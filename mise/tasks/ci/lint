@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Lint code"
+set -eou pipefail
+swiftformat --lint . --reporter github-actions-log
+swiftlint --reporter github-actions-logging --strict --quiet
+tuist install
+tuist inspect dependencies --only implicit

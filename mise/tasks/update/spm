@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Update Swift packages"
+set -eou pipefail
+tuist install --update

@@ -1,0 +1,46 @@
+services:
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.0.5
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      OPENSSL_armcap: "0"
+      PAPERLESS_ADMIN_MAIL: plu@aptumtek.com
+      PAPERLESS_ADMIN_PASSWORD: T0PS3CR3T!!123
+      PAPERLESS_ADMIN_USER: admin
+      PAPERLESS_REDIS: redis://redis:6379
+      PAPERLESS_SECRET_KEY: c0ff33
+      PAPERLESS_TIME_ZONE: Europe/Berlin
+      PAPERLESS_TOKEN_THROTTLE_RATE: 500/min
+    healthcheck:
+      test: ["CMD", "/healthcheck"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+    ports:
+      - "${PAPERLESS_PORT}:8000"
+    volumes:
+      - ./consume:/usr/src/paperless/consume
+      - ./healthcheck/paperless:/healthcheck
+  redis:
+    image: docker.io/library/redis:7
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/healthcheck"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+    volumes:
+      - ./healthcheck/redis:/healthcheck
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - paperless
+    ports:
+      - "${CADDY_PORT}:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+    command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Clean workspace"
+set -eou pipefail
+git clean -ffdx -e Tuist/.build && git reset --hard HEAD

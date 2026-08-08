@@ -1,0 +1,23 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      odiff-bin:
+        specifier: ^4.3.2
+        version: 4.3.2
+
+packages:
+
+  odiff-bin@4.3.2:
+    resolution: {integrity: sha512-irdWCW/b/b4aQiEfwNolbS0ZYUe2PAK6BKPt9Orzz3mGlko7ZqmEB1oDwCTAd2TQe3RmTpnePyd77xJzvWJHYQ==}
+    hasBin: true
+
+snapshots:
+
+  odiff-bin@4.3.2: {}

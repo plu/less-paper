@@ -1,0 +1,79 @@
+--swiftversion 6.1
+--disable all
+
+--symlinks ignore
+--exclude Tuist/.build
+
+--enable anyObjectProtocol
+
+--enable blankLinesAroundMark
+--enable blankLinesAtEndOfScope
+--enable blankLinesAtStartOfScope
+--enable blankLinesBetweenScopes
+--typeblanklines preserve
+
+--enable consecutiveBlankLines
+--enable consecutiveSpaces
+--enable elseOnSameLine
+--guardelse next-line
+--enable emptyBraces
+--enable extensionAccessControl
+--extensionacl on-extension
+
+--enable indent
+--ifdef no-indent
+--indent 4
+--xcodeindentation disabled
+
+--enable initCoderUnavailable
+--enable isEmpty
+--enable leadingDelimiters
+--enable modifierOrder
+
+--enable redundantBackticks
+--enable redundantBreak
+
+--enable redundantExtensionACL
+--enable redundantFileprivate
+--enable redundantGet
+--enable redundantInit
+--enable redundantLet
+--enable redundantLetError
+--enable redundantNilInit
+--enable redundantParens
+--enable redundantPattern
+--enable redundantReturn
+--enable redundantVoidReturnType
+
+--enable sortImports
+
+--enable spaceAroundBraces
+--enable spaceAroundBrackets
+--enable spaceAroundComments
+--enable spaceAroundGenerics
+--enable spaceAroundOperators
+--enable spaceAroundParens
+--enable spaceInsideBraces
+--enable spaceInsideBrackets
+--enable spaceInsideComments
+--enable spaceInsideGenerics
+--enable spaceInsideParens
+
+--enable trailingClosures
+--enable trailingSpace
+--commas inline
+
+--enable void
+
+--enable wrap
+--maxwidth 140
+--wrapternary before-operators
+
+
+--enable wrapArguments
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--wrapconditions after-first
+
+--enable wrapConditionalBodies

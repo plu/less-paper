@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#MISE description="Prepare Simulators with custom settings"
+set -eou pipefail
+
+for udid in $(xcrun simctl list devices -j | jq -r '.devices | values[] | flatten | .[].udid'); do
+    declare -a files=(
+        "$HOME/Library/Developer/CoreSimulator/Devices/$udid/data/Containers/Shared/SystemGroup/systemgroup.com.apple.configurationprofiles/Library/ConfigurationProfiles/UserSettings.plist"
+        "$HOME/Library/Developer/CoreSimulator/Devices/$udid/data/Library/UserConfigurationProfiles/EffectiveUserSettings.plist"
+        "$HOME/Library/Developer/CoreSimulator/Devices/$udid/data/Library/UserConfigurationProfiles/PublicInfo/PublicEffectiveUserSettings.plist"
+    )
+    for file in "${files[@]}"; do
+        if [ ! -f "$file" ]; then
+            continue
+        fi
+        plutil -replace restrictedBool.allowPasswordAutoFill.value -bool NO "$file"
+    done
+done

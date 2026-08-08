@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile --norc -euo pipefail {0}
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TUIST_GITHUB_RUN_NUMBER: ${{ github.run_number }}
+  TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
+
+jobs:
+  test:
+    name: Test
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          lfs: true
+
+      - name: mise
+        uses: jdx/mise-action@v3
+        with:
+          cache: false
+          cache_save: false
+
+      - run: mise ci:clean
+
+      - run: mise ci:lint
+
+      - run: mise simulators:prepare
+
+      - run: mise ci:test
+
+      - run: mise ci:cache
+        if: github.ref == 'refs/heads/main'
+
+  upload:
+    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'TestFlight')
+    name: Upload
+    needs: [test]
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          lfs: true
+
+      - run: git clean -ffdx -e Tuist/.build && git reset --hard HEAD
+
+      - name: mise
+        uses: jdx/mise-action@v3
+        with:
+          cache: false
+          cache_save: false
+
+      - run: mise ci:build
+
+      - run: mise ci:upload

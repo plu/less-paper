@@ -1,0 +1,181 @@
+import ProjectDescription
+
+public extension Module {
+    /**
+     * Xcode schemes configuration for each module.
+     *
+     * This property defines the build schemes available for each module type,
+     * including build actions, test configurations, and run actions. Different
+     * module types have different scheme configurations:
+     *
+     * - App modules: Include comprehensive test coverage across all testable targets
+     * - Feature modules: Include individual test suites with coverage reporting
+     * - App feature modules: Include dedicated test targets for feature apps
+     * - Test modules: No dedicated schemes (included in other module schemes)
+     *
+     * - Returns: An array of Scheme objects configured for the module type.
+     */
+    var schemes: [Scheme] {
+        switch self {
+        case .app:
+            [
+                .scheme(
+                    name: "Less Paper",
+                    buildAction: .buildAction(
+                        targets: [.target(self)]
+                    ),
+                    testAction: .targets(
+                        Module.allTestableTargets,
+                        arguments: .arguments(environmentVariables: .default),
+                        options: .options(
+                            language: .init(identifier: "en"),
+                            region: "DE",
+                            coverage: true,
+                            codeCoverageTargets: Module.allCodeCoverageTargets
+                        )
+                    ),
+                    runAction: .runAction()
+                )
+            ]
+        case .shareExtension:
+            [
+                .scheme(
+                    name: "ShareExtension",
+                    buildAction: .buildAction(
+                        targets: [.target(self)]
+                    ),
+                    runAction: .runAction(executable: .target(.app))
+                )
+            ]
+        case .apiImplementation,
+             .apiInterface,
+             .appFeature,
+             .certificatesFeature,
+             .components,
+             .correspondentsFeature,
+             .documentTypesFeature,
+             .documentsFeature,
+             .imageFeature,
+             .licensesFeature,
+             .permissionsFeature,
+             .savedViewsFeature,
+             .serversFeature,
+             .settingsFeature,
+             .shareFeature,
+             .storagePathsFeature,
+             .tagsFeature:
+            [
+                .scheme(
+                    name: rawValue,
+                    buildAction: .buildAction(
+                        targets: [.target(self)]
+                    ),
+                    testAction: .targets(
+                        testableTargets,
+                        arguments: .arguments(environmentVariables: .default),
+                        options: .options(
+                            language: .init(identifier: "en"),
+                            region: "DE",
+                            coverage: true,
+                            codeCoverageTargets: [.target(self)]
+                        )
+                    )
+                )
+            ]
+        case .correspondentsApp,
+             .documentTypesApp,
+             .documentsApp,
+             .savedViewsApp,
+             .serversApp,
+             .settingsApp,
+             .shareApp,
+             .storagePathsApp,
+             .tagsApp:
+            [
+                .scheme(
+                    name: rawValue,
+                    buildAction: .buildAction(
+                        targets: [.target(self)]
+                    ),
+                    testAction: .targets(
+                        featureAppTestTargets,
+                        arguments: .arguments(environmentVariables: .default),
+                        options: .options(
+                            language: .init(identifier: "en"),
+                            region: "DE",
+                            coverage: true
+                        )
+                    ),
+                    runAction: .runAction(
+                        arguments: .arguments(environmentVariables: .default),
+                    )
+                )
+            ]
+        case .apiImplementationTests,
+             .apiInterfaceTests,
+             .apiTestSupport,
+             .appFeatureTests,
+             .certificatesFeatureTests,
+             .componentsTests,
+             .correspondentsAppTests,
+             .correspondentsFeatureTests,
+             .documentTypesAppTests,
+             .documentTypesFeatureTests,
+             .documentsAppTests,
+             .documentsFeatureTests,
+             .imageFeatureTests,
+             .licensesFeatureTests,
+             .permissionsFeatureTests,
+             .savedViewsAppTests,
+             .savedViewsFeatureTests,
+             .serversAppTests,
+             .serversFeatureTests,
+             .settingsAppTests,
+             .settingsFeatureTests,
+             .shareAppTests,
+             .shareFeatureTests,
+             .storagePathsAppTests,
+             .storagePathsFeatureTests,
+             .tagsAppTests,
+             .tagsFeatureTests,
+             .testSupport:
+            []
+        }
+    }
+}
+
+extension Module {
+    /**
+     * Test targets for feature app modules.
+     *
+     * This private property maps each feature app module to its corresponding
+     * test target. Used internally by the schemes configuration to set up
+     * appropriate test actions for feature app schemes.
+     *
+     * - Returns: An array of TestableTarget objects for the feature app's tests.
+     */
+    private var featureAppTestTargets: [TestableTarget] {
+        switch self {
+        case .correspondentsApp:
+            [.testableTarget(target: .target(.correspondentsAppTests))]
+        case .documentTypesApp:
+            [.testableTarget(target: .target(.documentTypesAppTests))]
+        case .documentsApp:
+            [.testableTarget(target: .target(.documentsAppTests))]
+        case .savedViewsApp:
+            [.testableTarget(target: .target(.savedViewsAppTests))]
+        case .settingsApp:
+            [.testableTarget(target: .target(.settingsAppTests))]
+        case .serversApp:
+            [.testableTarget(target: .target(.serversAppTests))]
+        case .shareApp:
+            [.testableTarget(target: .target(.shareAppTests))]
+        case .storagePathsApp:
+            [.testableTarget(target: .target(.storagePathsAppTests))]
+        case .tagsApp:
+            [.testableTarget(target: .target(.tagsAppTests))]
+        default:
+            []
+        }
+    }
+}

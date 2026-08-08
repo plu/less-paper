@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Stop paperless-ngx"
+set -euo pipefail
+cd $MISE_PROJECT_ROOT/docker
+docker-compose -p paperless-ci down --remove-orphans
+docker-compose -p paperless-dev down --remove-orphans

@@ -1,0 +1,5 @@
+# Caddy reverse proxy for paperless
+localhost:443 {
+    tls internal
+    reverse_proxy paperless:8000
+}

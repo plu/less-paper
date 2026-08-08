@@ -1,0 +1,13 @@
+options:
+  addSources: false
+  addVersionNumbers: false
+  force: true
+  markdownPath: Modules/LicensesFeature/Resources/licenses.md
+  outputPath: /tmp
+  prefix: Licenses
+  suppressOpeningDirectory: true
+  packagePaths:
+    - Tuist/Package.resolved
+github:
+  - owner: mono0926
+    name: LicensePlist

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Run tests"
+set -euo pipefail
+tuist install
+tuist test -d "iPhone 17 Pro" --clean -T test.xcresult -- -testLanguage en -testRegion DE

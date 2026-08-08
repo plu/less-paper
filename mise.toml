@@ -1,0 +1,23 @@
+[env]
+HOMEBREW_NO_AUTO_UPDATE = "1"
+HOMEBREW_NO_ENV_HINTS = "1"
+HOMEBREW_NO_INSTALL_CLEANUP = "1"
+
+[hooks]
+postinstall = "brew bundle"
+
+[tools]
+aws = { version = "2.34.58", symlink_bins = "true" }
+colima = "0.10.1"
+fnox = "1.25.1"
+git-lfs = "3.7.1"
+lima = "2.1.2"
+node = "26.3.0"
+pnpm = "11.5.1"
+"spm:mono0926/LicensePlist" = "3.27.9"
+swiftformat = "0.61.1"
+swiftlint = "0.63.3"
+tuist = "4.195.11"
+
+[settings]
+experimental = true

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#MISE dir="{{cwd}}"
+#USAGE flag "-o --old <Correspondent>" help="The old value to look for"
+#USAGE flag "-n --new <DocumentType>" help="The new value to replace it with"
+old_lower=$(echo $usage_old | gsed 's/./\L&/')
+new_lower=$(echo $usage_new | gsed 's/./\L&/')
+set -eou pipefail
+shopt -s nullglob
+for file in *$usage_old*; do
+    file_new="${file/$usage_old/$usage_new}"
+    echo "Renaming $file to $file_new"
+    mv "$file" "$file_new"
+    gsed -i "s/${usage_old}s/${usage_new}s/g" "$file_new"
+    gsed -i "s/${usage_old}/${usage_new}/g" "$file_new"
+    gsed -i "s/${old_lower}s/${new_lower}s/g" "$file_new"
+    gsed -i "s/${old_lower}/${new_lower}/g" "$file_new"
+done

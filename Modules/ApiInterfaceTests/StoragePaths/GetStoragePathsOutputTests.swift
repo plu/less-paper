@@ -1,0 +1,44 @@
+@testable import ApiInterface
+
+import CustomDump
+import Foundation
+import Testing
+
+@Suite
+struct GetStoragePathsOutputTests {
+
+    @Test
+    func decode() async throws {
+        let json = """
+        {
+          "all": [
+            1
+          ],
+          "count": 1,
+          "next": null,
+          "previous": null,
+          "results": [
+            {
+              "document_count": 0,
+              "id": 1,
+              "is_insensitive": false,
+              "match": "",
+              "matching_algorithm": 6,
+              "name": "Test StoragePath",
+              "owner": 3,
+              "path" : "\\/home\\/paperless\\/test-storagepath",
+              "slug": "test-storagepath",
+              "user_can_change": true
+            }
+          ]
+        }
+        """
+
+        let output = try JSONDecoder.apiDecoder.decode(GetStoragePathsOutput.self, from: #require(json.data(using: .utf8)))
+
+        expectNoDifference(output, .testValue(
+            count: 1,
+            results: [.testValue()]
+        ))
+    }
+}

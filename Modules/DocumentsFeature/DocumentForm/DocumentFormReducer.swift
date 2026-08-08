@@ -1,0 +1,168 @@
+import ApiInterface
+import Components
+import ComposableArchitecture
+import CorrespondentsFeature
+import DocumentTypesFeature
+import Foundation
+import StoragePathsFeature
+import Tagged
+import TagsFeature
+
+@Reducer
+public struct DocumentFormReducer: Sendable {
+    public enum Action: BindableAction, ViewAction {
+        case binding(BindingAction<State>)
+        case delegate(Delegate)
+        case destination(PresentationAction<Destination.Action>)
+        case nextArchiveSerialNumber(Int)
+        case updateResult(Result<Document, Error>)
+        case view(View)
+
+        @CasePathable
+        public enum Delegate {
+            case documentUpdated(Document)
+        }
+
+        public enum View {
+            case createCorrespondentButtonTapped
+            case createDocumentTypeButtonTapped
+            case createStoragePathButtonTapped
+            case createTagButtonTapped
+            case closeButtonTapped
+            case getNextArchiveSerialNumberButtonTapped
+            case resetButtonTapped
+            case saveButtonTapped
+        }
+    }
+
+    @Reducer
+    public enum Destination {
+        case correspondentForm(CorrespondentFormReducer)
+        case documentTypeForm(DocumentTypeFormReducer)
+        case storagePathForm(StoragePathFormReducer)
+        case tagForm(TagFormReducer)
+    }
+
+    @ObservableState
+    public struct State: Equatable {
+
+        @Presents
+        var destination: Destination.State?
+
+        var document: Document
+
+        var input: DocumentFormInput
+
+        var isLoadingNextArchiveSerialNumber = false
+
+        var isModified: Bool {
+            input != DocumentFormInput(document: document, server: server)
+        }
+
+        var isUpdating = false
+
+        let server: Server
+
+        @Shared
+        var correspondents: IdentifiedArrayOf<Correspondent>
+
+        @Shared
+        var documentTypes: IdentifiedArrayOf<DocumentType>
+
+        @Shared
+        var storagePaths: IdentifiedArrayOf<StoragePath>
+
+        @Shared
+        var tags: IdentifiedArrayOf<Tag>
+
+        init(
+            destination: DocumentFormReducer.Destination.State? = nil,
+            document: Document,
+            server: Server
+        ) {
+            self.destination = destination
+            self.document = document
+            self.input = DocumentFormInput(
+                document: document,
+                server: server
+            )
+            self.server = server
+            self._correspondents = Shared(wrappedValue: [], .correspondents(server))
+            self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
+            self._storagePaths = Shared(wrappedValue: [], .storagePaths(server))
+            self._tags = Shared(wrappedValue: [], .tags(server))
+        }
+    }
+
+    public var body: some ReducerOf<Self> {
+        BindingReducer()
+        Reduce { state, action in
+            switch action {
+            case let .destination(.presented(.correspondentForm(.delegate(.correspondentSaved(correspondent))))):
+                state.destination = nil
+                state.input.correspondent = correspondent
+                return .none
+            case let .destination(.presented(.documentTypeForm(.delegate(.documentTypeSaved(documentType))))):
+                state.destination = nil
+                state.input.documentType = documentType
+                return .none
+            case let .destination(.presented(.storagePathForm(.delegate(.storagePathSaved(storagePath))))):
+                state.destination = nil
+                state.input.storagePath = storagePath
+                return .none
+            case let .destination(.presented(.tagForm(.delegate(.tagSaved(tag))))):
+                state.destination = nil
+                state.input.tags.insert(tag)
+                return .none
+            case let .nextArchiveSerialNumber(archiveSerialNumber):
+                state.input.archiveSerialNumber = String(archiveSerialNumber)
+                return .none
+            case let .updateResult(result):
+                switch result {
+                case let .failure(error):
+                    return .toast(error)
+                case let .success(document):
+                    state.document = document
+                    return .send(.delegate(.documentUpdated(document)))
+                }
+            case let .view(viewAction):
+                switch viewAction {
+                case .createCorrespondentButtonTapped:
+                    state.destination = .correspondentForm(CorrespondentFormReducer.State(server: state.server))
+                    return .none
+                case .createDocumentTypeButtonTapped:
+                    state.destination = .documentTypeForm(DocumentTypeFormReducer.State(server: state.server))
+                    return .none
+                case .createStoragePathButtonTapped:
+                    state.destination = .storagePathForm(StoragePathFormReducer.State(server: state.server))
+                    return .none
+                case .createTagButtonTapped:
+                    state.destination = .tagForm(TagFormReducer.State(server: state.server))
+                    return .none
+                case .closeButtonTapped:
+                    state.destination = nil
+                    return .runDismiss()
+                case .getNextArchiveSerialNumberButtonTapped:
+                    return .runGetNextArchiveSerialNumber(server: state.server)
+                case .resetButtonTapped:
+                    state.input = DocumentFormInput(
+                        document: state.document,
+                        server: state.server
+                    )
+                    return .none
+                case .saveButtonTapped:
+                    return .runUpdateDocument(
+                        id: state.document.id,
+                        input: state.input,
+                        server: state.server
+                    )
+                }
+            case .binding, .delegate, .destination:
+                return .none
+            }
+        }
+        .ifLet(\.$destination, action: \.destination)
+    }
+}
+
+extension DocumentFormReducer.Destination.State: Equatable {}

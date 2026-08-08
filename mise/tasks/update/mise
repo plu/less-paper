@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Update tools via mise"
+set -e
+tools=$(mise outdated -l | grep less-paper | awk '{print $1}' | tr '\n' ' ')
+echo "outdated tools: $tools"
+if [ -n "$tools" ]; then
+    mise upgrade $tools --bump
+fi

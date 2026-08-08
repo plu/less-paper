@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+curl -fs -S --max-time 2 -u 'admin:T0PS3CR3T!!123' http://localhost:8000/api/documents/ | \
+    python -c 'import json,sys;exit(0) if int(json.load(sys.stdin)["count"]) == 13 else exit(1)'

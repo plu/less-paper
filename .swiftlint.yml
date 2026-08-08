@@ -1,0 +1,116 @@
+excluded:
+  - Tuist/.build
+  - Derived
+disabled_rules:
+  - blanket_disable_command
+  - cyclomatic_complexity
+  - empty_enum_arguments
+  - file_length
+  - for_where
+  - force_cast
+  - function_body_length
+  - function_parameter_count
+  - line_length
+  - multiple_closures_with_trailing_closure
+  - nesting
+  - opening_brace
+  - optional_data_string_conversion
+  - redundant_objc_attribute
+  - trailing_comma
+  - type_body_length
+  - xctfail_message
+identifier_name:
+  min_length:
+    error: 1
+    warning: 1
+  max_length:
+    warning: 60
+    error: 80
+inclusive_language:
+  override_allowed_terms:
+    - masterKey
+opt_in_rules:
+  - array_init
+  - closure_end_indentation
+  - closure_spacing
+  - contains_over_first_not_nil
+  - empty_count
+  - explicit_init
+  - fallthrough
+  - first_where
+  - identical_operands
+  - implicit_return
+  - joined_default_parameter
+  - let_var_whitespace
+  - multiline_parameters
+  - object_literal
+  - operator_usage_whitespace
+  - overridden_super_call
+  - private_outlet
+  - prohibited_super_call
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - sorted_imports
+  - syntactic_sugar
+  - unavailable_function
+  - unneeded_parentheses_in_closure_argument
+  - vertical_whitespace_closing_braces
+  - yoda_condition
+type_name:
+  max_length:
+    error: 60
+    warning: 60
+  min_length:
+    error: 1
+    warning: 1
+
+custom_rules:
+  double_space: # from https://github.com/IBM-Swift/Package-Builder
+    include: "*.swift"
+    name: "Double space"
+    regex: '([a-z,A-Z!\?] \s+)'
+    message: "Double space between keywords"
+    match_kinds: keyword
+    severity: warning
+  comments_space: # from https://github.com/brandenr/swiftlintconfig
+    name: "Space After Comment"
+    regex: '(^ *//\w+)'
+    message: "There should be a space after //"
+    severity: warning
+  empty_line_after_guard: # from https://github.com/brandenr/swiftlintconfig
+    name: "Empty Line After Guard"
+    regex: '(^ *guard[ a-zA-Z0-9=?.\(\),><!]*\{[ a-zA-Z0-9=?.\(\),><!]*\}\n *(?!(?:return|guard))\S+)'
+    message: "There should be an empty line after a guard"
+    severity: warning
+  unnecessary_type: # from https://github.com/brandenr/swiftlintconfig
+    name: "Unnecessary Type"
+    regex: '[ a-zA-Z0-9]*(?:let|var) [ a-zA-Z0-9]*: ([a-zA-Z0-9]*)[ ]*= \1\('
+    message: "Type Definition Not Needed"
+    severity: warning
+  print:
+    name: "Debug print"
+    message: "Remove print output."
+    severity: warning
+    regex: "\\sprint[ ]?\\((.*\\))" # Detect this string print("
+  system_colors:
+    name: "System Colors"
+    regex: '(?:\.systemRed|\.systemOrange|\.systemYellow|\.systemGreen|\.systemMint|\.systemTeal|\.systemCyan|\.systemBlue|\.systemIndigo|\.systemPurple|\.systemPink|\.systemBrown|\.systemGray|\.systemGray2|\.systemGray3|\.systemGray4|\.systemGray5|\.systemGray6)'
+    message: "System colors are not allowed."
+    severity: error
+  fixed_colors:
+    name: "Fixed Colors"
+    regex: '(?:\.black|\.blue|\.brown|\.cyan|\.darkGray|\.gray|\.green|\.lightGray|\.magenta|\.orange|\.purple|\.red|\.white|\.yellow)$'
+    message: "Fixed colors are not allowed."
+    severity: error
+  ui_element_colors:
+    name: "UI Element Colors"
+    regex: 'Color\s=\s(?:UIColor|Color)?(?:\.label|\.secondaryLabel|\.tertiaryLabel|\.quaternaryLabel|\.systemFill|\.secondarySystemFill|\.tertiarySystemFill|\.quaternarySystemFill|\.placeholderText|\.tintColor|\.systemBackground|\.secondarySystemBackground|\.tertiarySystemBackground|\.systemGroupedBackground|\.secondarySystemGroupedBackground|\.tertiarySystemGroupedBackground|\.separator|\.opaqueSeparator|\.link|\.darkText|\.lightText|\.groupTableViewBackground)$'
+    message: "UI Element colors are not allowed."
+    severity: error
+  personal_fixme:
+    match_kinds:
+      - comment
+    message: "FIXMEs should be resolved."
+    name: "Personal FIXME"
+    regex: "//\\s*FIX-${USER}[\\s:]*"
+    severity: warning
