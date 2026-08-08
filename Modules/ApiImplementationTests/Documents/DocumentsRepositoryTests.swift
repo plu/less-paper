@@ -274,6 +274,240 @@ struct DocumentsRepositoryTests {
         #expect(output.results.count == 2)
     }
 
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_bulkEditDocuments_delete() async throws {
+        let title = "Bulk Edit Delete Test \(UUID())"
+        let id = try await createTestDocument(title: title)
+
+        try await repository.bulkEditDocuments(
+            input: .init(documents: [id], method: .delete),
+            server: .testValue()
+        )
+
+        let output = try await repository.getAllDocumentIds(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+        #expect(output.results.isEmpty)
+    }
+
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_bulkEditDocuments_modifyTags() async throws {
+        let title = "Bulk Edit Modify Tags Test \(UUID())"
+        let id = try await createTestDocument(title: title)
+        let tag = try await tagsRepository.createTag(
+            input: .init(
+                color: "#ff0000",
+                isInboxTag: false,
+                name: "Bulk Edit Test Tag \(UUID())"
+            ),
+            server: .testValue()
+        )
+
+        try await repository.bulkEditDocuments(
+            input: .init(
+                documents: [id],
+                method: .modifyTags(.init(addTags: [tag.id], removeTags: []))
+            ),
+            server: .testValue()
+        )
+
+        var documents = try await repository.getDocuments(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+        // Not `== [tag.id]`: paperless-ngx's automatic document classifier
+        // (the default `matchingAlgorithm` for every tag this codebase
+        // creates, including in other integration suites running
+        // concurrently against this shared fixture instance) can auto-assign
+        // unrelated tags to a document at consumption time. `modify_tags` is
+        // additive, so any such tag survives alongside ours. This test only
+        // needs to prove our own tag was added, not that we own the array.
+        #expect(documents.results.first?.tags.contains(tag.id) == true)
+
+        try await repository.bulkEditDocuments(
+            input: .init(
+                documents: [id],
+                method: .modifyTags(.init(addTags: [], removeTags: [tag.id]))
+            ),
+            server: .testValue()
+        )
+
+        documents = try await repository.getDocuments(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+        #expect(documents.results.first?.tags.contains(tag.id) == false)
+
+        try await repository.bulkEditDocuments(
+            input: .init(documents: [id], method: .delete),
+            server: .testValue()
+        )
+        try await tagsRepository.deleteTag(id: tag.id, server: .testValue())
+    }
+
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_bulkEditDocuments_setCorrespondent() async throws {
+        let title = "Bulk Edit Set Correspondent Test \(UUID())"
+        let id = try await createTestDocument(title: title)
+        let correspondent = try await correspondentsRepository.createCorrespondent(
+            input: .init(name: "Bulk Edit Test Correspondent \(UUID())"),
+            server: .testValue()
+        )
+
+        try await repository.bulkEditDocuments(
+            input: .init(
+                documents: [id],
+                method: .setCorrespondent(.init(correspondent: correspondent.id))
+            ),
+            server: .testValue()
+        )
+
+        var documents = try await repository.getDocuments(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+        #expect(documents.results.first?.correspondent == correspondent.id)
+
+        try await repository.bulkEditDocuments(
+            input: .init(
+                documents: [id],
+                method: .setCorrespondent(.init(correspondent: nil))
+            ),
+            server: .testValue()
+        )
+
+        documents = try await repository.getDocuments(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+        #expect(documents.results.first?.correspondent == nil)
+
+        try await repository.bulkEditDocuments(
+            input: .init(documents: [id], method: .delete),
+            server: .testValue()
+        )
+        try await correspondentsRepository.deleteCorrespondent(id: correspondent.id, server: .testValue())
+    }
+
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_bulkEditDocuments_setDocumentType() async throws {
+        let title = "Bulk Edit Set Document Type Test \(UUID())"
+        let id = try await createTestDocument(title: title)
+        let documentType = try await documentTypesRepository.createDocumentType(
+            input: .init(name: "Bulk Edit Test Document Type \(UUID())"),
+            server: .testValue()
+        )
+
+        try await repository.bulkEditDocuments(
+            input: .init(
+                documents: [id],
+                method: .setDocumentType(.init(documentType: documentType.id))
+            ),
+            server: .testValue()
+        )
+
+        var documents = try await repository.getDocuments(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+        #expect(documents.results.first?.documentType == documentType.id)
+
+        try await repository.bulkEditDocuments(
+            input: .init(
+                documents: [id],
+                method: .setDocumentType(.init(documentType: nil))
+            ),
+            server: .testValue()
+        )
+
+        documents = try await repository.getDocuments(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+        #expect(documents.results.first?.documentType == nil)
+
+        try await repository.bulkEditDocuments(
+            input: .init(documents: [id], method: .delete),
+            server: .testValue()
+        )
+        try await documentTypesRepository.deleteDocumentType(id: documentType.id, server: .testValue())
+    }
+
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_bulkEditDocuments_setStoragePath() async throws {
+        let title = "Bulk Edit Set Storage Path Test \(UUID())"
+        let id = try await createTestDocument(title: title)
+        let storagePath = try await storagePathsRepository.createStoragePath(
+            input: .init(name: "Bulk Edit Test Storage Path \(UUID())", path: "bulk-edit-test/{{ title }}"),
+            server: .testValue()
+        )
+
+        try await repository.bulkEditDocuments(
+            input: .init(
+                documents: [id],
+                method: .setStoragePath(.init(storagePath: storagePath.id))
+            ),
+            server: .testValue()
+        )
+
+        var documents = try await repository.getDocuments(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+        #expect(documents.results.first?.storagePath == storagePath.id)
+
+        try await repository.bulkEditDocuments(
+            input: .init(
+                documents: [id],
+                method: .setStoragePath(.init(storagePath: nil))
+            ),
+            server: .testValue()
+        )
+
+        documents = try await repository.getDocuments(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+        #expect(documents.results.first?.storagePath == nil)
+
+        try await repository.bulkEditDocuments(
+            input: .init(documents: [id], method: .delete),
+            server: .testValue()
+        )
+        try await storagePathsRepository.deleteStoragePath(id: storagePath.id, server: .testValue())
+    }
+
     private func createTempTestFile(content: String = "Test PDF content") throws -> URL {
         let tempDir = FileManager.default.temporaryDirectory
         let tempFile = tempDir.appendingPathComponent("test.pdf")
@@ -283,6 +517,41 @@ struct DocumentsRepositoryTests {
         return tempFile
     }
 
+    private func createTestDocument(title: String) async throws -> Document.Id {
+        let tempURL = try createTempTestFile()
+        try await repository.createDocument(
+            input: .testValue(createdDate: Date(), title: title, url: tempURL),
+            server: .testValue()
+        )
+
+        for _ in 0 ..< 30 {
+            let output = try await repository.getAllDocumentIds(
+                input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+                server: .testValue()
+            )
+            if let id = output.results.first?.id {
+                return id
+            }
+            try await Task.sleep(for: .seconds(1))
+        }
+
+        throw DocumentConsumptionTimedOut()
+    }
+
+    private struct DocumentConsumptionTimedOut: Error {}
+
     @Dependency(\.documentsRepository)
     private var repository
+
+    @Dependency(\.tagsRepository)
+    private var tagsRepository
+
+    @Dependency(\.correspondentsRepository)
+    private var correspondentsRepository
+
+    @Dependency(\.documentTypesRepository)
+    private var documentTypesRepository
+
+    @Dependency(\.storagePathsRepository)
+    private var storagePathsRepository
 }

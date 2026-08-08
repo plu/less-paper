@@ -2,4 +2,18 @@
 #MISE description="Run tests"
 set -euo pipefail
 tuist install
+
+set +e
 tuist test -d "iPhone 17 Pro" --clean -T test.xcresult -- -testLanguage en -testRegion DE
+test_exit_code=$?
+set -e
+
+if [ -d test.xcresult ]; then
+  summary=$(xcresultparser --output-format github --failed-tests-only test.xcresult)
+  echo "$summary"
+  if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    echo "$summary" >> "$GITHUB_STEP_SUMMARY"
+  fi
+fi
+
+exit "$test_exit_code"

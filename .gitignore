@@ -72,3 +72,4 @@ Tuist/.build
 node_modules/
 
 .claude/
+*.xcresult

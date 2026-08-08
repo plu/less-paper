@@ -8,6 +8,11 @@ import MultipartFormDataKit
 @DependencyClient
 struct DocumentsRepository: Sendable {
 
+    var bulkEditDocuments: @Sendable (
+        _ input: BulkEditDocumentsInput,
+        _ server: Server
+    ) async throws -> Void
+
     var createDocument: @Sendable (
         _ input: CreateDocumentInput,
         _ server: Server
@@ -42,6 +47,7 @@ struct DocumentsRepository: Sendable {
 extension DocumentsRepository: TestDependencyKey {
 
     static let previewValue = Self(
+        bulkEditDocuments: { _, _ in },
         createDocument: { _, _ in },
         downloadDocument: { _, _ in try .testValue() },
         getAllDocumentIds: { _, _ in .testValue() },
@@ -51,6 +57,7 @@ extension DocumentsRepository: TestDependencyKey {
     )
 
     static let testValue = Self(
+        bulkEditDocuments: { _, _ in },
         createDocument: { _, _ in },
         downloadDocument: { _, _ in try .testValue() },
         getAllDocumentIds: { _, _ in .testValue() },
@@ -70,6 +77,7 @@ extension DependencyValues {
 
 extension DocumentsRepository: DependencyKey {
     static let liveValue = Self(
+        bulkEditDocuments: bulkEditDocuments(input:server:),
         createDocument: createDocument(input:server:),
         downloadDocument: downloadDocument(id:server:),
         getAllDocumentIds: getAllDocumentIds(input:server:),
@@ -80,6 +88,20 @@ extension DocumentsRepository: DependencyKey {
 }
 
 private extension DocumentsRepository {
+
+    static func bulkEditDocuments(
+        input: BulkEditDocumentsInput,
+        server: Server
+    ) async throws {
+        try await APIClient
+            .client(server: server)
+            .send(.init(
+                path: "/api/documents/bulk_edit/",
+                method: .post,
+                body: input
+            ))
+            .value
+    }
 
     static func createDocument(
         input: CreateDocumentInput,

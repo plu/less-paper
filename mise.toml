@@ -11,6 +11,7 @@ aws = { version = "2.34.58", symlink_bins = "true" }
 colima = "0.10.1"
 fnox = "1.25.1"
 git-lfs = "3.7.1"
+"github:a7ex/xcresultparser" = "2.2.0"
 lima = "2.1.2"
 node = "26.3.0"
 pnpm = "11.5.1"
