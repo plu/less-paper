@@ -1,4 +1,5 @@
 excluded:
+  - .claude
   - Tuist/.build
   - Derived
 disabled_rules:

@@ -281,6 +281,27 @@ struct DocumentsRepositoryTests {
         },
         .tags(.integrationTests)
     )
+    func test_getSelectionData() async throws {
+        let documentIds = try await repository.getAllDocumentIds(
+            input: .testValue(
+                filterRules: [.init(ruleType: .title, value: "Lego")]
+            ),
+            server: .testValue()
+        )
+
+        _ = try await repository.getSelectionData(
+            input: .init(documents: documentIds.results.map(\.id)),
+            server: .testValue()
+        )
+    }
+
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
     func test_bulkEditDocuments_delete() async throws {
         let title = "Bulk Edit Delete Test \(UUID())"
         let id = try await createTestDocument(title: title)

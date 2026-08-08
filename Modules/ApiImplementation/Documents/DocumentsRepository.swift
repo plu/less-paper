@@ -37,6 +37,11 @@ struct DocumentsRepository: Sendable {
         _ server: Server
     ) async throws -> Int
 
+    var getSelectionData: @Sendable (
+        _ input: GetSelectionDataInput,
+        _ server: Server
+    ) async throws -> GetSelectionDataOutput
+
     var updateDocument: @Sendable (
         _ id: Document.Id,
         _ input: UpdateDocumentInput,
@@ -53,6 +58,7 @@ extension DocumentsRepository: TestDependencyKey {
         getAllDocumentIds: { _, _ in .testValue() },
         getDocuments: { _, _ in .testValue() },
         getNextArchiveSerialNumber: { _ in 1 },
+        getSelectionData: { _, _ in .testValue() },
         updateDocument: { _, _, _ in .testValue() }
     )
 
@@ -63,6 +69,7 @@ extension DocumentsRepository: TestDependencyKey {
         getAllDocumentIds: { _, _ in .testValue() },
         getDocuments: { _, _ in .testValue() },
         getNextArchiveSerialNumber: { _ in 1 },
+        getSelectionData: { _, _ in .testValue() },
         updateDocument: { _, _, _ in .testValue() }
     )
 }
@@ -83,6 +90,7 @@ extension DocumentsRepository: DependencyKey {
         getAllDocumentIds: getAllDocumentIds(input:server:),
         getDocuments: getDocuments(input:server:),
         getNextArchiveSerialNumber: getNextArchiveSerialNumber(server:),
+        getSelectionData: getSelectionData(input:server:),
         updateDocument: updateDocument(id:input:server:)
     )
 }
@@ -161,6 +169,20 @@ private extension DocumentsRepository {
             .send(.init(
                 path: "/api/documents/next_asn/",
                 method: .get
+            ))
+            .value
+    }
+
+    static func getSelectionData(
+        input: GetSelectionDataInput,
+        server: Server
+    ) async throws -> GetSelectionDataOutput {
+        try await APIClient
+            .client(server: server)
+            .send(.init(
+                path: "/api/documents/selection_data/",
+                method: .post,
+                body: input
             ))
             .value
     }
