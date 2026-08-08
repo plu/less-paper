@@ -21,26 +21,8 @@ extension Effect where Action == ServerListReducer.Action {
         }
         .cancellable(id: CancelID.getCredentials)
     }
-
-    static func runServersObserver() -> Self {
-        @Shared(.servers)
-        var servers: IdentifiedArrayOf<Server>
-
-        return .publisher {
-            $servers
-                .publisher
-                .receive(on: RunLoop.main)
-                .removeDuplicates()
-                .map(Action.serversChanged)
-        }
-        .cancellable(
-            id: CancelID.observeServersChanges,
-            cancelInFlight: true
-        )
-    }
 }
 
 private enum CancelID {
     case getCredentials
-    case observeServersChanges
 }

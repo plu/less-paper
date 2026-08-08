@@ -66,17 +66,13 @@ struct ServerListReducerTests {
             ServerListReducer()
         }
 
-        let bootstrap = await store.send(.bootstrap)
-        await store.receive(\.serversChanged, [server]) {
-            $0.servers = [.testValue(server: server)]
-        }
+        #expect(store.state.servers == [.testValue(server: server)])
+
         await store.send(.servers(.element(id: server.id, action: .delegate(.deleteServer)))) {
             $0.servers = []
         }
-        await store.receive(\.serversChanged, [])
 
         #expect(servers == [])
-        await bootstrap.cancel()
     }
 
     @Test
@@ -92,17 +88,14 @@ struct ServerListReducerTests {
             $0.getCredentials.execute = { _ in .testValue() }
         }
 
-        let bootstrap = await store.send(.bootstrap)
-        await store.receive(\.serversChanged, [server]) {
-            $0.servers = [.testValue(server: server)]
-        }
+        #expect(store.state.servers == [.testValue(server: server)])
+
         await store.send(.servers(.element(id: server.id, action: .delegate(.editServer))))
         await store.receive(\.getCredentialsResult) {
             $0.destination = .serverForm(ServerFormReducer.State(
                 input: .testValue(headers: [.testValue()])
             ))
         }
-        await bootstrap.cancel()
     }
 
     @Test

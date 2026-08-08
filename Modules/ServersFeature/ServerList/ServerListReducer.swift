@@ -8,11 +8,9 @@ import SwiftSharing
 public struct ServerListReducer: Sendable {
 
     public enum Action: ViewAction {
-        case bootstrap
         case destination(PresentationAction<Destination.Action>)
         case getCredentialsResult(Credentials?, Server)
         case servers(IdentifiedActionOf<ServerRowReducer>)
-        case serversChanged(IdentifiedArrayOf<Server>)
         case view(View)
 
         public enum View {
@@ -36,15 +34,20 @@ public struct ServerListReducer: Sendable {
         public init(
             destination: Destination.State? = nil
         ) {
+            @Shared(.servers)
+            var storedServers: IdentifiedArrayOf<Server>
+
             self.destination = destination
+            self.servers = IdentifiedArray(
+                uniqueElements: storedServers.map { ServerRowReducer.State(server: $0) }
+            )
+            self.sort()
         }
     }
 
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .bootstrap:
-                return .runServersObserver()
             case let .destination(.presented(.serverForm(.delegate(.serverSaved(server))))):
                 state.destination = nil
                 state.servers.updateOrAppend(ServerRowReducer.State(server: server))
@@ -71,11 +74,6 @@ public struct ServerListReducer: Sendable {
                         server: state.servers[id: id]?.server
                     )
                 }
-            case let .serversChanged(sharedServers):
-                state.servers = IdentifiedArray(
-                    uniqueElements: sharedServers.map { ServerRowReducer.State(server: $0) }
-                )
-                return .none
             case let .view(viewAction):
                 switch viewAction {
                 case .createServerButtonTapped:
@@ -96,7 +94,8 @@ public struct ServerListReducer: Sendable {
 extension ServerListReducer.Destination.State: Equatable {}
 
 extension ServerListReducer.State {
-    mutating func sync() {
+
+    mutating func sort() {
         servers.sort {
             $0.server.alias.compare(
                 $1.server.alias,
@@ -107,25 +106,22 @@ extension ServerListReducer.State {
                 ]
             ) == .orderedAscending
         }
+    }
+
+    mutating func sync() {
+        sort()
 
         @Shared(.selectedServer)
         var selectedServer: Server?
 
         @Shared(.servers)
-        var servers: IdentifiedArrayOf<Server>
+        var storedServers: IdentifiedArrayOf<Server>
 
-        $servers.withLock { $0 = IdentifiedArray(uniqueElements: self.servers.map(\.server)) }
+        $storedServers.withLock { $0 = IdentifiedArray(uniqueElements: self.servers.map(\.server)) }
         $selectedServer.withLock {
-            if [0, 1].contains(servers.count) {
-                $0 = servers.first
+            if [0, 1].contains(storedServers.count) {
+                $0 = storedServers.first
             }
         }
-    }
-}
-
-public extension StoreOf<ServerListReducer> {
-    func bootstrapped() -> Self {
-        send(.bootstrap)
-        return self
     }
 }

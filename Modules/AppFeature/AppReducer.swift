@@ -51,6 +51,7 @@ public struct AppReducer {
                     return .runUpdateCache(server: server)
                 } else {
                     state.main = nil
+                    state.serverList = ServerListReducer.State()
                     return .none
                 }
             case .certificateApproval, .main, .serverList:

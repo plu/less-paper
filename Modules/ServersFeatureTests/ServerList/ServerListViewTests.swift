@@ -8,6 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
+    .dependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
@@ -47,9 +48,6 @@ struct ServerListViewTests {
                 ServerListReducer()
             }
         )
-        store.send(.bootstrap)
-
-        try await Task.sleep(for: .milliseconds(1))
 
         assertSnapshot(
             of: NavigationStack {
@@ -58,5 +56,23 @@ struct ServerListViewTests {
             as: .image(layout: .device(config: .iPhone12)),
             named: "withData"
         )
+    }
+
+    @Test
+    func test_init_doesNotSendActions() async throws {
+        let actions = LockIsolated([String]())
+
+        let store = Store(initialState: ServerListReducer.State.testValue()) {
+            Reduce<ServerListReducer.State, ServerListReducer.Action> { _, action in
+                let description = String(describing: action)
+                actions.withValue { $0.append(description) }
+                return .none
+            }
+            ServerListReducer()
+        }
+
+        _ = ServerListView(store: store)
+
+        #expect(actions.value.isEmpty)
     }
 }

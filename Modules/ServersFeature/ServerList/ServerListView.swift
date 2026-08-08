@@ -35,7 +35,7 @@ public struct ServerListView: View {
     }
 
     public init(store: StoreOf<ServerListReducer>) {
-        self.store = store.bootstrapped()
+        self.store = store
     }
 
     @Bindable

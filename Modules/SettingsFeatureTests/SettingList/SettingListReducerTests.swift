@@ -6,9 +6,12 @@ import Foundation
 import ServersFeature
 import TagsFeature
 import Testing
+import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .dependencies()
+)
 struct SettingListReducerTests {
 
     @Test
