@@ -358,6 +358,40 @@
         }
       }
     },
+    "confirm" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bestätigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm"
+          }
+        }
+      }
+    },
+    "confirmAssignment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuweisung bestätigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm assignment"
+          }
+        }
+      }
+    },
     "color" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -388,6 +422,88 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Correspondent"
+          }
+        }
+      }
+    },
+    "correspondentBulkEditConfirmationAssign" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird dem ausgewählten Dokument den Korrespondenten „%1$@“ zuweisen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird %2$ld ausgewählten Dokumenten den Korrespondenten „%1$@“ zuweisen."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will assign the correspondent \"%1$@\" to the selected document."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will assign the correspondent \"%1$@\" to %2$ld selected documents."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "correspondentBulkEditConfirmationRemove" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird bei dem ausgewählten Dokument den Korrespondent entfernen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird bei %ld ausgewählten Dokumenten den Korrespondent entfernen."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will remove the correspondent from the selected document."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will remove the correspondent from %ld selected documents."
+                }
+              }
+            }
           }
         }
       }
@@ -677,6 +793,88 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Document type"
+          }
+        }
+      }
+    },
+    "documentTypeBulkEditConfirmationAssign" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird dem ausgewählten Dokument den Dokumenttyp „%1$@“ zuweisen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird %2$ld ausgewählten Dokumenten den Dokumenttyp „%1$@“ zuweisen."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will assign the document type \"%1$@\" to the selected document."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will assign the document type \"%1$@\" to %2$ld selected documents."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "documentTypeBulkEditConfirmationRemove" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird bei dem ausgewählten Dokument den Dokumenttyp entfernen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird bei %ld ausgewählten Dokumenten den Dokumenttyp entfernen."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will remove the document type from the selected document."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will remove the document type from %ld selected documents."
+                }
+              }
+            }
           }
         }
       }
@@ -2384,6 +2582,88 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Storage path"
+          }
+        }
+      }
+    },
+    "storagePathBulkEditConfirmationAssign" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird dem ausgewählten Dokument den Speicherpfad „%1$@“ zuweisen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird %2$ld ausgewählten Dokumenten den Speicherpfad „%1$@“ zuweisen."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will assign the storage path \"%1$@\" to the selected document."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will assign the storage path \"%1$@\" to %2$ld selected documents."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "storagePathBulkEditConfirmationRemove" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird bei dem ausgewählten Dokument den Speicherpfad entfernen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Diese Aktion wird bei %ld ausgewählten Dokumenten den Speicherpfad entfernen."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will remove the storage path from the selected document."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This operation will remove the storage path from %ld selected documents."
+                }
+              }
+            }
           }
         }
       }

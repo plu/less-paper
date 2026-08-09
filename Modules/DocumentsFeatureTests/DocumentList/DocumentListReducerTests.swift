@@ -474,4 +474,106 @@ struct DocumentListReducerTests {
             $0.documentSelection.selectedDocuments = []
         }
     }
+
+    @Test
+    func test_view_editCorrespondentButtonTapped() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1, 2]
+            )
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.editCorrespondentButtonTapped)) {
+            $0.destination = .bulkEditCorrespondent(DocumentBulkEditGenericValueReducer<Correspondent>.State(
+                documents: [1, 2],
+                server: $0.server,
+                values: $0.correspondents
+            ))
+        }
+    }
+
+    @Test
+    func test_view_editDocumentTypeButtonTapped() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1, 2]
+            )
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.editDocumentTypeButtonTapped)) {
+            $0.destination = .bulkEditDocumentType(DocumentBulkEditGenericValueReducer<DocumentType>.State(
+                documents: [1, 2],
+                server: $0.server,
+                values: $0.documentTypes
+            ))
+        }
+    }
+
+    @Test
+    func test_view_editStoragePathButtonTapped() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1, 2]
+            )
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.editStoragePathButtonTapped)) {
+            $0.destination = .bulkEditStoragePath(DocumentBulkEditGenericValueReducer<StoragePath>.State(
+                documents: [1, 2],
+                server: $0.server,
+                values: $0.storagePaths
+            ))
+        }
+    }
+
+    @Test
+    func test_destination_bulkEditCorrespondent_documentsUpdated() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            destination: .bulkEditCorrespondent(DocumentBulkEditGenericValueReducer<Correspondent>.State(
+                documents: [1, 2],
+                server: .testValue(),
+                values: []
+            )),
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1, 2]
+            )
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.getDocuments.execute = { _, _ in
+                .testValue(
+                    count: 77,
+                    results: [.testValue()]
+                )
+            }
+        }
+
+        await store.send(.destination(.presented(.bulkEditCorrespondent(.delegate(.documentsUpdated))))) {
+            $0.destination = nil
+        }
+        await store.receive(\.replaceDocuments, .testValue(
+            count: 77,
+            results: [.testValue()]
+        )) {
+            $0.documents = [.testValue()]
+            $0.documentSelection.allLoadedDocuments = [1]
+            $0.totalNumberOfDocuments = 77
+        }
+        await store.receive(\.binding, .set(\.isLoaded, true)) {
+            $0.isLoaded = true
+        }
+
+        #expect(store.state.documentSelection.isActive == true)
+        #expect(store.state.documentSelection.selectedDocuments == [1, 2])
+    }
 }

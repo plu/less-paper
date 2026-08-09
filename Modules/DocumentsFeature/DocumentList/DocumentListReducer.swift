@@ -20,6 +20,9 @@ public struct DocumentListReducer: Sendable {
 
         public enum View {
             case allDocumentsButtonTapped
+            case editCorrespondentButtonTapped
+            case editDocumentTypeButtonTapped
+            case editStoragePathButtonTapped
             case filterButtonTapped
             case importButtonTapped
             case onAppear
@@ -34,6 +37,9 @@ public struct DocumentListReducer: Sendable {
 
     @Reducer
     public enum Destination {
+        case bulkEditCorrespondent(DocumentBulkEditGenericValueReducer<Correspondent>)
+        case bulkEditDocumentType(DocumentBulkEditGenericValueReducer<DocumentType>)
+        case bulkEditStoragePath(DocumentBulkEditGenericValueReducer<StoragePath>)
         case documentFilter(DocumentFilterReducer)
     }
 
@@ -78,7 +84,19 @@ public struct DocumentListReducer: Sendable {
 
         @Shared
 
+        var correspondents: IdentifiedArrayOf<Correspondent>
+
+        @Shared
+
+        var documentTypes: IdentifiedArrayOf<DocumentType>
+
+        @Shared
+
         var savedViews: IdentifiedArrayOf<SavedView>
+
+        @Shared
+
+        var storagePaths: IdentifiedArrayOf<StoragePath>
 
         var totalNumberOfDocuments: Int
 
@@ -106,7 +124,10 @@ public struct DocumentListReducer: Sendable {
             self.path = path
             self.server = server
             self.totalNumberOfDocuments = totalNumberOfDocuments
+            self._correspondents = Shared(wrappedValue: [], .correspondents(server))
+            self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
             self._savedViews = Shared(wrappedValue: [], .savedViews(server))
+            self._storagePaths = Shared(wrappedValue: [], .storagePaths(server))
         }
     }
 
@@ -131,6 +152,16 @@ public struct DocumentListReducer: Sendable {
                 state.nextPage = output.next
                 state.totalNumberOfDocuments = output.count
                 return .none
+            case .destination(.presented(.bulkEditCorrespondent(.delegate(.documentsUpdated)))),
+                 .destination(.presented(.bulkEditDocumentType(.delegate(.documentsUpdated)))),
+                 .destination(.presented(.bulkEditStoragePath(.delegate(.documentsUpdated)))):
+                state.destination = nil
+                return .runGetDocuments(
+                    filterRules: state.filter.input.filterRules,
+                    server: state.server,
+                    sortDirection: state.filter.input.sort.direction,
+                    sortField: state.filter.input.sort.field
+                )
             case let .destination(.presented(.documentFilter(.delegate(delegateAction)))):
                 switch delegateAction {
                 case let .filterUpdated(filter):
@@ -185,6 +216,27 @@ public struct DocumentListReducer: Sendable {
                         sortDirection: state.filter.input.sort.direction,
                         sortField: state.filter.input.sort.field
                     )
+                case .editCorrespondentButtonTapped:
+                    state.destination = .bulkEditCorrespondent(DocumentBulkEditGenericValueReducer.State(
+                        documents: state.documentSelection.selectedDocuments,
+                        server: state.server,
+                        values: state.correspondents
+                    ))
+                    return .none
+                case .editDocumentTypeButtonTapped:
+                    state.destination = .bulkEditDocumentType(DocumentBulkEditGenericValueReducer.State(
+                        documents: state.documentSelection.selectedDocuments,
+                        server: state.server,
+                        values: state.documentTypes
+                    ))
+                    return .none
+                case .editStoragePathButtonTapped:
+                    state.destination = .bulkEditStoragePath(DocumentBulkEditGenericValueReducer.State(
+                        documents: state.documentSelection.selectedDocuments,
+                        server: state.server,
+                        values: state.storagePaths
+                    ))
+                    return .none
                 case .filterButtonTapped:
                     state.destination = .documentFilter(DocumentFilterReducer.State(
                         input: state.filter.input,

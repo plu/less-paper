@@ -1,3 +1,4 @@
+import ApiInterface
 import ComposableArchitecture
 import SwiftUI
 
@@ -27,6 +28,33 @@ private struct DocumentListBottomToolbar: ViewModifier {
                     }
                 }
             }
+            .sheet(
+                item: $store.scope(
+                    state: \.destination?.bulkEditCorrespondent,
+                    action: \.destination.bulkEditCorrespondent
+                )
+            ) { store in
+                DocumentBulkEditGenericValueView(store: store)
+                    .presentationDetents([.sheet])
+            }
+            .sheet(
+                item: $store.scope(
+                    state: \.destination?.bulkEditDocumentType,
+                    action: \.destination.bulkEditDocumentType
+                )
+            ) { store in
+                DocumentBulkEditGenericValueView(store: store)
+                    .presentationDetents([.sheet])
+            }
+            .sheet(
+                item: $store.scope(
+                    state: \.destination?.bulkEditStoragePath,
+                    action: \.destination.bulkEditStoragePath
+                )
+            ) { store in
+                DocumentBulkEditGenericValueView(store: store)
+                    .presentationDetents([.sheet])
+            }
     }
 
     init(
@@ -40,15 +68,21 @@ private struct DocumentListBottomToolbar: ViewModifier {
     @ViewBuilder
     private var selectActionsMenu: some View {
         HStack(spacing: .x5) {
-            Button {} label: {
+            Button {
+                send(.editCorrespondentButtonTapped)
+            } label: {
                 Label(.editCorrespondent, systemImage: "person")
             }
 
-            Button {} label: {
+            Button {
+                send(.editDocumentTypeButtonTapped)
+            } label: {
                 Label(.editDocumentType, systemImage: "document.badge.gearshape")
             }
 
-            Button {} label: {
+            Button {
+                send(.editStoragePathButtonTapped)
+            } label: {
                 Label(.editStoragePath, systemImage: "folder")
             }
 
@@ -56,6 +90,7 @@ private struct DocumentListBottomToolbar: ViewModifier {
                 Label(.editTags, systemImage: "tag")
             }
         }
+        .disabled(store.documentSelection.selectedDocuments.isEmpty)
         .font(.title3)
         .padding(.horizontal, .x4)
     }
@@ -65,6 +100,8 @@ private struct DocumentListBottomToolbar: ViewModifier {
         viewAction(action)
     }
 
-    private let store: StoreOf<DocumentListReducer>
+    @Bindable
+    private var store: StoreOf<DocumentListReducer>
+
     private let viewAction: (DocumentListReducer.Action.View) -> StoreTask
 }
