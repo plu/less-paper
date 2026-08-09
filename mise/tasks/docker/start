@@ -4,8 +4,10 @@ set -euo pipefail
 
 cd $MISE_PROJECT_ROOT/docker
 
-cp data/*.pdf consume
-CADDY_PORT=8010 PAPERLESS_PORT=8000 docker-compose -p paperless-dev up -d --wait
+cp data/*.pdf consume/dev
+PAPERLESS_INSTANCE=dev CADDY_PORT=8010 PAPERLESS_PORT=8000 docker-compose -p paperless-dev up -d --wait
 
-cp data/*.pdf consume
-CADDY_PORT=9010 PAPERLESS_PORT=9000 docker-compose -p paperless-ci up -d --wait
+cp data/*.pdf consume/ci
+PAPERLESS_INSTANCE=ci CADDY_PORT=9010 PAPERLESS_PORT=9000 docker-compose -p paperless-ci up -d --wait
+
+mise run docker:seed

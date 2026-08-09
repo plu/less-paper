@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Seed paperless-ngx dev data"
+set -euo pipefail
+
+python3 "$MISE_PROJECT_ROOT/docker/seed/seed.py" "$@"

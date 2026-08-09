@@ -1,0 +1,119 @@
+{
+  "correspondents": [
+    "Deutsche Telekom",
+    "Finanzamt München",
+    "IKEA",
+    "Internal Revenue Service",
+    "LEGO",
+    "N26",
+    "PUKY",
+    "Sonos",
+    "Stadtwerke München",
+    "tonies"
+  ],
+  "document_types": [
+    "Assembly Instructions",
+    "Bank Statement",
+    "Invoice",
+    "Manual",
+    "Tax Form",
+    "Tax Return"
+  ],
+  "tags": [
+    { "name": "Audio", "color": "#33a02c", "is_inbox_tag": false },
+    { "name": "Furniture", "color": "#b2df8a", "is_inbox_tag": false },
+    { "name": "Important", "color": "#cab2d6", "is_inbox_tag": false },
+    { "name": "Inbox", "color": "#a6cee3", "is_inbox_tag": true },
+    { "name": "Kids", "color": "#fb9a99", "is_inbox_tag": false },
+    { "name": "Locked", "color": "#ffff99", "is_inbox_tag": false },
+    { "name": "Manual", "color": "#1f78b4", "is_inbox_tag": false },
+    { "name": "Needs Review", "color": "#6a3d9a", "is_inbox_tag": false },
+    { "name": "Tax", "color": "#fdbf6f", "is_inbox_tag": false },
+    { "name": "Toys", "color": "#e31a1c", "is_inbox_tag": false },
+    { "name": "Warranty", "color": "#ff7f00", "is_inbox_tag": false }
+  ],
+  "storage_paths": [
+    { "name": "Archive", "path": "Archive/{{ created_year }}/{{ title }}" },
+    { "name": "Furniture", "path": "Home/Furniture/{{ correspondent }}/{{ title }}" },
+    { "name": "Manuals", "path": "Manuals/{{ correspondent }}/{{ title }}" },
+    { "name": "Taxes", "path": "Taxes/{{ created_year }}/{{ correspondent }}/{{ title }}" }
+  ],
+  "filler_titles": [
+    "Stromabrechnung 2024",
+    "Stromabrechnung 2025",
+    "Gasabrechnung 2025",
+    "Wasserabrechnung 2026",
+    "Telekom Rechnung 2026-01",
+    "Telekom Rechnung 2026-02",
+    "Telekom Rechnung 2026-03",
+    "Telekom Rechnung 2026-04",
+    "Kontoauszug Q1 2026",
+    "Kontoauszug Q2 2026",
+    "Unsortiertes Dokument #1",
+    "Unsortiertes Dokument #2"
+  ],
+  "documents": [
+    { "title": "Sonos One", "correspondent": "Sonos", "document_type": "Manual", "tags": ["Manual", "Audio"], "storage_path": "Manuals", "created": "2019-03-11", "archive_serial_number": 1 },
+    { "title": "Sonos Sub", "correspondent": "Sonos", "document_type": "Manual", "tags": ["Manual", "Audio"], "storage_path": "Manuals", "created": "2020-09-27", "archive_serial_number": 2 },
+    { "title": "Sonos Era 300", "correspondent": "Sonos", "document_type": "Manual", "tags": ["Manual", "Audio", "Warranty"], "storage_path": "Manuals", "created": "2023-06-18", "archive_serial_number": 3 },
+    { "title": "Ikea Danderyd", "correspondent": "IKEA", "document_type": "Assembly Instructions", "tags": ["Furniture"], "storage_path": "Furniture", "created": "2021-08-07", "archive_serial_number": null },
+    { "title": "Ikea Vimle #1", "correspondent": "IKEA", "document_type": "Assembly Instructions", "tags": ["Furniture", "Manual", "Warranty", "Important", "Inbox"], "storage_path": "Furniture", "created": "2022-02-19", "archive_serial_number": 4 },
+    { "title": "Ikea Vimle #2", "correspondent": "IKEA", "document_type": "Assembly Instructions", "tags": ["Furniture"], "storage_path": "Furniture", "created": "2022-02-19", "archive_serial_number": null },
+    { "title": "Puky", "correspondent": "PUKY", "document_type": "Manual", "tags": ["Manual", "Kids"], "storage_path": "Manuals", "created": "2022-04-23", "archive_serial_number": 5 },
+    { "title": "Puky-Locked", "correspondent": "PUKY", "document_type": "Manual", "tags": ["Locked", "Needs Review"], "storage_path": "Manuals", "created": "2024-01-15", "archive_serial_number": null },
+    { "title": "TonieBox", "correspondent": "tonies", "document_type": "Manual", "tags": ["Manual", "Kids", "Toys"], "storage_path": "Manuals", "created": "2023-12-24", "archive_serial_number": null },
+    { "title": "Lego Duplo", "correspondent": "LEGO", "document_type": "Assembly Instructions", "tags": ["Kids", "Toys"], "storage_path": null, "created": "2023-12-24", "archive_serial_number": null },
+    { "title": "Lego Friends", "correspondent": "LEGO", "document_type": "Assembly Instructions", "tags": ["Kids", "Toys"], "storage_path": null, "created": "2024-12-24", "archive_serial_number": null },
+    { "title": "ESt1A", "correspondent": "Finanzamt München", "document_type": "Tax Return", "tags": ["Tax", "Important"], "storage_path": "Taxes", "created": "2023-05-14", "archive_serial_number": 10 },
+    { "title": "W-8BEN", "correspondent": "Internal Revenue Service", "document_type": "Tax Form", "tags": ["Tax"], "storage_path": "Taxes", "created": "2021-11-02", "archive_serial_number": 11 },
+    { "title": "Stromabrechnung 2024", "correspondent": "Stadtwerke München", "document_type": "Invoice", "tags": ["Inbox"], "storage_path": "Archive", "created": "2024-03-05", "archive_serial_number": null },
+    { "title": "Stromabrechnung 2025", "correspondent": "Stadtwerke München", "document_type": "Invoice", "tags": ["Inbox", "Needs Review"], "storage_path": "Archive", "created": "2025-03-04", "archive_serial_number": null },
+    { "title": "Gasabrechnung 2025", "correspondent": "Stadtwerke München", "document_type": "Invoice", "tags": [], "storage_path": "Archive", "created": "2025-04-10", "archive_serial_number": null },
+    { "title": "Wasserabrechnung 2026", "correspondent": "Stadtwerke München", "document_type": "Invoice", "tags": ["Important"], "storage_path": "Archive", "created": "2026-02-18", "archive_serial_number": null },
+    { "title": "Telekom Rechnung 2026-01", "correspondent": "Deutsche Telekom", "document_type": "Invoice", "tags": ["Inbox"], "storage_path": "Archive", "created": "2026-01-08", "archive_serial_number": null },
+    { "title": "Telekom Rechnung 2026-02", "correspondent": "Deutsche Telekom", "document_type": "Invoice", "tags": [], "storage_path": "Archive", "created": "2026-02-08", "archive_serial_number": null },
+    { "title": "Telekom Rechnung 2026-03", "correspondent": "Deutsche Telekom", "document_type": "Invoice", "tags": [], "storage_path": "Archive", "created": "2026-03-09", "archive_serial_number": null },
+    { "title": "Telekom Rechnung 2026-04", "correspondent": "Deutsche Telekom", "document_type": "Invoice", "tags": ["Needs Review"], "storage_path": "Archive", "created": "2026-04-08", "archive_serial_number": null },
+    { "title": "Kontoauszug Q1 2026", "correspondent": "N26", "document_type": "Bank Statement", "tags": ["Important"], "storage_path": "Archive", "created": "2026-03-31", "archive_serial_number": 20 },
+    { "title": "Kontoauszug Q2 2026", "correspondent": "N26", "document_type": "Bank Statement", "tags": [], "storage_path": "Archive", "created": "2026-06-30", "archive_serial_number": 21 },
+    { "title": "Unsortiertes Dokument #1", "correspondent": null, "document_type": null, "tags": [], "storage_path": null, "created": "2025-07-21", "archive_serial_number": null },
+    { "title": "Unsortiertes Dokument #2", "correspondent": null, "document_type": null, "tags": [], "storage_path": null, "created": "2026-05-02", "archive_serial_number": null }
+  ],
+  "saved_views": [
+    {
+      "name": "Inbox",
+      "show_in_sidebar": true,
+      "show_on_dashboard": true,
+      "sort_field": "created",
+      "sort_reverse": true,
+      "filter_rules": [{ "rule_type": 22, "tag": "Inbox" }]
+    },
+    {
+      "name": "Manuals",
+      "show_in_sidebar": true,
+      "show_on_dashboard": false,
+      "sort_field": "title",
+      "sort_reverse": false,
+      "filter_rules": [{ "rule_type": 28, "document_type": "Manual" }]
+    },
+    {
+      "name": "Taxes",
+      "show_in_sidebar": false,
+      "show_on_dashboard": true,
+      "sort_field": "created",
+      "sort_reverse": true,
+      "filter_rules": [{ "rule_type": 22, "tag": "Tax" }]
+    },
+    {
+      "name": "Invoices 2026",
+      "show_in_sidebar": false,
+      "show_on_dashboard": false,
+      "sort_field": "created",
+      "sort_reverse": false,
+      "filter_rules": [
+        { "rule_type": 28, "document_type": "Invoice" },
+        { "rule_type": 9, "value": "2026-01-01" }
+      ]
+    }
+  ]
+}

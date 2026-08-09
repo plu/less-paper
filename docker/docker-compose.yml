@@ -21,7 +21,7 @@ services:
     ports:
       - "${PAPERLESS_PORT}:8000"
     volumes:
-      - ./consume:/usr/src/paperless/consume
+      - ./consume/${PAPERLESS_INSTANCE}:/usr/src/paperless/consume
       - ./healthcheck/paperless:/healthcheck
   redis:
     image: docker.io/library/redis:7

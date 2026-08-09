@@ -205,8 +205,10 @@ struct DocumentsRepositoryTests {
         .tags(.integrationTests)
     )
     func test_createDocument() async throws {
+        let title = "Create Document Test \(UUID())"
         let input = CreateDocumentInput.testValue(
             createdDate: Date(),
+            title: title,
             url: URL.projectRoot
                 .appendingPathComponent("docker")
                 .appendingPathComponent("data")
@@ -215,6 +217,13 @@ struct DocumentsRepositoryTests {
 
         try await repository.createDocument(
             input: input,
+            server: .testValue()
+        )
+
+        let id = try await waitForDocument(title: title)
+
+        try await repository.bulkEditDocuments(
+            input: .init(documents: [id], method: .delete),
             server: .testValue()
         )
     }
@@ -545,6 +554,10 @@ struct DocumentsRepositoryTests {
             server: .testValue()
         )
 
+        return try await waitForDocument(title: title)
+    }
+
+    private func waitForDocument(title: String) async throws -> Document.Id {
         for _ in 0 ..< 30 {
             let output = try await repository.getAllDocumentIds(
                 input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),

@@ -219,7 +219,7 @@ private extension Request where Response == GetDocumentsOutput {
             query: [
                 "ordering": [input.sortDirection.rawValue, input.sortField.rawValue].joined(),
                 "page": "1",
-                "page_size": "100",
+                "page_size": "\(PageSize.configured)",
                 "truncate_content": "true",
             ] + input.filterRules.queryDictionary.map { ($0, "\($1)") }
         )

@@ -24,7 +24,8 @@ extension Module {
                 "NSAppTransportSecurity": [
                     "NSAllowsArbitraryLoads": true,
                 ],
-                "PAPERLESS_TEST_URL": .string(Environment.paperlessTestUrl.getString(default: "http://localhost:8000")),
+                "PAPERLESS_PAGE_SIZE": .string(Environment.paperlessPageSize.getString(default: "100")),
+                "PAPERLESS_TEST_URL": .string(Environment.paperlessTestUrl.getString(default: "http://localhost:9000")),
                 "UIApplicationSceneManifest": [
                     "UIApplicationSupportsMultipleScenes": false,
                     "UISceneConfigurations": [:],
@@ -84,7 +85,8 @@ extension Module {
                     "en",
                     "de",
                 ],
-                "PAPERLESS_TEST_URL": .string(Environment.paperlessTestUrl.getString(default: "http://localhost:8000")),
+                "PAPERLESS_PAGE_SIZE": .string(Environment.paperlessPageSize.getString(default: "100")),
+                "PAPERLESS_TEST_URL": .string(Environment.paperlessTestUrl.getString(default: "http://localhost:9000")),
                 "UILaunchScreen": [:],
                 "UIPrefersShowingLanguageSettings": true,
                 "UISupportedInterfaceOrientations": [
@@ -99,7 +101,8 @@ extension Module {
                     "en",
                     "de",
                 ],
-                "PAPERLESS_TEST_URL": .string(Environment.paperlessTestUrl.getString(default: "http://localhost:8000")),
+                "PAPERLESS_PAGE_SIZE": .string(Environment.paperlessPageSize.getString(default: "100")),
+                "PAPERLESS_TEST_URL": .string(Environment.paperlessTestUrl.getString(default: "http://localhost:9000")),
             ])
         }
     }
