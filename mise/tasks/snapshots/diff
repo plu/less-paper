@@ -49,7 +49,7 @@ for FILE_PATH in $(git diff --name-only $usage_parent -- $usage_path); do
     echo "warning: Could not retrieve the previous version of $FILE_PATH"
   }
   cp "$FILE_PATH" "$TEMP_DIR/$FILE_PATH_THIS"
-  if ! pnpm odiff -t $usage_threshold --diff-mask "$TEMP_DIR/$FILE_PATH_PREV" "$TEMP_DIR/$FILE_PATH_THIS" "$TEMP_DIR/$FILE_PATH_DIFF"; then
+  if ! aube exec odiff -t $usage_threshold --diff-mask "$TEMP_DIR/$FILE_PATH_PREV" "$TEMP_DIR/$FILE_PATH_THIS" "$TEMP_DIR/$FILE_PATH_DIFF"; then
     cat >>"$FILE_PATH_HTML" <<EOF
     <h2>$FILE_PATH</h2>
     <table>
