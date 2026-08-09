@@ -20,7 +20,10 @@ struct ServerRowView: View {
                         .font(.caption)
                         .foregroundColor(.m3Outline)
                 }
-                if selectedServer == store.server {
+                if store.isSelecting {
+                    Spacer()
+                    ProgressView()
+                } else if selectedServer == store.server {
                     Spacer()
                     Image(systemName: "checkmark.circle")
                         .font(.title)

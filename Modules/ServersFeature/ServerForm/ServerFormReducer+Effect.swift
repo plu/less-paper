@@ -9,9 +9,13 @@ extension Effect where Action == ServerFormReducer.Action {
         @Dependency(\.storeToken.execute)
         var storeToken
 
+        @Dependency(\.updateCache.execute)
+        var updateCache
+
         return .run { send in
             await send(.binding(.set(\.isSaving, true)))
             try await storeToken(input.code, input.password, input.server, input.username)
+            try await updateCache(input.server)
             await send(.delegate(.serverSaved(input.server)), animation: .default)
             await send(.binding(.set(\.isSaving, false)))
         } catch: { error, send in

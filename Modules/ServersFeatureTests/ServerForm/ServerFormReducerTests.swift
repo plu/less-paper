@@ -27,10 +27,18 @@ struct ServerFormReducerTests {
 
     @Test
     func test_view_saveButtonTapped_success() async throws {
+        let events = LockIsolated<[String]>([])
         let store = TestStore(initialState: ServerFormReducer.State(
             input: .testValue()
         )) {
             ServerFormReducer()
+        } withDependencies: {
+            $0.storeToken.execute = { _, _, _, _ in
+                events.withValue { $0.append("storeToken") }
+            }
+            $0.updateCache.execute = { _ in
+                events.withValue { $0.append("updateCache") }
+            }
         }
 
         await store.send(.view(.saveButtonTapped))
@@ -41,6 +49,38 @@ struct ServerFormReducerTests {
         await store.receive(\.binding, .set(\.isSaving, false)) {
             $0.isSaving = false
         }
+
+        // Saving the first server selects it straight away, so its caches have
+        // to be filled before it is announced as saved — otherwise the inbox
+        // filter is built with no tags and shows every document.
+        #expect(events.value == ["storeToken", "updateCache"])
+    }
+
+    @Test
+    func test_view_saveButtonTapped_cacheError() async throws {
+        let toasts = LockIsolated<[Toast]>([])
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: .testValue()
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.storeToken.execute = { _, _, _, _ in }
+            $0.updateCache.execute = { _ in throw ApiError.testValue() }
+            $0.toastPresenter.present = { value in
+                toasts.withValue { $0.append(value) }
+            }
+        }
+
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.binding, .set(\.isSaving, true)) {
+            $0.isSaving = true
+        }
+        await store.receive(\.error)
+        await store.receive(\.binding, .set(\.isSaving, false)) {
+            $0.isSaving = false
+        }
+
+        #expect(toasts.value == [.error("Something went wrong")])
     }
 
     @Test
@@ -114,6 +154,8 @@ struct ServerFormReducerTests {
 
         let store = TestStore(initialState: state) {
             ServerFormReducer()
+        } withDependencies: {
+            $0.updateCache.execute = { _ in }
         }
 
         let mfaCode = "123456"

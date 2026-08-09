@@ -10,6 +10,7 @@ public struct ServerRowReducer: Sendable {
     public enum Action: ViewAction {
         case delegate(Delegate)
         case destination(PresentationAction<Destination.Action>)
+        case serverSelected
         case view(View)
 
         public enum Delegate {
@@ -35,11 +36,12 @@ public struct ServerRowReducer: Sendable {
 
     @ObservableState
     public struct State: Equatable, Identifiable {
-
         public var id: String { server.id }
 
         @Presents
         var destination: Destination.State?
+
+        var isSelecting = false
 
         let server: Server
     }
@@ -60,8 +62,15 @@ public struct ServerRowReducer: Sendable {
                     state.destination = .confirmation(.confirmDelete(name: state.server.alias))
                     return .none
                 case .serverTapped:
+                    guard !state.isSelecting else {
+                        return .none
+                    }
+                    state.isSelecting = true
                     return .runSelectServer(server: state.server)
                 }
+            case .serverSelected:
+                state.isSelecting = false
+                return .none
             case .delegate, .destination:
                 return .none
             }
