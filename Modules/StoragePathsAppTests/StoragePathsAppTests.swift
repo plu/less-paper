@@ -3,6 +3,7 @@
 import ApiInterface
 import Dependencies
 import StoragePathsFeature
+import UITestSupport
 import XCTest
 
 @MainActor
@@ -23,17 +24,16 @@ final class StoragePathsAppTests: XCTestCase {
         app.typeText("/home/paperless/new-storage-path")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["New Storage Path"].exists)
+        XCTAssertTrue(app.staticTexts["New Storage Path"].waitForExistence(timeout: timeout))
     }
 
     func testDelete() async throws {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete storage path"].firstMatch.tap()
+        app.tapSwipeAction("Delete storage path", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Storage Path\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete storage path"].firstMatch.tap()
+        app.sheets.buttons["Delete storage path"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -47,10 +47,9 @@ final class StoragePathsAppTests: XCTestCase {
             try await deleteAllStoragePaths()
         }
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete storage path"].firstMatch.tap()
+        app.tapSwipeAction("Delete storage path", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Storage Path\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete storage path"].firstMatch.tap()
+        app.sheets.buttons["Delete storage path"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No StoragePath matches the given query."].waitForExistence(timeout: timeout))
     }
 
@@ -67,13 +66,12 @@ final class StoragePathsAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Edit storage path"].tap()
+        app.tapSwipeAction("Edit storage path", in: app.cells.firstMatch, timeout: timeout)
         app.textFields["Name"].tap()
         app.typeText(" Updated")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["Test Storage Path Updated"].exists)
+        XCTAssertTrue(app.staticTexts["Test Storage Path Updated"].waitForExistence(timeout: timeout))
     }
 
     override func setUp() async throws {

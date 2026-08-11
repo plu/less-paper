@@ -76,6 +76,7 @@ public enum Module: String, CaseIterable {
     case tagsFeature = "TagsFeature"
     case tagsFeatureTests = "TagsFeatureTests"
     case testSupport = "TestSupport"
+    case uiTestSupport = "UITestSupport"
 }
 
 extension Module {
@@ -179,7 +180,8 @@ extension Module {
              .tagsApp,
              .tagsAppTests,
              .tagsFeatureTests,
-             .testSupport:
+             .testSupport,
+             .uiTestSupport:
             false
         }
     }
@@ -251,7 +253,8 @@ extension Module {
              .shareFeature,
              .storagePathsFeature,
              .tagsFeature,
-             .testSupport:
+             .testSupport,
+             .uiTestSupport:
             Environment.staticFrameworks.getBoolean(default: false) ? .staticFramework : .framework
         case .apiImplementationTests,
              .apiInterfaceTests,

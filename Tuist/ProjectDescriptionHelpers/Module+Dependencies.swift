@@ -154,6 +154,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.correspondentsApp),
                 .target(.correspondentsFeature),
+                .target(.uiTestSupport),
             ]
         case .correspondentsFeature:
             [
@@ -190,6 +191,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.documentTypesApp),
                 .target(.documentTypesFeature),
+                .target(.uiTestSupport),
             ]
         case .documentTypesFeature:
             [
@@ -323,6 +325,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.savedViewsApp),
                 .target(.savedViewsFeature),
+                .target(.uiTestSupport),
             ]
         case .savedViewsFeature:
             [
@@ -359,6 +362,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.serversApp),
                 .target(.serversFeature),
+                .target(.uiTestSupport),
             ]
         case .serversFeature:
             [
@@ -491,6 +495,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.storagePathsApp),
                 .target(.storagePathsFeature),
+                .target(.uiTestSupport),
             ]
         case .storagePathsFeature:
             [
@@ -527,6 +532,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.tagsApp),
                 .target(.tagsFeature),
+                .target(.uiTestSupport),
             ]
         case .tagsFeature:
             [
@@ -553,6 +559,8 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
             ]
+        case .uiTestSupport:
+            []
         }
     }
 }

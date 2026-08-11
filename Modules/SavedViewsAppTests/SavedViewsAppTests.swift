@@ -3,6 +3,7 @@
 import ApiInterface
 import Dependencies
 import SavedViewsFeature
+import UITestSupport
 import XCTest
 
 @MainActor
@@ -23,7 +24,7 @@ final class SavedViewsAppTests: XCTestCase {
         app.switches["Show on dashboard"].tap()
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["New Saved View"].exists)
+        XCTAssertTrue(app.staticTexts["New Saved View"].waitForExistence(timeout: timeout))
 
         let cell = app.cells.containing(.staticText, identifier: "New Saved View").firstMatch
         XCTAssertTrue(cell.images["Show in sidebar"].exists)
@@ -34,10 +35,9 @@ final class SavedViewsAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete saved view"].firstMatch.tap()
+        app.tapSwipeAction("Delete saved view", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Saved View\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete saved view"].firstMatch.tap()
+        app.sheets.buttons["Delete saved view"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -51,10 +51,9 @@ final class SavedViewsAppTests: XCTestCase {
             try await deleteAllSavedViews()
         }
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete saved view"].firstMatch.tap()
+        app.tapSwipeAction("Delete saved view", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Saved View\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete saved view"].firstMatch.tap()
+        app.sheets.buttons["Delete saved view"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No SavedView matches the given query."].waitForExistence(timeout: timeout))
     }
 
@@ -72,13 +71,12 @@ final class SavedViewsAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Edit saved view"].tap()
+        app.tapSwipeAction("Edit saved view", in: app.cells.firstMatch, timeout: timeout)
         app.textFields["Name"].tap()
         app.typeText(" Updated")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["Test Saved View Updated"].exists)
+        XCTAssertTrue(app.staticTexts["Test Saved View Updated"].waitForExistence(timeout: timeout))
 
         let cell = app.cells.containing(.staticText, identifier: "Test Saved View Updated").firstMatch
         XCTAssertTrue(cell.images["Show in sidebar"].exists)

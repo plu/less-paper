@@ -39,7 +39,7 @@ extension Module {
             releaseSettings.set(Environment.codeSignIdentity, forKey: "CODE_SIGN_IDENTITY")
         }
 
-        if case .testSupport = self {
+        if self == .testSupport || self == .uiTestSupport {
             debugSettings["ENABLE_TESTING_SEARCH_PATHS"] = "YES"
             releaseSettings["ENABLE_TESTING_SEARCH_PATHS"] = "YES"
         }

@@ -3,6 +3,7 @@
 import ApiInterface
 import Dependencies
 import DocumentTypesFeature
+import UITestSupport
 import XCTest
 
 @MainActor
@@ -21,17 +22,16 @@ final class DocumentTypesAppTests: XCTestCase {
         app.typeText("New Document Type")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["New Document Type"].exists)
+        XCTAssertTrue(app.staticTexts["New Document Type"].waitForExistence(timeout: timeout))
     }
 
     func testDelete() async throws {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete document type"].firstMatch.tap()
+        app.tapSwipeAction("Delete document type", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Document Type\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete document type"].firstMatch.tap()
+        app.sheets.buttons["Delete document type"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -45,10 +45,9 @@ final class DocumentTypesAppTests: XCTestCase {
             try await deleteAllDocumentTypes()
         }
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete document type"].firstMatch.tap()
+        app.tapSwipeAction("Delete document type", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Document Type\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete document type"].firstMatch.tap()
+        app.sheets.buttons["Delete document type"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No DocumentType matches the given query."].waitForExistence(timeout: timeout))
     }
 
@@ -65,13 +64,12 @@ final class DocumentTypesAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Edit document type"].tap()
+        app.tapSwipeAction("Edit document type", in: app.cells.firstMatch, timeout: timeout)
         app.textFields["Name"].tap()
         app.typeText(" Updated")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["Test Document Type Updated"].exists)
+        XCTAssertTrue(app.staticTexts["Test Document Type Updated"].waitForExistence(timeout: timeout))
     }
 
     override func setUp() async throws {

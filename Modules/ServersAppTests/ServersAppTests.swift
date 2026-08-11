@@ -2,6 +2,7 @@
 
 import ApiInterface
 import Dependencies
+import UITestSupport
 import XCTest
 
 @MainActor
@@ -26,24 +27,22 @@ final class ServersAppTests: XCTestCase {
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
 
-        XCTAssertTrue(app.staticTexts["CI"].exists)
-        XCTAssertTrue(app.staticTexts["admin @ \(url.absoluteString)"].exists)
+        XCTAssertTrue(app.staticTexts["CI"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.staticTexts["admin @ \(url.absoluteString)"].waitForExistence(timeout: timeout))
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Edit server"].firstMatch.tap()
+        app.tapSwipeAction("Edit server", in: app.cells.firstMatch, timeout: timeout)
         app.textFields["Alias"].tap()
         app.typeText(" Updated")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
 
-        XCTAssertTrue(app.staticTexts["CI Updated"].exists)
+        XCTAssertTrue(app.staticTexts["CI Updated"].waitForExistence(timeout: timeout))
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete server"].firstMatch.tap()
+        app.tapSwipeAction("Delete server", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"CI Updated\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete server"].firstMatch.tap()
+        app.sheets.buttons["Delete server"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["No servers found"].exists)
+        XCTAssertTrue(app.staticTexts["No servers found"].waitForExistence(timeout: timeout))
     }
 
     override func setUp() async throws {

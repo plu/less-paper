@@ -138,7 +138,8 @@ public extension Module {
              .storagePathsFeatureTests,
              .tagsAppTests,
              .tagsFeatureTests,
-             .testSupport:
+             .testSupport,
+             .uiTestSupport:
             []
         }
     }

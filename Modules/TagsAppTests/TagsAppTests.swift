@@ -3,6 +3,7 @@
 import ApiInterface
 import Dependencies
 import TagsFeature
+import UITestSupport
 import XCTest
 
 @MainActor
@@ -21,17 +22,16 @@ final class TagsAppTests: XCTestCase {
         app.typeText("New tag")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["New tag"].exists)
+        XCTAssertTrue(app.staticTexts["New tag"].waitForExistence(timeout: timeout))
     }
 
     func testDelete() async throws {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete tag"].firstMatch.tap()
+        app.tapSwipeAction("Delete tag", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Inbox\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete tag"].firstMatch.tap()
+        app.sheets.buttons["Delete tag"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -45,10 +45,9 @@ final class TagsAppTests: XCTestCase {
             try await deleteAllTags()
         }
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete tag"].firstMatch.tap()
+        app.tapSwipeAction("Delete tag", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Inbox\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete tag"].firstMatch.tap()
+        app.sheets.buttons["Delete tag"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No Tag matches the given query."].waitForExistence(timeout: timeout))
     }
 
@@ -66,13 +65,12 @@ final class TagsAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Edit tag"].tap()
+        app.tapSwipeAction("Edit tag", in: app.cells.firstMatch, timeout: timeout)
         app.textFields["Name"].tap()
         app.typeText(" Updated")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["Inbox Updated"].exists)
+        XCTAssertTrue(app.staticTexts["Inbox Updated"].waitForExistence(timeout: timeout))
     }
 
     override func setUp() async throws {

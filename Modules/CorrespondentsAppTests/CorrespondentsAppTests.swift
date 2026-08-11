@@ -3,6 +3,7 @@
 import ApiInterface
 import CorrespondentsFeature
 import Dependencies
+import UITestSupport
 import XCTest
 
 @MainActor
@@ -21,17 +22,16 @@ final class CorrespondentsAppTests: XCTestCase {
         app.typeText("New Correspondent")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["New Correspondent"].exists)
+        XCTAssertTrue(app.staticTexts["New Correspondent"].waitForExistence(timeout: timeout))
     }
 
     func testDelete() async throws {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete correspondent"].firstMatch.tap()
+        app.tapSwipeAction("Delete correspondent", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Correspondent\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete correspondent"].firstMatch.tap()
+        app.sheets.buttons["Delete correspondent"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -45,10 +45,9 @@ final class CorrespondentsAppTests: XCTestCase {
             try await deleteAllCorrespondents()
         }
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Delete correspondent"].firstMatch.tap()
+        app.tapSwipeAction("Delete correspondent", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Correspondent\"?"].waitForExistence(timeout: timeout))
-        app.buttons["Delete correspondent"].firstMatch.tap()
+        app.sheets.buttons["Delete correspondent"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No Correspondent matches the given query."].waitForExistence(timeout: timeout))
     }
 
@@ -65,13 +64,12 @@ final class CorrespondentsAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.cells.firstMatch.swipeLeft()
-        app.buttons["Edit correspondent"].tap()
+        app.tapSwipeAction("Edit correspondent", in: app.cells.firstMatch, timeout: timeout)
         app.textFields["Name"].tap()
         app.typeText(" Updated")
         app.buttons["Save"].tap()
         app.buttons["Save"].waitForNonExistence(timeout: timeout)
-        XCTAssertTrue(app.staticTexts["Test Correspondent Updated"].exists)
+        XCTAssertTrue(app.staticTexts["Test Correspondent Updated"].waitForExistence(timeout: timeout))
     }
 
     override func setUp() async throws {

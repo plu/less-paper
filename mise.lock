@@ -404,3 +404,7 @@ url = "https://nodejs.org/dist/v26.7.0/node-v26.7.0-win-x64.zip"
 [[tools."spm:mono0926/LicensePlist"]]
 version = "3.28.0"
 backend = "spm:mono0926/LicensePlist"
+
+[[tools.swiftlint]]
+version = "0.65.0"
+backend = "asdf:swiftlint"
