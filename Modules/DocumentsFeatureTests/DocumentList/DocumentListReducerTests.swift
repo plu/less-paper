@@ -576,4 +576,66 @@ struct DocumentListReducerTests {
         #expect(store.state.documentSelection.isActive == true)
         #expect(store.state.documentSelection.selectedDocuments == [1, 2])
     }
+
+    @Test
+    func test_view_editTagsButtonTapped() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1, 2]
+            )
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.editTagsButtonTapped)) {
+            $0.destination = .bulkEditTags(DocumentBulkEditTagsReducer.State(
+                documents: [1, 2],
+                server: $0.server,
+                values: $0.tags
+            ))
+        }
+    }
+
+    @Test
+    func test_destination_bulkEditTags_documentsUpdated() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            destination: .bulkEditTags(DocumentBulkEditTagsReducer.State(
+                documents: [1, 2],
+                server: .testValue(),
+                values: []
+            )),
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1, 2]
+            )
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.getDocuments.execute = { _, _ in
+                .testValue(
+                    count: 77,
+                    results: [.testValue()]
+                )
+            }
+        }
+
+        await store.send(.destination(.presented(.bulkEditTags(.delegate(.documentsUpdated))))) {
+            $0.destination = nil
+        }
+        await store.receive(\.replaceDocuments, .testValue(
+            count: 77,
+            results: [.testValue()]
+        )) {
+            $0.documents = [.testValue()]
+            $0.documentSelection.allLoadedDocuments = [1]
+            $0.totalNumberOfDocuments = 77
+        }
+        await store.receive(\.binding, .set(\.isLoaded, true)) {
+            $0.isLoaded = true
+        }
+
+        #expect(store.state.documentSelection.isActive == true)
+        #expect(store.state.documentSelection.selectedDocuments == [1, 2])
+    }
 }

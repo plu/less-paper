@@ -3,28 +3,51 @@ import Components
 import ComposableArchitecture
 import SwiftUI
 
-@ViewAction(for: DocumentFilterTagListReducer.self)
-struct DocumentFilterTagListView: View {
+@ViewAction(for: DocumentBulkEditTagsReducer.self)
+struct DocumentBulkEditTagsView: View {
     var body: some View {
         Sheet(isScrollingEnabled: false, padding: .x0) {
             SheetHeader(
-                title: .tag,
+                title: .editTags,
                 left: leftHeader
             )
         } content: {
-            VStack(spacing: .x4) {
-                sectionPicker()
-                sectionView()
-            }
+            list()
+        } bottom: {
+            buttons()
         }
+        .task { await send(.onAppear).finish() }
     }
 
     @Bindable
-    var store: StoreOf<DocumentFilterTagListReducer>
+    var store: StoreOf<DocumentBulkEditTagsReducer>
+
+    @ViewBuilder
+    private func buttons() -> some View {
+        AdaptiveStack {
+            Button {
+                send(.resetButtonTapped)
+            } label: {
+                Text(.reset)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.secondary())
+            .disabled(!store.isEdited)
+
+            Button {
+                send(.applyButtonTapped)
+            } label: {
+                Text(.apply)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.primary(isLoading: $store.isSaving))
+            .disabled(!store.isEdited)
+        }
+    }
 
     @ViewBuilder
     private func emptyListView() -> some View {
-        if store.filteredValues.isEmpty {
+        if store.filteredValues.isEmpty, !store.isLoading {
             ContentUnavailableView {
                 EmptyListView(systemImage: "tray")
             }
@@ -49,7 +72,7 @@ struct DocumentFilterTagListView: View {
                     send(.valueTapped(value))
                 } label: {
                     HStack(spacing: .x4) {
-                        Image(systemName: systemImage(value))
+                        Image(systemName: store.state.systemImage(for: value))
                             .font(.title2)
                             .fontWeight(.medium)
                             .foregroundStyle(Color.m3Outline)
@@ -59,6 +82,10 @@ struct DocumentFilterTagListView: View {
                                 font: .body,
                                 foregroundColor: Color(hex: value.textColor)
                             )
+                        Spacer()
+                        Text(String(store.documentCounts[value.id] ?? 0))
+                            .font(.caption2)
+                            .foregroundStyle(Color.m3OnSurface)
                     }
                 }
                 .foregroundStyle(Color.m3OnSurface)
@@ -72,6 +99,7 @@ struct DocumentFilterTagListView: View {
             .listStyle(.plain)
             .navigationBarHidden(true)
             .overlay(emptyListView())
+            .overlay(loadingView())
             .presentationDetents([.sheet])
             .scrollContentBackground(.hidden)
             .searchable(text: $store.searchText)
@@ -79,46 +107,10 @@ struct DocumentFilterTagListView: View {
     }
 
     @ViewBuilder
-    private func sectionPicker() -> some View {
-        Picker("", selection: $store.rule) {
-            ForEach(DocumentFilterTagRule.allCases, id: \.self) {
-                Text($0.localized)
-            }
-        }
-        .labelsHidden()
-        .padding(.horizontal, .x4)
-        .padding(.top, .x4)
-        .pickerStyle(.segmented)
-    }
-
-    @ViewBuilder
-    private func sectionView() -> some View {
-        switch store.rule {
-        case .all, .any:
-            list()
-        case .notAssigned:
-            Spacer()
-        }
-    }
-
-    private func systemImage(_ value: Tag) -> String {
-        switch store.rule {
-        case .all:
-            if store.selection.all.include.contains(value) {
-                "checkmark.circle.fill"
-            } else if store.selection.all.exclude.contains(value) {
-                "xmark.circle.fill"
-            } else {
-                "circle"
-            }
-        case .any:
-            if store.selection.any.contains(value) {
-                "checkmark.circle.fill"
-            } else {
-                "circle"
-            }
-        case .notAssigned:
-            preconditionFailure()
+    private func loadingView() -> some View {
+        if store.isLoading {
+            ProgressView()
+                .controlSize(.large)
         }
     }
 }

@@ -23,6 +23,7 @@ public struct DocumentListReducer: Sendable {
             case editCorrespondentButtonTapped
             case editDocumentTypeButtonTapped
             case editStoragePathButtonTapped
+            case editTagsButtonTapped
             case filterButtonTapped
             case importButtonTapped
             case onAppear
@@ -40,6 +41,7 @@ public struct DocumentListReducer: Sendable {
         case bulkEditCorrespondent(DocumentBulkEditGenericValueReducer<Correspondent>)
         case bulkEditDocumentType(DocumentBulkEditGenericValueReducer<DocumentType>)
         case bulkEditStoragePath(DocumentBulkEditGenericValueReducer<StoragePath>)
+        case bulkEditTags(DocumentBulkEditTagsReducer)
         case documentFilter(DocumentFilterReducer)
     }
 
@@ -98,6 +100,10 @@ public struct DocumentListReducer: Sendable {
 
         var storagePaths: IdentifiedArrayOf<StoragePath>
 
+        @Shared
+
+        var tags: IdentifiedArrayOf<Tag>
+
         var totalNumberOfDocuments: Int
 
         public init(
@@ -128,6 +134,7 @@ public struct DocumentListReducer: Sendable {
             self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
             self._savedViews = Shared(wrappedValue: [], .savedViews(server))
             self._storagePaths = Shared(wrappedValue: [], .storagePaths(server))
+            self._tags = Shared(wrappedValue: [], .tags(server))
         }
     }
 
@@ -154,7 +161,8 @@ public struct DocumentListReducer: Sendable {
                 return .none
             case .destination(.presented(.bulkEditCorrespondent(.delegate(.documentsUpdated)))),
                  .destination(.presented(.bulkEditDocumentType(.delegate(.documentsUpdated)))),
-                 .destination(.presented(.bulkEditStoragePath(.delegate(.documentsUpdated)))):
+                 .destination(.presented(.bulkEditStoragePath(.delegate(.documentsUpdated)))),
+                 .destination(.presented(.bulkEditTags(.delegate(.documentsUpdated)))):
                 state.destination = nil
                 return .runGetDocuments(
                     filterRules: state.filter.input.filterRules,
@@ -235,6 +243,13 @@ public struct DocumentListReducer: Sendable {
                         documents: state.documentSelection.selectedDocuments,
                         server: state.server,
                         values: state.storagePaths
+                    ))
+                    return .none
+                case .editTagsButtonTapped:
+                    state.destination = .bulkEditTags(DocumentBulkEditTagsReducer.State(
+                        documents: state.documentSelection.selectedDocuments,
+                        server: state.server,
+                        values: state.tags
                     ))
                     return .none
                 case .filterButtonTapped:

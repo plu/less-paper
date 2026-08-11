@@ -4,7 +4,7 @@ import Foundation
 @Reducer
 public struct DocumentImportReducer {
 
-    public enum Action: BindableAction {
+    public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
         case view(View)

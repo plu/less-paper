@@ -55,6 +55,15 @@ private struct DocumentListBottomToolbar: ViewModifier {
                 DocumentBulkEditGenericValueView(store: store)
                     .presentationDetents([.sheet])
             }
+            .sheet(
+                item: $store.scope(
+                    state: \.destination?.bulkEditTags,
+                    action: \.destination.bulkEditTags
+                )
+            ) { store in
+                DocumentBulkEditTagsView(store: store)
+                    .presentationDetents([.sheet])
+            }
     }
 
     init(
@@ -86,7 +95,9 @@ private struct DocumentListBottomToolbar: ViewModifier {
                 Label(.editStoragePath, systemImage: "folder")
             }
 
-            Button {} label: {
+            Button {
+                send(.editTagsButtonTapped)
+            } label: {
                 Label(.editTags, systemImage: "tag")
             }
         }

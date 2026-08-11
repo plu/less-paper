@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import SwiftUI
 
+@ViewAction(for: DocumentImportReducer.self)
 struct DocumentImportViewModifier: ViewModifier {
     @Bindable var store: StoreOf<DocumentImportReducer>
 
@@ -11,14 +12,14 @@ struct DocumentImportViewModifier: ViewModifier {
                 allowedContentTypes: [.pdf],
                 allowsMultipleSelection: true,
                 onCompletion: {
-                    store.send(.view(.fileImporterResult($0)))
+                    send(.fileImporterResult($0))
                 }
             )
             .fullScreenCover(
                 isPresented: $store.isPresentingDocumentScanner
             ) {
                 DocumentScannerView {
-                    store.send(.view(.fileImporterResult($0)))
+                    send(.fileImporterResult($0))
                 }
                 .ignoresSafeArea(.all)
             }
