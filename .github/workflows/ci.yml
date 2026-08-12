@@ -26,7 +26,7 @@ jobs:
   test:
     name: Test
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -57,7 +57,7 @@ jobs:
     name: Upload
     needs: [test]
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
