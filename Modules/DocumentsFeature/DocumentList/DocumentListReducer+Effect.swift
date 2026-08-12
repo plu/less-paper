@@ -45,9 +45,57 @@ extension Effect where Action == DocumentListReducer.Action {
         }
         .cancellable(id: CancelID.getDocuments)
     }
+
+    /**
+     * Re-fetches the given documents and writes them into the shared store.
+     *
+     * Bulk edit returns no documents, so the affected content has to be re-read. Only ids
+     * already present in the store are worth fetching, and the request is chunked because a
+     * selection can run to thousands of ids.
+     *
+     * - Parameters:
+     *   - ids: The affected document ids that are present in the shared store.
+     *   - server: The server to fetch from.
+     */
+    static func runRefreshDocuments(
+        ids: Set<Document.Id>,
+        server: Server
+    ) -> Self {
+        @Dependency(\.getDocumentsByIds.execute)
+        var getDocumentsByIds
+
+        guard !ids.isEmpty else {
+            return .none
+        }
+
+        let chunks = ids.sorted().chunked(into: refreshChunkSize)
+
+        return .run { send in
+            for chunk in chunks {
+                let documents = try await getDocumentsByIds(.init(ids: chunk), server)
+                await send(.documentsRefreshed(documents), animation: .none)
+            }
+        } catch: { _, _ in
+            // Best-effort content sync. A failure leaves the affected rows showing their
+            // previous content until the next fetch. Sending `.error` here would set
+            // `state.error` and surface the empty-state view, which would be wrong.
+        }
+        .cancellable(id: CancelID.refreshDocuments)
+    }
+}
+
+private let refreshChunkSize = 100
+
+private extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: size).map {
+            Array(self[$0 ..< Swift.min($0 + size, count)])
+        }
+    }
 }
 
 private enum CancelID {
     case getDocuments
     case getMoreDocuments
+    case refreshDocuments
 }

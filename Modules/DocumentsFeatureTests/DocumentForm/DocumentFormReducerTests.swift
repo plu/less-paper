@@ -4,6 +4,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 import TestSupport
 
@@ -179,11 +180,42 @@ struct DocumentFormReducerTests {
         #expect(store.state.isModified == false)
     }
 
+    /// A successful update writes straight through the shared reference, so every other screen
+    /// holding that document — rows and detail screens in either tab — sees the new value.
+    ///
+    /// Driven by sending `.updateResult` directly rather than through `saveButtonTapped`: the
+    /// save effect emits several actions in a row, and a `TestStore` compares a reference-backed
+    /// `@Shared` value against its *current* contents, so a later step's write is already visible
+    /// when an earlier step is asserted. Sending the one action keeps the assertion unambiguous.
+    @Test
+    func test_updateResult_success_writesThroughSharedDocument() async throws {
+        let updatedDocument = Document.testValue(title: "some new title")
+        let document = Shared(value: Document.testValue())
+        let store = TestStore(initialState: DocumentFormReducer.State(
+            document: document,
+            server: .testValue()
+        )) {
+            DocumentFormReducer()
+        }
+
+        await store.send(.updateResult(.success(updatedDocument))) {
+            $0.$document.withLock { $0 = updatedDocument }
+        }
+        await store.receive(\.delegate.documentUpdated)
+
+        #expect(document.wrappedValue == updatedDocument)
+    }
+
+    /// Covers the action sequence of a save. Non-exhaustive because the shared document write
+    /// lands mid-sequence — see `test_updateResult_success_writesThroughSharedDocument`, which
+    /// asserts that write on its own.
     @Test
     func test_view_saveButtonTapped_success() async throws {
         let updatedDocument = Document.testValue(title: "some new title")
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
-            document: .testValue()
+        let document = Shared(value: Document.testValue())
+        let store = TestStore(initialState: DocumentFormReducer.State(
+            document: document,
+            server: .testValue()
         )) {
             DocumentFormReducer()
         } withDependencies: {
@@ -191,6 +223,7 @@ struct DocumentFormReducerTests {
                 updatedDocument
             }
         }
+        store.exhaustivity = .off
 
         await store.send(.binding(.set(\.input.title, "some new title"))) {
             $0.input.title = "some new title"
@@ -199,13 +232,13 @@ struct DocumentFormReducerTests {
         await store.receive(\.binding, .set(\.isUpdating, true)) {
             $0.isUpdating = true
         }
-        await store.receive(\.updateResult.success, updatedDocument) {
-            $0.document = updatedDocument
-        }
-        await store.receive(\.delegate.documentUpdated, updatedDocument)
+        await store.receive(\.updateResult.success, updatedDocument)
+        await store.receive(\.delegate.documentUpdated)
         await store.receive(\.binding, .set(\.isUpdating, false)) {
             $0.isUpdating = false
         }
+
+        #expect(document.wrappedValue == updatedDocument)
     }
 
     @Test

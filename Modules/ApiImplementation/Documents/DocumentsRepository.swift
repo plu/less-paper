@@ -33,6 +33,11 @@ struct DocumentsRepository: Sendable {
         _ server: Server
     ) async throws -> GetDocumentsOutput
 
+    var getDocumentsByIds: @Sendable (
+        _ input: GetDocumentsByIdsInput,
+        _ server: Server
+    ) async throws -> [Document]
+
     var getNextArchiveSerialNumber: @Sendable (
         _ server: Server
     ) async throws -> Int
@@ -57,6 +62,7 @@ extension DocumentsRepository: TestDependencyKey {
         downloadDocument: { _, _ in try .testValue() },
         getAllDocumentIds: { _, _ in .testValue() },
         getDocuments: { _, _ in .testValue() },
+        getDocumentsByIds: { _, _ in [] },
         getNextArchiveSerialNumber: { _ in 1 },
         getSelectionData: { _, _ in .testValue() },
         updateDocument: { _, _, _ in .testValue() }
@@ -68,6 +74,7 @@ extension DocumentsRepository: TestDependencyKey {
         downloadDocument: { _, _ in try .testValue() },
         getAllDocumentIds: { _, _ in .testValue() },
         getDocuments: { _, _ in .testValue() },
+        getDocumentsByIds: { _, _ in [] },
         getNextArchiveSerialNumber: { _ in 1 },
         getSelectionData: { _, _ in .testValue() },
         updateDocument: { _, _, _ in .testValue() }
@@ -89,6 +96,7 @@ extension DocumentsRepository: DependencyKey {
         downloadDocument: downloadDocument(id:server:),
         getAllDocumentIds: getAllDocumentIds(input:server:),
         getDocuments: getDocuments(input:server:),
+        getDocumentsByIds: getDocumentsByIds(input:server:),
         getNextArchiveSerialNumber: getNextArchiveSerialNumber(server:),
         getSelectionData: getSelectionData(input:server:),
         updateDocument: updateDocument(id:input:server:)
@@ -161,6 +169,21 @@ private extension DocumentsRepository {
             .value
     }
 
+    static func getDocumentsByIds(
+        input: GetDocumentsByIdsInput,
+        server: Server
+    ) async throws -> [Document] {
+        guard !input.ids.isEmpty else {
+            return []
+        }
+
+        return try await APIClient
+            .client(server: server)
+            .send(.init(input: input))
+            .value
+            .results
+    }
+
     static func getNextArchiveSerialNumber(
         server: Server
     ) async throws -> Int {
@@ -222,6 +245,19 @@ private extension Request where Response == GetDocumentsOutput {
                 "page_size": "\(PageSize.configured)",
                 "truncate_content": "true",
             ] + input.filterRules.queryDictionary.map { ($0, "\($1)") }
+        )
+    }
+
+    init(input: GetDocumentsByIdsInput) {
+        self.init(
+            path: "/api/documents/",
+            method: .get,
+            query: [
+                ("id__in", input.ids.map { "\($0.rawValue)" }.joined(separator: ",")),
+                ("page", "1"),
+                ("page_size", "\(input.ids.count)"),
+                ("truncate_content", "true"),
+            ]
         )
     }
 }

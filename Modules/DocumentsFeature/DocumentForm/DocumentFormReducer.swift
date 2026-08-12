@@ -20,7 +20,7 @@ public struct DocumentFormReducer: Sendable {
 
         @CasePathable
         public enum Delegate {
-            case documentUpdated(Document)
+            case documentUpdated
         }
 
         public enum View {
@@ -49,6 +49,7 @@ public struct DocumentFormReducer: Sendable {
         @Presents
         var destination: Destination.State?
 
+        @Shared
         var document: Document
 
         var input: DocumentFormInput
@@ -77,13 +78,13 @@ public struct DocumentFormReducer: Sendable {
 
         init(
             destination: DocumentFormReducer.Destination.State? = nil,
-            document: Document,
+            document: Shared<Document>,
             server: Server
         ) {
             self.destination = destination
-            self.document = document
+            self._document = document
             self.input = DocumentFormInput(
-                document: document,
+                document: document.wrappedValue,
                 server: server
             )
             self.server = server
@@ -122,8 +123,8 @@ public struct DocumentFormReducer: Sendable {
                 case let .failure(error):
                     return .toast(error)
                 case let .success(document):
-                    state.document = document
-                    return .send(.delegate(.documentUpdated(document)))
+                    state.$document.withLock { $0 = document }
+                    return .send(.delegate(.documentUpdated))
                 }
             case let .view(viewAction):
                 switch viewAction {

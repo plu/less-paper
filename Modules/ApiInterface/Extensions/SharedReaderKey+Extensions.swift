@@ -42,6 +42,21 @@ public extension SharedReaderKey where Self == FileStorageKey<IdentifiedArrayOf<
     }
 }
 
+public extension SharedReaderKey where Self == InMemoryKey<IdentifiedArrayOf<Document>>.Default {
+
+    /// Per-server store of document content, keyed by id.
+    ///
+    /// Used as an `id → Document` map — its ordering is meaningless and nothing displays it.
+    /// In-memory rather than file-backed: documents are paginated and far more numerous than
+    /// the other cached entities, and there is no offline requirement.
+    static func documents(_ server: Server) -> Self {
+        Self[
+            .inMemory("\(server.id)-documents"),
+            default: []
+        ]
+    }
+}
+
 public extension SharedReaderKey where Self == FileStorageKey<IdentifiedArrayOf<Group>>.Default {
 
     static func groups(_ server: Server) -> Self {

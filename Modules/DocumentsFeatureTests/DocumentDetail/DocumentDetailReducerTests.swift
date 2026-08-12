@@ -20,9 +20,8 @@ struct DocumentDetailReducerTests {
             DocumentDetailReducer()
         }
 
-        await store.send(.destination(.presented(.documentForm(.delegate(.documentUpdated(.testValue(title: "NEW TITLE"))))))) {
+        await store.send(.destination(.presented(.documentForm(.delegate(.documentUpdated))))) {
             $0.destination = nil
-            $0.document = .testValue(title: "NEW TITLE")
         }
     }
 

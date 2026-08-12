@@ -21,7 +21,7 @@ struct DocumentListReducerTests {
             DocumentListReducer()
         }
 
-        await store.send(.documents(.element(id: 1, action: .delegate(.presentDocumentDetail(.testValue()))))) {
+        await store.send(.documents(.element(id: 1, action: .delegate(.presentDocumentDetail(Shared(value: .testValue())))))) {
             $0.path.append(.documentDetail(.testValue()))
         }
     }
@@ -56,6 +56,7 @@ struct DocumentListReducerTests {
             $0.documents = [.testValue()]
             $0.documentSelection.allLoadedDocuments = [1]
             $0.totalNumberOfDocuments = 77
+            $0.$documentCache.withLock { $0 = [.testValue()] }
         }
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
@@ -102,18 +103,19 @@ struct DocumentListReducerTests {
     }
 
     @Test
+    /// The list no longer propagates the edit itself — the shared store does, so all this
+    /// action still has to do is dismiss the form nested in the detail screen.
     func test_path_documentDetail_destination_documentForm_delegate_documentUpdated() async throws {
-        let originalDocument = Document.testValue(id: 1, title: "Original Title")
-        let updatedDocument = Document.testValue(id: 1, title: "Updated Title")
+        let document = Document.testValue(id: 1, title: "Original Title")
 
         let store = TestStore(initialState: DocumentListReducer.State.testValue(
             documents: [
-                .testValue(document: originalDocument)
+                .testValue(document: document)
             ],
             path: .init([
                 .documentDetail(.testValue(
                     destination: .documentForm(.testValue()),
-                    document: originalDocument
+                    document: document
                 ))
             ])
         )) {
@@ -122,11 +124,9 @@ struct DocumentListReducerTests {
 
         await store.send(.path(.element(
             id: 0,
-            action: .documentDetail(.destination(.presented(.documentForm(.delegate(.documentUpdated(updatedDocument))))))
+            action: .documentDetail(.destination(.presented(.documentForm(.delegate(.documentUpdated)))))
         ))) {
-            $0.documents[id: updatedDocument.id]?.document = updatedDocument
             $0.path[id: 0, case: \.documentDetail]?.destination = nil
-            $0.path[id: 0, case: \.documentDetail]?.document = updatedDocument
         }
     }
 
@@ -158,6 +158,7 @@ struct DocumentListReducerTests {
             $0.documents = [.testValue()]
             $0.documentSelection.allLoadedDocuments = [1]
             $0.totalNumberOfDocuments = 77
+            $0.$documentCache.withLock { $0 = [.testValue()] }
         }
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
@@ -256,6 +257,7 @@ struct DocumentListReducerTests {
             $0.documents = [.testValue()]
             $0.documentSelection.allLoadedDocuments = [1]
             $0.totalNumberOfDocuments = 77
+            $0.$documentCache.withLock { $0 = [.testValue()] }
         }
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
@@ -289,6 +291,7 @@ struct DocumentListReducerTests {
             $0.documents = [.testValue()]
             $0.documentSelection.allLoadedDocuments = [1]
             $0.totalNumberOfDocuments = 77
+            $0.$documentCache.withLock { $0 = [.testValue()] }
         }
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
@@ -345,6 +348,7 @@ struct DocumentListReducerTests {
             results: [.testValue(id: 4)]
         )) {
             $0.documents.append(.testValue(document: .testValue(id: 4)))
+            $0.$documentCache.withLock { $0 = [.testValue(id: 4)] }
             $0.documentSelection.allLoadedDocuments = [1, 2, 3, 4]
             $0.nextPage = nil
             $0.totalNumberOfDocuments = 4
@@ -417,6 +421,7 @@ struct DocumentListReducerTests {
             $0.documents = [.testValue()]
             $0.documentSelection.allLoadedDocuments = [1]
             $0.totalNumberOfDocuments = 77
+            $0.$documentCache.withLock { $0 = [.testValue()] }
         }
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
@@ -558,7 +563,7 @@ struct DocumentListReducerTests {
             }
         }
 
-        await store.send(.destination(.presented(.bulkEditCorrespondent(.delegate(.documentsUpdated))))) {
+        await store.send(.destination(.presented(.bulkEditCorrespondent(.delegate(.documentsUpdated([1, 2])))))) {
             $0.destination = nil
         }
         await store.receive(\.replaceDocuments, .testValue(
@@ -568,6 +573,7 @@ struct DocumentListReducerTests {
             $0.documents = [.testValue()]
             $0.documentSelection.allLoadedDocuments = [1]
             $0.totalNumberOfDocuments = 77
+            $0.$documentCache.withLock { $0 = [.testValue()] }
         }
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
@@ -597,17 +603,22 @@ struct DocumentListReducerTests {
         }
     }
 
+    /// Document 7 is in the shared store but is not returned by this list's own re-fetch —
+    /// exactly the case the self-re-fetch alone would leave stale in the other tab.
     @Test
-    func test_destination_bulkEditTags_documentsUpdated() async throws {
+    func test_destination_bulkEditTags_documentsUpdated_refreshesAffectedDocuments() async throws {
+        let refetched = Document.testValue(id: 1, title: "Refetched")
+        let refreshed = Document.testValue(id: 7, title: "Refreshed")
         let store = TestStore(initialState: DocumentListReducer.State.testValue(
             destination: .bulkEditTags(DocumentBulkEditTagsReducer.State(
-                documents: [1, 2],
+                documents: [1, 7],
                 server: .testValue(),
                 values: []
             )),
+            documents: [],
             documentSelection: .testValue(
                 isActive: true,
-                selectedDocuments: [1, 2]
+                selectedDocuments: [1, 7]
             )
         )) {
             DocumentListReducer()
@@ -615,27 +626,91 @@ struct DocumentListReducerTests {
             $0.getDocuments.execute = { _, _ in
                 .testValue(
                     count: 77,
-                    results: [.testValue()]
+                    results: [refetched]
                 )
             }
+            $0.getDocumentsByIds.execute = { input, _ in
+                #expect(input.ids == [7])
+                return [refreshed]
+            }
         }
+        store.exhaustivity = .off
 
-        await store.send(.destination(.presented(.bulkEditTags(.delegate(.documentsUpdated))))) {
+        // Load document 7 into the store. The bulk edit's own re-fetch below returns only
+        // document 1, so 7 is exactly the case the self-re-fetch cannot keep fresh.
+        await store.send(.replaceDocuments(.testValue(
+            count: 1,
+            results: [.testValue(id: 7, title: "Invoice")]
+        )))
+        #expect(Array(store.state.documentCache.ids) == [7])
+
+        await store.send(.destination(.presented(.bulkEditTags(.delegate(.documentsUpdated([1, 7])))))) {
             $0.destination = nil
         }
         await store.receive(\.replaceDocuments, .testValue(
             count: 77,
-            results: [.testValue()]
+            results: [refetched]
         )) {
-            $0.documents = [.testValue()]
+            $0.documents = [.testValue(document: refetched)]
             $0.documentSelection.allLoadedDocuments = [1]
             $0.totalNumberOfDocuments = 77
         }
+        await store.receive(\.documentsRefreshed, [refreshed])
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
         }
 
-        #expect(store.state.documentSelection.isActive == true)
-        #expect(store.state.documentSelection.selectedDocuments == [1, 2])
+        // Document 7 was refreshed even though it dropped out of this list.
+        #expect(store.state.documentCache[id: 7] == refreshed)
+        #expect(store.state.documentCache[id: 1] == refetched)
+        #expect(store.state.documentSelection.selectedDocuments == [1, 7])
+    }
+
+    @Test
+    func test_replaceDocuments_cachesDocuments() async throws {
+        let document = Document.testValue(id: 7, title: "Invoice")
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documents: []
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.replaceDocuments(.testValue(
+            count: 1,
+            results: [document]
+        ))) {
+            $0.documents = [.testValue(document: document)]
+            $0.documentSelection.allLoadedDocuments = [7]
+            $0.totalNumberOfDocuments = 1
+            $0.$documentCache.withLock { $0 = [document] }
+        }
+    }
+
+    @Test
+    func test_documentDetail_referencesDocumentCache() async throws {
+        let state = DocumentListReducer.State.testValue(documents: [])
+        let rows = state.rows(for: [.testValue(id: 7, title: "Invoice")])
+        let detail = DocumentDetailReducer.State(
+            document: rows[id: 7]!.$document,
+            server: state.server
+        )
+
+        state.$documentCache.withLock {
+            $0[id: 7] = .testValue(id: 7, title: "Renamed")
+        }
+
+        #expect(detail.document.title == "Renamed")
+    }
+
+    @Test
+    func test_rows_referenceDocumentCache() async throws {
+        let state = DocumentListReducer.State.testValue(documents: [])
+        let rows = state.rows(for: [.testValue(id: 7, title: "Invoice")])
+
+        state.$documentCache.withLock {
+            $0[id: 7] = .testValue(id: 7, title: "Renamed")
+        }
+
+        #expect(rows[id: 7]?.document.title == "Renamed")
     }
 }

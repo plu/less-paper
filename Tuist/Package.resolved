@@ -48,7 +48,7 @@
     {
       "identity" : "swift-asn1",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-asn1.git",
+      "location" : "https://github.com/apple/swift-asn1",
       "state" : {
         "revision" : "eb50cbd14606a9161cbc5d452f18797c90ef0bab",
         "version" : "1.7.0"
@@ -129,7 +129,7 @@
     {
       "identity" : "swift-crypto",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-crypto.git",
+      "location" : "https://github.com/apple/swift-crypto",
       "state" : {
         "revision" : "1b6b2e274e85105bfa155183145a1dcfd63331f1",
         "version" : "4.5.0"

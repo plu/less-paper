@@ -283,6 +283,40 @@ struct DocumentsRepositoryTests {
         #expect(output.results.count == 2)
     }
 
+    @Test
+    func test_getDocumentsByIds_emptyIds_returnsEmpty() async throws {
+        let documents = try await repository.getDocumentsByIds(
+            input: .init(ids: []),
+            server: .testValue()
+        )
+
+        #expect(documents.isEmpty)
+    }
+
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_getDocumentsByIds() async throws {
+        let allIds = try await repository.getAllDocumentIds(
+            input: .testValue(
+                filterRules: [.init(ruleType: .title, value: "Lego")]
+            ),
+            server: .testValue()
+        )
+        let ids = allIds.results.map(\.id)
+
+        let documents = try await repository.getDocumentsByIds(
+            input: .init(ids: ids),
+            server: .testValue()
+        )
+
+        #expect(Set(documents.map(\.id)) == Set(ids))
+    }
+
     @Test(
         .dependencies {
             $0.authenticationProvider = .integrationTest

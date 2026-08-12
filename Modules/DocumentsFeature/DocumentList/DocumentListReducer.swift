@@ -13,6 +13,7 @@ public struct DocumentListReducer: Sendable {
         case documentImport(DocumentImportReducer.Action)
         case documentSelection(DocumentSelectionReducer.Action)
         case documents(IdentifiedActionOf<DocumentRowReducer>)
+        case documentsRefreshed([Document])
         case error(Error)
         case path(StackActionOf<Path>)
         case replaceDocuments(GetDocumentsOutput)
@@ -90,6 +91,10 @@ public struct DocumentListReducer: Sendable {
 
         @Shared
 
+        var documentCache: IdentifiedArrayOf<Document>
+
+        @Shared
+
         var documentTypes: IdentifiedArrayOf<DocumentType>
 
         @Shared
@@ -131,10 +136,39 @@ public struct DocumentListReducer: Sendable {
             self.server = server
             self.totalNumberOfDocuments = totalNumberOfDocuments
             self._correspondents = Shared(wrappedValue: [], .correspondents(server))
+            self._documentCache = Shared(wrappedValue: [], .documents(server))
             self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
             self._savedViews = Shared(wrappedValue: [], .savedViews(server))
             self._storagePaths = Shared(wrappedValue: [], .storagePaths(server))
             self._tags = Shared(wrappedValue: [], .tags(server))
+        }
+
+        /// Upserts documents into the shared store without touching this list's membership.
+        func cacheDocuments(_ documents: [Document]) {
+            $documentCache.withLock { cache in
+                for document in documents {
+                    cache.updateOrAppend(document)
+                }
+            }
+        }
+
+        /**
+         * Caches the given documents and builds rows referencing them.
+         *
+         * The upsert must happen before the rows are built — each row holds a reference into
+         * the store, which has to exist first.
+         *
+         * - Parameter documents: The documents this list should show, in display order.
+         * - Returns: Rows referencing the shared store, in the same order.
+         */
+        func rows(for documents: [Document]) -> IdentifiedArrayOf<DocumentRowReducer.State> {
+            cacheDocuments(documents)
+            return IdentifiedArray(uniqueElements: documents.map { document in
+                DocumentRowReducer.State(
+                    document: Shared($documentCache[id: document.id])!,
+                    server: server
+                )
+            })
         }
     }
 
@@ -149,26 +183,28 @@ public struct DocumentListReducer: Sendable {
         Reduce { state, action in
             switch action {
             case let .appendDocuments(output):
-                state.documents.append(contentsOf: output.results.map {
-                    DocumentRowReducer.State(
-                        document: $0,
-                        server: state.server
-                    )
-                })
+                let rows = state.rows(for: output.results)
+                state.documents.append(contentsOf: rows)
                 state.documentSelection.allLoadedDocuments.formUnion(Set(output.results.map(\.id)))
                 state.nextPage = output.next
                 state.totalNumberOfDocuments = output.count
                 return .none
-            case .destination(.presented(.bulkEditCorrespondent(.delegate(.documentsUpdated)))),
-                 .destination(.presented(.bulkEditDocumentType(.delegate(.documentsUpdated)))),
-                 .destination(.presented(.bulkEditStoragePath(.delegate(.documentsUpdated)))),
-                 .destination(.presented(.bulkEditTags(.delegate(.documentsUpdated)))):
+            case let .destination(.presented(.bulkEditCorrespondent(.delegate(.documentsUpdated(ids))))),
+                 let .destination(.presented(.bulkEditDocumentType(.delegate(.documentsUpdated(ids))))),
+                 let .destination(.presented(.bulkEditStoragePath(.delegate(.documentsUpdated(ids))))),
+                 let .destination(.presented(.bulkEditTags(.delegate(.documentsUpdated(ids))))):
                 state.destination = nil
-                return .runGetDocuments(
-                    filterRules: state.filter.input.filterRules,
-                    server: state.server,
-                    sortDirection: state.filter.input.sort.direction,
-                    sortField: state.filter.input.sort.field
+                return .merge(
+                    .runGetDocuments(
+                        filterRules: state.filter.input.filterRules,
+                        server: state.server,
+                        sortDirection: state.filter.input.sort.direction,
+                        sortField: state.filter.input.sort.field
+                    ),
+                    .runRefreshDocuments(
+                        ids: Set(state.documentCache.ids).intersection(ids),
+                        server: state.server
+                    )
                 )
             case let .destination(.presented(.documentFilter(.delegate(delegateAction)))):
                 switch delegateAction {
@@ -191,24 +227,14 @@ public struct DocumentListReducer: Sendable {
                     )))
                     return .none
                 }
+            case let .documentsRefreshed(documents):
+                state.cacheDocuments(documents)
+                return .none
             case let .error(error):
                 state.error = error.localizedDescription
                 return .toast(error)
-            case let .path(.element(
-                id: _,
-                action: .documentDetail(.destination(.presented(.documentForm(.delegate(.documentUpdated(document))))))
-            )):
-                state.documents[id: document.id]?.document = document
-                return .none
             case let .replaceDocuments(output):
-                state.documents = IdentifiedArray(
-                    uniqueElements: output.results.map {
-                        DocumentRowReducer.State(
-                            document: $0,
-                            server: state.server
-                        )
-                    }
-                )
+                state.documents = state.rows(for: output.results)
                 state.documentSelection.allLoadedDocuments = Set(output.results.map(\.id))
                 state.nextPage = output.next
                 state.totalNumberOfDocuments = output.count

@@ -1,5 +1,6 @@
 import ApiInterface
 import Foundation
+import SwiftSharing
 
 extension DocumentRowReducer.State {
 
@@ -8,7 +9,7 @@ extension DocumentRowReducer.State {
         server: Server = .testValue()
     ) -> Self {
         .init(
-            document: document,
+            document: Shared(value: document),
             server: server
         )
     }

@@ -3,6 +3,7 @@
 import ApiInterface
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 import TestSupport
 
@@ -24,9 +25,8 @@ struct DocumentRowReducerTests {
         await store.send(.view(.editButtonTapped)) {
             $0.destination = .documentForm(.testValue())
         }
-        await store.send(.destination(.presented(.documentForm(.delegate(.documentUpdated(.testValue(title: "NEW TITLE"))))))) {
+        await store.send(.destination(.presented(.documentForm(.delegate(.documentUpdated))))) {
             $0.destination = nil
-            $0.document = .testValue(title: "NEW TITLE")
         }
     }
 
@@ -40,7 +40,7 @@ struct DocumentRowReducerTests {
         }
 
         await store.send(.view(.rowTapped))
-        await store.receive(\.delegate, .presentDocumentDetail(document))
+        await store.receive(\.delegate, .presentDocumentDetail(Shared(value: document)))
     }
 
     @Test

@@ -20,7 +20,7 @@ extension Effect where Action == DocumentBulkEditTagsReducer.Action {
 
         return .run { send in
             try await bulkEditDocuments(input, server)
-            await send(.delegate(.documentsUpdated))
+            await send(.delegate(.documentsUpdated(documents)))
         } catch: { error, send in
             await send(.error(error))
         }

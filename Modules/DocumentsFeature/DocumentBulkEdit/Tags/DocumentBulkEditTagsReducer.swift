@@ -2,6 +2,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import Tagged
 
 @Reducer
 public struct DocumentBulkEditTagsReducer: Sendable {
@@ -16,7 +17,7 @@ public struct DocumentBulkEditTagsReducer: Sendable {
 
         @CasePathable
         public enum Delegate {
-            case documentsUpdated
+            case documentsUpdated(Set<Document.Id>)
         }
 
         public enum View {

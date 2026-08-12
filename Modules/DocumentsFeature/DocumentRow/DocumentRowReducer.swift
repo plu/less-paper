@@ -13,7 +13,7 @@ public struct DocumentRowReducer: Sendable {
         case view(View)
 
         public enum Delegate {
-            case presentDocumentDetail(Document)
+            case presentDocumentDetail(Shared<Document>)
         }
 
         public enum View {
@@ -39,6 +39,7 @@ public struct DocumentRowReducer: Sendable {
         @Presents
         var destination: Destination.State?
 
+        @Shared
         var document: Document
 
         var documentType: String? {
@@ -70,10 +71,10 @@ public struct DocumentRowReducer: Sendable {
         }
 
         init(
-            document: Document,
+            document: Shared<Document>,
             server: Server
         ) {
-            self.document = document
+            self._document = document
             self.server = server
         }
     }
@@ -81,20 +82,19 @@ public struct DocumentRowReducer: Sendable {
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case let .destination(.presented(.documentForm(.delegate(.documentUpdated(document))))):
+            case .destination(.presented(.documentForm(.delegate(.documentUpdated)))):
                 state.destination = nil
-                state.document = document
                 return .none
             case let .view(viewAction):
                 switch viewAction {
                 case .editButtonTapped:
                     state.destination = .documentForm(DocumentFormReducer.State(
-                        document: state.document,
+                        document: state.$document,
                         server: state.server
                     ))
                     return .none
                 case .rowTapped:
-                    return .send(.delegate(.presentDocumentDetail(state.document)))
+                    return .send(.delegate(.presentDocumentDetail(state.$document)))
                 }
             case .delegate, .destination:
                 return .none

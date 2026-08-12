@@ -31,6 +31,8 @@ public struct DocumentDetailReducer: Sendable {
 
         var destination: Destination.State?
 
+        @Shared
+
         var document: Document
 
         var downloadResult: DownloadResult?
@@ -38,15 +40,28 @@ public struct DocumentDetailReducer: Sendable {
         var quickLookPreview: URL?
 
         let server: Server
+
+        init(
+            destination: Destination.State? = nil,
+            document: Shared<Document>,
+            downloadResult: DownloadResult? = nil,
+            quickLookPreview: URL? = nil,
+            server: Server
+        ) {
+            self.destination = destination
+            self._document = document
+            self.downloadResult = downloadResult
+            self.quickLookPreview = quickLookPreview
+            self.server = server
+        }
     }
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
         Reduce { state, action in
             switch action {
-            case let .destination(.presented(.documentForm(.delegate(.documentUpdated(document))))):
+            case .destination(.presented(.documentForm(.delegate(.documentUpdated)))):
                 state.destination = nil
-                state.document = document
                 return .none
             case let .downloadResult(result):
                 state.downloadResult = result
@@ -55,7 +70,7 @@ public struct DocumentDetailReducer: Sendable {
                 switch viewAction {
                 case .editDocumentButtonTapped:
                     state.destination = .documentForm(DocumentFormReducer.State(
-                        document: state.document,
+                        document: state.$document,
                         server: state.server
                     ))
                     return .none

@@ -1,5 +1,6 @@
 import ApiInterface
 import Foundation
+import SwiftSharing
 
 extension DocumentDetailReducer.State {
 
@@ -11,7 +12,7 @@ extension DocumentDetailReducer.State {
     ) -> Self {
         .init(
             destination: destination,
-            document: document,
+            document: Shared(value: document),
             downloadResult: downloadResult,
             server: server
         )
