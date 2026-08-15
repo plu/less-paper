@@ -850,7 +850,8 @@ struct DocumentFilterInputTests {
             tag: .init(
                 rule: .all,
                 selection: .testValue(all: .testValue(include: [tag1]))
-            )
+            ),
+            unsupportedFilterRules: [.init(ruleType: .hasTagsAll, value: "42")]
         ))
     }
 
@@ -985,7 +986,12 @@ struct DocumentFilterInputTests {
         expectNoDifference(input, DocumentFilterInput(
             correspondent: .init(rule: .include, selection: [.testValue(id: 1)]),
             documentType: .init(rule: .include, selection: [.testValue(id: 1)]),
-            storagePath: .init(rule: .include, selection: [.testValue(id: 1)])
+            storagePath: .init(rule: .include, selection: [.testValue(id: 1)]),
+            unsupportedFilterRules: [
+                .init(ruleType: .hasCorrespondentAny, value: "42"),
+                .init(ruleType: .hasDocumentTypeAny, value: "42"),
+                .init(ruleType: .hasStoragePathAny, value: "42"),
+            ]
         ))
     }
 
@@ -1040,5 +1046,87 @@ struct DocumentFilterInputTests {
 
             expectNoDifference(input.filterRules, original)
         }
+    }
+
+    // MARK: - Unresolved ids
+
+    /// An id the caches cannot resolve — an entity created on another device, or deleted
+    /// server-side — used to be dropped outright, which changed the query and, on save, rewrote
+    /// the saved view without it. It is now carried through untouched.
+    @Test
+    func unresolvedIdsSurviveARoundTrip() async throws {
+        @Shared(.correspondents(.testValue()))
+        var correspondents: IdentifiedArrayOf<Correspondent> = [.testValue(id: 1)]
+
+        let original = [FilterRule(ruleType: .hasCorrespondentAny, value: "1,42")]
+        let input = DocumentFilterInput(
+            filterRules: original,
+            server: .testValue(),
+            sortDirection: .descending,
+            sortField: .added
+        )
+
+        expectNoDifference(input.correspondent.selection, [.testValue(id: 1)])
+        expectNoDifference(input.filterRules.sorted(), [
+            .init(ruleType: .hasCorrespondentAny, value: "1"),
+            .init(ruleType: .hasCorrespondentAny, value: "42"),
+        ])
+    }
+
+    /// A cold cache resolves nothing, so the whole rule has to survive rather than the filter
+    /// silently becoming "no correspondent filter at all".
+    @Test
+    func unresolvedIdsWithEmptyCacheSurvive() async throws {
+        @Shared(.correspondents(.testValue()))
+        var correspondents: IdentifiedArrayOf<Correspondent> = []
+
+        let input = DocumentFilterInput(
+            filterRules: [.init(ruleType: .hasCorrespondentAny, value: "7")],
+            server: .testValue(),
+            sortDirection: .descending,
+            sortField: .added
+        )
+
+        expectNoDifference(input.correspondent.selection, [])
+        expectNoDifference(input.filterRules, [.init(ruleType: .hasCorrespondentAny, value: "7")])
+    }
+
+    /// Values that are not ids at all are still discarded — `ids()` drops them before resolution,
+    /// and re-emitting garbage would be worse than losing it.
+    @Test
+    func nonNumericIdsAreStillDropped() async throws {
+        @Shared(.correspondents(.testValue()))
+        var correspondents: IdentifiedArrayOf<Correspondent> = []
+
+        let input = DocumentFilterInput(
+            filterRules: [.init(ruleType: .hasCorrespondentAny, value: "abc")],
+            server: .testValue(),
+            sortDirection: .descending,
+            sortField: .added
+        )
+
+        expectNoDifference(input.filterRules, [])
+    }
+
+    @Test
+    func unresolvedTagIdsSurviveARoundTrip() async throws {
+        @Shared(.tags(.testValue()))
+        var tags: IdentifiedArrayOf<ApiInterface.Tag> = [.testValue(id: 1)]
+
+        let input = DocumentFilterInput(
+            filterRules: [
+                .init(ruleType: .hasTagsAll, value: "1,42"),
+                .init(ruleType: .doesNotHaveTag, value: "43"),
+            ],
+            server: .testValue(),
+            sortDirection: .descending,
+            sortField: .added
+        )
+
+        expectNoDifference(input.filterRules.sorted(), [
+            .init(ruleType: .hasTagsAll, value: "1"),
+            .init(ruleType: .hasTagsAll, value: "42"),
+            .init(ruleType: .doesNotHaveTag, value: "43"),
+        ])
     }
 }

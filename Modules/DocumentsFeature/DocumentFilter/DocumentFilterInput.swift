@@ -2,6 +2,7 @@ import ApiInterface
 import CorrespondentsFeature
 import DocumentTypesFeature
 import Foundation
+import IdentifiedCollections
 import SavedViewsFeature
 import StoragePathsFeature
 import SwiftSharing
@@ -121,32 +122,24 @@ extension DocumentFilterInput {
                 documentType.rule = .notAssigned
             case .doesNotHaveCorrespondent:
                 correspondent.rule = .exclude
-                correspondent.selection = correspondent.selection.union(Set(
-                    filterRule.value.ids()
-                        .compactMap(Correspondent.Id.init)
-                        .compactMap { correspondents[id: $0] }
-                ))
+                correspondent.selection = correspondent.selection.union(
+                    resolve(filterRule, in: correspondents)
+                )
             case .doesNotHaveDocumentType:
                 documentType.rule = .exclude
-                documentType.selection = documentType.selection.union(Set(
-                    filterRule.value.ids()
-                        .compactMap(DocumentType.Id.init)
-                        .compactMap { documentTypes[id: $0] }
-                ))
+                documentType.selection = documentType.selection.union(
+                    resolve(filterRule, in: documentTypes)
+                )
             case .doesNotHaveStoragePath:
                 storagePath.rule = .exclude
-                storagePath.selection = storagePath.selection.union(Set(
-                    filterRule.value.ids()
-                        .compactMap(StoragePath.Id.init)
-                        .compactMap { storagePaths[id: $0] }
-                ))
+                storagePath.selection = storagePath.selection.union(
+                    resolve(filterRule, in: storagePaths)
+                )
             case .doesNotHaveTag:
                 tag.rule = .all
-                tag.selection.all.exclude = tag.selection.all.exclude.union(Set(
-                    filterRule.value.ids()
-                        .compactMap(Tag.Id.init)
-                        .compactMap { tags[id: $0] }
-                ))
+                tag.selection.all.exclude = tag.selection.all.exclude.union(
+                    resolve(filterRule, in: tags)
+                )
             case .fulltextQuery:
                 searchType = .advanced
                 setSearchValue(filterRule)
@@ -155,39 +148,29 @@ extension DocumentFilterInput {
                 tag.rule = filterRule.value == "0" ? .notAssigned : .assigned
             case .hasCorrespondentAny:
                 correspondent.rule = .include
-                correspondent.selection = correspondent.selection.union(Set(
-                    filterRule.value.ids()
-                        .compactMap(Correspondent.Id.init)
-                        .compactMap { correspondents[id: $0] }
-                ))
+                correspondent.selection = correspondent.selection.union(
+                    resolve(filterRule, in: correspondents)
+                )
             case .hasDocumentTypeAny:
                 documentType.rule = .include
-                documentType.selection = documentType.selection.union(Set(
-                    filterRule.value.ids()
-                        .compactMap(DocumentType.Id.init)
-                        .compactMap { documentTypes[id: $0] }
-                ))
+                documentType.selection = documentType.selection.union(
+                    resolve(filterRule, in: documentTypes)
+                )
             case .hasStoragePathAny:
                 storagePath.rule = .include
-                storagePath.selection = storagePath.selection.union(Set(
-                    filterRule.value.ids()
-                        .compactMap(StoragePath.Id.init)
-                        .compactMap { storagePaths[id: $0] }
-                ))
+                storagePath.selection = storagePath.selection.union(
+                    resolve(filterRule, in: storagePaths)
+                )
             case .hasTagsAll:
                 tag.rule = .all
-                tag.selection.all.include = tag.selection.all.include.union(Set(
-                    filterRule.value.ids()
-                        .compactMap(Tag.Id.init)
-                        .compactMap { tags[id: $0] }
-                ))
+                tag.selection.all.include = tag.selection.all.include.union(
+                    resolve(filterRule, in: tags)
+                )
             case .hasTagsAny:
                 tag.rule = .any
-                tag.selection.any = tag.selection.any.union(Set(
-                    filterRule.value.ids()
-                        .compactMap(Tag.Id.init)
-                        .compactMap { tags[id: $0] }
-                ))
+                tag.selection.any = tag.selection.any.union(
+                    resolve(filterRule, in: tags)
+                )
             case .storagePath:
                 storagePath.rule = .notAssigned
             case .title:
@@ -340,6 +323,46 @@ extension DocumentFilterInput {
         if let value = filterRule.value {
             searchValue = value
         }
+    }
+
+    /**
+     * Resolves a rule's ids against a cache, keeping any that do not resolve as passthrough rules.
+     *
+     * A saved view can name an entity this client has no cached copy of — one created on another
+     * device before the caches were warm, or deleted server-side while the view still references
+     * it. Those ids used to be dropped outright, which quietly widened the query and, if the user
+     * saved from the filter sheet, rewrote the saved view without them.
+     *
+     * The selection holds whole entities, so an unresolvable id cannot live there. It is carried in
+     * `unsupportedFilterRules` instead, which already exists for rules the UI cannot represent and
+     * is re-emitted verbatim. Splitting the rule per id is what makes this safe: the resolved ids
+     * are re-emitted from the selection, so only the missing ones are passed through and nothing is
+     * duplicated.
+     *
+     * Values that are not ids at all never get here — `ids()` discards them.
+     *
+     * - Parameters:
+     *   - filterRule: The rule being parsed.
+     *   - cache: The entities currently cached for this server.
+     * - Returns: The entities the rule's ids resolved to.
+     */
+    private mutating func resolve<Value: Identifiable>(
+        _ filterRule: FilterRule,
+        in cache: IdentifiedArrayOf<Value>
+    ) -> Set<Value> where Value: Hashable, Value.ID: RawRepresentable, Value.ID.RawValue == Int {
+        var resolved = Set<Value>()
+
+        for id in filterRule.value.ids() {
+            guard let value = Value.ID(rawValue: id).flatMap({ cache[id: $0] }) else {
+                unsupportedFilterRules.append(
+                    .init(ruleType: filterRule.ruleType, value: String(id))
+                )
+                continue
+            }
+            resolved.insert(value)
+        }
+
+        return resolved
     }
 }
 
