@@ -343,6 +343,87 @@ struct DocumentListReducerTests {
     }
 
     @Test
+    func test_view_deleteSelectedButtonTapped_confirmed() async throws {
+        let countReceived = LockIsolated<Int?>(nil)
+        let idsReceived = LockIsolated<[Document.Id]?>(nil)
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                allLoadedDocuments: [1, 2, 3, 4],
+                isActive: true,
+                selectedDocuments: [2, 3]
+            )
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.documentDeleteConfirmation.presentMany = { count in
+                countReceived.setValue(count)
+                return true
+            }
+            $0.deleteDocuments.execute = { ids, _ in
+                idsReceived.setValue(ids)
+            }
+        }
+
+        await store.send(.view(.deleteSelectedButtonTapped))
+        await store.receive(\.deleteSelectedConfirmed) {
+            // Selection mode collapses the moment the user commits, while the rows dim.
+            $0.documentSelection.isActive = false
+        }
+        await store.receive(\.isUpdating) {
+            $0.documents[id: 2]?.isUpdating = true
+            $0.documents[id: 3]?.isUpdating = true
+        }
+        await store.receive(\.documentsDeleted, [2, 3]) {
+            $0.documents.remove(id: 2)
+            $0.documents.remove(id: 3)
+            $0.documentSelection.allLoadedDocuments = [1, 4]
+            $0.documentSelection.selectedDocuments = []
+            $0.totalNumberOfDocuments = 40
+        }
+        await store.receive(\.delegate, .documentsDeleted([2, 3]))
+
+        #expect(countReceived.value == 2)
+        #expect(idsReceived.value == [2, 3])
+    }
+
+    @Test
+    func test_view_deleteSelectedButtonTapped_cancelled() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [2, 3]
+            )
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.documentDeleteConfirmation.presentMany = { _ in false }
+        }
+
+        // `deleteDocuments` is left unimplemented: reaching it would fail the test.
+        await store.send(.view(.deleteSelectedButtonTapped))
+    }
+
+    /// Nothing selected means nothing to confirm — the popup should not appear at all.
+    @Test
+    func test_view_deleteSelectedButtonTapped_withoutSelection_doesNothing() async throws {
+        let presentations = LockIsolated(0)
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(isActive: true)
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.documentDeleteConfirmation.presentMany = { _ in
+                presentations.withValue { $0 += 1 }
+                return true
+            }
+        }
+
+        await store.send(.view(.deleteSelectedButtonTapped))
+
+        #expect(presentations.value == 0)
+    }
+
+    @Test
     func test_view_refresh() async throws {
         let statisticsServers = LockIsolated<[Server]>([])
         let store = TestStore(initialState: DocumentListReducer.State.testValue(

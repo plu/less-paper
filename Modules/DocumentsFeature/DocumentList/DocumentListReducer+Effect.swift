@@ -75,6 +75,27 @@ extension Effect where Action == DocumentListReducer.Action {
     }
 
     /**
+     * Asks the user to confirm deleting the current selection.
+     *
+     * The count rather than the documents themselves: a selection can run to thousands after
+     * "select all matching", so naming them is not an option.
+     *
+     * - Parameter documentCount: How many documents the user has selected.
+     */
+    static func runConfirmDeleteSelected(documentCount: Int) -> Self {
+        @Dependency(\.documentDeleteConfirmation.presentMany)
+        var presentConfirmation
+
+        return .run { send in
+            guard await presentConfirmation(documentCount) else {
+                return
+            }
+            await send(.deleteSelectedConfirmed)
+        }
+        .cancellable(id: CancelID.confirmDeleteSelected)
+    }
+
+    /**
      * Re-reads the server's statistics so the Inbox tab badge matches what the user just pulled to
      * refresh.
      *
@@ -145,6 +166,7 @@ private extension Array {
 }
 
 private enum CancelID {
+    case confirmDeleteSelected
     case deleteDocuments
     case getDocuments
     case getMoreDocuments

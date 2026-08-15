@@ -12,6 +12,7 @@ public struct DocumentListReducer: Sendable {
         case binding(BindingAction<State>)
         case delegate(Delegate)
         case deleteDocumentsFailed(ids: Set<Document.Id>, error: Error)
+        case deleteSelectedConfirmed
         case destination(PresentationAction<Destination.Action>)
         case documentImport(DocumentImportReducer.Action)
         case documentSelection(DocumentSelectionReducer.Action)
@@ -30,6 +31,7 @@ public struct DocumentListReducer: Sendable {
 
         public enum View {
             case allDocumentsButtonTapped
+            case deleteSelectedButtonTapped
             case editCorrespondentButtonTapped
             case editDocumentTypeButtonTapped
             case editStoragePathButtonTapped
@@ -233,6 +235,13 @@ public struct DocumentListReducer: Sendable {
                 state.nextPage = output.next
                 state.totalNumberOfDocuments = output.count
                 return .none
+            case .deleteSelectedConfirmed:
+                // Selection mode collapses on commit rather than in `documentsDeleted`, which
+                // `MainReducer` forwards to the other tab — that tab's selection is not ours to
+                // close.
+                let ids = state.documentSelection.selectedDocuments
+                state.documentSelection.isActive = false
+                return .runDeleteDocuments(ids: ids, server: state.server)
             case let .deleteDocumentsFailed(ids: ids, error: error):
                 for id in ids {
                     state.documents[id: id]?.isUpdating = false
@@ -327,6 +336,13 @@ public struct DocumentListReducer: Sendable {
                         server: state.server,
                         sortDirection: state.filter.input.sort.direction,
                         sortField: state.filter.input.sort.field
+                    )
+                case .deleteSelectedButtonTapped:
+                    guard !state.documentSelection.selectedDocuments.isEmpty else {
+                        return .none
+                    }
+                    return .runConfirmDeleteSelected(
+                        documentCount: state.documentSelection.selectedDocuments.count
                     )
                 case .editCorrespondentButtonTapped:
                     state.destination = .bulkEditCorrespondent(DocumentBulkEditGenericValueReducer.State(

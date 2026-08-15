@@ -100,6 +100,18 @@ private struct DocumentListBottomToolbar: ViewModifier {
             } label: {
                 Label(.editTags, systemImage: "tag")
             }
+
+            // Destructive, so it sits behind an overflow menu rather than one mistap away from
+            // four reversible actions.
+            Menu {
+                Button(role: .destructive) {
+                    send(.deleteSelectedButtonTapped)
+                } label: {
+                    Label(.deleteDocuments, systemImage: "trash")
+                }
+            } label: {
+                Label(.moreActions, systemImage: "ellipsis.circle")
+            }
         }
         .disabled(store.documentSelection.selectedDocuments.isEmpty)
         .font(.title3)

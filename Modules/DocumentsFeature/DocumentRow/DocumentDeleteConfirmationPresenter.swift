@@ -6,20 +6,31 @@ import Foundation
 @DependencyClient
 struct DocumentDeleteConfirmationPresenter: Sendable {
 
-    /// Presents the delete confirmation popup and suspends until the user confirms or cancels
+    /// Presents the delete confirmation popup for a single document and suspends until the user
+    /// confirms or cancels
     var present: @Sendable (_ documentTitle: String) async -> Bool = { _ in false }
+
+    /// Presents the delete confirmation popup for a selection and suspends until the user confirms
+    /// or cancels
+    var presentMany: @Sendable (_ documentCount: Int) async -> Bool = { _ in false }
 }
 
 extension DocumentDeleteConfirmationPresenter: TestDependencyKey {
 
-    static let previewValue = Self(present: { _ in false })
+    static let previewValue = Self(
+        present: { _ in false },
+        presentMany: { _ in false }
+    )
 
     static let testValue = Self()
 }
 
 extension DocumentDeleteConfirmationPresenter: DependencyKey {
 
-    static let liveValue = Self(present: present(documentTitle:))
+    static let liveValue = Self(
+        present: present(documentTitle:),
+        presentMany: presentMany(documentCount:)
+    )
 }
 
 private extension DocumentDeleteConfirmationPresenter {
@@ -32,6 +43,21 @@ private extension DocumentDeleteConfirmationPresenter {
             ConfirmationPopupView(
                 title: .deleteDocument,
                 message: .deleteConfirmation(documentTitle),
+                isDestructive: true,
+                cancel: { resolve(false) },
+                confirm: { resolve(true) }
+            )
+        } ?? false
+    }
+
+    static func presentMany(documentCount: Int) async -> Bool {
+        @Dependency(\.popupPresenter)
+        var popupPresenter
+
+        return await popupPresenter.present { resolve in
+            ConfirmationPopupView(
+                title: .deleteDocuments,
+                message: .deleteDocumentsConfirmation(documentCount),
                 isDestructive: true,
                 cancel: { resolve(false) },
                 confirm: { resolve(true) }
