@@ -13,10 +13,12 @@ public struct DocumentRowReducer: Sendable {
         case view(View)
 
         public enum Delegate {
+            case deleteDocument
             case presentDocumentDetail(Shared<Document>)
         }
 
         public enum View {
+            case deleteButtonTapped
             case editButtonTapped
             case rowTapped
         }
@@ -46,6 +48,8 @@ public struct DocumentRowReducer: Sendable {
             document.documentType?.get(server)?.name
         }
 
+        var isUpdating = false
+
         var storagePath: String? {
             document.storagePath?.get(server)?.name
         }
@@ -71,10 +75,14 @@ public struct DocumentRowReducer: Sendable {
         }
 
         init(
+            destination: Destination.State? = nil,
             document: Shared<Document>,
+            isUpdating: Bool = false,
             server: Server
         ) {
+            self.destination = destination
             self._document = document
+            self.isUpdating = isUpdating
             self.server = server
         }
     }
@@ -87,6 +95,8 @@ public struct DocumentRowReducer: Sendable {
                 return .none
             case let .view(viewAction):
                 switch viewAction {
+                case .deleteButtonTapped:
+                    return .runConfirmDelete(documentTitle: state.document.title)
                 case .editButtonTapped:
                     state.destination = .documentForm(DocumentFormReducer.State(
                         document: state.$document,

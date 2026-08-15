@@ -3,21 +3,30 @@ import Components
 import ComposableArchitecture
 import Foundation
 import ShareFeature
+import Tagged
 
 @Reducer
 public struct DocumentListReducer: Sendable {
     public enum Action: BindableAction, ViewAction {
         case appendDocuments(GetDocumentsOutput)
         case binding(BindingAction<State>)
+        case delegate(Delegate)
+        case deleteDocumentsFailed(ids: Set<Document.Id>, error: Error)
         case destination(PresentationAction<Destination.Action>)
         case documentImport(DocumentImportReducer.Action)
         case documentSelection(DocumentSelectionReducer.Action)
         case documents(IdentifiedActionOf<DocumentRowReducer>)
+        case documentsDeleted(Set<Document.Id>)
         case documentsRefreshed([Document])
         case error(Error)
+        case isUpdating(ids: Set<Document.Id>, isUpdating: Bool)
         case path(StackActionOf<Path>)
         case replaceDocuments(GetDocumentsOutput)
         case view(View)
+
+        public enum Delegate: Equatable {
+            case documentsDeleted(Set<Document.Id>)
+        }
 
         public enum View {
             case allDocumentsButtonTapped
@@ -189,6 +198,11 @@ public struct DocumentListReducer: Sendable {
                 state.nextPage = output.next
                 state.totalNumberOfDocuments = output.count
                 return .none
+            case let .deleteDocumentsFailed(ids: ids, error: error):
+                for id in ids {
+                    state.documents[id: id]?.isUpdating = false
+                }
+                return .toast(error)
             case let .destination(.presented(.bulkEditCorrespondent(.delegate(.documentsUpdated(ids))))),
                  let .destination(.presented(.bulkEditDocumentType(.delegate(.documentsUpdated(ids))))),
                  let .destination(.presented(.bulkEditStoragePath(.delegate(.documentsUpdated(ids))))),
@@ -218,8 +232,10 @@ public struct DocumentListReducer: Sendable {
                         sortField: state.filter.input.sort.field
                     )
                 }
-            case let .documents(.element(id: _, action: .delegate(delegateAction))):
+            case let .documents(.element(id: id, action: .delegate(delegateAction))):
                 switch delegateAction {
+                case .deleteDocument:
+                    return .runDeleteDocuments(ids: [id], server: state.server)
                 case let .presentDocumentDetail(document):
                     state.path.append(.documentDetail(DocumentDetailReducer.State(
                         document: document,
@@ -227,12 +243,39 @@ public struct DocumentListReducer: Sendable {
                     )))
                     return .none
                 }
+            case let .documentsDeleted(ids):
+                let countBefore = state.documents.count
+                state.documents.removeAll { ids.contains($0.id) }
+                state.documentSelection.allLoadedDocuments.subtract(ids)
+                state.documentSelection.allMatchingDocuments.subtract(ids)
+                state.documentSelection.selectedDocuments.subtract(ids)
+                // Cleared by id rather than with `removeAll(where:)`: the latter rebuilds the
+                // stack through `replaceSubrange`, which hands the surviving screens fresh
+                // `StackElementID`s and makes SwiftUI treat them as new pushes.
+                for elementId in state.path.ids {
+                    guard case let .documentDetail(detail) = state.path[id: elementId],
+                          ids.contains(detail.document.id)
+                    else {
+                        continue
+                    }
+                    state.path[id: elementId] = nil
+                }
+                state.totalNumberOfDocuments = max(
+                    0,
+                    state.totalNumberOfDocuments - (countBefore - state.documents.count)
+                )
+                return .none
             case let .documentsRefreshed(documents):
                 state.cacheDocuments(documents)
                 return .none
             case let .error(error):
                 state.error = error.localizedDescription
                 return .toast(error)
+            case let .isUpdating(ids: ids, isUpdating: isUpdating):
+                for id in ids {
+                    state.documents[id: id]?.isUpdating = isUpdating
+                }
+                return .none
             case let .replaceDocuments(output):
                 state.documents = state.rows(for: output.results)
                 state.documentSelection.allLoadedDocuments = Set(output.results.map(\.id))
@@ -336,7 +379,7 @@ public struct DocumentListReducer: Sendable {
                 case .toggleSelectionModeButtonTapped:
                     return .send(.documentSelection(.toggleSelectionModeButtonTapped(state.filter)))
                 }
-            case .binding, .destination, .documentImport, .documentSelection, .documents, .path:
+            case .binding, .delegate, .destination, .documentImport, .documentSelection, .documents, .path:
                 return .none
             }
         }

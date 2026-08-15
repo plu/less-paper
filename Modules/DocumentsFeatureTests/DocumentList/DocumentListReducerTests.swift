@@ -713,4 +713,83 @@ struct DocumentListReducerTests {
 
         #expect(rows[id: 7]?.document.title == "Renamed")
     }
+
+    @Test
+    func test_documents_element_delegate_deleteDocument_success() async throws {
+        let idsReceived = LockIsolated<[Document.Id]?>(nil)
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                allLoadedDocuments: [1, 2, 3, 4],
+                allMatchingDocuments: [1, 2, 3, 4],
+                selectedDocuments: [1, 2]
+            ),
+            path: StackState([.documentDetail(.testValue(document: .testValue(id: 2)))])
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.deleteDocuments.execute = { ids, _ in
+                idsReceived.setValue(ids)
+            }
+        }
+
+        await store.send(.documents(.element(id: 2, action: .delegate(.deleteDocument))))
+        await store.receive(\.isUpdating) {
+            $0.documents[id: 2]?.isUpdating = true
+        }
+        await store.receive(\.documentsDeleted, [2]) {
+            $0.documents.remove(id: 2)
+            $0.documentSelection.allLoadedDocuments = [1, 3, 4]
+            $0.documentSelection.allMatchingDocuments = [1, 3, 4]
+            $0.documentSelection.selectedDocuments = [1]
+            $0.path = StackState()
+            $0.totalNumberOfDocuments = 41
+        }
+        await store.receive(\.delegate, .documentsDeleted([2]))
+
+        #expect(idsReceived.value == [2])
+    }
+
+    @Test
+    func test_documents_element_delegate_deleteDocument_error() async throws {
+        let toasts = LockIsolated<[Toast]>([])
+        let store = TestStore(initialState: DocumentListReducer.State.testValue()) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.deleteDocuments.execute = { _, _ in
+                throw ApiError.testValue()
+            }
+            $0.toastPresenter.present = { value in
+                toasts.withValue { $0.append(value) }
+            }
+        }
+
+        await store.send(.documents(.element(id: 2, action: .delegate(.deleteDocument))))
+        await store.receive(\.isUpdating) {
+            $0.documents[id: 2]?.isUpdating = true
+        }
+        await store.receive(\.deleteDocumentsFailed) {
+            $0.documents[id: 2]?.isUpdating = false
+        }
+
+        #expect(toasts.value == [.error("Something went wrong")])
+        #expect(store.state.documents.ids.elements == [1, 2, 3, 4])
+        #expect(store.state.error == nil)
+    }
+
+    @Test
+    func test_documentsDeleted_leavesUnrelatedStateAlone() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(selectedDocuments: [1, 3]),
+            path: StackState([.documentDetail(.testValue(document: .testValue(id: 3)))])
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.documentsDeleted([99]))
+
+        #expect(store.state.documents.ids.elements == [1, 2, 3, 4])
+        #expect(store.state.documentSelection.selectedDocuments == [1, 3])
+        #expect(store.state.path.count == 1)
+        #expect(store.state.totalNumberOfDocuments == 42)
+    }
 }

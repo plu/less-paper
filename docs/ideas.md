@@ -8,19 +8,27 @@ When picking one up, move it out of here and into a `docs/plans/` document.
 
 ---
 
-## Refresh the inbox badge after edits
+## Refresh the inbox badge
+
+**Observed in practice:** the number on the Inbox tab bar item is sometimes wrong.
 
 The Inbox tab badge reads `inboxDocumentCount` (`SharedReaderKey+Extensions.swift`), which is
 written only by `GetStatisticsUseCase` — and that runs only from `UpdateCacheUseCase`, i.e. when
 the selected server changes (`AppReducer.selectedServerChanged`).
 
-So adding or removing an inbox tag leaves the badge stale for the rest of the session, whether the
-edit was made from the Inbox tab or the Documents tab.
+So the badge is a snapshot taken at server-selection time and never revised for the rest of the
+session. Everything that changes the true inbox count leaves it stale:
 
-Fix would be to re-fetch statistics after any edit that touches an inbox tag. Cheap, but it adds a
-request to the edit path, so it wants a moment's thought about where to trigger it.
+- adding or removing an inbox tag, from either tab (single edit or bulk edit)
+- deleting a document that carried an inbox tag
+- documents consumed server-side while the app is open
 
-Surfaced during: `docs/plans/2026-08-12-cross-tab-document-sync.md`.
+Fix would be to re-fetch statistics after any operation that can change the count. Cheap per call,
+but it adds a request to several paths, so it wants a moment's thought about where to trigger it —
+probably one shared "invalidate statistics" effect rather than a call per site.
+
+Surfaced during: `docs/plans/2026-08-12-cross-tab-document-sync.md`, reinforced by
+`docs/plans/2026-08-14-delete-document.md` and a direct user report on 2026-08-15.
 
 ---
 

@@ -147,4 +147,19 @@ struct DocumentRowViewTests {
             as: .image(layout: .sizeThatFits)
         )
     }
+
+    @Test
+    func testSnapshot_isUpdating() async throws {
+        assertSnapshot(
+            of: DocumentRowView(
+                store: Store(
+                    initialState: DocumentRowReducer.State.testValue(isUpdating: true),
+                    reducer: {
+                        DocumentRowReducer()
+                    }
+                )
+            ).frame(width: 375).padding(),
+            as: .image(layout: .sizeThatFits)
+        )
+    }
 }

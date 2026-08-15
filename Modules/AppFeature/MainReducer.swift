@@ -53,6 +53,10 @@ public struct MainReducer {
         }
         Reduce { state, action in
             switch action {
+            case let .documentList(.delegate(.documentsDeleted(ids))):
+                return .send(.inbox(.documentsDeleted(ids)))
+            case let .inbox(.delegate(.documentsDeleted(ids))):
+                return .send(.documentList(.documentsDeleted(ids)))
             case let .selectedTab(tab):
                 state.selectedTab = tab
                 return .none

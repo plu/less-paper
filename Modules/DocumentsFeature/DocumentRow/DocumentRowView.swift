@@ -26,6 +26,7 @@ struct DocumentRowView: View {
         .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
         .contextMenu(menuItems: contextMenu)
+        .opacity(store.isUpdating ? 0.5 : 1.0)
         .sheet(
             item: $store.scope(state: \.destination?.documentForm, action: \.destination.documentForm)
         ) { store in
@@ -43,6 +44,12 @@ struct DocumentRowView: View {
             send(.editButtonTapped)
         } label: {
             Label(.editDocument, systemImage: "square.and.pencil")
+        }
+
+        Button(role: .destructive) {
+            send(.deleteButtonTapped)
+        } label: {
+            Label(.deleteDocument, systemImage: "trash")
         }
     }
 

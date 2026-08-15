@@ -678,6 +678,23 @@
         }
       }
     },
+    "deleteDocument" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokument löschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete document"
+          }
+        }
+      }
+    },
     "deleteDocumentType" : {
       "extractionState" : "manual",
       "localizations" : {

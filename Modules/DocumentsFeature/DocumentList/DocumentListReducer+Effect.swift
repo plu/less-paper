@@ -4,6 +4,34 @@ import Foundation
 
 extension Effect where Action == DocumentListReducer.Action {
 
+    /**
+     * Deletes documents on the server, then announces the removal locally and to the other tab.
+     *
+     * The rows are dimmed for the duration rather than removed optimistically, so a failure
+     * leaves the list exactly as it was.
+     *
+     * - Parameters:
+     *   - ids: The documents to delete.
+     *   - server: The server to delete them from.
+     */
+    static func runDeleteDocuments(
+        ids: Set<Document.Id>,
+        server: Server
+    ) -> Self {
+        @Dependency(\.deleteDocuments.execute)
+        var deleteDocuments
+
+        return .run { send in
+            await send(.isUpdating(ids: ids, isUpdating: true))
+            try await deleteDocuments(ids.sorted(), server)
+            await send(.documentsDeleted(ids), animation: .default)
+            await send(.delegate(.documentsDeleted(ids)))
+        } catch: { error, send in
+            await send(.deleteDocumentsFailed(ids: ids, error: error))
+        }
+        .cancellable(id: CancelID.deleteDocuments)
+    }
+
     static func runGetDocuments(
         filterRules: [FilterRule] = [],
         server: Server,
@@ -95,6 +123,7 @@ private extension Array {
 }
 
 private enum CancelID {
+    case deleteDocuments
     case getDocuments
     case getMoreDocuments
     case refreshDocuments

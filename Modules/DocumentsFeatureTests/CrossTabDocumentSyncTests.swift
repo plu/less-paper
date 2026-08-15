@@ -91,4 +91,62 @@ struct CrossTabDocumentSyncTests {
 
         #expect(inboxDetail.document.title == "Renamed")
     }
+
+    /// Deletion is the deliberate exception to the rule the tests above establish: an edit never
+    /// moves a list's membership, but a delete removes the row from *both* tabs.
+    @Test
+    func test_deleteFromOneList_removesRowFromBothLists() async throws {
+        let server = Server.testValue()
+        var inboxState = DocumentListReducer.State.testValue(
+            documents: [],
+            filter: .inbox(server: server),
+            server: server
+        )
+        var documentListState = DocumentListReducer.State.testValue(
+            documents: [],
+            server: server
+        )
+
+        inboxState.documents = inboxState.rows(for: [
+            .testValue(id: 15, title: "Warranty"),
+            .testValue(id: 7, title: "Invoice"),
+        ])
+        documentListState.documents = documentListState.rows(for: [
+            .testValue(id: 7, title: "Invoice"),
+            .testValue(id: 12, title: "Contract"),
+        ])
+
+        let documentListStore = TestStore(initialState: documentListState) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.deleteDocuments.execute = { _, _ in }
+        }
+        let inboxStore = TestStore(initialState: inboxState) {
+            DocumentListReducer()
+        }
+
+        await documentListStore.send(.documents(.element(id: 7, action: .delegate(.deleteDocument))))
+        await documentListStore.receive(\.isUpdating) {
+            $0.documents[id: 7]?.isUpdating = true
+        }
+        await documentListStore.receive(\.documentsDeleted, [7]) {
+            $0.documents.remove(id: 7)
+            $0.totalNumberOfDocuments = 41
+        }
+        await documentListStore.receive(\.delegate, .documentsDeleted([7]))
+
+        // MainReducer forwards the delegate to the other tab; this is that hop.
+        await inboxStore.send(.documentsDeleted([7])) {
+            $0.documents.remove(id: 7)
+            $0.totalNumberOfDocuments = 41
+        }
+
+        // The document is gone from both tabs...
+        #expect(documentListStore.state.documents.ids.elements == [12])
+        #expect(inboxStore.state.documents.ids.elements == [15])
+
+        // ...and the surviving rows kept their order and content.
+        #expect(inboxStore.state.documents[id: 15]?.document.title == "Warranty")
+        #expect(documentListStore.state.documents[id: 12]?.document.title == "Contract")
+    }
 }
