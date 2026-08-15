@@ -28,11 +28,9 @@ public struct DocumentDetailReducer: Sendable {
     @ObservableState
     public struct State: Equatable {
         @Presents
-
         var destination: Destination.State?
 
         @Shared
-
         var document: Document
 
         var downloadResult: DownloadResult?

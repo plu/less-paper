@@ -54,7 +54,6 @@ public struct DocumentFilterReducer: Sendable {
     @ObservableState
     public struct State: Equatable {
         @Presents
-
         var destination: Destination.State?
 
         var input: DocumentFilterInput
@@ -82,23 +81,18 @@ public struct DocumentFilterReducer: Sendable {
         }
 
         @Shared
-
         var correspondents: IdentifiedArrayOf<Correspondent>
 
         @Shared
-
         var documentTypes: IdentifiedArrayOf<DocumentType>
 
         @Shared
-
         var savedViews: IdentifiedArrayOf<SavedView>
 
         @Shared
-
         var storagePaths: IdentifiedArrayOf<StoragePath>
 
         @Shared
-
         var tags: IdentifiedArrayOf<Tag>
 
         init(

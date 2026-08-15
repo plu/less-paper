@@ -3,3 +3,4 @@
 set -euo pipefail
 swiftlint lint --fix --quiet --config $MISE_PROJECT_ROOT/.swiftlint.yml $MISE_PROJECT_ROOT
 swiftformat $MISE_PROJECT_ROOT
+$MISE_PROJECT_ROOT/mise/scripts/attribute_blank_lines.py

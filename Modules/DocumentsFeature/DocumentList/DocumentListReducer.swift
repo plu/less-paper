@@ -68,7 +68,6 @@ public struct DocumentListReducer: Sendable {
         let server: Server
 
         @Presents
-
         var destination: Destination.State?
 
         var documentImport = DocumentImportReducer.State()
@@ -97,27 +96,21 @@ public struct DocumentListReducer: Sendable {
         var path: StackState<Path.State>
 
         @Shared
-
         var correspondents: IdentifiedArrayOf<Correspondent>
 
         @Shared
-
         var documentCache: IdentifiedArrayOf<Document>
 
         @Shared
-
         var documentTypes: IdentifiedArrayOf<DocumentType>
 
         @Shared
-
         var savedViews: IdentifiedArrayOf<SavedView>
 
         @Shared
-
         var storagePaths: IdentifiedArrayOf<StoragePath>
 
         @Shared
-
         var tags: IdentifiedArrayOf<Tag>
 
         var totalNumberOfDocuments: Int
