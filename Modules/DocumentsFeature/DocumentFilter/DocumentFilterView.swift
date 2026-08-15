@@ -29,8 +29,6 @@ struct DocumentFilterView: View {
                 sortField()
             }
             .frame(maxWidth: .infinity)
-        } bottom: {
-            buttons()
         }
         .sheet(
             item: $store.scope(
@@ -138,13 +136,20 @@ struct DocumentFilterView: View {
             }
     }
 
+    var searchValueBinding: Binding<String> {
+        Binding(
+            get: { store.input.searchValue },
+            set: { send(.searchValueChanged($0)) }
+        )
+    }
+
     @ViewBuilder
     private func searchField() -> some View {
         DocumentFilterSearchField(
             asnType: store.input.asnType,
             onViewAction: send,
             searchType: store.input.searchType,
-            searchValue: $store.input.searchValue
+            searchValue: searchValueBinding
         )
     }
 
@@ -178,27 +183,6 @@ struct DocumentFilterView: View {
     }
 
     @ViewBuilder
-    private func buttons() -> some View {
-        AdaptiveStack {
-            Button {
-                send(.resetButtonTapped)
-            } label: {
-                Text(.reset)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.secondary())
-
-            Button {
-                send(.applyButtonTapped)
-            } label: {
-                Text(.apply)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.primary())
-        }
-    }
-
-    @ViewBuilder
     private func leftHeader() -> some View {
         Button {
             send(.closeButtonTapped)
@@ -210,7 +194,44 @@ struct DocumentFilterView: View {
 
     @ViewBuilder
     private func rightHeader() -> some View {
-        saveMenu()
+        optionsMenu()
+    }
+
+    @ViewBuilder
+    private func optionsMenu() -> some View {
+        Menu {
+            if store.savedView != nil {
+                Button {
+                    send(.saveButtonTapped)
+                } label: {
+                    Text(.save)
+                }
+                .disabled(!store.isModified)
+            }
+
+            Button {
+                send(.saveAsButtonTapped)
+            } label: {
+                Text(.saveAs)
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                send(.resetButtonTapped)
+            } label: {
+                Text(.reset)
+            }
+            .disabled(!store.isModified)
+        } label: {
+            // Expanded inside the label on purpose: a menu's tap target is its label, so the 60pt
+            // slot SheetHeader provides does nothing for it. Shaping it from the outside does not
+            // work either — the three dots are only about 16x4pt on their own.
+            Image(systemName: "ellipsis")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .accessibilityLabel(.moreOptions)
+        }
     }
 
     @ViewBuilder
@@ -242,29 +263,6 @@ struct DocumentFilterView: View {
             } label: {
                 title().opacity(0)
             }
-        }
-    }
-
-    @ViewBuilder
-    private func saveMenu() -> some View {
-        Menu {
-            Button {
-                send(.saveAsButtonTapped)
-            } label: {
-                Text(.saveAs)
-            }
-
-            if store.savedView != nil {
-                Button {
-                    send(.saveButtonTapped)
-                } label: {
-                    Text(.save)
-                }
-                .disabled(!store.isModified)
-            }
-        } label: {
-            Image(systemName: "square.and.arrow.down")
-                .accessibilityLabel(.moreOptions)
         }
     }
 

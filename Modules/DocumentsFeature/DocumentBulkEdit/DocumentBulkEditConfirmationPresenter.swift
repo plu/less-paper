@@ -7,10 +7,8 @@ import Foundation
 @DependencyClient
 struct DocumentBulkEditConfirmationPresenter: Sendable {
 
-    /// Presents the confirmation popup and suspends until the user confirms or cancels
     var present: @Sendable (_ message: LocalizedStringResource) async -> Bool = { _ in false }
 
-    /// Presents the tag confirmation popup and suspends until the user confirms or cancels
     var presentTags: @Sendable (
         _ addTags: [Tag],
         _ documentCount: Int,

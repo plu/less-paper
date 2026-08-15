@@ -26,8 +26,6 @@ struct GetStatisticsUseCaseTests {
         }
     }
 
-    /// The badge count and the Inbox list's filter both come out of this one response, so both
-    /// caches have to be written here.
     @Test
     func execute_cachesInboxCountAndTags() async throws {
         @Shared(.inboxDocumentCount(.testValue()))

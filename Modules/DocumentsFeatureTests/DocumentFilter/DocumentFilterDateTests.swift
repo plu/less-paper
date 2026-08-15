@@ -45,8 +45,6 @@ struct DocumentFilterDateTests {
         #expect(input.date.from.date == date("2026-01-01"))
     }
 
-    /// The field constrains one date at a time. Created wins, and the added rules are passed
-    /// through so the query and the saved view keep them.
     @Test
     func createdWinsAndAddedPassesThroughWhenBothArePresent() async throws {
         let input = makeInput([
@@ -62,7 +60,6 @@ struct DocumentFilterDateTests {
         )
     }
 
-    /// `createdYear` and friends are not from/to bounds, so they keep passing through untouched.
     @Test
     func createdYearIsNotTreatedAsABound() async throws {
         let original = [FilterRule(ruleType: .createdYear, value: "2026")]
@@ -108,7 +105,6 @@ struct DocumentFilterDateTests {
         ])
     }
 
-    /// Switching the field must not emit a created rule for an added bound.
     @Test
     func rememberedRuleFromTheOtherDateIsIgnored() async throws {
         var input = DocumentFilterInput()
@@ -122,9 +118,6 @@ struct DocumentFilterDateTests {
 
     // MARK: - Round trip
 
-    /// The property that matters: whichever of the four spellings a saved view used comes back out
-    /// unchanged. Normalising an exclusive bound to an inclusive one would move the user's
-    /// boundary by a day.
     @Test(arguments: [
         FilterRuleType.createdFrom,
         .createdTo,

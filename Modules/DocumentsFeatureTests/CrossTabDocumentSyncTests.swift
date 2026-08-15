@@ -7,9 +7,6 @@ import SwiftSharing
 import Testing
 import TestSupport
 
-/// The two tabs are two `DocumentListReducer.State`s over one server — all `MainReducer` does is
-/// hold them — so that is what these tests build. They cover the point of the whole feature: an
-/// edit made from one tab reaches the other's rows and detail screens, and changes nothing else.
 @MainActor
 @Suite(
     .dependencies()
@@ -92,8 +89,6 @@ struct CrossTabDocumentSyncTests {
         #expect(inboxDetail.document.title == "Renamed")
     }
 
-    /// Deletion is the deliberate exception to the rule the tests above establish: an edit never
-    /// moves a list's membership, but a delete removes the row from *both* tabs.
     @Test
     func test_deleteFromOneList_removesRowFromBothLists() async throws {
         let server = Server.testValue()

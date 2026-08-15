@@ -14,10 +14,13 @@ extension Effect where Action == DocumentFilterReducer.Action {
     }
 
     static func runFilterUpdated(_ state: DocumentFilterReducer.State) -> Self {
-        .send(.delegate(.filterUpdated(.init(
-            input: state.input,
-            savedView: state.savedView
-        ))))
+        .merge(
+            .cancel(id: CancelID.searchDebounce),
+            .send(.delegate(.filterUpdated(.init(
+                input: state.input,
+                savedView: state.savedView
+            ))))
+        )
     }
 
     static func runSaveView(
@@ -43,8 +46,22 @@ extension Effect where Action == DocumentFilterReducer.Action {
         }
         .cancellable(id: CancelID.saveView)
     }
+
+    // Carries no filter on purpose: the reducer reads state when `searchDebounced` lands. Capturing
+    // it here would let a keystroke report a search type the user changed inside the window.
+    static func runSearchDebounce() -> Self {
+        @Dependency(\.continuousClock)
+        var clock
+
+        return .run { send in
+            try await clock.sleep(for: .milliseconds(400))
+            await send(.searchDebounced)
+        }
+        .cancellable(id: CancelID.searchDebounce, cancelInFlight: true)
+    }
 }
 
 private enum CancelID {
     case saveView
+    case searchDebounce
 }

@@ -1000,9 +1000,6 @@ struct DocumentFilterInputTests {
 
     // MARK: - hasAnyTag
 
-    /// `is_tagged=1` means "has at least one tag". Parsing it as `.notAssigned` inverted the
-    /// filter, and because `runGetDocuments` sends these same rules, selecting such a saved view
-    /// asked the server for untagged documents.
     @Test
     func hasAnyTagWithValueOne_parsesAsAssigned() async throws {
         let input = DocumentFilterInput(
@@ -1035,7 +1032,6 @@ struct DocumentFilterInputTests {
         expectNoDifference(input.filterRules, [.init(ruleType: .hasAnyTag, value: "1")])
     }
 
-    /// The whole point: a saved view survives being loaded into the sheet and written back out.
     @Test
     func hasAnyTagSurvivesARoundTrip() async throws {
         for value in ["0", "1"] {
@@ -1053,9 +1049,6 @@ struct DocumentFilterInputTests {
 
     // MARK: - Unresolved ids
 
-    /// An id the caches cannot resolve — an entity created on another device, or deleted
-    /// server-side — used to be dropped outright, which changed the query and, on save, rewrote
-    /// the saved view without it. It is now carried through untouched.
     @Test
     func unresolvedIdsSurviveARoundTrip() async throws {
         @Shared(.correspondents(.testValue()))
@@ -1076,8 +1069,6 @@ struct DocumentFilterInputTests {
         ])
     }
 
-    /// A cold cache resolves nothing, so the whole rule has to survive rather than the filter
-    /// silently becoming "no correspondent filter at all".
     @Test
     func unresolvedIdsWithEmptyCacheSurvive() async throws {
         @Shared(.correspondents(.testValue()))
@@ -1094,8 +1085,6 @@ struct DocumentFilterInputTests {
         expectNoDifference(input.filterRules, [.init(ruleType: .hasCorrespondentAny, value: "7")])
     }
 
-    /// Values that are not ids at all are still discarded — `ids()` drops them before resolution,
-    /// and re-emitting garbage would be worse than losing it.
     @Test
     func nonNumericIdsAreStillDropped() async throws {
         @Shared(.correspondents(.testValue()))

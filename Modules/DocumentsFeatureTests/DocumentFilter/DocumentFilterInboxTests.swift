@@ -13,8 +13,6 @@ import TestSupport
 )
 struct DocumentFilterInboxTests {
 
-    /// The tag *ids* come from the statistics response — refreshed on every mutation, foreground
-    /// and pull-to-refresh — while the tags cache supplies the `Tag` values the selection holds.
     @Test
     func inbox_filtersByTheInboxTagsFromStatistics() async throws {
         let server = Server.testValue()
@@ -35,8 +33,6 @@ struct DocumentFilterInboxTests {
         #expect(filter.isInbox)
     }
 
-    /// A tag the server has newly flagged as an inbox tag is picked up from the statistics ids even
-    /// though the cached `Tag` still says `isInboxTag == false`.
     @Test
     func inbox_prefersStatisticsIdsOverTheCachedFlag() async throws {
         let server = Server.testValue()
@@ -55,8 +51,6 @@ struct DocumentFilterInboxTests {
         #expect(filter.input.tag.selection.any.map(\.id) == [200])
     }
 
-    /// An empty selection produces no tag rule at all, which would ask the server for *every*
-    /// document. `isInbox` is what lets the list tell that apart from an unfiltered list.
     @Test
     func inbox_withoutInboxTags_isStillMarkedAsInbox() async throws {
         let server = Server.testValue()

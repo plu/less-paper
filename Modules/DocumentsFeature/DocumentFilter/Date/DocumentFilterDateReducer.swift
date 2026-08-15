@@ -49,8 +49,6 @@ public struct DocumentFilterDateReducer: Sendable {
                         await dismiss()
                     }
                 case .fromButtonTapped:
-                    // Seeded with today so the picker opens somewhere sensible rather than at
-                    // the reference date.
                     state.date.from.date = Date()
                     return .send(.delegate(.filterUpdated(state.date)))
                 case .resetFromButtonTapped:

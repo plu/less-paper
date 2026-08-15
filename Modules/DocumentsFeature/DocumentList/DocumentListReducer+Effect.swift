@@ -4,16 +4,6 @@ import Foundation
 
 extension Effect where Action == DocumentListReducer.Action {
 
-    /**
-     * Deletes documents on the server, then announces the removal locally and to the other tab.
-     *
-     * The rows are dimmed for the duration rather than removed optimistically, so a failure
-     * leaves the list exactly as it was.
-     *
-     * - Parameters:
-     *   - ids: The documents to delete.
-     *   - server: The server to delete them from.
-     */
     static func runDeleteDocuments(
         ids: Set<Document.Id>,
         server: Server
@@ -74,14 +64,6 @@ extension Effect where Action == DocumentListReducer.Action {
         .cancellable(id: CancelID.getDocuments)
     }
 
-    /**
-     * Asks the user to confirm deleting the current selection.
-     *
-     * The count rather than the documents themselves: a selection can run to thousands after
-     * "select all matching", so naming them is not an option.
-     *
-     * - Parameter documentCount: How many documents the user has selected.
-     */
     static func runConfirmDeleteSelected(documentCount: Int) -> Self {
         @Dependency(\.documentDeleteConfirmation.presentMany)
         var presentConfirmation
@@ -95,15 +77,6 @@ extension Effect where Action == DocumentListReducer.Action {
         .cancellable(id: CancelID.confirmDeleteSelected)
     }
 
-    /**
-     * Re-reads the server's statistics so the Inbox tab badge matches what the user just pulled to
-     * refresh.
-     *
-     * Runs for both tabs rather than only the Inbox: the badge should be right whichever list the
-     * user refreshed, and this is one request on an explicit gesture.
-     *
-     * - Parameter server: The server to read statistics from.
-     */
     static func runRefreshStatistics(server: Server) -> Self {
         @Dependency(\.getStatistics.execute)
         var getStatistics
@@ -117,17 +90,6 @@ extension Effect where Action == DocumentListReducer.Action {
         .cancellable(id: CancelID.refreshStatistics)
     }
 
-    /**
-     * Re-fetches the given documents and writes them into the shared store.
-     *
-     * Bulk edit returns no documents, so the affected content has to be re-read. Only ids
-     * already present in the store are worth fetching, and the request is chunked because a
-     * selection can run to thousands of ids.
-     *
-     * - Parameters:
-     *   - ids: The affected document ids that are present in the shared store.
-     *   - server: The server to fetch from.
-     */
     static func runRefreshDocuments(
         ids: Set<Document.Id>,
         server: Server

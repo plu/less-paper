@@ -44,11 +44,6 @@ public extension SharedReaderKey where Self == FileStorageKey<IdentifiedArrayOf<
 
 public extension SharedReaderKey where Self == InMemoryKey<IdentifiedArrayOf<Document>>.Default {
 
-    /// Per-server store of document content, keyed by id.
-    ///
-    /// Used as an `id → Document` map — its ordering is meaningless and nothing displays it.
-    /// In-memory rather than file-backed: documents are paginated and far more numerous than
-    /// the other cached entities, and there is no offline requirement.
     static func documents(_ server: Server) -> Self {
         Self[
             .inMemory("\(server.id)-documents"),
@@ -164,10 +159,6 @@ public extension SharedReaderKey where Self == AppStorageKey<Int>.Default {
 
 public extension SharedReaderKey where Self == FileStorageKey<[Tag.Id]>.Default {
 
-    /// The tags the server treats as inbox tags.
-    ///
-    /// Written from the statistics response, so the Inbox tab's badge and the Inbox list's filter
-    /// are derived from the same read rather than from two independently cached sources.
     static func inboxTags(_ server: Server) -> Self {
         Self[
             .fileStorage(

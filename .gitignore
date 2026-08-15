@@ -71,5 +71,6 @@ Tuist/.build
 
 node_modules/
 
-.claude/
+.claude/*
+!.claude/CLAUDE.md
 *.xcresult

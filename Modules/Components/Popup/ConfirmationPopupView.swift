@@ -40,19 +40,6 @@ public struct ConfirmationPopupView<Content: View>: View {
         .frame(maxWidth: 600)
     }
 
-    /**
-     * Creates a confirmation popup with custom content.
-     *
-     * - Parameters:
-     *   - title: The title shown in the popup's header bar
-     *   - confirmTitle: The confirm button's title, defaulting to the shared "Confirm" string
-     *   - cancelTitle: The cancel button's title, defaulting to the shared "Cancel" string
-     *   - isDestructive: Whether the confirm button uses the critical style
-     *   - submit: Optional async work run while the confirm button shows a spinner, before `confirm`
-     *   - cancel: Called when the cancel button is tapped
-     *   - confirm: Called when the confirm button is tapped, after `submit` has finished
-     *   - content: The popup's body
-     */
     public init(
         title: LocalizedStringResource,
         confirmTitle: LocalizedStringResource? = nil,
@@ -108,19 +95,6 @@ public struct ConfirmationPopupView<Content: View>: View {
 
 public extension ConfirmationPopupView where Content == Text {
 
-    /**
-     * Creates a confirmation popup showing a single message.
-     *
-     * - Parameters:
-     *   - title: The title shown in the popup's header bar
-     *   - message: The message shown in the popup's body
-     *   - confirmTitle: The confirm button's title, defaulting to the shared "Confirm" string
-     *   - cancelTitle: The cancel button's title, defaulting to the shared "Cancel" string
-     *   - isDestructive: Whether the confirm button uses the critical style
-     *   - submit: Optional async work run while the confirm button shows a spinner, before `confirm`
-     *   - cancel: Called when the cancel button is tapped
-     *   - confirm: Called when the confirm button is tapped, after `submit` has finished
-     */
     init(
         title: LocalizedStringResource,
         message: LocalizedStringResource,

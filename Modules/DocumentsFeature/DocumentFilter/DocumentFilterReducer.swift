@@ -17,6 +17,7 @@ public struct DocumentFilterReducer: Sendable {
         case destination(PresentationAction<Destination.Action>)
         case error(Error)
         case savedViewSaved(SavedView)
+        case searchDebounced
         case view(View)
 
         @CasePathable
@@ -25,7 +26,6 @@ public struct DocumentFilterReducer: Sendable {
         }
 
         public enum View {
-            case applyButtonTapped
             case asnTypeButtonTapped(DocumentFilterASNType)
             case closeButtonTapped
             case correspondentButtonTapped
@@ -36,6 +36,7 @@ public struct DocumentFilterReducer: Sendable {
             case saveButtonTapped
             case savedViewButtonTapped(SavedView?)
             case searchTypeButtonTapped(DocumentFilterSearchType)
+            case searchValueChanged(String)
             case sortDirectionButtonTapped(SortDirection)
             case sortFieldButtonTapped(SortField)
             case storagePathButtonTapped
@@ -159,10 +160,10 @@ public struct DocumentFilterReducer: Sendable {
                 )
                 state.savedView = savedView
                 return .runFilterUpdated(state)
+            case .searchDebounced:
+                return .runFilterUpdated(state)
             case let .view(viewAction):
                 switch viewAction {
-                case .applyButtonTapped:
-                    return .runFilterUpdated(state)
                 case let .asnTypeButtonTapped(asnType):
                     state.input.asnType = asnType
                     state.input.searchType = .asn
@@ -225,6 +226,13 @@ public struct DocumentFilterReducer: Sendable {
                 case let .searchTypeButtonTapped(searchType):
                     state.input.searchType = searchType
                     return .runFilterUpdated(state)
+                case let .searchValueChanged(searchValue):
+                    // An explicit action rather than a binding: `$store.input.searchValue` is a
+                    // chained lookup, so the store only ever sees `.binding(.set(\.input, …))` with
+                    // the whole input — a `\.input.searchValue` case never matches, and a `\.input`
+                    // one would silently catch every future binding on the sheet.
+                    state.input.searchValue = searchValue
+                    return .runSearchDebounce()
                 case let .sortDirectionButtonTapped(direction):
                     state.input.sort.direction = direction
                     return .runFilterUpdated(state)

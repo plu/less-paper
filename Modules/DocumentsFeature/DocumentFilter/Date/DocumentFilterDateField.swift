@@ -3,10 +3,6 @@ import Components
 import ComposableArchitecture
 import SwiftUI
 
-/// The filter sheet's date row.
-///
-/// One row that opens a sheet, like the correspondent, document type, storage path and tag fields
-/// — a date range is a multi-value editor, not a one-tap choice.
 struct DocumentFilterDateField: View {
 
     let date: DocumentFilterInput.DateFilter
@@ -30,7 +26,6 @@ struct DocumentFilterDateField: View {
         }
     }
 
-    /// The range as `from – to`, with an en dash and an open end where a bound is unset.
     private var bounds: String {
         let formatter = DateFormatter.filterRule
         let from = date.from.date.map(formatter.string(from:)) ?? String(localized: .any)

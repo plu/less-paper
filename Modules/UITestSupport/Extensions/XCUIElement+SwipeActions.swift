@@ -2,12 +2,6 @@ import XCTest
 
 public extension XCUIElement {
 
-    /// Reveals the trailing swipe actions of a list row.
-    ///
-    /// Deliberately not `swipeLeft()`: that synthesizes a fast, full-width flick whose timing
-    /// varies with host load, so it can be interpreted as a tap on the row itself, or cross
-    /// SwiftUI's full-swipe threshold — which performs the first trailing action instead of
-    /// revealing it. A slow drag across 45% of the row width can do neither.
     func revealSwipeActions() {
         coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5))
             .press(

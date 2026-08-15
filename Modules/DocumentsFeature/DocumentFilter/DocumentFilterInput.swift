@@ -9,40 +9,21 @@ import SwiftSharing
 import TagsFeature
 
 public struct DocumentFilterInput: Equatable {
-
     struct ListFilter<T: Equatable & Hashable>: Equatable {
-
         var rule = DocumentFilterGenericValueRule.include
-
         var selection = Set<T>()
     }
 
     public struct DateFilter: Equatable {
-
-        /// One end of the range.
         public struct Bound: Equatable {
-
             var date: Date?
-
-            /// The rule this bound was parsed from, kept so a saved view's spelling survives.
-            ///
-            /// Paperless has two spellings per bound — the modern inclusive `__gte`/`__lte` and the
-            /// legacy exclusive `__gt`/`__lt`. Normalising one to the other would silently move the
-            /// user's boundary by a day, so whatever a saved view used is written back unchanged.
-            /// `nil` for a bound the user set here, which is written with the modern spelling.
             var ruleType: FilterRuleType?
         }
 
         var from = Bound()
-
         var to = Bound()
-
         var type = DocumentFilterDateType.created
 
-        /// The rule to write for a bound, preferring the spelling it was parsed from.
-        ///
-        /// A remembered rule from the other date is ignored: switching the field from created to
-        /// added must not emit `createdFrom` for an added bound.
         func ruleType(for bound: Bound, isLowerBound: Bool) -> FilterRuleType {
             if let ruleType = bound.ruleType, ruleType.dateType == type {
                 return ruleType
@@ -52,38 +33,24 @@ public struct DocumentFilterInput: Equatable {
     }
 
     struct SortFilter: Equatable {
-
         var direction = SortDirection.descending
-
         var field = SortField.added
     }
 
     struct TagFilter: Equatable {
-
         var rule = DocumentFilterTagRule.all
-
         var selection = DocumentFilterTagSelection()
     }
 
     var asnType = DocumentFilterASNType.equals
-
     var correspondent = ListFilter<Correspondent>()
-
     var date = DateFilter()
-
     var documentType = ListFilter<DocumentType>()
-
     var searchType = DocumentFilterSearchType.titleContent
-
     var searchValue = ""
-
     var sort = SortFilter()
-
     var storagePath = ListFilter<StoragePath>()
-
     var tag = TagFilter()
-
-    /// Filter rules that this filter UI cannot represent, kept so they survive a round trip
     var unsupportedFilterRules = [FilterRule]()
 }
 
@@ -98,7 +65,6 @@ extension DocumentFilterInput.TagFilter {
         case .any:
             return lhs.selection.any == rhs.selection.any
         case .assigned, .notAssigned:
-            // Neither carries a selection, so matching rules are all it takes.
             return true
         }
     }
@@ -133,8 +99,6 @@ extension DocumentFilterInput {
         tag.selection = .init()
         unsupportedFilterRules = []
 
-        // Collected rather than applied inline: which date the field shows depends on all of the
-        // rules, and they can arrive in any order.
         var dateRules = [FilterRule]()
 
         for filterRule in filterRules ?? [] {
@@ -233,16 +197,6 @@ extension DocumentFilterInput {
         apply(dateRules)
     }
 
-    /**
-     * Applies the collected date rules to the single date field, passing through what it cannot
-     * hold.
-     *
-     * The field constrains one date at a time, so a saved view that bounds *both* created and
-     * added can only show one of them. Created wins, and the added rules are passed through
-     * untouched so the query and the saved view keep them — they are simply not editable here.
-     *
-     * - Parameter dateRules: Every from/to date rule found, in the order they appeared.
-     */
     private mutating func apply(_ dateRules: [FilterRule]) {
         guard !dateRules.isEmpty else {
             return
@@ -421,27 +375,6 @@ extension DocumentFilterInput {
         }
     }
 
-    /**
-     * Resolves a rule's ids against a cache, keeping any that do not resolve as passthrough rules.
-     *
-     * A saved view can name an entity this client has no cached copy of — one created on another
-     * device before the caches were warm, or deleted server-side while the view still references
-     * it. Those ids used to be dropped outright, which quietly widened the query and, if the user
-     * saved from the filter sheet, rewrote the saved view without them.
-     *
-     * The selection holds whole entities, so an unresolvable id cannot live there. It is carried in
-     * `unsupportedFilterRules` instead, which already exists for rules the UI cannot represent and
-     * is re-emitted verbatim. Splitting the rule per id is what makes this safe: the resolved ids
-     * are re-emitted from the selection, so only the missing ones are passed through and nothing is
-     * duplicated.
-     *
-     * Values that are not ids at all never get here — `ids()` discards them.
-     *
-     * - Parameters:
-     *   - filterRule: The rule being parsed.
-     *   - cache: The entities currently cached for this server.
-     * - Returns: The entities the rule's ids resolved to.
-     */
     private mutating func resolve<Value: Identifiable>(
         _ filterRule: FilterRule,
         in cache: IdentifiedArrayOf<Value>

@@ -147,15 +147,10 @@ public struct DocumentListReducer: Sendable {
             self._tags = Shared(wrappedValue: [], .tags(server))
         }
 
-        /// True when this is the Inbox and the server reports no inbox tags at all.
-        ///
-        /// An empty tag selection produces no tag rule, so fetching would ask for *every*
-        /// document rather than none.
         var isInboxWithoutInboxTags: Bool {
             filter.isInbox && filter.input.tag.selection.any.isEmpty
         }
 
-        /// Empties the list without a request, for an inbox that cannot contain anything.
         mutating func clearForEmptyInbox() {
             documents = []
             documentSelection.allLoadedDocuments = []
@@ -164,17 +159,6 @@ public struct DocumentListReducer: Sendable {
             totalNumberOfDocuments = 0
         }
 
-        /**
-         * Re-derives the Inbox filter from the current caches.
-         *
-         * The filter is built in `MainReducer.State.init`, which runs from the same action that
-         * kicks off the cache refresh — so it is always built from the *previous* session's
-         * caches, and on a first launch from empty ones. Rebuilding it on every fetch keeps the
-         * Inbox tracking the tags the server currently calls inbox tags.
-         *
-         * Does nothing once the user has applied their own filter here, since that clears
-         * `isInbox` — rebuilding then would silently discard what they asked for.
-         */
         mutating func rebuildInboxFilterIfNeeded() {
             guard filter.isInbox else {
                 return
@@ -182,7 +166,6 @@ public struct DocumentListReducer: Sendable {
             filter = .inbox(server: server)
         }
 
-        /// Upserts documents into the shared store without touching this list's membership.
         func cacheDocuments(_ documents: [Document]) {
             $documentCache.withLock { cache in
                 for document in documents {
@@ -191,15 +174,6 @@ public struct DocumentListReducer: Sendable {
             }
         }
 
-        /**
-         * Caches the given documents and builds rows referencing them.
-         *
-         * The upsert must happen before the rows are built — each row holds a reference into
-         * the store, which has to exist first.
-         *
-         * - Parameter documents: The documents this list should show, in display order.
-         * - Returns: Rows referencing the shared store, in the same order.
-         */
         func rows(for documents: [Document]) -> IdentifiedArrayOf<DocumentRowReducer.State> {
             cacheDocuments(documents)
             return IdentifiedArray(uniqueElements: documents.map { document in

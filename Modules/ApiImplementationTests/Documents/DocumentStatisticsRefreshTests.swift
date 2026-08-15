@@ -7,13 +7,6 @@ import IdentifiedCollections
 import SwiftSharing
 import Testing
 
-/**
- * Every mutation that can change the number of documents in the inbox must refresh the cached
- * statistics, otherwise the Inbox tab badge keeps showing the count from the last refresh.
- *
- * These tests drive the real `liveValue` of each use case with a stubbed repository, so they fail
- * if the refresh is dropped from any one of them.
- */
 @MainActor
 @Suite
 struct DocumentStatisticsRefreshTests {
@@ -99,8 +92,6 @@ struct DocumentStatisticsRefreshTests {
         #expect(serversReceived.value == [.testValue()])
     }
 
-    /// The mutation has already succeeded by the time the refresh runs, so a failure to refresh
-    /// must not fail the mutation — the badge simply stays stale until the next refresh.
     @Test
     func refreshFailure_doesNotFailTheMutation() async throws {
         try await withDependencies {

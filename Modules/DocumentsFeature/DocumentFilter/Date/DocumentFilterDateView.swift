@@ -80,9 +80,6 @@ struct DocumentFilterDateView: View {
             Spacer()
 
             if let value = date.wrappedValue {
-                // The picker is laid behind a capsule rather than shown directly: its compact
-                // style renders the date differently depending on the width it is given, so the
-                // two rows disagreed with each other and with the rest of the sheet.
                 ZStack {
                     Text(DateFormatter.filterRule.string(from: value)).capsule()
                     DatePicker(

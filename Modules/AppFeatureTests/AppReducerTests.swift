@@ -35,8 +35,6 @@ struct AppReducerTests {
         #expect(serversReceived.value == [server])
     }
 
-    /// Without a selected server there is nothing to refresh, and `getStatistics` is unimplemented
-    /// in tests — so this failing would show up as an unimplemented-dependency issue.
     @Test
     func test_didBecomeActive_withoutServer_doesNothing() async {
         let store = TestStore(

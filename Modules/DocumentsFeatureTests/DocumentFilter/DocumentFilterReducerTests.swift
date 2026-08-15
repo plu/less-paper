@@ -7,6 +7,7 @@ import DocumentTypesFeature
 import Foundation
 import IdentifiedCollections
 import SwiftSharing
+import SwiftUI
 import Testing
 import TestSupport
 
@@ -202,6 +203,94 @@ struct DocumentFilterReducerTests {
     }
 
     @Test
+    func test_view_searchValueChanged_debounces() async throws {
+        let clock = TestClock()
+        let store = TestStore(initialState: DocumentFilterReducer.State.testValue()) {
+            DocumentFilterReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+        }
+
+        await store.send(.view(.searchValueChanged("Lego"))) {
+            $0.input.searchValue = "Lego"
+        }
+
+        await clock.advance(by: .milliseconds(400))
+        await store.receive(\.searchDebounced)
+        await store.receive(\.delegate.filterUpdated, .testValue(
+            input: .testValue(searchValue: "Lego")
+        ))
+    }
+
+    @Test
+    func test_view_searchValueChanged_coalescesKeystrokes() async throws {
+        let clock = TestClock()
+        let store = TestStore(initialState: DocumentFilterReducer.State.testValue()) {
+            DocumentFilterReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+        }
+
+        await store.send(.view(.searchValueChanged("Leg"))) {
+            $0.input.searchValue = "Leg"
+        }
+        await clock.advance(by: .milliseconds(200))
+        await store.send(.view(.searchValueChanged("Lego"))) {
+            $0.input.searchValue = "Lego"
+        }
+        await clock.advance(by: .milliseconds(400))
+
+        await store.receive(\.searchDebounced)
+        await store.receive(\.delegate.filterUpdated, .testValue(
+            input: .testValue(searchValue: "Lego")
+        ))
+    }
+
+    @Test
+    func test_view_searchValueChanged_cancelledByExplicitChange() async throws {
+        let clock = TestClock()
+        let store = TestStore(initialState: DocumentFilterReducer.State.testValue()) {
+            DocumentFilterReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+        }
+
+        await store.send(.view(.searchValueChanged("Lego"))) {
+            $0.input.searchValue = "Lego"
+        }
+        await store.send(.view(.sortFieldButtonTapped(.title))) {
+            $0.input.sort.field = .title
+        }
+        await store.receive(\.delegate.filterUpdated, .testValue(
+            input: .testValue(searchValue: "Lego", sort: .init(field: .title))
+        ))
+
+        await clock.advance(by: .seconds(1))
+    }
+
+    @Test
+    func test_view_searchValueChanged_readsStateAtDelivery() async throws {
+        let clock = TestClock()
+        let store = TestStore(initialState: DocumentFilterReducer.State.testValue()) {
+            DocumentFilterReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+        }
+
+        await store.send(.view(.searchValueChanged("Lego"))) {
+            $0.input.searchValue = "Lego"
+        }
+        await store.send(.view(.searchTypeButtonTapped(.title))) {
+            $0.input.searchType = .title
+        }
+        await store.receive(\.delegate.filterUpdated, .testValue(
+            input: .testValue(searchType: .title, searchValue: "Lego")
+        ))
+
+        await clock.advance(by: .seconds(1))
+    }
+
+    @Test
     func test_view_asnTypeButtonTapped() async throws {
         let store = TestStore(initialState: .testValue(
             input: .testValue(searchValue: "Lego")
@@ -219,22 +308,6 @@ struct DocumentFilterReducerTests {
                 searchType: .asn,
                 searchValue: "Lego"
             )
-        ))
-    }
-
-    @Test
-    func test_view_applyButtonTapped() async throws {
-        let store = TestStore(initialState: .testValue(
-            input: .testValue(searchValue: "Lego"),
-            savedView: .testValue()
-        )) {
-            DocumentFilterReducer()
-        }
-
-        await store.send(.view(.applyButtonTapped))
-        await store.receive(\.delegate.filterUpdated, .testValue(
-            input: .testValue(searchValue: "Lego"),
-            savedView: .testValue()
         ))
     }
 
@@ -462,5 +535,30 @@ struct DocumentFilterReducerTests {
         await store.send(.view(.tagButtonTapped)) {
             $0.destination = .tagList(.testValue())
         }
+    }
+
+    @Test
+    func test_searchField_bindingReachesTheDebounce() async throws {
+        let didDebounce = LockIsolated(false)
+        let store = Store(initialState: DocumentFilterReducer.State.testValue()) {
+            Reduce<DocumentFilterReducer.State, DocumentFilterReducer.Action> { _, action in
+                if case .searchDebounced = action {
+                    didDebounce.setValue(true)
+                }
+                return .none
+            }
+            DocumentFilterReducer()
+        } withDependencies: {
+            $0.continuousClock = ContinuousClock()
+        }
+
+        let view = DocumentFilterView(store: store)
+        view.searchValueBinding.wrappedValue = "Lego"
+
+        #expect(store.input.searchValue == "Lego")
+
+        try await Task.sleep(for: .milliseconds(700))
+
+        #expect(didDebounce.value)
     }
 }

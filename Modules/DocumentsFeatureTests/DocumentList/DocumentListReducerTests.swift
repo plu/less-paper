@@ -103,8 +103,6 @@ struct DocumentListReducerTests {
     }
 
     @Test
-    /// The list no longer propagates the edit itself — the shared store does, so all this
-    /// action still has to do is dismiss the form nested in the detail screen.
     func test_path_documentDetail_destination_documentForm_delegate_documentUpdated() async throws {
         let document = Document.testValue(id: 1, title: "Original Title")
 
@@ -264,8 +262,6 @@ struct DocumentListReducerTests {
         }
     }
 
-    /// The Inbox filter is built in `MainReducer.State.init`, before this session's caches land.
-    /// Fetching re-derives it, so a first launch does not keep filtering by an empty tag set.
     @Test
     func test_view_onAppear_inbox_rebuildsFilterFromCaches() async throws {
         let server = Server.testValue()
@@ -313,8 +309,6 @@ struct DocumentListReducerTests {
         #expect(filterRulesUsed.value == [.init(ruleType: .hasTagsAny, value: "104")])
     }
 
-    /// An empty tag selection produces no tag rule, so fetching would ask for every document.
-    /// An inbox with no inbox tags is simply empty.
     @Test
     func test_view_onAppear_inbox_withoutInboxTags_doesNotFetchEverything() async throws {
         let server = Server.testValue()
@@ -403,7 +397,6 @@ struct DocumentListReducerTests {
         await store.send(.view(.deleteSelectedButtonTapped))
     }
 
-    /// Nothing selected means nothing to confirm — the popup should not appear at all.
     @Test
     func test_view_deleteSelectedButtonTapped_withoutSelection_doesNothing() async throws {
         let presentations = LockIsolated(0)
@@ -772,8 +765,6 @@ struct DocumentListReducerTests {
         }
     }
 
-    /// Document 7 is in the shared store but is not returned by this list's own re-fetch —
-    /// exactly the case the self-re-fetch alone would leave stale in the other tab.
     @Test
     func test_destination_bulkEditTags_documentsUpdated_refreshesAffectedDocuments() async throws {
         let refetched = Document.testValue(id: 1, title: "Refetched")

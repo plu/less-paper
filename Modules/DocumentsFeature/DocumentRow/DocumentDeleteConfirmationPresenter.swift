@@ -5,13 +5,7 @@ import Foundation
 
 @DependencyClient
 struct DocumentDeleteConfirmationPresenter: Sendable {
-
-    /// Presents the delete confirmation popup for a single document and suspends until the user
-    /// confirms or cancels
     var present: @Sendable (_ documentTitle: String) async -> Bool = { _ in false }
-
-    /// Presents the delete confirmation popup for a selection and suspends until the user confirms
-    /// or cancels
     var presentMany: @Sendable (_ documentCount: Int) async -> Bool = { _ in false }
 }
 

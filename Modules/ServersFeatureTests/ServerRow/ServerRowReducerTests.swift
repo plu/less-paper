@@ -51,10 +51,6 @@ struct ServerRowReducerTests {
         await store.receive(\.delegate, .editServer)
     }
 
-    /// Selecting a server builds its main UI immediately, and the inbox filter
-    /// is derived from the cached tags. Selecting before the caches are filled
-    /// leaves the inbox with an empty tag selection, which paperless reads as
-    /// "no tag filter" and answers with every document.
     @Test
     func test_view_serverTapped_fillsCachesBeforeSelecting() async throws {
         let server = Server.testValue(alias: "Other", id: "other")
