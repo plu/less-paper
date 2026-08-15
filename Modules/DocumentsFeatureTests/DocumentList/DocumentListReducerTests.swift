@@ -264,8 +264,87 @@ struct DocumentListReducerTests {
         }
     }
 
+    /// The Inbox filter is built in `MainReducer.State.init`, before this session's caches land.
+    /// Fetching re-derives it, so a first launch does not keep filtering by an empty tag set.
+    @Test
+    func test_view_onAppear_inbox_rebuildsFilterFromCaches() async throws {
+        let server = Server.testValue()
+
+        @Shared(.inboxTags(server))
+        var inboxTags: [ApiInterface.Tag.Id] = [104]
+
+        @Shared(.tags(server))
+        var tags: IdentifiedArrayOf<ApiInterface.Tag> = [
+            .testValue(id: 104, isInboxTag: true, name: "Inbox")
+        ]
+
+        let filterRulesUsed = LockIsolated<[FilterRule]?>(nil)
+
+        // Built while the caches were still empty, as it is on a cold start.
+        var staleInboxFilter = DocumentFilter()
+        staleInboxFilter.isInbox = true
+
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documents: [],
+            filter: staleInboxFilter,
+            server: server
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.getDocuments.execute = { input, _ in
+                filterRulesUsed.setValue(input.filterRules)
+                return .testValue(count: 1, results: [.testValue()])
+            }
+        }
+
+        await store.send(.view(.onAppear)) {
+            $0.filter = .inbox(server: server)
+        }
+        await store.receive(\.replaceDocuments) {
+            $0.documents = [.testValue()]
+            $0.documentSelection.allLoadedDocuments = [1]
+            $0.totalNumberOfDocuments = 1
+            $0.$documentCache.withLock { $0 = [.testValue()] }
+        }
+        await store.receive(\.binding, .set(\.isLoaded, true)) {
+            $0.isLoaded = true
+        }
+
+        #expect(filterRulesUsed.value == [.init(ruleType: .hasTagsAny, value: "104")])
+    }
+
+    /// An empty tag selection produces no tag rule, so fetching would ask for every document.
+    /// An inbox with no inbox tags is simply empty.
+    @Test
+    func test_view_onAppear_inbox_withoutInboxTags_doesNotFetchEverything() async throws {
+        let server = Server.testValue()
+
+        @Shared(.inboxTags(server))
+        var inboxTags: [ApiInterface.Tag.Id] = []
+
+        var inboxFilter = DocumentFilter()
+        inboxFilter.isInbox = true
+
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documents: [],
+            filter: inboxFilter,
+            server: server,
+            totalNumberOfDocuments: 42
+        )) {
+            DocumentListReducer()
+        }
+
+        // `getDocuments` is left unimplemented: reaching it would fail the test.
+        await store.send(.view(.onAppear)) {
+            $0.filter = .inbox(server: server)
+            $0.isLoaded = true
+            $0.totalNumberOfDocuments = 0
+        }
+    }
+
     @Test
     func test_view_refresh() async throws {
+        let statisticsServers = LockIsolated<[Server]>([])
         let store = TestStore(initialState: DocumentListReducer.State.testValue(
             documents: [
                 .testValue(document: .testValue(id: 1)),
@@ -280,6 +359,10 @@ struct DocumentListReducerTests {
                     count: 77,
                     results: [.testValue()]
                 )
+            }
+            $0.getStatistics.execute = { server in
+                statisticsServers.withValue { $0.append(server) }
+                return .testValue()
             }
         }
 
@@ -296,6 +379,11 @@ struct DocumentListReducerTests {
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
         }
+
+        // A pull-to-refresh is an explicit "show me the current state" gesture, so it also
+        // re-reads the counts behind the Inbox badge.
+        await store.finish()
+        #expect(statisticsServers.value == [.testValue()])
     }
 
     @Test

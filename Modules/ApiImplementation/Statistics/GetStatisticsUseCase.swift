@@ -18,6 +18,9 @@ private extension GetStatisticsUseCase {
         @Shared(.inboxDocumentCount(server))
         var inboxDocumentCount: Int
 
+        @Shared(.inboxTags(server))
+        var inboxTags: [Tag.Id]
+
         @Dependency(\.statisticsRepository)
         var repository
 
@@ -27,6 +30,7 @@ private extension GetStatisticsUseCase {
         )
 
         $inboxDocumentCount.withLock { $0 = statistics.documentsInbox }
+        $inboxTags.withLock { $0 = statistics.inboxTags.map(Tag.Id.init(rawValue:)) }
 
         return statistics
     }

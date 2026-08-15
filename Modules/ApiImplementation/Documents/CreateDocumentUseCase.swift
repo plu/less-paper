@@ -19,9 +19,11 @@ private extension CreateDocumentUseCase {
         @Dependency(\.documentsRepository)
         var documentsRepository
 
-        return try await documentsRepository.createDocument(
+        try await documentsRepository.createDocument(
             input: input,
             server: server
         )
+
+        await refreshStatistics(server: server)
     }
 }

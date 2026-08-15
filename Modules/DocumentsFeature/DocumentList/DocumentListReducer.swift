@@ -152,6 +152,41 @@ public struct DocumentListReducer: Sendable {
             self._tags = Shared(wrappedValue: [], .tags(server))
         }
 
+        /// True when this is the Inbox and the server reports no inbox tags at all.
+        ///
+        /// An empty tag selection produces no tag rule, so fetching would ask for *every*
+        /// document rather than none.
+        var isInboxWithoutInboxTags: Bool {
+            filter.isInbox && filter.input.tag.selection.any.isEmpty
+        }
+
+        /// Empties the list without a request, for an inbox that cannot contain anything.
+        mutating func clearForEmptyInbox() {
+            documents = []
+            documentSelection.allLoadedDocuments = []
+            isLoaded = true
+            nextPage = nil
+            totalNumberOfDocuments = 0
+        }
+
+        /**
+         * Re-derives the Inbox filter from the current caches.
+         *
+         * The filter is built in `MainReducer.State.init`, which runs from the same action that
+         * kicks off the cache refresh — so it is always built from the *previous* session's
+         * caches, and on a first launch from empty ones. Rebuilding it on every fetch keeps the
+         * Inbox tracking the tags the server currently calls inbox tags.
+         *
+         * Does nothing once the user has applied their own filter here, since that clears
+         * `isInbox` — rebuilding then would silently discard what they asked for.
+         */
+        mutating func rebuildInboxFilterIfNeeded() {
+            guard filter.isInbox else {
+                return
+            }
+            filter = .inbox(server: server)
+        }
+
         /// Upserts documents into the shared store without touching this list's membership.
         func cacheDocuments(_ documents: [Document]) {
             $documentCache.withLock { cache in
@@ -335,6 +370,11 @@ public struct DocumentListReducer: Sendable {
                         return .none
                     }
                     state.error = nil
+                    state.rebuildInboxFilterIfNeeded()
+                    guard !state.isInboxWithoutInboxTags else {
+                        state.clearForEmptyInbox()
+                        return .none
+                    }
                     return .runGetDocuments(
                         filterRules: state.filter.input.filterRules,
                         server: state.server,
@@ -343,11 +383,19 @@ public struct DocumentListReducer: Sendable {
                     )
                 case .onRefresh, .reloadButtonTapped:
                     state.error = nil
-                    return .runGetDocuments(
-                        filterRules: state.filter.input.filterRules,
-                        server: state.server,
-                        sortDirection: state.filter.input.sort.direction,
-                        sortField: state.filter.input.sort.field
+                    state.rebuildInboxFilterIfNeeded()
+                    guard !state.isInboxWithoutInboxTags else {
+                        state.clearForEmptyInbox()
+                        return .runRefreshStatistics(server: state.server)
+                    }
+                    return .merge(
+                        .runGetDocuments(
+                            filterRules: state.filter.input.filterRules,
+                            server: state.server,
+                            sortDirection: state.filter.input.sort.direction,
+                            sortField: state.filter.input.sort.field
+                        ),
+                        .runRefreshStatistics(server: state.server)
                     )
                 case let .onRowAppear(document):
                     if let nextPage = state.nextPage, state.documents.last?.id == document.id && !state.isLoadingMore {

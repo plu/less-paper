@@ -44,5 +44,7 @@ private extension DeleteDocumentsUseCase {
                 cache.remove(id: id)
             }
         }
+
+        await refreshStatistics(server: server)
     }
 }

@@ -162,6 +162,24 @@ public extension SharedReaderKey where Self == AppStorageKey<Int>.Default {
     }
 }
 
+public extension SharedReaderKey where Self == FileStorageKey<[Tag.Id]>.Default {
+
+    /// The tags the server treats as inbox tags.
+    ///
+    /// Written from the statistics response, so the Inbox tab's badge and the Inbox list's filter
+    /// are derived from the same read rather than from two independently cached sources.
+    static func inboxTags(_ server: Server) -> Self {
+        Self[
+            .fileStorage(
+                .applicationGroupDirectory.appending(component: "\(server.id)-inbox-tags.json"),
+                decoder: .apiDecoder,
+                encoder: .apiEncoder
+            ),
+            default: []
+        ]
+    }
+}
+
 private extension URL {
     static var applicationGroupDirectory: URL {
         guard let applicationGroupDirectory = FileManager.default

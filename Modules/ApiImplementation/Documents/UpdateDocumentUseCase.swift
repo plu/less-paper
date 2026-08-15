@@ -20,16 +20,13 @@ private extension UpdateDocumentUseCase {
         @Dependency(\.documentsRepository)
         var documentsRepository
 
-        @Dependency(\.getStatistics.execute)
-        var getStatistics
-
         let document = try await documentsRepository.updateDocument(
             id: id,
             input: input,
             server: server
         )
 
-        do { _ = try await getStatistics(server) } catch {}
+        await refreshStatistics(server: server)
 
         return document
     }

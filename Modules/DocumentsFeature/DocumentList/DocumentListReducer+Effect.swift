@@ -75,6 +75,28 @@ extension Effect where Action == DocumentListReducer.Action {
     }
 
     /**
+     * Re-reads the server's statistics so the Inbox tab badge matches what the user just pulled to
+     * refresh.
+     *
+     * Runs for both tabs rather than only the Inbox: the badge should be right whichever list the
+     * user refreshed, and this is one request on an explicit gesture.
+     *
+     * - Parameter server: The server to read statistics from.
+     */
+    static func runRefreshStatistics(server: Server) -> Self {
+        @Dependency(\.getStatistics.execute)
+        var getStatistics
+
+        return .run { _ in
+            _ = try await getStatistics(server)
+        } catch: { _, _ in
+            // Best-effort, exactly like `runRefreshDocuments` below: a failure here must not
+            // surface an error for a refresh the user did not explicitly ask for.
+        }
+        .cancellable(id: CancelID.refreshStatistics)
+    }
+
+    /**
      * Re-fetches the given documents and writes them into the shared store.
      *
      * Bulk edit returns no documents, so the affected content has to be re-read. Only ids
@@ -127,4 +149,5 @@ private enum CancelID {
     case getDocuments
     case getMoreDocuments
     case refreshDocuments
+    case refreshStatistics
 }

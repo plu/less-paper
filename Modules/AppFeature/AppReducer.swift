@@ -11,6 +11,7 @@ public struct AppReducer {
     public enum Action {
         case bootstrap
         case certificateApproval(CertificateApprovalReducer.Action)
+        case didBecomeActive
         case main(MainReducer.Action)
         case selectedServerChanged(Server?)
         case serverList(ServerListReducer.Action)
@@ -45,6 +46,11 @@ public struct AppReducer {
                 return .runSelectedServerObserver().merge(with: .run { send in
                     await send(.certificateApproval(.bootstrap))
                 })
+            case .didBecomeActive:
+                guard let server = state.main?.server else {
+                    return .none
+                }
+                return .runRefreshStatistics(server: server)
             case .selectedServerChanged(let server):
                 if let server {
                     state.main = MainReducer.State(server: server)

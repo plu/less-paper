@@ -20,6 +20,12 @@ public struct AppView: View {
                 }
             }
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else {
+                return
+            }
+            store.send(.didBecomeActive)
+        }
     }
 
     public init(store: StoreOf<AppReducer>) {
@@ -28,4 +34,7 @@ public struct AppView: View {
 
     @Bindable
     public var store: StoreOf<AppReducer>
+
+    @Environment(\.scenePhase)
+    private var scenePhase
 }

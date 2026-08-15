@@ -14,6 +14,40 @@ import TestSupport
 struct AppReducerTests {
 
     @Test
+    func test_didBecomeActive_refreshesStatistics() async {
+        let serversReceived = LockIsolated<[Server]>([])
+        let server = Server.testValue()
+
+        let store = TestStore(
+            initialState: AppReducer.State(main: MainReducer.State(server: server)),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.getStatistics.execute = { server in
+                    serversReceived.withValue { $0.append(server) }
+                    return .testValue()
+                }
+            }
+        )
+
+        await store.send(.didBecomeActive)
+        await store.finish()
+
+        #expect(serversReceived.value == [server])
+    }
+
+    /// Without a selected server there is nothing to refresh, and `getStatistics` is unimplemented
+    /// in tests — so this failing would show up as an unimplemented-dependency issue.
+    @Test
+    func test_didBecomeActive_withoutServer_doesNothing() async {
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() }
+        )
+
+        await store.send(.didBecomeActive)
+    }
+
+    @Test
     func test_bootstrap() async {
         let updateCacheServer = LockIsolated<Server?>(nil)
         let server1 = Server.testValue(alias: "Server 1", id: "1")

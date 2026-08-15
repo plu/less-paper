@@ -23,5 +23,7 @@ private extension BulkEditDocumentsUseCase {
             input: input,
             server: server
         )
+
+        await refreshStatistics(server: server)
     }
 }
