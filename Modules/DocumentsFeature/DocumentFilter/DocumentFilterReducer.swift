@@ -29,6 +29,7 @@ public struct DocumentFilterReducer: Sendable {
             case asnTypeButtonTapped(DocumentFilterASNType)
             case closeButtonTapped
             case correspondentButtonTapped
+            case dateButtonTapped
             case documentTypeButtonTapped
             case resetButtonTapped
             case saveAsButtonTapped
@@ -45,6 +46,7 @@ public struct DocumentFilterReducer: Sendable {
     @Reducer
     public enum Destination {
         case correspondentList(DocumentFilterGenericValueListReducer<Correspondent>)
+        case date(DocumentFilterDateReducer)
         case documentTypeList(DocumentFilterGenericValueListReducer<DocumentType>)
         case savedViewForm(SavedViewFormReducer)
         case storagePathList(DocumentFilterGenericValueListReducer<StoragePath>)
@@ -121,6 +123,9 @@ public struct DocumentFilterReducer: Sendable {
                 state.input.correspondent.rule = rule
                 state.input.correspondent.selection = selection
                 return .runFilterUpdated(state)
+            case let .destination(.presented(.date(.delegate(.filterUpdated(date))))):
+                state.input.date = date
+                return .runFilterUpdated(state)
             case let .destination(.presented(.documentTypeList(.delegate(.filterUpdated(rule: rule, selection: selection))))):
                 state.input.documentType.rule = rule
                 state.input.documentType.selection = selection
@@ -169,6 +174,11 @@ public struct DocumentFilterReducer: Sendable {
                         rule: state.input.correspondent.rule,
                         selection: state.input.correspondent.selection,
                         values: state.correspondents
+                    ))
+                    return .none
+                case .dateButtonTapped:
+                    state.destination = .date(DocumentFilterDateReducer.State(
+                        date: state.input.date
                     ))
                     return .none
                 case .documentTypeButtonTapped:

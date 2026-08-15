@@ -913,7 +913,8 @@ struct DocumentFilterInputTests {
 
     @Test
     func initWithUnsupportedFilterRuleType() async throws {
-        let filterRules = [FilterRule(ruleType: .createdBefore, value: "2024-01-01")]
+        // `modified` has no field in the sheet; `created`/`added` bounds are parsed now.
+        let filterRules = [FilterRule(ruleType: .modifiedBefore, value: "2024-01-01")]
         let input = DocumentFilterInput(
             filterRules: filterRules,
             server: .testValue(),
@@ -933,7 +934,8 @@ struct DocumentFilterInputTests {
 
         let filterRules = [
             FilterRule(ruleType: .hasDocumentTypeAny, value: "3"),
-            FilterRule(ruleType: .createdAfter, value: "2026-01-01"),
+            // `modified` bounds have no field in the sheet, so they are carried untouched.
+            FilterRule(ruleType: .modifiedAfter, value: "2026-01-01"),
         ]
         let input = DocumentFilterInput(
             filterRules: filterRules,
@@ -942,6 +944,7 @@ struct DocumentFilterInputTests {
             sortField: .created
         )
 
+        #expect(input.unsupportedFilterRules == [.init(ruleType: .modifiedAfter, value: "2026-01-01")])
         expectNoDifference(input.filterRules.sorted(), filterRules.sorted())
     }
 

@@ -25,6 +25,7 @@ struct DocumentFilterView: View {
                 documentTypeField()
                 storagePathField()
                 tagField()
+                dateField()
                 sortField()
             }
             .frame(maxWidth: .infinity)
@@ -118,6 +119,23 @@ struct DocumentFilterView: View {
             )
             .presentationDetents([.sheet])
         }
+    }
+
+    @ViewBuilder
+    private func dateField() -> some View {
+        DocumentFilterDateField(date: store.input.date)
+            .onTapGesture {
+                send(.dateButtonTapped)
+            }
+            .sheet(
+                item: $store.scope(
+                    state: \.destination?.date,
+                    action: \.destination.date
+                )
+            ) { store in
+                DocumentFilterDateView(store: store)
+                    .presentationDetents([.sheet])
+            }
     }
 
     @ViewBuilder

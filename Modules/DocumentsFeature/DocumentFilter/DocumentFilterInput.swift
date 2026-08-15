@@ -17,6 +17,40 @@ public struct DocumentFilterInput: Equatable {
         var selection = Set<T>()
     }
 
+    public struct DateFilter: Equatable {
+
+        /// One end of the range.
+        public struct Bound: Equatable {
+
+            var date: Date?
+
+            /// The rule this bound was parsed from, kept so a saved view's spelling survives.
+            ///
+            /// Paperless has two spellings per bound — the modern inclusive `__gte`/`__lte` and the
+            /// legacy exclusive `__gt`/`__lt`. Normalising one to the other would silently move the
+            /// user's boundary by a day, so whatever a saved view used is written back unchanged.
+            /// `nil` for a bound the user set here, which is written with the modern spelling.
+            var ruleType: FilterRuleType?
+        }
+
+        var from = Bound()
+
+        var to = Bound()
+
+        var type = DocumentFilterDateType.created
+
+        /// The rule to write for a bound, preferring the spelling it was parsed from.
+        ///
+        /// A remembered rule from the other date is ignored: switching the field from created to
+        /// added must not emit `createdFrom` for an added bound.
+        func ruleType(for bound: Bound, isLowerBound: Bool) -> FilterRuleType {
+            if let ruleType = bound.ruleType, ruleType.dateType == type {
+                return ruleType
+            }
+            return isLowerBound ? type.fromRuleType : type.toRuleType
+        }
+    }
+
     struct SortFilter: Equatable {
 
         var direction = SortDirection.descending
@@ -34,6 +68,8 @@ public struct DocumentFilterInput: Equatable {
     var asnType = DocumentFilterASNType.equals
 
     var correspondent = ListFilter<Correspondent>()
+
+    var date = DateFilter()
 
     var documentType = ListFilter<DocumentType>()
 
@@ -89,6 +125,7 @@ extension DocumentFilterInput {
         var tags
 
         correspondent.selection = []
+        date = .init()
         documentType.selection = []
         sort.direction = sortDirection ?? .descending
         sort.field = sortField ?? .added
@@ -96,7 +133,16 @@ extension DocumentFilterInput {
         tag.selection = .init()
         unsupportedFilterRules = []
 
+        // Collected rather than applied inline: which date the field shows depends on all of the
+        // rules, and they can arrive in any order.
+        var dateRules = [FilterRule]()
+
         for filterRule in filterRules ?? [] {
+            if filterRule.ruleType.dateType != nil {
+                dateRules.append(filterRule)
+                continue
+            }
+
             switch filterRule.ruleType {
             case .asn:
                 asnType = .equals
@@ -181,6 +227,43 @@ extension DocumentFilterInput {
                 setSearchValue(filterRule)
             default:
                 unsupportedFilterRules.append(filterRule)
+            }
+        }
+
+        apply(dateRules)
+    }
+
+    /**
+     * Applies the collected date rules to the single date field, passing through what it cannot
+     * hold.
+     *
+     * The field constrains one date at a time, so a saved view that bounds *both* created and
+     * added can only show one of them. Created wins, and the added rules are passed through
+     * untouched so the query and the saved view keep them — they are simply not editable here.
+     *
+     * - Parameter dateRules: Every from/to date rule found, in the order they appeared.
+     */
+    private mutating func apply(_ dateRules: [FilterRule]) {
+        guard !dateRules.isEmpty else {
+            return
+        }
+
+        date.type = dateRules.contains { $0.ruleType.dateType == .created } ? .created : .added
+
+        for filterRule in dateRules {
+            guard filterRule.ruleType.dateType == date.type,
+                  let value = filterRule.value,
+                  let parsed = DateFormatter.filterRule.date(from: value)
+            else {
+                unsupportedFilterRules.append(filterRule)
+                continue
+            }
+
+            let bound = DateFilter.Bound(date: parsed, ruleType: filterRule.ruleType)
+            if filterRule.ruleType.isDateLowerBound {
+                date.from = bound
+            } else {
+                date.to = bound
             }
         }
     }
@@ -306,6 +389,19 @@ extension DocumentFilterInput {
             filterRules.append(.init(ruleType: .hasAnyTag, value: "1"))
         case .notAssigned:
             filterRules.append(.init(ruleType: .hasAnyTag, value: "0"))
+        }
+
+        if let from = date.from.date {
+            filterRules.append(.init(
+                ruleType: date.ruleType(for: date.from, isLowerBound: true),
+                value: DateFormatter.filterRule.string(from: from)
+            ))
+        }
+        if let to = date.to.date {
+            filterRules.append(.init(
+                ruleType: date.ruleType(for: date.to, isLowerBound: false),
+                value: DateFormatter.filterRule.string(from: to)
+            ))
         }
 
         filterRules.append(contentsOf: unsupportedFilterRules)
