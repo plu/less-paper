@@ -25,7 +25,7 @@ struct DocumentFilterTagField: View {
             self.selection = (selection.all.include.map { .include($0) } + selection.all.exclude.map { .exclude($0) }).sorted()
         case .any:
             self.selection = selection.any.map { .include($0) }.sorted()
-        case .notAssigned:
+        case .assigned, .notAssigned:
             self.selection = []
         }
     }
@@ -56,6 +56,10 @@ struct DocumentFilterTagField: View {
                         }
                         .scrollIndicators(.hidden)
                     }
+                case .assigned:
+                    Text(.assigned)
+                        .capsule()
+                    Spacer()
                 case .notAssigned:
                     Text(.notAssigned)
                         .capsule()

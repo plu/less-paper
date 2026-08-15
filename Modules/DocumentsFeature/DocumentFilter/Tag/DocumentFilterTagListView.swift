@@ -96,7 +96,7 @@ struct DocumentFilterTagListView: View {
         switch store.rule {
         case .all, .any:
             list()
-        case .notAssigned:
+        case .assigned, .notAssigned:
             Spacer()
         }
     }
@@ -117,7 +117,7 @@ struct DocumentFilterTagListView: View {
             } else {
                 "circle"
             }
-        case .notAssigned:
+        case .assigned, .notAssigned:
             preconditionFailure()
         }
     }

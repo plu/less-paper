@@ -60,7 +60,8 @@ extension DocumentFilterInput.TagFilter {
             return lhs.selection.all == rhs.selection.all
         case .any:
             return lhs.selection.any == rhs.selection.any
-        case .notAssigned:
+        case .assigned, .notAssigned:
+            // Neither carries a selection, so matching rules are all it takes.
             return true
         }
     }
@@ -150,7 +151,8 @@ extension DocumentFilterInput {
                 searchType = .advanced
                 setSearchValue(filterRule)
             case .hasAnyTag:
-                tag.rule = .notAssigned
+                // `is_tagged=1` means "has at least one tag"; only `0` means "not tagged".
+                tag.rule = filterRule.value == "0" ? .notAssigned : .assigned
             case .hasCorrespondentAny:
                 correspondent.rule = .include
                 correspondent.selection = correspondent.selection.union(Set(
@@ -317,6 +319,8 @@ extension DocumentFilterInput {
                     value: String($0.id)
                 )
             })
+        case .assigned:
+            filterRules.append(.init(ruleType: .hasAnyTag, value: "1"))
         case .notAssigned:
             filterRules.append(.init(ruleType: .hasAnyTag, value: "0"))
         }

@@ -78,7 +78,7 @@ public struct DocumentFilterTagListReducer: Sendable {
                         } else {
                             state.selection.any.insert(tag)
                         }
-                    case .notAssigned:
+                    case .assigned, .notAssigned:
                         preconditionFailure()
                     }
                     return .send(.delegate(.filterUpdated(

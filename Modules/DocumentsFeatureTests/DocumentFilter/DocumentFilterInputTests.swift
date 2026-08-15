@@ -988,4 +988,57 @@ struct DocumentFilterInputTests {
             storagePath: .init(rule: .include, selection: [.testValue(id: 1)])
         ))
     }
+
+    // MARK: - hasAnyTag
+
+    /// `is_tagged=1` means "has at least one tag". Parsing it as `.notAssigned` inverted the
+    /// filter, and because `runGetDocuments` sends these same rules, selecting such a saved view
+    /// asked the server for untagged documents.
+    @Test
+    func hasAnyTagWithValueOne_parsesAsAssigned() async throws {
+        let input = DocumentFilterInput(
+            filterRules: [.init(ruleType: .hasAnyTag, value: "1")],
+            server: .testValue(),
+            sortDirection: .descending,
+            sortField: .added
+        )
+
+        expectNoDifference(input.tag.rule, .assigned)
+    }
+
+    @Test
+    func hasAnyTagWithValueZero_parsesAsNotAssigned() async throws {
+        let input = DocumentFilterInput(
+            filterRules: [.init(ruleType: .hasAnyTag, value: "0")],
+            server: .testValue(),
+            sortDirection: .descending,
+            sortField: .added
+        )
+
+        expectNoDifference(input.tag.rule, .notAssigned)
+    }
+
+    @Test
+    func filterRulesWithTagAssigned() async throws {
+        var input = DocumentFilterInput()
+        input.tag.rule = .assigned
+
+        expectNoDifference(input.filterRules, [.init(ruleType: .hasAnyTag, value: "1")])
+    }
+
+    /// The whole point: a saved view survives being loaded into the sheet and written back out.
+    @Test
+    func hasAnyTagSurvivesARoundTrip() async throws {
+        for value in ["0", "1"] {
+            let original = [FilterRule(ruleType: .hasAnyTag, value: value)]
+            let input = DocumentFilterInput(
+                filterRules: original,
+                server: .testValue(),
+                sortDirection: .descending,
+                sortField: .added
+            )
+
+            expectNoDifference(input.filterRules, original)
+        }
+    }
 }
