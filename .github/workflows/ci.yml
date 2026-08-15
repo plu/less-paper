@@ -48,6 +48,10 @@ jobs:
       - run: mise simulators:prepare
 
       - run: mise ci:test
+        env:
+          # The XCUITest targets dominate the run, so they are reserved for main,
+          # for anything about to ship to TestFlight, and for PRs that ask for them.
+          CI_UI_TESTS: ${{ github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'TestFlight') || contains(github.event.pull_request.labels.*.name, 'UITests') }}
 
       - run: mise ci:cache
         if: github.ref == 'refs/heads/main'
