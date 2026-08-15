@@ -14,6 +14,13 @@ struct ApiClientDelegate: Sendable {
 extension ApiClientDelegate: Get.APIClientDelegate {
 
     func client(_ client: APIClient, willSendRequest request: inout URLRequest) async throws {
+        // Paperless writes absolute URLs into its responses — `next` among them — built from what it
+        // believes its own origin to be. Behind a reverse proxy missing PAPERLESS_PROXY_SSL_HEADER
+        // or the X-Forwarded headers, that is an internal http:// origin. Following one redirects to
+        // the real origin, and URLSession drops the Authorization header across that change, so a
+        // correctly authenticated request comes back 401. The configured server is authoritative.
+        request.url = request.url?.movedToOrigin(of: server.url)
+
         request.setValue("application/json; version=10", forHTTPHeaderField: "Accept")
 
         for header in server.headers {
