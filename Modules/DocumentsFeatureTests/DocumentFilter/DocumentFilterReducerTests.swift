@@ -3,7 +3,10 @@
 import ApiInterface
 import Components
 import ComposableArchitecture
+import DocumentTypesFeature
 import Foundation
+import IdentifiedCollections
+import SwiftSharing
 import Testing
 import TestSupport
 
@@ -168,6 +171,34 @@ struct DocumentFilterReducerTests {
         }
 
         #expect(store.state.sheetTitle == "Test SavedView")
+    }
+
+    @Test
+    func test_isModified_savedViewWithUnsupportedFilterRule() async throws {
+        @Shared(.documentTypes(.testValue()))
+        var documentTypes: IdentifiedArrayOf<DocumentType> = [.testValue(id: 3)]
+
+        let savedView = SavedView.testValue(
+            filterRules: [
+                .init(ruleType: .hasDocumentTypeAny, value: "3"),
+                .init(ruleType: .createdAfter, value: "2026-01-01"),
+            ],
+            sortDirection: .ascending,
+            sortField: .created
+        )
+        let store = TestStore(initialState: DocumentFilterReducer.State.testValue(
+            input: DocumentFilterInput(
+                filterRules: savedView.filterRules,
+                server: .testValue(),
+                sortDirection: savedView.sortDirection,
+                sortField: savedView.sortField
+            ),
+            savedView: savedView
+        )) {
+            DocumentFilterReducer()
+        }
+
+        #expect(store.state.isModified == false)
     }
 
     @Test

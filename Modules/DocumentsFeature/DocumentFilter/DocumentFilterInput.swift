@@ -45,6 +45,9 @@ public struct DocumentFilterInput: Equatable {
     var storagePath = ListFilter<StoragePath>()
 
     var tag = TagFilter()
+
+    /// Filter rules that this filter UI cannot represent, kept so they survive a round trip
+    var unsupportedFilterRules = [FilterRule]()
 }
 
 extension DocumentFilterInput.TagFilter {
@@ -89,6 +92,7 @@ extension DocumentFilterInput {
         sort.field = sortField ?? .added
         storagePath.selection = []
         tag.selection = .init()
+        unsupportedFilterRules = []
 
         for filterRule in filterRules ?? [] {
             switch filterRule.ruleType {
@@ -142,6 +146,9 @@ extension DocumentFilterInput {
                         .compactMap(Tag.Id.init)
                         .compactMap { tags[id: $0] }
                 ))
+            case .fulltextQuery:
+                searchType = .advanced
+                setSearchValue(filterRule)
             case .hasAnyTag:
                 tag.rule = .notAssigned
             case .hasCorrespondentAny:
@@ -188,7 +195,7 @@ extension DocumentFilterInput {
                 searchType = .titleContent
                 setSearchValue(filterRule)
             default:
-                break
+                unsupportedFilterRules.append(filterRule)
             }
         }
     }
@@ -314,6 +321,8 @@ extension DocumentFilterInput {
             filterRules.append(.init(ruleType: .hasAnyTag, value: "0"))
         }
 
+        filterRules.append(contentsOf: unsupportedFilterRules)
+
         return filterRules
     }
 
@@ -340,7 +349,8 @@ extension DocumentFilterInput {
         searchValue: String = "",
         sort: SortFilter = .init(),
         storagePath: ListFilter<StoragePath> = .init(),
-        tag: TagFilter = .init()
+        tag: TagFilter = .init(),
+        unsupportedFilterRules: [FilterRule] = []
     ) -> Self {
         .init(
             asnType: asnType,
@@ -350,7 +360,8 @@ extension DocumentFilterInput {
             searchValue: searchValue,
             sort: sort,
             storagePath: storagePath,
-            tag: tag
+            tag: tag,
+            unsupportedFilterRules: unsupportedFilterRules
         )
     }
 }

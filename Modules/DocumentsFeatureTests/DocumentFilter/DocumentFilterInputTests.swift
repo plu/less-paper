@@ -911,7 +911,7 @@ struct DocumentFilterInputTests {
     }
 
     @Test
-    func initWithUnknownFilterRuleType() async throws {
+    func initWithUnsupportedFilterRuleType() async throws {
         let filterRules = [FilterRule(ruleType: .createdBefore, value: "2024-01-01")]
         let input = DocumentFilterInput(
             filterRules: filterRules,
@@ -920,7 +920,45 @@ struct DocumentFilterInputTests {
             sortField: .added
         )
 
-        expectNoDifference(input, DocumentFilterInput())
+        expectNoDifference(input, DocumentFilterInput(
+            unsupportedFilterRules: filterRules
+        ))
+    }
+
+    @Test
+    func filterRulesRoundTripKeepsUnsupportedFilterRules() async throws {
+        @Shared(.documentTypes(.testValue()))
+        var documentTypes: IdentifiedArrayOf<DocumentType> = [.testValue(id: 3)]
+
+        let filterRules = [
+            FilterRule(ruleType: .hasDocumentTypeAny, value: "3"),
+            FilterRule(ruleType: .createdAfter, value: "2026-01-01"),
+        ]
+        let input = DocumentFilterInput(
+            filterRules: filterRules,
+            server: .testValue(),
+            sortDirection: .ascending,
+            sortField: .created
+        )
+
+        expectNoDifference(input.filterRules.sorted(), filterRules.sorted())
+    }
+
+    @Test
+    func filterRulesRoundTripWithAdvancedSearch() async throws {
+        let filterRules = [FilterRule(ruleType: .fulltextQuery, value: "invoice")]
+        let input = DocumentFilterInput(
+            filterRules: filterRules,
+            server: .testValue(),
+            sortDirection: .descending,
+            sortField: .added
+        )
+
+        expectNoDifference(input, DocumentFilterInput(
+            searchType: .advanced,
+            searchValue: "invoice"
+        ))
+        expectNoDifference(input.filterRules.sorted(), filterRules.sorted())
     }
 
     @Test
