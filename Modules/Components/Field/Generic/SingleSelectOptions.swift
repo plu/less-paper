@@ -7,11 +7,8 @@ struct SingleSelectOptions<Value: Comparable & CustomStringConvertible & Hashabl
             SheetHeader(
                 title: title,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         isPresented = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 },
                 right: {
@@ -21,6 +18,7 @@ struct SingleSelectOptions<Value: Comparable & CustomStringConvertible & Hashabl
                             onCreate()
                         } label: {
                             Image(systemName: "plus")
+                                .sheetHeaderTapTarget()
                                 .accessibilityLabel(.add(item: String(localized: title)))
                         }
                     }

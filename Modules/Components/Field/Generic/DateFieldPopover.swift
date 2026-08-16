@@ -15,11 +15,8 @@ struct DateFieldPopover: View {
             SheetHeader(
                 title: title,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 }
             )

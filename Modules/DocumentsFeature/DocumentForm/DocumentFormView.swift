@@ -13,11 +13,8 @@ struct DocumentFormView: View {
     var body: some View {
         Sheet {
             SheetHeader(title: .editDocument, left: {
-                Button {
+                SheetCloseButton {
                     send(.closeButtonTapped)
-                } label: {
-                    Image(systemName: "xmark")
-                        .accessibilityLabel(.close)
                 }
             })
         } content: {

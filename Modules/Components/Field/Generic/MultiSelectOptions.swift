@@ -7,11 +7,8 @@ struct MultiSelectOptions<OptionsItemView: View, Value: Comparable & CustomStrin
             SheetHeader(
                 title: title,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         isPresented = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 },
                 right: {
@@ -21,6 +18,7 @@ struct MultiSelectOptions<OptionsItemView: View, Value: Comparable & CustomStrin
                             onCreate()
                         } label: {
                             Image(systemName: "plus")
+                                .sheetHeaderTapTarget()
                                 .accessibilityLabel(.add(item: String(localized: title)))
                         }
                     }

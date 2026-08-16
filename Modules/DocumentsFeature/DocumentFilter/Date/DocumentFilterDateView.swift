@@ -25,11 +25,8 @@ struct DocumentFilterDateView: View {
 
     @ViewBuilder
     private func leftHeader() -> some View {
-        Button {
+        SheetCloseButton {
             send(.closeButtonTapped)
-        } label: {
-            Image(systemName: "xmark")
-                .accessibilityLabel(.close)
         }
     }
 

@@ -12,11 +12,8 @@ public struct CorrespondentFormView: View {
             SheetHeader(
                 title: store.correspondentId == nil ? .createCorrespondent : .editCorrespondent,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         send(.closeButtonTapped)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 }
             )

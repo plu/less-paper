@@ -12,11 +12,8 @@ public struct TagFormView: View {
             SheetHeader(
                 title: store.tagId == nil ? .createTag : .editTag,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         send(.closeButtonTapped)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 }
             )

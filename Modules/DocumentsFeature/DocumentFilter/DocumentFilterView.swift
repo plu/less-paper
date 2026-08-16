@@ -184,11 +184,8 @@ struct DocumentFilterView: View {
 
     @ViewBuilder
     private func leftHeader() -> some View {
-        Button {
+        SheetCloseButton {
             send(.closeButtonTapped)
-        } label: {
-            Image(systemName: "xmark")
-                .accessibilityLabel(.close)
         }
     }
 
@@ -224,12 +221,8 @@ struct DocumentFilterView: View {
             }
             .disabled(!store.isModified)
         } label: {
-            // Expanded inside the label on purpose: a menu's tap target is its label, so the 60pt
-            // slot SheetHeader provides does nothing for it. Shaping it from the outside does not
-            // work either — the three dots are only about 16x4pt on their own.
             Image(systemName: "ellipsis")
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
+                .sheetHeaderTapTarget()
                 .accessibilityLabel(.moreOptions)
         }
     }

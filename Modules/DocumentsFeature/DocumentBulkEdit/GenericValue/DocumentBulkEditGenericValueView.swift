@@ -55,11 +55,8 @@ struct DocumentBulkEditGenericValueView<Value: DocumentBulkEditGenericValue>: Vi
 
     @ViewBuilder
     private func leftHeader() -> some View {
-        Button {
+        SheetCloseButton {
             store.send(.view(.closeButtonTapped))
-        } label: {
-            Image(systemName: "xmark")
-                .accessibilityLabel(.close)
         }
     }
 

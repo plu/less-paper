@@ -12,11 +12,8 @@ public struct StoragePathFormView: View {
             SheetHeader(
                 title: store.storagePathId == nil ? .createStoragePath : .editStoragePath,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         send(.closeButtonTapped)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 }
             )

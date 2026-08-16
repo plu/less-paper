@@ -12,11 +12,8 @@ public struct SavedViewFormView: View {
             SheetHeader(
                 title: store.savedViewId == nil ? .createSavedView : .editSavedView,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         send(.closeButtonTapped)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 }
             )

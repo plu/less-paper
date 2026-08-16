@@ -12,11 +12,8 @@ public struct DocumentTypeFormView: View {
             SheetHeader(
                 title: store.documentTypeId == nil ? .createDocumentType : .editDocumentType,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         send(.closeButtonTapped)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 }
             )

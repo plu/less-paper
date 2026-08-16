@@ -9,11 +9,8 @@ public struct MfaFormView: View {
             SheetHeader(
                 title: .mfaCodeRequiredTitle,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         send(.closeButtonTapped)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 }
             )

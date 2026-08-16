@@ -11,11 +11,8 @@ public struct ServerFormView: View {
             SheetHeader(
                 title: .createServer,
                 left: {
-                    Button {
+                    SheetCloseButton {
                         send(.closeButtonTapped)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .accessibilityLabel(.close)
                     }
                 }
             )
