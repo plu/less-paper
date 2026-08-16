@@ -44,6 +44,7 @@ public struct DocumentListReducer: Sendable {
             case reloadButtonTapped
             case savedViewButtonTapped(SavedView)
             case scanButtonTapped
+            case serverButtonTapped(Server)
             case toggleSelectionModeButtonTapped
         }
     }
@@ -106,6 +107,11 @@ public struct DocumentListReducer: Sendable {
 
         @Shared
         var savedViews: IdentifiedArrayOf<SavedView>
+
+        // Carries its key in the attribute rather than being assigned in `init`: unlike its
+        // neighbours this one is not scoped to `server`, so it has nothing to wait for.
+        @Shared(.servers)
+        var servers: IdentifiedArrayOf<Server>
 
         @Shared
         var storagePaths: IdentifiedArrayOf<StoragePath>
@@ -407,6 +413,11 @@ public struct DocumentListReducer: Sendable {
                     )
                 case .scanButtonTapped:
                     return .send(.documentImport(.view(.scanButtonTapped)))
+                case let .serverButtonTapped(server):
+                    guard server != state.server else {
+                        return .none
+                    }
+                    return .runSelectServer(server: server)
                 case .toggleSelectionModeButtonTapped:
                     return .send(.documentSelection(.toggleSelectionModeButtonTapped(state.filter)))
                 }

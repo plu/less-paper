@@ -61,6 +61,8 @@ private struct DocumentListTopTrailingToolbar: ViewModifier {
             } label: {
                 Label(.select, systemImage: "checklist")
             }
+
+            serversMenu
         } label: {
             Label(.moreActions, systemImage: "ellipsis.circle")
         }
@@ -86,6 +88,27 @@ private struct DocumentListTopTrailingToolbar: ViewModifier {
             }
         } label: {
             Label(.select, systemImage: "checklist")
+        }
+    }
+
+    @ViewBuilder
+    private var serversMenu: some View {
+        if store.servers.count > 1 {
+            Menu {
+                ForEach(store.servers.sorted()) { server in
+                    Button {
+                        send(.serverButtonTapped(server))
+                    } label: {
+                        if server == store.server {
+                            Label(server.alias, systemImage: "checkmark")
+                        } else {
+                            Text(server.alias)
+                        }
+                    }
+                }
+            } label: {
+                Label(.servers, systemImage: "server.rack")
+            }
         }
     }
 

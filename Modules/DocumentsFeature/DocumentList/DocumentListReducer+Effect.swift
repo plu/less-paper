@@ -115,6 +115,21 @@ extension Effect where Action == DocumentListReducer.Action {
         }
         .cancellable(id: CancelID.refreshDocuments)
     }
+
+    static func runSelectServer(server: Server) -> Self {
+        .run { _ in
+            @Shared(.selectedServer)
+            var selectedServer: Server?
+
+            // An effect rather than a synchronous write: this is what makes `AppReducer` discard
+            // `MainReducer.State`, and with it the store currently being reduced.
+            $selectedServer.withLock { $0 = server }
+        }
+        .cancellable(
+            id: CancelID.selectServer,
+            cancelInFlight: true
+        )
+    }
 }
 
 private let refreshChunkSize = 100
@@ -134,4 +149,5 @@ private enum CancelID {
     case getMoreDocuments
     case refreshDocuments
     case refreshStatistics
+    case selectServer
 }

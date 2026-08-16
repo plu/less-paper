@@ -41,4 +41,22 @@ struct ServerTests {
 
         expectNoDifference(decoded, server)
     }
+
+    @Test
+    func comparable_ordersCaseInsensitively() async throws {
+        let apple = Server.testValue(alias: "apple", id: "1")
+        let banana = Server.testValue(alias: "Banana", id: "2")
+
+        #expect(apple < banana)
+        #expect(!(banana < apple))
+    }
+
+    @Test
+    func comparable_ordersNumerically() async throws {
+        let second = Server.testValue(alias: "Server 2", id: "1")
+        let tenth = Server.testValue(alias: "Server 10", id: "2")
+
+        #expect(second < tenth)
+        #expect(!(tenth < second))
+    }
 }

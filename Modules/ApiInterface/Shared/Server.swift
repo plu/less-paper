@@ -50,7 +50,10 @@ public extension Server {
 
 extension Server: Comparable {
     public static func < (lhs: Server, rhs: Server) -> Bool {
-        lhs.alias < rhs.alias
+        lhs.alias.compare(
+            rhs.alias,
+            options: [.caseInsensitive, .numeric, .forcedOrdering]
+        ) == .orderedAscending
     }
 }
 

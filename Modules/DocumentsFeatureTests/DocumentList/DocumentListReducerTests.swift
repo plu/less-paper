@@ -603,6 +603,44 @@ struct DocumentListReducerTests {
     }
 
     @Test
+    func test_view_serverButtonTapped() async throws {
+        @Shared(.selectedServer)
+        var selectedServer: Server?
+
+        let current = Server.testValue(alias: "Home", id: "home")
+        let other = Server.testValue(alias: "Office", id: "office")
+
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            server: current
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.serverButtonTapped(other)))
+        await store.finish()
+
+        #expect(selectedServer == other)
+    }
+
+    @Test
+    func test_view_serverButtonTapped_alreadySelected_doesNothing() async throws {
+        @Shared(.selectedServer)
+        var selectedServer: Server?
+
+        let current = Server.testValue(alias: "Home", id: "home")
+
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            server: current
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.serverButtonTapped(current)))
+
+        #expect(selectedServer == nil, "tapping the current server must not restart the app's server observer")
+    }
+
+    @Test
     func test_view_toggleSelectionModeButtonTapped_activate() async throws {
         let store = TestStore(initialState: DocumentListReducer.State.testValue(
             documents: [

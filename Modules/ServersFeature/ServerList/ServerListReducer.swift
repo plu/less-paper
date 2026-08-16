@@ -96,16 +96,7 @@ extension ServerListReducer.Destination.State: Equatable {}
 extension ServerListReducer.State {
 
     mutating func sort() {
-        servers.sort {
-            $0.server.alias.compare(
-                $1.server.alias,
-                options: [
-                    .caseInsensitive,
-                    .numeric,
-                    .forcedOrdering
-                ]
-            ) == .orderedAscending
-        }
+        servers.sort { $0.server < $1.server }
     }
 
     mutating func sync() {
