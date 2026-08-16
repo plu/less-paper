@@ -7,9 +7,12 @@ import Tagged
 
 @Reducer
 public struct DocumentRowReducer: Sendable {
-    public enum Action: ViewAction {
+    public enum Action: BindableAction, ViewAction {
+        case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
         case delegate(Delegate)
+        case downloadFailed(Error)
+        case downloadSucceeded(url: URL, intent: DownloadIntent)
         case view(View)
 
         public enum Delegate {
@@ -20,8 +23,15 @@ public struct DocumentRowReducer: Sendable {
         public enum View {
             case deleteButtonTapped
             case editButtonTapped
+            case previewButtonTapped
             case rowTapped
+            case shareButtonTapped
         }
+    }
+
+    public enum DownloadIntent: Equatable, Sendable {
+        case preview
+        case share
     }
 
     @Reducer
@@ -48,7 +58,19 @@ public struct DocumentRowReducer: Sendable {
             document.documentType?.get(server)?.name
         }
 
+        var downloadedURL: URL?
+
+        var isBusy: Bool {
+            isDownloading || isUpdating
+        }
+
+        var isDownloading = false
+
         var isUpdating = false
+
+        var quickLookPreview: URL?
+
+        var shareItem: ShareItem?
 
         var storagePath: String? {
             document.storagePath?.get(server)?.name
@@ -77,21 +99,38 @@ public struct DocumentRowReducer: Sendable {
         init(
             destination: Destination.State? = nil,
             document: Shared<Document>,
+            downloadedURL: URL? = nil,
+            isDownloading: Bool = false,
             isUpdating: Bool = false,
-            server: Server
+            quickLookPreview: URL? = nil,
+            server: Server,
+            shareItem: ShareItem? = nil
         ) {
             self.destination = destination
             self._document = document
+            self.downloadedURL = downloadedURL
+            self.isDownloading = isDownloading
             self.isUpdating = isUpdating
+            self.quickLookPreview = quickLookPreview
             self.server = server
+            self.shareItem = shareItem
         }
     }
 
     public var body: some ReducerOf<Self> {
+        BindingReducer()
         Reduce { state, action in
             switch action {
             case .destination(.presented(.documentForm(.delegate(.documentUpdated)))):
                 state.destination = nil
+                return .none
+            case let .downloadFailed(error):
+                state.isDownloading = false
+                return .toast(error)
+            case let .downloadSucceeded(url, intent):
+                state.downloadedURL = url
+                state.isDownloading = false
+                state.present(url: url, intent: intent)
                 return .none
             case let .view(viewAction):
                 switch viewAction {
@@ -103,10 +142,14 @@ public struct DocumentRowReducer: Sendable {
                         server: state.server
                     ))
                     return .none
+                case .previewButtonTapped:
+                    return state.download(intent: .preview)
                 case .rowTapped:
                     return .send(.delegate(.presentDocumentDetail(state.$document)))
+                case .shareButtonTapped:
+                    return state.download(intent: .share)
                 }
-            case .delegate, .destination:
+            case .binding, .delegate, .destination:
                 return .none
             }
         }

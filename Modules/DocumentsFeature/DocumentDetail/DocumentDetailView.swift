@@ -31,25 +31,26 @@ struct DocumentDetailView: View {
         }
         .toolbar {
             Menu {
-                if let url = store.downloadResult?.value?.url {
+                if let url = store.downloadedURL {
                     Button {
                         send(.previewButtonTapped)
                     } label: {
-                        Label(.previewDocument, systemImage: "eye")
+                        Label(.preview, systemImage: "eye")
                     }
 
                     ShareLink(item: url) {
-                        Label(.shareDocument, systemImage: "square.and.arrow.up")
+                        Label(.share, systemImage: "square.and.arrow.up")
                     }
                 }
             } label: {
                 Label(.moreActions, systemImage: "ellipsis.circle")
             }
+            .disabled(store.downloadedURL == nil)
 
             Button(action: {
                 send(.editDocumentButtonTapped)
             }) {
-                Label(.editDocument, systemImage: "square.and.pencil")
+                Label(.edit, systemImage: "square.and.pencil")
             }
         }
     }

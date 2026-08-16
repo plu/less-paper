@@ -1,6 +1,7 @@
 @testable import DocumentsFeature
 
 import ApiInterface
+import Components
 import ComposableArchitecture
 import Foundation
 import SwiftSharing
@@ -88,5 +89,84 @@ struct DocumentRowReducerTests {
         await store.send(.view(.editButtonTapped)) {
             $0.destination = .documentForm(.testValue())
         }
+    }
+
+    @Test
+    func test_view_previewButtonTapped_downloadSuccess() async throws {
+        let data = try Data.testValue()
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("invoice.pdf")
+        let store = TestStore(initialState: DocumentRowReducer.State.testValue()) {
+            DocumentRowReducer()
+        } withDependencies: {
+            $0.downloadDocument.execute = { _, _ in data }
+        }
+
+        await store.send(.view(.previewButtonTapped)) {
+            $0.isDownloading = true
+        }
+        await store.receive(\.downloadSucceeded) {
+            $0.downloadedURL = url
+            $0.isDownloading = false
+            $0.quickLookPreview = url
+        }
+    }
+
+    @Test
+    func test_view_shareButtonTapped_downloadSuccess() async throws {
+        let data = try Data.testValue()
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("invoice.pdf")
+        let store = TestStore(initialState: DocumentRowReducer.State.testValue()) {
+            DocumentRowReducer()
+        } withDependencies: {
+            $0.downloadDocument.execute = { _, _ in data }
+        }
+
+        await store.send(.view(.shareButtonTapped)) {
+            $0.isDownloading = true
+        }
+        await store.receive(\.downloadSucceeded) {
+            $0.downloadedURL = url
+            $0.isDownloading = false
+            $0.shareItem = ShareItem(url: url)
+        }
+    }
+
+    @Test
+    func test_view_shareButtonTapped_reusesDownloadedFile() async throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("invoice.pdf")
+        let store = TestStore(initialState: DocumentRowReducer.State.testValue(
+            downloadedURL: url
+        )) {
+            DocumentRowReducer()
+        } withDependencies: {
+            $0.downloadDocument.execute = { _, _ in
+                Issue.record("The file is already on disk — it must not be downloaded again")
+                return try Data.testValue()
+            }
+        }
+
+        await store.send(.view(.shareButtonTapped)) {
+            $0.shareItem = ShareItem(url: url)
+        }
+    }
+
+    @Test
+    func test_view_previewButtonTapped_downloadFailure() async throws {
+        let toasts = LockIsolated<[Toast]>([])
+        let store = TestStore(initialState: DocumentRowReducer.State.testValue()) {
+            DocumentRowReducer()
+        } withDependencies: {
+            $0.downloadDocument.execute = { _, _ in throw ApiError.testValue() }
+            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
+        }
+
+        await store.send(.view(.previewButtonTapped)) {
+            $0.isDownloading = true
+        }
+        await store.receive(\.downloadFailed) {
+            $0.isDownloading = false
+        }
+
+        #expect(toasts.value == [.error("Something went wrong")])
     }
 }

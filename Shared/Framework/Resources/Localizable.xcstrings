@@ -1168,6 +1168,23 @@
         }
       }
     },
+    "delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
     "deleteConfirmation" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2631,19 +2648,19 @@
         }
       }
     },
-    "previewDocument" : {
+    "preview" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vorschau öffnen"
+            "value" : "Vorschau"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Preview document"
+            "value" : "Preview"
           }
         }
       }
@@ -3022,19 +3039,19 @@
         }
       }
     },
-    "shareDocument" : {
+    "share" : {
       "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dokument teilen"
+            "value" : "Teilen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Share document"
+            "value" : "Share"
           }
         }
       }

@@ -149,6 +149,21 @@ struct DocumentRowViewTests {
     }
 
     @Test
+    func testSnapshot_isDownloading() async throws {
+        assertSnapshot(
+            of: DocumentRowView(
+                store: Store(
+                    initialState: DocumentRowReducer.State.testValue(isDownloading: true),
+                    reducer: {
+                        DocumentRowReducer()
+                    }
+                )
+            ).frame(width: 375).padding(),
+            as: .image(layout: .sizeThatFits)
+        )
+    }
+
+    @Test
     func testSnapshot_isUpdating() async throws {
         assertSnapshot(
             of: DocumentRowView(

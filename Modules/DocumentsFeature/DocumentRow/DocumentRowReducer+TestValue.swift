@@ -1,4 +1,5 @@
 import ApiInterface
+import Components
 import Foundation
 import SwiftSharing
 
@@ -7,14 +8,22 @@ extension DocumentRowReducer.State {
     static func testValue(
         destination: DocumentRowReducer.Destination.State? = nil,
         document: Document = .testValue(),
+        downloadedURL: URL? = nil,
+        isDownloading: Bool = false,
         isUpdating: Bool = false,
-        server: Server = .testValue()
+        quickLookPreview: URL? = nil,
+        server: Server = .testValue(),
+        shareItem: ShareItem? = nil
     ) -> Self {
         .init(
             destination: destination,
             document: Shared(value: document),
+            downloadedURL: downloadedURL,
+            isDownloading: isDownloading,
             isUpdating: isUpdating,
-            server: server
+            quickLookPreview: quickLookPreview,
+            server: server,
+            shareItem: shareItem
         )
     }
 }

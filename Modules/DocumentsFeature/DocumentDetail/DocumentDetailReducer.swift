@@ -35,6 +35,10 @@ public struct DocumentDetailReducer: Sendable {
 
         var downloadResult: DownloadResult?
 
+        var downloadedURL: URL? {
+            downloadResult?.value?.url
+        }
+
         var quickLookPreview: URL?
 
         let server: Server

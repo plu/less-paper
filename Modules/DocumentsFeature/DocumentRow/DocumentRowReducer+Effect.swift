@@ -1,3 +1,4 @@
+import ApiInterface
 import ComposableArchitecture
 import Foundation
 
@@ -15,8 +16,24 @@ extension Effect where Action == DocumentRowReducer.Action {
         }
         .cancellable(id: CancelID.confirmDelete)
     }
+
+    static func runDownloadDocument(
+        document: Document,
+        intent: DocumentRowReducer.DownloadIntent,
+        server: Server
+    ) -> Self {
+        .run { send in
+            let file = try await document.download(server: server)
+            await send(.downloadSucceeded(url: file.url, intent: intent), animation: .default)
+        } catch: { error, send in
+            await send(.downloadFailed(error))
+        }
+        .cancellable(id: CancelID.downloadDocument(document.id))
+    }
 }
 
-private enum CancelID {
+// Keyed by document: a bare case would make a tap on one row cancel another row's download.
+private enum CancelID: Hashable {
     case confirmDelete
+    case downloadDocument(Document.Id)
 }

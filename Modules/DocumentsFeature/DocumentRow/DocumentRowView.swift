@@ -3,6 +3,7 @@ import Components
 import ComposableArchitecture
 import Dependencies
 import ImageFeature
+import QuickLook
 import SwiftUI
 
 @ViewAction(for: DocumentRowReducer.self)
@@ -17,6 +18,9 @@ struct DocumentRowView: View {
             imageView()
             detailsView()
         }
+        .sheet(item: $store.shareItem) { item in
+            ShareSheet(url: item.url)
+        }
         .frame(maxWidth: .infinity)
         .background(Color.m3SurfaceContainer)
         .buttonStyle(.borderless)
@@ -26,7 +30,10 @@ struct DocumentRowView: View {
         .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
         .contextMenu(menuItems: contextMenu)
-        .opacity(store.isUpdating ? 0.5 : 1.0)
+        .opacity(store.isBusy ? 0.5 : 1.0)
+        // After the opacity, so the spinner is not dimmed along with the row beneath it.
+        .overlay { downloadProgressView() }
+        .quickLookPreview($store.quickLookPreview)
         .sheet(
             item: $store.scope(state: \.destination?.documentForm, action: \.destination.documentForm)
         ) { store in
@@ -41,15 +48,27 @@ struct DocumentRowView: View {
     @ViewBuilder
     private func contextMenu() -> some View {
         Button {
+            send(.previewButtonTapped)
+        } label: {
+            Label(.preview, systemImage: "eye")
+        }
+
+        Button {
+            send(.shareButtonTapped)
+        } label: {
+            Label(.share, systemImage: "square.and.arrow.up")
+        }
+
+        Button {
             send(.editButtonTapped)
         } label: {
-            Label(.editDocument, systemImage: "square.and.pencil")
+            Label(.edit, systemImage: "square.and.pencil")
         }
 
         Button(role: .destructive) {
             send(.deleteButtonTapped)
         } label: {
-            Label(.deleteDocument, systemImage: "trash")
+            Label(.delete, systemImage: "trash")
         }
     }
 
@@ -108,6 +127,14 @@ struct DocumentRowView: View {
         .fontWeight(.medium)
         .font(.footnote)
         .padding(sizeCategory >= breakpoint ? .x4 : .x3)
+    }
+
+    @ViewBuilder
+    private func downloadProgressView() -> some View {
+        if store.isDownloading {
+            ProgressView()
+                .controlSize(.large)
+        }
     }
 
     @ViewBuilder
