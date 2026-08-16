@@ -15,7 +15,6 @@ final class DocumentsAppTests: XCTestCase {
         app.buttons["Filter"].firstMatch.tap()
         app.textFields["Title & content"].firstMatch.tap()
         app.textFields["Title & content"].firstMatch.typeText("Lego")
-        app.buttons["Apply"].firstMatch.tap()
         app.buttons["Close"].firstMatch.tap()
 
         XCTAssertTrue(app.staticTexts["Lego Duplo"].exists)
