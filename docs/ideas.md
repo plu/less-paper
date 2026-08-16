@@ -91,9 +91,12 @@ Since most feature PRs add a string, most PRs take the slow path.
 
 The obvious cheap fix does not work: moving the catalog into one shared module changes nothing,
 because every module would then depend on that module and the fan-out is identical. It has to
-actually split. Of 170 keys, **110 (64%) are used by exactly one module**, so per-module catalogs
+actually split. Of 170 keys, **110 (64%) were used by exactly one module**, so per-module catalogs
 would not duplicate much — but the 56 genuinely shared ones (`cancel`, `close`, `save`, `name`,
 `title`, `url`, `tags`, `deleteConfirmation`, …) need a home.
+
+That split was measured when the catalog held 170 keys; it now holds 206, so the proportions need
+re-deriving before they are quoted at anyone.
 
 The catch is why the current design exists at all: there are no hand-written
 `LocalizedStringResource` extensions and Tuist's synthesizers are off, so `.cancel` comes from
@@ -144,10 +147,11 @@ Surfaced during: #133 and the string catalog analysis.
 
 ## Remember the last bulk-rename template
 
-`DocumentBulkEditTitleReducer.State.template` starts empty every time the sheet opens. Retyping
-`{created_year}-{correspondent}` for each batch is the obvious annoyance once the feature sees
-daily use. An `@Shared(.appStorage)` key per server would cover it, but note the caveat already
-recorded under "`appStorage` does not use the app group".
+`DocumentBulkEditTitleReducer.State.template` opens on `{title}` every time — a no-op the user
+extends, rather than the blank it originally started as. What it still does not do is remember the
+template you used last time, so `{created_year}-{correspondent}` gets retyped for every batch. An
+`@Shared(.appStorage)` key per server would cover it, but note the caveat already recorded under
+"`appStorage` does not use the app group".
 
 Surfaced during: `docs/plans/2026-08-16-bulk-edit-title.md`.
 
@@ -163,3 +167,77 @@ Anything else that wants a place there needs the row to change shape first — a
 second line, or grouping the four edit actions behind one "Edit" menu.
 
 Surfaced during: `docs/plans/2026-08-16-bulk-edit-title.md`.
+
+---
+
+## The list's status capsule can cover the last row
+
+`DocumentListView` and `InboxView` both attach `DocumentListStatusBarView` with
+`.overlay(alignment: .bottom)`. An overlay floats the capsule without reserving room for it, so the
+last row of the list sits underneath it with no way to scroll clear.
+
+This is the same defect the filter sheet's match-count capsule had, where it was fixed by attaching
+with `.safeAreaInset(edge: .bottom, spacing: .x0)` instead — which floats identically *and* insets
+the scrollable content by the capsule's height. The list was left alone at the time to keep that
+change to one screen.
+
+Less acute here than it was in the sheet: a list scrolls freely, so the obscured row can be brought
+up by scrolling further, whereas the sheet's compressed content had nowhere to go. Still wrong.
+
+Surfaced during: `docs/plans/2026-08-16-filter-match-count.md`.
+
+---
+
+## A first-run message for an empty archive
+
+`DocumentListEmptyView` now says something specific for an error, an inbox with no inbox tag, an
+empty inbox and a filter that matches nothing. The fifth case — a genuinely empty archive —
+still reads "No documents found".
+
+For a new user who has uploaded nothing that is an onboarding moment, not a failure, and it wants
+copy that belongs with a wider first-run story rather than a lone string swap.
+
+Surfaced during: `docs/plans/2026-08-16-document-list-empty-states.md`.
+
+---
+
+## Why does the teardown binding write only warn on some sheets?
+
+A SwiftUI `TextField` writes back through its binding once as its view tears down. In the filter
+sheet that write landed *after* `destination = nil` and produced a ComposableArchitecture runtime
+issue, fixed by dropping writes that carry the value the store already holds.
+
+`ServerFormView`'s header fields have the identical shape — a manual `Binding(get:set:)` whose
+setter sends unconditionally, on a view presented as a `@Presents` destination — and instrumenting
+it shows the teardown write happening with an identical value. But **no runtime issue follows**, on
+either dismissal path.
+
+So those two ingredients are necessary and not sufficient: something makes the write land before
+`destination = nil` in one sheet and after it in the other. Worth understanding, because until it is
+understood there is no way to tell which of the app's other sheets are exposed without driving each
+one by hand.
+
+Surfaced during: #147, verified by instrumentation on 2026-08-16.
+
+---
+
+## The `ci` docker instance has drifted from the seed
+
+`mise run docker:start` brings up two paperless instances: `dev` on port 8000 and `ci` on port 9000.
+The XCUITest harness apps talk to `ci` (`PAPERLESS_TEST_URL` defaults to `http://localhost:9000`).
+
+Measured 2026-08-16, `ci` no longer matches `docker/seed/seed.json`:
+
+- 14 of the 25 seeded documents are present; 12 are missing
+- **none** of them carry a correspondent, document type, storage path, tag or ASN
+- two documents are both titled "TonieBox"
+
+`dev` is fine. This matters because `seed.py` keys documents **by title**, so a duplicate title
+makes the seed ambiguous, and any XCUITest asserting on metadata is asserting against a fixture
+that no longer has any. `python3 docker/seed/seed.py --url http://localhost:9000 --verify` reports
+the drift in full.
+
+Whether the fix is re-seeding `ci`, or making the harness apps point at `dev`, or teaching `seed.py`
+to reconcile rather than assume, is the open question.
+
+Surfaced during: the bulk edit title end-to-end verification, 2026-08-16.
