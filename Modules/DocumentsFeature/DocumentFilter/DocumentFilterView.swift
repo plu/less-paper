@@ -30,6 +30,12 @@ struct DocumentFilterView: View {
             }
             .frame(maxWidth: .infinity)
         }
+        // `safeAreaInset` rather than an overlay: the capsule floats over the scroll view either
+        // way, but this also insets the scrollable content by its height, so the last field can be
+        // scrolled clear of it instead of sitting underneath.
+        .safeAreaInset(edge: .bottom, spacing: .x0) {
+            DocumentFilterMatchCountView()
+        }
         .sheet(
             item: $store.scope(
                 state: \.destination?.savedViewForm,

@@ -16,6 +16,9 @@ struct DocumentFilterGenericValueListView<Value: CustomStringConvertible & Equat
                 sectionView()
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: .x0) {
+            DocumentFilterMatchCountView()
+        }
     }
 
     @Bindable

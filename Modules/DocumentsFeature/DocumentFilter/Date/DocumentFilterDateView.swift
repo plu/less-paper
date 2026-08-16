@@ -18,6 +18,9 @@ struct DocumentFilterDateView: View {
                 Spacer()
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: .x0) {
+            DocumentFilterMatchCountView()
+        }
     }
 
     @Bindable

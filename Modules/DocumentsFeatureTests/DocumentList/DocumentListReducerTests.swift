@@ -48,6 +48,9 @@ struct DocumentListReducerTests {
         ))))))) {
             $0.filter.input = .testValue(searchValue: "Invoice")
             $0.filter.savedView = .testValue(name: "All Invoices")
+            $0.$filterMatchCount.withLock { matchCount in
+                matchCount.isRecalculating = true
+            }
         }
         await store.receive(\.replaceDocuments, .testValue(
             count: 77,
@@ -57,6 +60,9 @@ struct DocumentListReducerTests {
             $0.documentSelection.allLoadedDocuments = [1]
             $0.totalNumberOfDocuments = 77
             $0.$documentCache.withLock { $0 = [.testValue()] }
+            $0.$filterMatchCount.withLock { matchCount in
+                matchCount = .init(count: 77, isRecalculating: false)
+            }
         }
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
@@ -1051,5 +1057,119 @@ struct DocumentListReducerTests {
         // Unlike its four siblings this must still be presented: a partial failure keeps the sheet
         // open holding the documents that failed, and full success dismisses from inside the sheet.
         #expect(store.state.destination != nil)
+    }
+
+    @Test
+    func test_view_filterButtonTapped_seedsMatchCount() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            isLoaded: true,
+            totalNumberOfDocuments: 77
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.filterButtonTapped)) {
+            $0.destination = .documentFilter(.testValue(
+                input: $0.filter.input,
+                savedView: $0.filter.savedView
+            ))
+            $0.$filterMatchCount.withLock { matchCount in
+                matchCount = .init(count: 77)
+            }
+        }
+    }
+
+    @Test
+    func test_view_filterButtonTapped_seedsNoMatchCountBeforeTheListHasLoaded() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            isLoaded: false,
+            totalNumberOfDocuments: 0
+        )) {
+            DocumentListReducer()
+        }
+        store.state.$filterMatchCount.withLock { $0 = .init(count: 12) }
+
+        await store.send(.view(.filterButtonTapped)) {
+            $0.destination = .documentFilter(.testValue(
+                input: $0.filter.input,
+                savedView: $0.filter.savedView
+            ))
+            // Cleared rather than left at the previous sheet's number: the list has not loaded, so
+            // there is nothing true to show and the capsule stays hidden.
+            $0.$filterMatchCount.withLock { matchCount in
+                matchCount = .init(count: nil)
+            }
+        }
+    }
+
+    @Test
+    func test_destination_documentFilter_filterUpdated_recalculatesTheMatchCount() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            destination: .documentFilter(.testValue(
+                input: .testValue(searchValue: "Lego")
+            )),
+            filter: .testValue(input: .testValue(searchValue: "Lego"))
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.getDocuments.execute = { _, _ in
+                .testValue(
+                    count: 2,
+                    results: [.testValue()]
+                )
+            }
+        }
+        store.state.$filterMatchCount.withLock { $0 = .init(count: 77) }
+
+        await store.send(.destination(.presented(.documentFilter(.delegate(.filterUpdated(.testValue(
+            input: .testValue(searchValue: "Invoice")
+        ))))))) {
+            $0.filter.input = .testValue(searchValue: "Invoice")
+            $0.$filterMatchCount.withLock { matchCount in
+                matchCount = .init(count: 77, isRecalculating: true)
+            }
+        }
+        await store.receive(\.replaceDocuments, .testValue(
+            count: 2,
+            results: [.testValue()]
+        )) {
+            $0.documents = [.testValue()]
+            $0.documentSelection.allLoadedDocuments = [1]
+            $0.totalNumberOfDocuments = 2
+            $0.$documentCache.withLock { $0 = [.testValue()] }
+            $0.$filterMatchCount.withLock { matchCount in
+                matchCount = .init(count: 2, isRecalculating: false)
+            }
+        }
+        await store.receive(\.binding, .set(\.isLoaded, true)) {
+            $0.isLoaded = true
+        }
+    }
+
+    @Test
+    func test_error_stopsRecalculatingTheMatchCount() async throws {
+        let toasts = LockIsolated<[Toast]>([])
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            destination: .documentFilter(.testValue()),
+            documents: [.testValue()]
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.toastPresenter.present = { value in
+                toasts.withValue { $0.append(value) }
+            }
+        }
+        store.state.$filterMatchCount.withLock { $0 = .init(count: 77, isRecalculating: true) }
+
+        await store.send(.error(ApiError.testValue())) {
+            $0.error = "Something went wrong"
+            // The stale count survives a failed refetch — it is the last number that was true, and
+            // blanking it would tell the user the filter matches nothing.
+            $0.$filterMatchCount.withLock { matchCount in
+                matchCount = .init(count: 77, isRecalculating: false)
+            }
+        }
+
+        #expect(toasts.value == [.error("Something went wrong")])
     }
 }

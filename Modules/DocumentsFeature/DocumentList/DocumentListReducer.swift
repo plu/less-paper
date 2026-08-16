@@ -107,6 +107,12 @@ public struct DocumentListReducer: Sendable {
         @Shared
         var documentTypes: IdentifiedArrayOf<DocumentType>
 
+        // Carries its key in the attribute rather than being assigned in `init`, like `servers`
+        // below: it is presentation state for the filter sheet and its pickers, not scoped to a
+        // server.
+        @Shared(.documentFilterMatchCount)
+        var filterMatchCount: DocumentFilterMatchCount
+
         @Shared
         var savedViews: IdentifiedArrayOf<SavedView>
 
@@ -165,6 +171,16 @@ public struct DocumentListReducer: Sendable {
             isLoaded = true
             nextPage = nil
             totalNumberOfDocuments = 0
+        }
+
+        // Scoped to the filter flow being on screen: the count is presentation state for that sheet
+        // and its pickers, so writing it from every list fetch would leave a value nothing reads
+        // and make every unrelated list test assert it.
+        mutating func updateFilterMatchCount(_ body: (inout DocumentFilterMatchCount) -> Void) {
+            guard destination?.documentFilter != nil else {
+                return
+            }
+            $filterMatchCount.withLock(body)
         }
 
         mutating func rebuildInboxFilterIfNeeded() {
@@ -261,6 +277,7 @@ public struct DocumentListReducer: Sendable {
                 case let .filterUpdated(filter):
                     state.error = nil
                     state.filter = filter
+                    state.updateFilterMatchCount { $0.isRecalculating = true }
                     return .runGetDocuments(
                         filterRules: state.filter.input.filterRules,
                         server: state.server,
@@ -306,6 +323,9 @@ public struct DocumentListReducer: Sendable {
                 return .none
             case let .error(error):
                 state.error = error.localizedDescription
+                // The count is deliberately left alone: it is the last number that was true, and
+                // blanking it would tell the user the filter matches nothing.
+                state.updateFilterMatchCount { $0.isRecalculating = false }
                 return .toast(error)
             case let .isUpdating(ids: ids, isUpdating: isUpdating):
                 for id in ids {
@@ -317,6 +337,10 @@ public struct DocumentListReducer: Sendable {
                 state.documentSelection.allLoadedDocuments = Set(output.results.map(\.id))
                 state.nextPage = output.next
                 state.totalNumberOfDocuments = output.count
+                state.updateFilterMatchCount {
+                    $0.count = output.count
+                    $0.isRecalculating = false
+                }
                 return .none
             case let .view(viewAction):
                 switch viewAction {
@@ -371,6 +395,9 @@ public struct DocumentListReducer: Sendable {
                     ))
                     return .none
                 case .filterButtonTapped:
+                    state.$filterMatchCount.withLock {
+                        $0 = .init(count: state.isLoaded ? state.totalNumberOfDocuments : nil)
+                    }
                     state.destination = .documentFilter(DocumentFilterReducer.State(
                         input: state.filter.input,
                         savedView: state.filter.savedView,

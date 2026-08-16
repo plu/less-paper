@@ -17,6 +17,9 @@ struct DocumentFilterTagListView: View {
                 sectionView()
             }
         }
+        .safeAreaInset(edge: .bottom, spacing: .x0) {
+            DocumentFilterMatchCountView()
+        }
     }
 
     @Bindable
