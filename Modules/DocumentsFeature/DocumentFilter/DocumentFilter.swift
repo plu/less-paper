@@ -29,13 +29,19 @@ public struct DocumentFilter: Equatable {
 }
 
 extension DocumentFilter {
+    // `inbox(server:)` is not usable from tests: it reads `@Shared(.inboxTags(server))` and
+    // `@Shared(.tags(server))`, so a test using it would depend on shared storage rather than on
+    // the state it is trying to describe.
     static func testValue(
         input: DocumentFilterInput = .testValue(),
+        isInbox: Bool = false,
         savedView: SavedView? = nil
     ) -> Self {
-        .init(
+        var filter = Self(
             input: input,
             savedView: savedView
         )
+        filter.isInbox = isInbox
+        return filter
     }
 }

@@ -1172,4 +1172,43 @@ struct DocumentListReducerTests {
 
         #expect(toasts.value == [.error("Something went wrong")])
     }
+
+    @Test
+    func test_hasActiveFilter_withSearchValue() async throws {
+        let state = DocumentListReducer.State.testValue(
+            filter: .testValue(input: .testValue(searchValue: "Lego"))
+        )
+
+        #expect(state.hasActiveFilter == true)
+    }
+
+    @Test
+    func test_hasActiveFilter_withSavedView() async throws {
+        let state = DocumentListReducer.State.testValue(
+            filter: .testValue(savedView: .testValue())
+        )
+
+        #expect(state.hasActiveFilter == true)
+    }
+
+    @Test
+    func test_hasActiveFilter_isFalseForTheDefaultFilter() async throws {
+        #expect(DocumentListReducer.State.testValue().hasActiveFilter == false)
+    }
+
+    @Test
+    func test_isInboxWithoutInboxTags() async throws {
+        let withoutTags = DocumentListReducer.State.testValue(
+            filter: .testValue(isInbox: true)
+        )
+        let withTags = DocumentListReducer.State.testValue(
+            filter: .testValue(
+                input: .testValue(tag: .init(rule: .any, selection: .init(any: [.testValue()]))),
+                isInbox: true
+            )
+        )
+
+        #expect(withoutTags.isInboxWithoutInboxTags == true)
+        #expect(withTags.isInboxWithoutInboxTags == false)
+    }
 }

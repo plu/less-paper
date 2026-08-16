@@ -83,6 +83,10 @@ public struct DocumentListReducer: Sendable {
 
         var filter = DocumentFilter()
 
+        var hasActiveFilter: Bool {
+            filter.input != DocumentFilterInput() || filter.savedView != nil
+        }
+
         var isLoaded: Bool
 
         var isLoadingMore: Bool

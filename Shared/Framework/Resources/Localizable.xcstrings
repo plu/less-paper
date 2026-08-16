@@ -52,6 +52,23 @@
         }
       }
     },
+    "allCaughtUp" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles erledigt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All caught up"
+          }
+        }
+      }
+    },
     "allDocuments" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2273,6 +2290,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No document types found"
+          }
+        }
+      }
+    },
+    "noInboxTagConfigured" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Posteingang-Tag konfiguriert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No inbox tag configured"
+          }
+        }
+      }
+    },
+    "noMatchingDocuments" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine passenden Dokumente"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No matching documents"
           }
         }
       }
