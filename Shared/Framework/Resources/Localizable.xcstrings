@@ -222,6 +222,462 @@
         }
       }
     },
+    "bulkEditTitleConfirmation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dieser Vorgang benennt %lld Dokument um."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dieser Vorgang benennt %lld Dokumente um."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This will rename %lld document."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This will rename %lld documents."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "bulkEditTitleError" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Ein Dokument konnte nicht aktualisiert werden. Du kannst es gleich nochmal versuchen."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Dokumente konnten nicht aktualisiert werden. Du kannst es gleich nochmal versuchen."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "There was one document that could not be updated. You can just try again to update it."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "There were %lld documents that could not be updated. You can just try again to update them."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.added" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Hinzufügedatum im ISO Format"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The full date (ISO format) the document was added to paperless"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.addedDay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Tag des Hinzufügedatums, als Zahl (01-31)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day added only (number 01-31)"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.addedMonth" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Monat des Hinzufügedatums, als Zahl (01-12)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Month added only (number 01-12)"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.addedMonthName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Monat des Hinzufügedatums"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Month added name, as per locale"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.addedMonthNameShort" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Monat des Hinzufügedatums, in Kurzform"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Month added abbreviated name, as per locale"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.addedYear" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Jahr des Hinzufügedatums, mit Jahrhundert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Year added only"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.addedYearShort" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Jahr des Hinzufügedatums, ohne Jahrhundert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Year added only, formatted as the year without century"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.asn" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ASN des Dokuments"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The ASN of the document"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.correspondent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Name des Korrespondenten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The name of the correspondent"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.created" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Ausstellungsdatum im ISO Format"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The full date (ISO format) the document was created"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.createdDay" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Tag des Ausstellungsdatums, als Zahl (01-31)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day created only (number 01-31)"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.createdMonth" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Monat des Ausstellungsdatums, als Zahl (01-12)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Month created only (number 01-12)"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.createdMonthName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Monat des Ausstellungsdatums"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Month created name, as per locale"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.createdMonthNameShort" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Monat des Ausstellungsdatums, in Kurzform"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Month created abbreviated name, as per locale"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.createdYear" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Jahr des Ausstellungsdatums, mit Jahrhundert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Year created only, formatted as the year with century"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.createdYearShort" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Jahr des Ausstellungsdatums, ohne Jahrhundert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Year created only, formatted as the year without century"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.docPk" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Paperless Nummer (Primärschlüssel) des Dokuments"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The paperless identifier (primary key) for the document"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.documentType" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der name des Dokumenttyps"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The name of the document type"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.originalName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Original Dateiname des Dokuments, ohne Dateiendung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Document original filename, minus the extension"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.ownerUsername" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzername des Besitzers"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Username of document owner"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.tagList" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine Kommaseparierte Liste von allen dem Dokument zugeordneten Tags"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A comma separated list of all tags assigned to the document"
+          }
+        }
+      }
+    },
+    "bulkEditTitlePlaceholder.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Titel des Dokuments"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The title of the document"
+          }
+        }
+      }
+    },
     "cancel" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -422,6 +878,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Color"
+          }
+        }
+      }
+    },
+    "confirmChanges" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderungen bestätigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm changes"
           }
         }
       }
@@ -1188,6 +1661,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit tags"
+          }
+        }
+      }
+    },
+    "editTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel bearbeiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit title"
           }
         }
       }
@@ -2028,6 +2518,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Permissions"
+          }
+        }
+      }
+    },
+    "placeholders" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Platzhalter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Placeholders"
           }
         }
       }

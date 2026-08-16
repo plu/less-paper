@@ -36,6 +36,7 @@ public struct DocumentListReducer: Sendable {
             case editDocumentTypeButtonTapped
             case editStoragePathButtonTapped
             case editTagsButtonTapped
+            case editTitleButtonTapped
             case filterButtonTapped
             case importButtonTapped
             case onAppear
@@ -55,6 +56,7 @@ public struct DocumentListReducer: Sendable {
         case bulkEditDocumentType(DocumentBulkEditGenericValueReducer<DocumentType>)
         case bulkEditStoragePath(DocumentBulkEditGenericValueReducer<StoragePath>)
         case bulkEditTags(DocumentBulkEditTagsReducer)
+        case bulkEditTitle(DocumentBulkEditTitleReducer)
         case documentFilter(DocumentFilterReducer)
     }
 
@@ -237,6 +239,23 @@ public struct DocumentListReducer: Sendable {
                         server: state.server
                     )
                 )
+            case let .destination(.presented(.bulkEditTitle(.delegate(.documentsUpdated(ids))))):
+                // No `destination = nil` here, unlike its four siblings above: after a partial
+                // failure the sheet stays open holding the documents that failed, while the ones
+                // that were renamed still reach the list. Full success dismisses from inside the
+                // sheet instead.
+                return .merge(
+                    .runGetDocuments(
+                        filterRules: state.filter.input.filterRules,
+                        server: state.server,
+                        sortDirection: state.filter.input.sort.direction,
+                        sortField: state.filter.input.sort.field
+                    ),
+                    .runRefreshDocuments(
+                        ids: Set(state.documentCache.ids).intersection(ids),
+                        server: state.server
+                    )
+                )
             case let .destination(.presented(.documentFilter(.delegate(delegateAction)))):
                 switch delegateAction {
                 case let .filterUpdated(filter):
@@ -343,6 +362,12 @@ public struct DocumentListReducer: Sendable {
                         documents: state.documentSelection.selectedDocuments,
                         server: state.server,
                         values: state.tags
+                    ))
+                    return .none
+                case .editTitleButtonTapped:
+                    state.destination = .bulkEditTitle(DocumentBulkEditTitleReducer.State(
+                        documents: state.documentSelection.selectedDocuments,
+                        server: state.server
                     ))
                     return .none
                 case .filterButtonTapped:

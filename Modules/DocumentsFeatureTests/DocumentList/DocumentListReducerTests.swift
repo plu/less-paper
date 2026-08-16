@@ -990,4 +990,66 @@ struct DocumentListReducerTests {
         #expect(store.state.path.count == 1)
         #expect(store.state.totalNumberOfDocuments == 42)
     }
+
+    @Test
+    func test_view_editTitleButtonTapped() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1, 2]
+            )
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.editTitleButtonTapped)) {
+            $0.destination = .bulkEditTitle(DocumentBulkEditTitleReducer.State(
+                documents: [1, 2],
+                server: $0.server
+            ))
+        }
+    }
+
+    @Test
+    func test_destination_bulkEditTitle_documentsUpdated_refreshesWithoutClosingTheSheet() async throws {
+        let refetched = Document.testValue(id: 1, title: "Refetched")
+        let refreshed = Document.testValue(id: 7, title: "Refreshed")
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            destination: .bulkEditTitle(DocumentBulkEditTitleReducer.State(
+                documents: [1, 7],
+                server: .testValue()
+            )),
+            documents: []
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.getDocuments.execute = { _, _ in
+                .testValue(
+                    count: 77,
+                    results: [refetched]
+                )
+            }
+            $0.getDocumentsByIds.execute = { input, _ in
+                #expect(input.ids == [7])
+                return [refreshed]
+            }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.replaceDocuments(.testValue(
+            count: 1,
+            results: [.testValue(id: 7, title: "Invoice")]
+        )))
+
+        await store.send(.destination(.presented(.bulkEditTitle(.delegate(.documentsUpdated([1, 7]))))))
+        await store.receive(\.replaceDocuments, .testValue(
+            count: 77,
+            results: [refetched]
+        ))
+        await store.receive(\.documentsRefreshed, [refreshed])
+
+        // Unlike its four siblings this must still be presented: a partial failure keeps the sheet
+        // open holding the documents that failed, and full success dismisses from inside the sheet.
+        #expect(store.state.destination != nil)
+    }
 }

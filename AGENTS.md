@@ -27,3 +27,27 @@ Do **not** restate what the code already says:
 /// The current sort direction
 private let direction: SortDirection
 ```
+
+## `@ViewAction` views send with `send`, never `store.send`
+
+In a view annotated `@ViewAction(for:)`, the macro generates a `send` that wraps the action in
+`.view(…)`. Calling `store.send` there compiles but emits:
+
+> Do not use 'store.send' directly when using '@ViewAction'
+
+It applies to `task` and other modifiers too, not just button actions — the trailing `.finish()`
+works the same either way:
+
+```swift
+// Wrong — warns.
+.task { await store.send(.view(.onAppear)).finish() }
+
+// Right.
+.task { await send(.onAppear).finish() }
+```
+
+Views without the macro — `DocumentBulkEditGenericValueView` is one, because it is generic — keep
+using `store.send(.view(…))`. Check for the annotation before copying a line between views.
+
+Builds are not warning-free by default, so a new warning is easy to miss. When touching a view,
+skim the build output for its file.

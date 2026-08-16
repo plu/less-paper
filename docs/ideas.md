@@ -139,3 +139,27 @@ Two things noticed while working on the tag filter, neither urgent:
   but worth confirming by hand before deleting.
 
 Surfaced during: #133 and the string catalog analysis.
+
+---
+
+## Remember the last bulk-rename template
+
+`DocumentBulkEditTitleReducer.State.template` starts empty every time the sheet opens. Retyping
+`{created_year}-{correspondent}` for each batch is the obvious annoyance once the feature sees
+daily use. An `@Shared(.appStorage)` key per server would cover it, but note the caveat already
+recorded under "`appStorage` does not use the app group".
+
+Surfaced during: `docs/plans/2026-08-16-bulk-edit-title.md`.
+
+---
+
+## The bottom toolbar is full
+
+Five icons plus the overflow menu is the maximum: measured on an iPhone 17 Pro (402pt), six span
+411pt and clip at both ends. "Edit title" went into the overflow menu for that reason alone, which
+makes it much harder to discover than the four edit actions beside it.
+
+Anything else that wants a place there needs the row to change shape first — a scrolling row, a
+second line, or grouping the four edit actions behind one "Edit" menu.
+
+Surfaced during: `docs/plans/2026-08-16-bulk-edit-title.md`.

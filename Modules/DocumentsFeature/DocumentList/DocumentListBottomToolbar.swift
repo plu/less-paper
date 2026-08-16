@@ -64,6 +64,15 @@ private struct DocumentListBottomToolbar: ViewModifier {
                 DocumentBulkEditTagsView(store: store)
                     .presentationDetents([.sheet])
             }
+            .sheet(
+                item: $store.scope(
+                    state: \.destination?.bulkEditTitle,
+                    action: \.destination.bulkEditTitle
+                )
+            ) { store in
+                DocumentBulkEditTitleView(store: store)
+                    .presentationDetents([.sheet])
+            }
     }
 
     init(
@@ -101,9 +110,18 @@ private struct DocumentListBottomToolbar: ViewModifier {
                 Label(.editTags, systemImage: "tag")
             }
 
-            // Destructive, so it sits behind an overflow menu rather than one mistap away from
-            // four reversible actions.
+            // Delete is destructive, so it sits behind an overflow menu rather than one mistap
+            // away from four reversible actions. Edit title joins it for a duller reason: a sixth
+            // icon does not fit — six span 411pt on a 402pt iPhone 17 Pro, clipping at both ends.
             Menu {
+                Button {
+                    send(.editTitleButtonTapped)
+                } label: {
+                    Label(.editTitle, systemImage: "textformat")
+                }
+
+                Divider()
+
                 Button(role: .destructive) {
                     send(.deleteSelectedButtonTapped)
                 } label: {

@@ -14,13 +14,16 @@ struct DocumentBulkEditConfirmationPresenter: Sendable {
         _ documentCount: Int,
         _ removeTags: [Tag]
     ) async -> Bool = { _, _, _ in false }
+
+    var presentTitle: @Sendable (_ documentCount: Int) async -> Bool = { _ in false }
 }
 
 extension DocumentBulkEditConfirmationPresenter: TestDependencyKey {
 
     static let previewValue = Self(
         present: { _ in false },
-        presentTags: { _, _, _ in false }
+        presentTags: { _, _, _ in false },
+        presentTitle: { _ in false }
     )
 
     static let testValue = Self()
@@ -30,7 +33,8 @@ extension DocumentBulkEditConfirmationPresenter: DependencyKey {
 
     static let liveValue = Self(
         present: present(message:),
-        presentTags: presentTags(addTags:documentCount:removeTags:)
+        presentTags: presentTags(addTags:documentCount:removeTags:),
+        presentTitle: presentTitle(documentCount:)
     )
 }
 
@@ -70,6 +74,20 @@ private extension DocumentBulkEditConfirmationPresenter {
                     removeTags: removeTags
                 )
             }
+        } ?? false
+    }
+
+    static func presentTitle(documentCount: Int) async -> Bool {
+        @Dependency(\.popupPresenter)
+        var popupPresenter
+
+        return await popupPresenter.present { resolve in
+            ConfirmationPopupView(
+                title: .confirmChanges,
+                message: .bulkEditTitleConfirmation(documentCount),
+                cancel: { resolve(false) },
+                confirm: { resolve(true) }
+            )
         } ?? false
     }
 }
