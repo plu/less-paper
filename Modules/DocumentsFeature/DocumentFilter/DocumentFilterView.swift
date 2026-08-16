@@ -142,10 +142,19 @@ struct DocumentFilterView: View {
             }
     }
 
+    // Drops writes that carry the value the store already holds. SwiftUI makes one as the sheet
+    // tears down, by which point the presentation state is gone — the action then lands on an
+    // absent destination and ComposableArchitecture reports a runtime issue. It makes another on
+    // presentation, which cost a 400ms debounce for a search that had not changed.
     var searchValueBinding: Binding<String> {
         Binding(
             get: { store.input.searchValue },
-            set: { send(.searchValueChanged($0)) }
+            set: {
+                guard $0 != store.input.searchValue else {
+                    return
+                }
+                send(.searchValueChanged($0))
+            }
         )
     }
 
