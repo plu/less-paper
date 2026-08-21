@@ -75,6 +75,8 @@ public struct ServerFormView: View {
         Field(.alias) {
             TextField(String(localized: .alias), text: $store.input.alias)
                 .focused($focus, equals: .alias)
+                .onSubmit { focus = nil }
+                .submitLabel(.done)
                 .textFieldStyle(.plain)
         }
         .accessibilityLabel(.alias)
@@ -86,6 +88,9 @@ public struct ServerFormView: View {
         Field(.password) {
             SecureField(String(localized: .password), text: $store.input.password)
                 .focused($focus, equals: .password)
+                .onSubmit { focus = .alias }
+                .submitLabel(.next)
+                .textContentType(.password)
                 .textFieldStyle(.plain)
         }
         .accessibilityLabel(.password)
@@ -96,15 +101,23 @@ public struct ServerFormView: View {
     private func urlField() -> some View {
         URLField(
             title: .url,
-            url: $store.input.url
+            url: $store.input.url,
+            focus: $focus,
+            equals: .url
         )
+        .onSubmit { focus = .username }
+        .submitLabel(.next)
     }
 
     @ViewBuilder
     private func usernameField() -> some View {
         Field(.username) {
             TextField(String(localized: .username), text: $store.input.username)
+                .autocorrectionDisabled()
                 .focused($focus, equals: .username)
+                .onSubmit { focus = .password }
+                .submitLabel(.next)
+                .textContentType(.username)
                 .textFieldStyle(.plain)
                 .textInputAutocapitalization(.never)
         }

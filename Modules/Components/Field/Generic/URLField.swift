@@ -1,6 +1,6 @@
 import SwiftUI
 
-public struct URLField: View {
+public struct URLField<Focus: Hashable>: View {
     public var body: some View {
         Field(title, padding: .x0) {
             HStack(spacing: .x0) {
@@ -17,8 +17,10 @@ public struct URLField: View {
 
                 TextField(String(localized: .domain), text: $address)
                     .autocorrectionDisabled()
-                    .textFieldStyle(.plain)
+                    .focused(focus, equals: equals)
                     .keyboardType(.URL)
+                    .textContentType(.URL)
+                    .textFieldStyle(.plain)
                     .textInputAutocapitalization(.never)
                     .padding(.trailing, .x2)
             }
@@ -29,10 +31,14 @@ public struct URLField: View {
 
     public init(
         title: LocalizedStringResource? = nil,
-        url: Binding<URL>
+        url: Binding<URL>,
+        focus: FocusState<Focus?>.Binding,
+        equals: Focus
     ) {
         self.title = title
         self._url = url
+        self.focus = focus
+        self.equals = equals
         address = url.wrappedValue.absoluteString
             .replacingOccurrences(of: "\(url.wrappedValue.scheme ?? "")://", with: "")
             .replacingOccurrences(of: "about:blank", with: "")
@@ -44,6 +50,10 @@ public struct URLField: View {
             self.url = url
         }
     }
+
+    private let equals: Focus
+
+    private let focus: FocusState<Focus?>.Binding
 
     private let title: LocalizedStringResource?
 
@@ -75,6 +85,10 @@ public struct URLField: View {
 
 #Preview {
     @Previewable
+    @FocusState
+    var focus: Int?
+
+    @Previewable
     @State
     var url = URL(string: "https://www.google.com:8443/foo")!
 
@@ -82,7 +96,9 @@ public struct URLField: View {
         VStack(spacing: .x5) {
             URLField(
                 title: LocalizedStringResource("URL"),
-                url: $url
+                url: $url,
+                focus: $focus,
+                equals: 0
             )
             Text(url.absoluteString)
             Spacer()
