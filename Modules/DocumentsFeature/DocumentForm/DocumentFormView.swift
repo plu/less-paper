@@ -11,38 +11,106 @@ import TagsFeature
 @ViewAction(for: DocumentFormReducer.self)
 struct DocumentFormView: View {
     var body: some View {
-        Sheet {
-            SheetHeader(title: .editDocument, left: {
-                SheetCloseButton {
-                    send(.closeButtonTapped)
+        Sheet(isScrollingEnabled: store.section != .content) {
+            SheetHeader(
+                title: .editDocument,
+                left: {
+                    SheetCloseButton {
+                        send(.closeButtonTapped)
+                    }
+                },
+                right: {
+                    sectionMenu()
                 }
-            })
+            )
         } content: {
-            VStack(spacing: .x3) {
-                TitleField(text: $store.input.title)
-                ASNField(
-                    isLoading: $store.isLoadingNextArchiveSerialNumber,
-                    text: $store.input.archiveSerialNumber,
-                    getNextButtonTapped: { send(.getNextArchiveSerialNumberButtonTapped) }
-                )
-                DateField(
-                    title: .createdDate,
-                    value: $store.input.createdDate,
-                    suggestions: .constant([])
-                )
-                correspondentField()
-                documentTypeField()
-                storagePathField()
-                tagsField()
+            switch store.section {
+            case .details:
+                detailsSection()
+            case .content:
+                contentSection()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity)
         } bottom: {
             buttons()
         }
+        .onAppear { send(.onAppear) }
     }
 
     @Bindable
     var store: StoreOf<DocumentFormReducer>
+
+    @ViewBuilder
+    private func sectionMenu() -> some View {
+        Menu {
+            Picker("", selection: $store.section) {
+                ForEach(DocumentFormSection.allCases, id: \.self) {
+                    Text($0.description).tag($0)
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .sheetHeaderTapTarget()
+                .accessibilityLabel(.moreOptions)
+        }
+    }
+
+    @ViewBuilder
+    private func detailsSection() -> some View {
+        VStack(spacing: .x3) {
+            TitleField(text: $store.input.title)
+            ASNField(
+                isLoading: $store.isLoadingNextArchiveSerialNumber,
+                text: $store.input.archiveSerialNumber,
+                getNextButtonTapped: { send(.getNextArchiveSerialNumberButtonTapped) }
+            )
+            DateField(
+                title: .createdDate,
+                value: $store.input.createdDate,
+                suggestions: .constant([])
+            )
+            correspondentField()
+            documentTypeField()
+            storagePathField()
+            tagsField()
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private func contentSection() -> some View {
+        if let loadError = store.loadError {
+            EmptyListView(
+                systemImage: "text.page.badge.magnifyingglass",
+                title: .init(stringLiteral: loadError)
+            ) {
+                Button {
+                    send(.retryLoadButtonTapped)
+                } label: {
+                    Text(.retry)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.primary())
+            }
+        } else if store.content == nil {
+            ProgressView()
+                .controlSize(.large)
+        } else {
+            TextEditor(text: contentBinding())
+                .accessibilityLabel(.content)
+                .font(.body)
+                .scrollContentBackground(.hidden)
+                .background(Color.m3SurfaceBright)
+                .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+        }
+    }
+
+    private func contentBinding() -> Binding<String> {
+        Binding(
+            get: { store.content ?? "" },
+            set: { $store.content.wrappedValue = $0 }
+        )
+    }
 
     @ViewBuilder
     private func buttons() -> some View {

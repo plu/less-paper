@@ -13,6 +13,16 @@ extension Effect where Action == DocumentFormReducer.Action {
         }
     }
 
+    static func runGetDocument(id: Document.Id, server: Server) -> Self {
+        .run { send in
+            @Dependency(\.getDocument.execute)
+            var getDocument
+            try await send(.documentResult(.success(getDocument(id, server))))
+        } catch: { error, send in
+            await send(.documentResult(.failure(error)))
+        }
+    }
+
     static func runGetNextArchiveSerialNumber(server: Server) -> Self {
         .run { send in
             @Dependency(\.getNextArchiveSerialNumber.execute)
@@ -25,12 +35,17 @@ extension Effect where Action == DocumentFormReducer.Action {
         }
     }
 
-    static func runUpdateDocument(id: Document.Id, input: DocumentFormInput, server: Server) -> Self {
+    static func runUpdateDocument(
+        content: String?,
+        id: Document.Id,
+        input: DocumentFormInput,
+        server: Server
+    ) -> Self {
         .run { send in
             @Dependency(\.updateDocument.execute)
             var updateDocument
             await send(.set(\.isUpdating, true))
-            try await send(.updateResult(.success(updateDocument(id, input.apiValue, server))))
+            try await send(.updateResult(.success(updateDocument(id, input.apiValue(content: content), server))))
             await send(.set(\.isUpdating, false))
         } catch: { error, send in
             await send(.updateResult(.failure(error)))

@@ -34,9 +34,10 @@ extension DocumentFormInput {
         title = document.title
     }
 
-    var apiValue: UpdateDocumentInput {
+    func apiValue(content: String?) -> UpdateDocumentInput {
         .init(
             archiveSerialNumber: Int(archiveSerialNumber),
+            content: content,
             correspondent: correspondent?.id,
             createdDate: createdDate,
             documentType: documentType?.id,

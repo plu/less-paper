@@ -14,6 +14,7 @@ public struct DocumentFormReducer: Sendable {
         case binding(BindingAction<State>)
         case delegate(Delegate)
         case destination(PresentationAction<Destination.Action>)
+        case documentResult(Result<Document, Error>)
         case nextArchiveSerialNumber(Int)
         case updateResult(Result<Document, Error>)
         case view(View)
@@ -30,7 +31,9 @@ public struct DocumentFormReducer: Sendable {
             case createTagButtonTapped
             case closeButtonTapped
             case getNextArchiveSerialNumberButtonTapped
+            case onAppear
             case resetButtonTapped
+            case retryLoadButtonTapped
             case saveButtonTapped
         }
     }
@@ -46,6 +49,10 @@ public struct DocumentFormReducer: Sendable {
     @ObservableState
     public struct State: Equatable {
 
+        // nil until the full document arrives. The list truncates content, so nil is the only
+        // honest value beforehand — and it is what keeps a partial save impossible.
+        var content: String?
+
         @Presents
         var destination: Destination.State?
 
@@ -54,13 +61,26 @@ public struct DocumentFormReducer: Sendable {
 
         var input: DocumentFormInput
 
+        var isContentModified: Bool {
+            guard let content else {
+                return false
+            }
+            return content != document.content
+        }
+
+        var isLoadingDocument = false
+
         var isLoadingNextArchiveSerialNumber = false
 
         var isModified: Bool {
-            input != DocumentFormInput(document: document, server: server)
+            input != DocumentFormInput(document: document, server: server) || isContentModified
         }
 
         var isUpdating = false
+
+        var loadError: String?
+
+        var section = DocumentFormSection.details
 
         let server: Server
 
@@ -115,6 +135,21 @@ public struct DocumentFormReducer: Sendable {
                 state.destination = nil
                 state.input.tags.insert(tag)
                 return .none
+            case let .documentResult(result):
+                state.isLoadingDocument = false
+                switch result {
+                case let .failure(error):
+                    state.loadError = error.localizedDescription
+                    return .toast(error)
+                case let .success(document):
+                    state.loadError = nil
+                    // Only content is re-seeded. The user may have edited the other fields while
+                    // this was in flight, and the truncated payload differs from the full one in
+                    // content alone.
+                    state.content = document.content
+                    state.$document.withLock { $0 = document }
+                    return .none
+                }
             case let .nextArchiveSerialNumber(archiveSerialNumber):
                 state.input.archiveSerialNumber = String(archiveSerialNumber)
                 return .none
@@ -145,14 +180,41 @@ public struct DocumentFormReducer: Sendable {
                     return .runDismiss()
                 case .getNextArchiveSerialNumberButtonTapped:
                     return .runGetNextArchiveSerialNumber(server: state.server)
+                case .onAppear:
+                    // A failed load is not retried silently on the next appearance; that is what
+                    // the retry button is for.
+                    guard state.content == nil, state.loadError == nil, !state.isLoadingDocument else {
+                        return .none
+                    }
+                    state.isLoadingDocument = true
+                    return .runGetDocument(
+                        id: state.document.id,
+                        server: state.server
+                    )
+                case .retryLoadButtonTapped:
+                    guard !state.isLoadingDocument else {
+                        return .none
+                    }
+                    state.isLoadingDocument = true
+                    state.loadError = nil
+                    return .runGetDocument(
+                        id: state.document.id,
+                        server: state.server
+                    )
                 case .resetButtonTapped:
                     state.input = DocumentFormInput(
                         document: state.document,
                         server: state.server
                     )
+                    // Guarded: an unloaded reset must leave nil in place rather than adopt the
+                    // truncated string from the list.
+                    if state.content != nil {
+                        state.content = state.document.content
+                    }
                     return .none
                 case .saveButtonTapped:
                     return .runUpdateDocument(
+                        content: state.isContentModified ? state.content : nil,
                         id: state.document.id,
                         input: state.input,
                         server: state.server

@@ -259,4 +259,256 @@ struct DocumentFormReducerTests {
             $0.isUpdating = false
         }
     }
+
+    @Test
+    func test_view_onAppear_seedsContentFromFullDocument() async throws {
+        let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
+        let document = Shared(value: Document.testValue(content: "Some invoice"))
+        let store = TestStore(initialState: DocumentFormReducer.State(
+            document: document,
+            server: .testValue()
+        )) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.getDocument.execute = { _, _ in full }
+        }
+
+        await store.send(.view(.onAppear)) {
+            $0.isLoadingDocument = true
+        }
+        await store.receive(\.documentResult.success, full) {
+            $0.isLoadingDocument = false
+            $0.content = full.content
+            $0.$document.withLock { $0 = full }
+        }
+
+        #expect(document.wrappedValue == full)
+        #expect(store.state.isModified == false)
+    }
+
+    @Test
+    func test_documentResult_success_keepsEditsMadeWhileLoading() async throws {
+        let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
+        // The fetch is held open so the edit below genuinely happens mid-flight.
+        let gate = AsyncStream<Void>.makeStream()
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+            document: .testValue(content: "Some invoice")
+        )) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.getDocument.execute = { _, _ in
+                await gate.stream.first { _ in true }
+                return full
+            }
+        }
+
+        await store.send(.view(.onAppear)) {
+            $0.isLoadingDocument = true
+        }
+        await store.send(.binding(.set(\.input.title, "typed while loading"))) {
+            $0.input.title = "typed while loading"
+        }
+
+        gate.continuation.yield()
+        gate.continuation.finish()
+
+        await store.receive(\.documentResult.success, full) {
+            $0.isLoadingDocument = false
+            $0.content = full.content
+            $0.$document.withLock { $0 = full }
+        }
+
+        #expect(store.state.input.title == "typed while loading")
+    }
+
+    @Test
+    func test_view_onAppear_failure_setsLoadError() async throws {
+        let toasts = LockIsolated<[Toast]>([])
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.getDocument.execute = { _, _ in throw ApiError.testValue() }
+            $0.toastPresenter.present = { value in
+                toasts.withValue { $0.append(value) }
+            }
+        }
+
+        await store.send(.view(.onAppear)) {
+            $0.isLoadingDocument = true
+        }
+        await store.receive(\.documentResult.failure) {
+            $0.isLoadingDocument = false
+            $0.loadError = ApiError.testValue().localizedDescription
+        }
+
+        #expect(store.state.content == nil)
+        #expect(toasts.value.count == 1)
+
+        // Re-appearing must not silently retry; only the retry button may.
+        await store.send(.view(.onAppear))
+    }
+
+    @Test
+    func test_view_retryLoadButtonTapped_afterFailure_refetches() async throws {
+        let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+            loadError: "The request timed out."
+        )) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.getDocument.execute = { _, _ in full }
+        }
+
+        await store.send(.view(.retryLoadButtonTapped)) {
+            $0.isLoadingDocument = true
+            $0.loadError = nil
+        }
+        await store.receive(\.documentResult.success, full) {
+            $0.isLoadingDocument = false
+            $0.content = full.content
+            $0.$document.withLock { $0 = full }
+        }
+    }
+
+    @Test
+    func test_view_onAppear_doesNotRefetchOnceLoaded() async throws {
+        let calls = LockIsolated(0)
+        let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.getDocument.execute = { _, _ in
+                calls.withValue { $0 += 1 }
+                return full
+            }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.onAppear))
+        await store.receive(\.documentResult.success)
+        await store.send(.view(.onAppear))
+
+        #expect(calls.value == 1)
+    }
+
+    @Test
+    func test_contentEdit_flipsIsModified() async throws {
+        let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.getDocument.execute = { _, _ in full }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.onAppear))
+        await store.receive(\.documentResult.success)
+
+        #expect(store.state.isModified == false)
+
+        await store.send(.binding(.set(\.content, "edited content"))) {
+            $0.content = "edited content"
+        }
+
+        #expect(store.state.isModified == true)
+
+        await store.send(.binding(.set(\.content, full.content))) {
+            $0.content = full.content
+        }
+
+        #expect(store.state.isModified == false)
+    }
+
+    @Test
+    func test_view_saveButtonTapped_beforeLoad_omitsContent() async throws {
+        let inputs = LockIsolated<[UpdateDocumentInput]>([])
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+            document: .testValue(content: "Some invoice")
+        )) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.updateDocument.execute = { _, input, _ in
+                inputs.withValue { $0.append(input) }
+                return .testValue()
+            }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.binding(.set(\.input.title, "some new title"))) {
+            $0.input.title = "some new title"
+        }
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.updateResult.success)
+
+        // The document came from the list, so its content is truncated. Sending it back would
+        // overwrite the real text with a stump.
+        #expect(inputs.value.count == 1)
+        #expect(inputs.value.first?.content == nil)
+    }
+
+    @Test
+    func test_view_saveButtonTapped_sendsContentOnlyWhenChanged() async throws {
+        let inputs = LockIsolated<[UpdateDocumentInput]>([])
+        let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.getDocument.execute = { _, _ in full }
+            $0.updateDocument.execute = { _, input, _ in
+                inputs.withValue { $0.append(input) }
+                return full
+            }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.onAppear))
+        await store.receive(\.documentResult.success)
+
+        await store.send(.binding(.set(\.input.title, "some new title")))
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.updateResult.success)
+
+        #expect(inputs.value.last?.content == nil)
+
+        await store.send(.binding(.set(\.content, "edited content")))
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.updateResult.success)
+
+        #expect(inputs.value.last?.content == "edited content")
+    }
+
+    @Test
+    func test_view_resetButtonTapped_beforeLoad_leavesContentNil() async throws {
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+            document: .testValue(content: "Some invoice")
+        )) {
+            DocumentFormReducer()
+        }
+
+        await store.send(.view(.resetButtonTapped))
+
+        #expect(store.state.content == nil)
+    }
+
+    @Test
+    func test_view_resetButtonTapped_restoresLoadedContent() async throws {
+        let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.getDocument.execute = { _, _ in full }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.onAppear))
+        await store.receive(\.documentResult.success)
+        await store.send(.binding(.set(\.content, "edited content")))
+
+        #expect(store.state.isModified == true)
+
+        await store.send(.view(.resetButtonTapped))
+
+        #expect(store.state.content == full.content)
+        #expect(store.state.isModified == false)
+    }
 }

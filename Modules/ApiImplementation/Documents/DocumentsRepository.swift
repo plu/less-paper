@@ -28,6 +28,11 @@ struct DocumentsRepository: Sendable {
         _ server: Server
     ) async throws -> GetAllDocumentIdsOutput
 
+    var getDocument: @Sendable (
+        _ id: Document.Id,
+        _ server: Server
+    ) async throws -> Document
+
     var getDocuments: @Sendable (
         _ input: GetDocumentsInput,
         _ server: Server
@@ -61,6 +66,7 @@ extension DocumentsRepository: TestDependencyKey {
         createDocument: { _, _ in },
         downloadDocument: { _, _ in try .testValue() },
         getAllDocumentIds: { _, _ in .testValue() },
+        getDocument: { _, _ in .testValue() },
         getDocuments: { _, _ in .testValue() },
         getDocumentsByIds: { _, _ in [] },
         getNextArchiveSerialNumber: { _ in 1 },
@@ -73,6 +79,7 @@ extension DocumentsRepository: TestDependencyKey {
         createDocument: { _, _ in },
         downloadDocument: { _, _ in try .testValue() },
         getAllDocumentIds: { _, _ in .testValue() },
+        getDocument: { _, _ in .testValue() },
         getDocuments: { _, _ in .testValue() },
         getDocumentsByIds: { _, _ in [] },
         getNextArchiveSerialNumber: { _ in 1 },
@@ -95,6 +102,7 @@ extension DocumentsRepository: DependencyKey {
         createDocument: createDocument(input:server:),
         downloadDocument: downloadDocument(id:server:),
         getAllDocumentIds: getAllDocumentIds(input:server:),
+        getDocument: getDocument(id:server:),
         getDocuments: getDocuments(input:server:),
         getDocumentsByIds: getDocumentsByIds(input:server:),
         getNextArchiveSerialNumber: getNextArchiveSerialNumber(server:),
@@ -156,6 +164,19 @@ private extension DocumentsRepository {
         try await APIClient
             .client(server: server)
             .send(.init(input: input))
+            .value
+    }
+
+    static func getDocument(
+        id: Document.Id,
+        server: Server
+    ) async throws -> Document {
+        try await APIClient
+            .client(server: server)
+            .send(.init(
+                path: "/api/documents/\(id)/",
+                method: .get
+            ))
             .value
     }
 

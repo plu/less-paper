@@ -5,6 +5,10 @@ public struct UpdateDocumentInput: Encodable, Equatable, Sendable {
     @NullEncodable
     public var archiveSerialNumber: Int?
 
+    // A plain optional, not @NullEncodable: nil must omit the key so the server leaves content
+    // untouched. Encoding an explicit null here would blank the document.
+    public let content: String?
+
     @NullEncodable
     public var correspondent: Correspondent.Id?
 
@@ -22,6 +26,7 @@ public struct UpdateDocumentInput: Encodable, Equatable, Sendable {
 
     public init(
         archiveSerialNumber: Int?,
+        content: String?,
         correspondent: Correspondent.Id?,
         createdDate: Date,
         documentType: DocumentType.Id?,
@@ -30,6 +35,7 @@ public struct UpdateDocumentInput: Encodable, Equatable, Sendable {
         title: String
     ) {
         self.archiveSerialNumber = archiveSerialNumber
+        self.content = content
         self.correspondent = correspondent
         self.createdDate = createdDate
         self.documentType = documentType
@@ -43,6 +49,7 @@ public extension UpdateDocumentInput {
 
     static func testValue(
         archiveSerialNumber: Int? = nil,
+        content: String? = nil,
         correspondent: Correspondent.Id? = nil,
         createdDate: Date = .distantPast,
         documentType: DocumentType.Id? = nil,
@@ -52,6 +59,7 @@ public extension UpdateDocumentInput {
     ) -> Self {
         .init(
             archiveSerialNumber: archiveSerialNumber,
+            content: content,
             correspondent: correspondent,
             createdDate: createdDate,
             documentType: documentType,

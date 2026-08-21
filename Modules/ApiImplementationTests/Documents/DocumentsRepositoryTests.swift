@@ -283,6 +283,37 @@ struct DocumentsRepositoryTests {
         #expect(output.results.count == 2)
     }
 
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_getDocument_returnsUntruncatedContent() async throws {
+        let listed = try await repository.getDocuments(
+            input: .testValue(),
+            server: .testValue()
+        ).results
+
+        // Paperless caps truncated content at 550 characters, so a document sitting exactly on the
+        // cap is one the list has demonstrably cut short. Picking it by length rather than by title
+        // keeps the test honest if the fixtures change: no candidate means #require fails loudly
+        // rather than the comparison below passing vacuously on empty content.
+        let truncated = try #require(listed.first { $0.content?.count == 550 })
+        let truncatedContent = try #require(truncated.content)
+
+        let fetched = try await repository.getDocument(
+            id: truncated.id,
+            server: .testValue()
+        )
+        let fetchedContent = try #require(fetched.content)
+
+        #expect(fetched.id == truncated.id)
+        #expect(fetchedContent.count > truncatedContent.count)
+        #expect(fetchedContent.hasPrefix(truncatedContent))
+    }
+
     @Test
     func test_getDocumentsByIds_emptyIds_returnsEmpty() async throws {
         let documents = try await repository.getDocumentsByIds(

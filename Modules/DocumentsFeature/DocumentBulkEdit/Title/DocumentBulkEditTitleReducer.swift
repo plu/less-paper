@@ -45,6 +45,9 @@ public struct DocumentBulkEditTitleReducer: Sendable {
         var updateInput: UpdateDocumentInput {
             .init(
                 archiveSerialNumber: document.archiveSerialNumber,
+                // nil, never document.content: these documents come from the list, where the
+                // content is truncated. Sending it back would overwrite the real text.
+                content: nil,
                 correspondent: document.correspondent,
                 createdDate: document.created,
                 documentType: document.documentType,
