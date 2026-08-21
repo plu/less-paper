@@ -29,10 +29,12 @@ public struct PdfPasswordListView: View {
         .task { await send(.onAppear).finish() }
         .overlay {
             if store.isLoaded, store.pdfPasswords.isEmpty {
-                ContentUnavailableView(
-                    String(localized: .pdfPasswordsEmpty),
-                    systemImage: "key"
-                )
+                ContentUnavailableView {
+                    EmptyListView(
+                        systemImage: "key",
+                        title: .pdfPasswordsEmpty
+                    )
+                }
             }
         }
     }

@@ -17,6 +17,9 @@ struct PdfPasswordRowView: View {
                 .font(.footnote.monospaced())
                 .foregroundStyle(Color.m3OnSurface.opacity(0.7))
         }
+        // The VStack sizes to its text, so contentShape alone would leave the rest of the row dead
+        // to taps.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .onTapGesture {
             send(.revealButtonTapped, animation: .default)
