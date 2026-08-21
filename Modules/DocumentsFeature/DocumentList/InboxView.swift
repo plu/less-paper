@@ -8,12 +8,15 @@ public struct InboxView: View {
     public var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
             List {
+                // Rows default to `systemBackground`, which is black in dark mode and so paints over
+                // the list's `m3SurfaceContainerLowest`. Invisible in light mode, where both are white.
                 ForEach(Array(store.scope(state: \.documents, action: \.documents))) { store in
                     DocumentRowView(store: store)
                         .documentSelectionOverlay(
                             document: store.document.id,
                             store: documentSelectionStore
                         )
+                        .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
                         .onAppear { send(.onRowAppear(store.document)) }
@@ -27,10 +30,13 @@ public struct InboxView: View {
                             .id(UUID())
                         Spacer()
                     }
+                    .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
                     .padding(.x3)
                 }
-                Spacer().listRowSeparator(.hidden)
+                Spacer()
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             }
             .background(Color.m3SurfaceContainerLowest)
             .documentListBottomToolbar(store: store, viewAction: send)
