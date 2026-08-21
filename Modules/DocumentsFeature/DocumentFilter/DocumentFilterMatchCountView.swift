@@ -1,9 +1,8 @@
 import ComposableArchitecture
 import SwiftUI
 
-// Reads the count straight from shared storage rather than taking it from a store, so any sheet in
-// the filter flow can show it with one line and no state plumbing. The pickers change the filter on
-// every tap, so the count moves while they are on screen — it has to be visible there too.
+// Reads the count from shared storage rather than taking it from a store: it is produced by the
+// document list as it re-queries, and nothing in between needs to thread it through.
 struct DocumentFilterMatchCountView: View {
 
     var body: some View {

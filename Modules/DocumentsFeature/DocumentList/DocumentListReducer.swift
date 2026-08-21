@@ -112,8 +112,7 @@ public struct DocumentListReducer: Sendable {
         var documentTypes: IdentifiedArrayOf<DocumentType>
 
         // Carries its key in the attribute rather than being assigned in `init`, like `servers`
-        // below: it is presentation state for the filter sheet and its pickers, not scoped to a
-        // server.
+        // below: it is presentation state for the filter sheet, not scoped to a server.
         @Shared(.documentFilterMatchCount)
         var filterMatchCount: DocumentFilterMatchCount
 

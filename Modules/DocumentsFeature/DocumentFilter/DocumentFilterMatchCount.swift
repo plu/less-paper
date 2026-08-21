@@ -13,8 +13,7 @@ struct DocumentFilterMatchCount: Equatable, Sendable {
 extension SharedReaderKey where Self == InMemoryKey<DocumentFilterMatchCount>.Default {
 
     // Not scoped to a server, unlike its neighbours in ApiInterface: only one filter sheet exists
-    // at a time, and this is ephemeral presentation state rather than data. Being unscoped is also
-    // what lets the pickers read it — they are handed a rule and a selection, and never a `Server`.
+    // at a time, and this is ephemeral presentation state rather than data.
     static var documentFilterMatchCount: Self {
         Self[
             .inMemory("documentFilterMatchCount"),

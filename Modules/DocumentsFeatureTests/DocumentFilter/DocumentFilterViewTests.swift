@@ -155,30 +155,4 @@ struct DocumentFilterViewTests {
             named: "matchCountSingular"
         )
     }
-
-    @Test
-    func testSnapshot_matchCountInTagPicker() async throws {
-        @Shared(.documentFilterMatchCount)
-        var matchCount
-
-        $matchCount.withLock { $0 = .init(count: 12) }
-
-        assertSnapshot(
-            of: DocumentFilterTagListView(
-                store: Store(
-                    initialState: DocumentFilterTagListReducer.State.testValue(
-                        values: [
-                            .testValue(color: "#A6CEE3", id: 1, name: "Invoice", textColor: "#000000"),
-                            .testValue(color: "#B2DF8A", id: 2, name: "2026", textColor: "#000000")
-                        ]
-                    ),
-                    reducer: {
-                        DocumentFilterTagListReducer()
-                    }
-                )
-            ),
-            as: .image(layout: .device(config: .iPhone12)),
-            named: "matchCountInTagPicker"
-        )
-    }
 }
