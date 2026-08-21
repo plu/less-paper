@@ -50,9 +50,7 @@ public extension ServerFormInput {
 
         return .init(
             alias: "",
-            headers: [
-                HTTPHeader(id: uuid().uuidString, name: "Accept", value: "application/json; version=10")
-            ],
+            headers: [],
             id: uuid().uuidString,
             password: "",
             url: .empty,

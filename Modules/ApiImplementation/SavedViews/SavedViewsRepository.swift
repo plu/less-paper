@@ -22,6 +22,12 @@ struct SavedViewsRepository: Sendable {
         _ server: Server
     ) async throws -> GetSavedViewsOutput
 
+    var setSavedViewVisibility: @Sendable (
+        _ id: SavedView.Id,
+        _ input: SetSavedViewVisibilityInput,
+        _ server: Server
+    ) async throws -> SaveSavedViewOutput
+
     var updateSavedView: @Sendable (
         _ id: SavedView.Id,
         _ input: SaveSavedViewInput,
@@ -35,6 +41,7 @@ extension SavedViewsRepository: TestDependencyKey {
         createSavedView: { _, _ in .testValue() },
         deleteSavedView: { _, _ in },
         getSavedViews: { _, _ in .testValue(results: .previewValue) },
+        setSavedViewVisibility: { _, _, _ in .testValue() },
         updateSavedView: { _, _, _ in .testValue() }
     )
 
@@ -42,6 +49,7 @@ extension SavedViewsRepository: TestDependencyKey {
         createSavedView: { _, _ in .testValue() },
         deleteSavedView: { _, _ in },
         getSavedViews: { _, _ in .testValue() },
+        setSavedViewVisibility: { _, _, _ in .testValue() },
         updateSavedView: { _, _, _ in .testValue() }
     )
 }
@@ -59,6 +67,7 @@ extension SavedViewsRepository: DependencyKey {
         createSavedView: createSavedView(input:server:),
         deleteSavedView: deleteSavedView(id:server:),
         getSavedViews: getSavedViews(input:server:),
+        setSavedViewVisibility: setSavedViewVisibility(id:input:server:),
         updateSavedView: updateSavedView(id:input:server:)
     )
 }
@@ -99,6 +108,21 @@ private extension SavedViewsRepository {
         try await APIClient
             .client(server: server)
             .send(.init(input: input))
+            .value
+    }
+
+    static func setSavedViewVisibility(
+        id: SavedView.Id,
+        input: SetSavedViewVisibilityInput,
+        server: Server
+    ) async throws -> SaveSavedViewOutput {
+        try await APIClient
+            .client(server: server)
+            .send(.init(
+                path: "/api/saved_views/\(id)/",
+                method: .patch,
+                body: input
+            ))
             .value
     }
 

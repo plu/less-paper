@@ -16,6 +16,9 @@ private extension GetSavedViewsUseCase {
     static func execute(
         server: Server
     ) async throws -> [SavedView] {
+        @Shared(.apiVersion(server))
+        var apiVersion: Int
+
         @Shared(.savedViews(server))
         var cache: IdentifiedArrayOf<SavedView> = []
 
@@ -39,17 +42,21 @@ private extension GetSavedViewsUseCase {
             result.append(contentsOf: output.results)
         }
 
-        let uiSettings = try await uiSettingsRepository.getUISettings(
-            input: .init(),
-            server: server
-        )
-        let sidebarIds = Set(uiSettings.settings.savedViews?.sidebarViewsVisibleIds ?? [])
-        let dashboardIds = Set(uiSettings.settings.savedViews?.dashboardViewsVisibleIds ?? [])
-        result = result.map {
-            var savedView = $0
-            savedView.showInSidebar = sidebarIds.contains(savedView.id)
-            savedView.showOnDashboard = dashboardIds.contains(savedView.id)
-            return savedView
+        // v10 removed show_on_dashboard/show_in_sidebar from saved views and moved them into
+        // UISettings. On v9 the payload is authoritative and the extra request is pure waste.
+        if apiVersion >= 10 {
+            let uiSettings = try await uiSettingsRepository.getUISettings(
+                input: .init(),
+                server: server
+            )
+            let sidebarIds = Set(uiSettings.settings.savedViews?.sidebarViewsVisibleIds ?? [])
+            let dashboardIds = Set(uiSettings.settings.savedViews?.dashboardViewsVisibleIds ?? [])
+            result = result.map {
+                var savedView = $0
+                savedView.showInSidebar = sidebarIds.contains(savedView.id)
+                savedView.showOnDashboard = dashboardIds.contains(savedView.id)
+                return savedView
+            }
         }
 
         $cache.withLock { $0 = IdentifiedArray(uniqueElements: result) }

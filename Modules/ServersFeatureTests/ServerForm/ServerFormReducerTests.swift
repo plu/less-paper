@@ -36,6 +36,10 @@ struct ServerFormReducerTests {
             $0.storeToken.execute = { _, _, _, _ in
                 events.withValue { $0.append("storeToken") }
             }
+            $0.negotiateApiVersion.execute = { _ in
+                events.withValue { $0.append("negotiateApiVersion") }
+                return 10
+            }
             $0.updateCache.execute = { _ in
                 events.withValue { $0.append("updateCache") }
             }
@@ -53,7 +57,7 @@ struct ServerFormReducerTests {
         // Saving the first server selects it straight away, so its caches have
         // to be filled before it is announced as saved — otherwise the inbox
         // filter is built with no tags and shows every document.
-        #expect(events.value == ["storeToken", "updateCache"])
+        #expect(events.value == ["storeToken", "negotiateApiVersion", "updateCache"])
     }
 
     @Test
@@ -261,5 +265,58 @@ struct ServerFormReducerTests {
             $0.input.code = nil
         }
         #expect(toasts.value == [.error("Authentication failed")])
+    }
+
+    @Test
+    func test_view_saveButtonTapped_unsupportedServerAbortsTheSave() async throws {
+        let events = LockIsolated<[String]>([])
+        let toasts = LockIsolated<[Toast]>([])
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: .testValue()
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.storeToken.execute = { _, _, _, _ in
+                events.withValue { $0.append("storeToken") }
+            }
+            $0.negotiateApiVersion.execute = { _ in
+                throw ApiVersionError.unsupportedServer(6)
+            }
+            $0.updateCache.execute = { _ in
+                events.withValue { $0.append("updateCache") }
+            }
+            $0.toastPresenter.present = { value in
+                toasts.withValue { $0.append(value) }
+            }
+        }
+
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.binding, .set(\.isSaving, true)) {
+            $0.isSaving = true
+        }
+        await store.receive(\.error)
+        await store.receive(\.binding, .set(\.isSaving, false)) {
+            $0.isSaving = false
+        }
+
+        #expect(events.value == ["storeToken"])
+
+        // The toast has to name the server's own version, otherwise the user has no idea what to
+        // upgrade from.
+        let toast = try #require(toasts.value.first)
+        guard case let .error(message) = toast else {
+            Issue.record("expected an error toast, got \(toast)")
+            return
+        }
+        #expect(message.contains("6"))
+    }
+
+    @Test
+    func empty_startsWithNoHeaders() {
+        withDependencies {
+            $0.uuid = .incrementing
+        } operation: {
+            #expect(ServerFormInput.empty.headers.isEmpty)
+        }
     }
 }

@@ -171,6 +171,22 @@ public extension SharedReaderKey where Self == FileStorageKey<[Tag.Id]>.Default 
     }
 }
 
+public extension SharedReaderKey where Self == FileStorageKey<Int>.Default {
+
+    // The default is the floor rather than the ceiling on purpose: an un-probed server must never
+    // send a version it might answer 406 to, and every server this app supports accepts 9.
+    static func apiVersion(_ server: Server) -> Self {
+        Self[
+            .fileStorage(
+                .applicationGroupDirectory.appending(component: "\(server.id)-api-version.json"),
+                decoder: .apiDecoder,
+                encoder: .apiEncoder
+            ),
+            default: ApiVersion.minimumSupported
+        ]
+    }
+}
+
 private extension URL {
     static var applicationGroupDirectory: URL {
         guard let applicationGroupDirectory = FileManager.default

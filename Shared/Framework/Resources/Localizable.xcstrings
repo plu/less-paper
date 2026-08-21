@@ -3737,6 +3737,40 @@
         }
       }
     },
+    "unsupportedServerApiVersion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Server unterstützt nur API-Version %1$lld. Less Paper benötigt mindestens Version %2$lld. Bitte aktualisiere Paperless-ngx."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This server only supports API version %1$lld. Less Paper needs at least version %2$lld. Please update Paperless-ngx."
+          }
+        }
+      }
+    },
+    "unsupportedServerApiVersionUnknown" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Server hat seine API-Version nicht gemeldet. Er ist vermutlich zu alt für Less Paper. Bitte aktualisiere Paperless-ngx."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This server did not report its API version. It is most likely too old for Less Paper. Please update Paperless-ngx."
+          }
+        }
+      }
+    },
     "url" : {
       "extractionState" : "manual",
       "localizations" : {

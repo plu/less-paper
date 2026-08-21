@@ -6,8 +6,11 @@ import Foundation
 import IdentifiedCollections
 import SwiftSharing
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .dependencies()
+)
 struct GetSavedViewsUseCaseTests {
 
     @Test
@@ -44,6 +47,65 @@ struct GetSavedViewsUseCaseTests {
             .testValue(id: 2),
             .testValue(id: 3)
         ])
+    }
+
+    @Test
+    func execute_onVersion9_usesPayloadFieldsAndSkipsUiSettings() async throws {
+        let server = Server.testValue()
+        @Shared(.apiVersion(server))
+        var apiVersion: Int
+
+        let uiSettingsRequested = LockIsolated(false)
+
+        try await withDependencies {
+            $0.savedViewsRepository.getSavedViews = { _, _ in
+                .testValue(next: nil, results: [
+                    .testValue(id: 1, showInSidebar: true, showOnDashboard: false)
+                ])
+            }
+            $0.uiSettingsRepository.getUISettings = { _, _ in
+                uiSettingsRequested.setValue(true)
+                return .testValue()
+            }
+        } operation: {
+            let savedViews = try await GetSavedViewsUseCase.liveValue.execute(server: server)
+
+            #expect(savedViews.first?.showInSidebar == true)
+            #expect(savedViews.first?.showOnDashboard == false)
+        }
+
+        #expect(uiSettingsRequested.value == false)
+    }
+
+    @Test
+    func execute_onVersion10_overlaysVisibilityFromUiSettings() async throws {
+        let server = Server.testValue()
+        @Shared(.apiVersion(server))
+        var apiVersion: Int
+        $apiVersion.withLock { $0 = 10 }
+
+        try await withDependencies {
+            $0.savedViewsRepository.getSavedViews = { _, _ in
+                .testValue(next: nil, results: [
+                    .testValue(id: 1, showInSidebar: true, showOnDashboard: true)
+                ])
+            }
+            $0.uiSettingsRepository.getUISettings = { _, _ in
+                .init(
+                    settings: .testValue(savedViews: .testValue(
+                        dashboardViewsVisibleIds: [1],
+                        sidebarViewsVisibleIds: []
+                    )),
+                    user: .testValue()
+                )
+            }
+        } operation: {
+            let savedViews = try await GetSavedViewsUseCase.liveValue.execute(server: server)
+
+            // UISettings is authoritative on v10, so the payload's `true` for sidebar loses.
+            #expect(savedViews.first?.showInSidebar == false)
+            #expect(savedViews.first?.showOnDashboard == true)
+        }
     }
 
     @Shared(.savedViews(.testValue()))
