@@ -441,6 +441,7 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
                 .target(.apiInterface),
+                .target(.pdfPasswordsFeature),
                 .target(.serversFeature),
                 .target(.settingsFeature),
                 .target(.tagsFeature),
