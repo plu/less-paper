@@ -9,13 +9,16 @@ extension Effect where Action == ServerRowReducer.Action {
         @Dependency(\.updateCache.execute)
         var updateCache
 
+        // Clearing the row's flag has to happen before the selection is written. Writing
+        // `selectedServer` rebuilds `MainReducer.State`, which empties the settings navigation
+        // stack this row lives in — anything sent afterwards arrives at a missing element.
         return .run { send in
             try await updateCache(server)
-            await select(server)
             await send(.serverSelected, animation: .default)
+            await select(server)
         } catch: { _, send in
-            await select(server)
             await send(.serverSelected, animation: .default)
+            await select(server)
         }
         .cancellable(
             id: CancelID.selectServer,
