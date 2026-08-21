@@ -2,6 +2,7 @@ import ComposableArchitecture
 import CorrespondentsFeature
 import DocumentTypesFeature
 import LicensesFeature
+import PdfPasswordsFeature
 import SavedViewsFeature
 import ServersFeature
 import ShareFeature
@@ -46,6 +47,13 @@ public struct SettingListView: View {
                         state: SettingListReducer.Path.State.savedViewList(SavedViewListReducer.State(server: store.server))
                     ) {
                         Label(.savedViews, systemImage: "line.3.horizontal.decrease")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.pdfPasswordList(PdfPasswordListReducer.State())
+                    ) {
+                        Label(.pdfPasswords, systemImage: "key")
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
@@ -121,6 +129,8 @@ public struct SettingListView: View {
                 LicenseView(license: license)
             case let .licenseList(store):
                 LicenseListView(store: store)
+            case let .pdfPasswordList(store):
+                PdfPasswordListView(store: store)
             case let .savedViewList(store):
                 SavedViewListView(store: store)
             case let .serverList(store):

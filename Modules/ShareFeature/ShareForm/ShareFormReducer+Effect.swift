@@ -18,24 +18,69 @@ extension Effect where Action == ShareFormReducer.Action {
         }
     }
 
+    // Silent by design. Every stored password failing is the expected outcome for a document the
+    // user has never unlocked, so this reports nothing and lets the unlock form appear.
+    // Takes only the URL, never the caller's PDFDocument: the passwords have to be awaited from the
+    // keychain first, and PDFDocument is not Sendable, so it cannot cross into this closure. Reading
+    // a fresh copy here is also what `.fileUnlocked` does afterwards.
+    static func runAutoUnlock(
+        url: URL
+    ) -> Self {
+        .run { send in
+            @Dependency(\.getPdfPasswords.execute)
+            var getPdfPasswords
+
+            guard let document = PDFDocument(url: url) else {
+                return
+            }
+
+            for stored in try await getPdfPasswords() {
+                guard document.unlock(withPassword: stored.password) else {
+                    continue
+                }
+                guard document.write(
+                    to: url,
+                    withOptions: [.ownerPasswordOption: "", .userPasswordOption: ""]
+                )
+                else {
+                    return
+                }
+                await send(.fileUnlocked, animation: .snappy)
+                return
+            }
+        } catch: { _, _ in
+        }
+    }
+
     static func runUnlockFile(
         document: PDFDocument?,
+        filename: String,
         password: String,
+        shouldRemember: Bool,
         url: URL
     ) -> Self {
         guard let document, document.unlock(withPassword: password) == true else {
             return .send(.error(ShareFormError.unlockFailed))
         }
 
-        if document.write(
+        guard document.write(
             to: url,
             withOptions: [.ownerPasswordOption: "", .userPasswordOption: ""]
-        ) == true {
-            return .run { send in
-                await send(.fileUnlocked, animation: .snappy)
-            }
-        } else {
+        ) == true
+        else {
             return .send(.error(ShareFormError.unlockFailed))
+        }
+
+        return .run { send in
+            if shouldRemember {
+                @Dependency(\.savePdfPassword.execute)
+                var savePdfPassword
+
+                // Best effort: a keychain write failing must not block an unlock the user has
+                // already completed.
+                try? await savePdfPassword(filename, password)
+            }
+            await send(.fileUnlocked, animation: .snappy)
         }
     }
 

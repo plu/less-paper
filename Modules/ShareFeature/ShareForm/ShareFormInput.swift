@@ -16,6 +16,8 @@ struct ShareFormInput: Equatable, Sendable {
 
     var password = ""
 
+    var shouldRememberPassword = false
+
     var storagePath: StoragePath?
 
     var tags = Set<Tag>()

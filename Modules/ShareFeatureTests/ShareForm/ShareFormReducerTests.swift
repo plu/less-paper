@@ -184,7 +184,8 @@ struct ShareFormReducerTests {
         }
 
         await store.withExhaustivity(.off(showSkippedAssertions: false)) {
-            await store.receive(\.fileImported) {
+            await store.receive(\.fileImported)
+            await store.receive(\.selectFile) {
                 $0.currentIndex = 1
                 $0.input.title = "TonieBox"
             }
@@ -199,7 +200,8 @@ struct ShareFormReducerTests {
         }
 
         await store.withExhaustivity(.off(showSkippedAssertions: false)) {
-            await store.receive(\.fileImported) {
+            await store.receive(\.fileImported)
+            await store.receive(\.selectFile) {
                 $0.currentIndex = 2
                 $0.input.title = "W-8BEN"
             }
@@ -245,12 +247,14 @@ struct ShareFormReducerTests {
         }
 
         await store.withExhaustivity(.off(showSkippedAssertions: false)) {
-            await store.send(.view(.skipButtonTapped)) {
+            await store.send(.view(.skipButtonTapped))
+            await store.receive(\.selectFile) {
                 $0.currentIndex = 1
                 $0.input.title = "TonieBox"
             }
 
-            await store.send(.view(.skipButtonTapped)) {
+            await store.send(.view(.skipButtonTapped))
+            await store.receive(\.selectFile) {
                 $0.currentIndex = 2
                 $0.input.title = "W-8BEN"
             }

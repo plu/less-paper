@@ -20,6 +20,7 @@ public struct ShareFormReducer {
         case fileImported
         case fileUnlocked
         case nextArchiveSerialNumber(Int)
+        case selectFile(Int)
         case view(View)
 
         public enum Delegate {
@@ -33,6 +34,7 @@ public struct ShareFormReducer {
             case createTagButtonTapped
             case getNextArchiveSerialNumberButtonTapped
             case importButtonTapped
+            case onAppear
             case skipButtonTapped
             case unlockButtonTapped
         }
@@ -129,8 +131,13 @@ public struct ShareFormReducer {
                 guard state.hasMoreFiles else {
                     return .send(.delegate(.dismiss))
                 }
-                state.selectNextFile()
-                return .none
+                return .send(.selectFile(state.currentIndex + 1))
+            case let .selectFile(index):
+                state.selectNextFile(index: index)
+                guard state.isLocked else {
+                    return .none
+                }
+                return .runAutoUnlock(url: state.files[state.currentIndex])
             case .fileUnlocked:
                 state.document = PDFDocument(url: state.files[state.currentIndex])
                 state.image = state.document?.firstPageImage
@@ -170,16 +177,22 @@ public struct ShareFormReducer {
                         server: state.server,
                         url: state.files[state.currentIndex]
                     )
+                case .onAppear:
+                    guard state.isLocked else {
+                        return .none
+                    }
+                    return .runAutoUnlock(url: state.files[state.currentIndex])
                 case .skipButtonTapped:
                     guard state.hasMoreFiles else {
                         return .send(.delegate(.dismiss))
                     }
-                    state.selectNextFile()
-                    return .none
+                    return .send(.selectFile(state.currentIndex + 1))
                 case .unlockButtonTapped:
                     return .runUnlockFile(
                         document: state.document,
+                        filename: state.files[state.currentIndex].lastPathComponent,
                         password: state.input.password,
+                        shouldRemember: state.input.shouldRememberPassword,
                         url: state.files[state.currentIndex]
                     )
                 }
@@ -209,9 +222,9 @@ extension ShareFormReducer.State {
         _tags = Shared(wrappedValue: [], .tags(server))
     }
 
-    mutating func selectNextFile() {
+    mutating func selectNextFile(index: Int) {
         input = .init()
-        selectFile(index: currentIndex + 1)
+        selectFile(index: index)
     }
 
     mutating func selectFile(index: Int) {

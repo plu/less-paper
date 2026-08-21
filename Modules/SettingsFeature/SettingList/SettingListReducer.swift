@@ -6,6 +6,7 @@ import Dependencies
 import DocumentTypesFeature
 import Foundation
 import LicensesFeature
+import PdfPasswordsFeature
 import SavedViewsFeature
 import ServersFeature
 import ShareFeature
@@ -36,6 +37,7 @@ public struct SettingListReducer {
         case correspondentList(CorrespondentListReducer)
         case documentTypeList(DocumentTypeListReducer)
         case licenseList(LicenseListReducer)
+        case pdfPasswordList(PdfPasswordListReducer)
         case savedViewList(SavedViewListReducer)
         case serverList(ServerListReducer)
         case storagePathList(StoragePathListReducer)

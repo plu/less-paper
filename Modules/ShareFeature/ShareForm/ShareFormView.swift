@@ -13,6 +13,7 @@ struct ShareFormView: View {
 
     var body: some View {
         contentView()
+            .task { await send(.onAppear).finish() }
     }
 
     init(store: StoreOf<ShareFormReducer>) {
@@ -218,6 +219,12 @@ struct ShareFormView: View {
                         .textFieldStyle(.plain)
                 }
                 .accessibilityLabel(.password)
+
+                Toggle(isOn: $store.input.shouldRememberPassword) {
+                    Text(.rememberPassword)
+                }
+                .tint(Color.m3Primary)
+                .padding(.horizontal, .x3)
 
                 Text(.fileLocked)
                     .font(.footnote)

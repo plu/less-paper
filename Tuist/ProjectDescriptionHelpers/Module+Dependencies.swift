@@ -293,6 +293,24 @@ extension Module {
                 .target(.licensesFeature),
                 .target(.testSupport),
             ]
+        case .pdfPasswordsFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .target(.apiInterface),
+                .target(.components),
+            ]
+        case .pdfPasswordsFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .external(.snapshotTesting),
+                .target(.apiInterface),
+                .target(.components),
+                .target(.pdfPasswordsFeature),
+                .target(.testSupport),
+            ]
         case .permissionsFeature:
             [
                 .external(.composableArchitecture),
@@ -410,6 +428,7 @@ extension Module {
                 .target(.correspondentsFeature),
                 .target(.documentTypesFeature),
                 .target(.licensesFeature),
+                .target(.pdfPasswordsFeature),
                 .target(.savedViewsFeature),
                 .target(.serversFeature),
                 .target(.shareFeature),
