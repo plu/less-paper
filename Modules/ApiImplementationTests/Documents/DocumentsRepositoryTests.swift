@@ -355,6 +355,33 @@ struct DocumentsRepositoryTests {
         },
         .tags(.integrationTests)
     )
+    func test_getDocumentsByIds_ordering() async throws {
+        let allIds = try await repository.getAllDocumentIds(
+            input: .testValue(),
+            server: .testValue()
+        )
+        let ids = Array(allIds.results.map(\.id).prefix(5))
+
+        let ascending = try await repository.getDocumentsByIds(
+            input: .init(ids: ids, sortDirection: .ascending, sortField: .title),
+            server: .testValue()
+        )
+        let descending = try await repository.getDocumentsByIds(
+            input: .init(ids: ids, sortDirection: .descending, sortField: .title),
+            server: .testValue()
+        )
+
+        #expect(ascending.map(\.id) == descending.map(\.id).reversed())
+        #expect(ascending.map(\.title) == ascending.map(\.title).sorted())
+    }
+
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
     func test_getSelectionData() async throws {
         let documentIds = try await repository.getAllDocumentIds(
             input: .testValue(
@@ -390,6 +417,34 @@ struct DocumentsRepositoryTests {
             server: .testValue()
         )
         #expect(output.results.isEmpty)
+    }
+
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_bulkEditDocuments_merge() async throws {
+        let first = try await createTestPdfDocument(title: "Bulk Edit Merge Test A \(UUID())")
+        let second = try await createTestPdfDocument(title: "Bulk Edit Merge Test B \(UUID())")
+        let existing = try await documentIds()
+
+        try await repository.bulkEditDocuments(
+            input: .init(
+                documents: [first, second],
+                method: .merge(.init(archiveFallback: true, deleteOriginals: true))
+            ),
+            server: .testValue()
+        )
+
+        let mergedId = try await waitForNewDocument(excluding: existing)
+
+        try await repository.bulkEditDocuments(
+            input: .init(documents: [mergedId], method: .delete),
+            server: .testValue()
+        )
     }
 
     @Test(
@@ -610,6 +665,61 @@ struct DocumentsRepositoryTests {
         try content.data(using: .utf8)!.write(to: tempFile)
 
         return tempFile
+    }
+
+    private func documentIds() async throws -> Set<Document.Id> {
+        let output = try await repository.getAllDocumentIds(
+            input: .testValue(),
+            server: .testValue()
+        )
+
+        return Set(output.results.map(\.id))
+    }
+
+    // A comment is appended so the checksum is unique: paperless rejects a byte-identical upload as
+    // a duplicate, and every PDF under `docker/data` is already seeded. Bytes after `%%EOF` are
+    // ignored, so the file stays a PDF pikepdf can open — which `merge` requires and the plain-text
+    // `createTempTestFile` fixture does not satisfy.
+    private func createTempPdfFile() throws -> URL {
+        var data = try Data(
+            contentsOf: URL.projectRoot
+                .appendingPathComponent("docker")
+                .appendingPathComponent("data")
+                .appendingPathComponent("Puky.pdf")
+        )
+        data.append(Data("\n% \(UUID())\n".utf8))
+
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(UUID()).pdf")
+        try data.write(to: url)
+
+        return url
+    }
+
+    private func createTestPdfDocument(title: String) async throws -> Document.Id {
+        try await repository.createDocument(
+            input: .testValue(
+                createdDate: Date(),
+                title: title,
+                url: try createTempPdfFile()
+            ),
+            server: .testValue()
+        )
+
+        return try await waitForDocument(title: title)
+    }
+
+    // Found by elimination rather than by name: without `metadata_document_id` the merged
+    // document's title comes from a filename paperless builds itself.
+    private func waitForNewDocument(excluding existing: Set<Document.Id>) async throws -> Document.Id {
+        for _ in 0 ..< 60 {
+            if let id = try await documentIds().subtracting(existing).first {
+                return id
+            }
+            try await Task.sleep(for: .seconds(1))
+        }
+
+        throw DocumentConsumptionTimedOut()
     }
 
     private func createTestDocument(title: String) async throws -> Document.Id {

@@ -26,6 +26,55 @@ struct BulkEditDocumentsInputTests {
     }
 
     @Test
+    func encode_merge() async throws {
+        let input = BulkEditDocumentsInput(
+            documents: [3, 1, 2],
+            method: .merge(.testValue(deleteOriginals: true))
+        )
+
+        let json = try String(decoding: JSONEncoder.apiEncoder.encode(input), as: UTF8.self)
+
+        expectNoDifference(json, """
+        {
+          "documents" : [
+            3,
+            1,
+            2
+          ],
+          "method" : "merge",
+          "parameters" : {
+            "archive_fallback" : true,
+            "delete_originals" : true
+          }
+        }
+        """)
+    }
+
+    @Test
+    func encode_merge_withDefaults() async throws {
+        let input = BulkEditDocumentsInput(
+            documents: [1, 2],
+            method: .merge(.testValue())
+        )
+
+        let json = try String(decoding: JSONEncoder.apiEncoder.encode(input), as: UTF8.self)
+
+        expectNoDifference(json, """
+        {
+          "documents" : [
+            1,
+            2
+          ],
+          "method" : "merge",
+          "parameters" : {
+            "archive_fallback" : true,
+            "delete_originals" : false
+          }
+        }
+        """)
+    }
+
+    @Test
     func encode_modifyTags() async throws {
         let input = BulkEditDocumentsInput.testValue()
 

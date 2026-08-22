@@ -998,6 +998,63 @@ struct DocumentListReducerTests {
     }
 
     @Test
+    func test_view_mergeSelectedButtonTapped() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1, 2]
+            )
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.mergeSelectedButtonTapped)) {
+            $0.destination = .bulkEditMerge(DocumentBulkEditMergeReducer.State(
+                selectedDocuments: [1, 2],
+                server: $0.server,
+                sort: $0.filter.input.sort
+            ))
+        }
+    }
+
+    @Test
+    func test_view_mergeSelectedButtonTapped_withOneDocument() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1]
+            )
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.view(.mergeSelectedButtonTapped))
+    }
+
+    @Test
+    func test_destination_bulkEditMerge_documentsMerged_exitsSelectionWithoutRefetching() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            destination: .bulkEditMerge(DocumentBulkEditMergeReducer.State(
+                selectedDocuments: [1, 2],
+                server: .testValue(),
+                sort: .init()
+            )),
+            documentSelection: .testValue(
+                isActive: true,
+                selectedDocuments: [1, 2]
+            )
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.destination(.presented(.bulkEditMerge(.delegate(.documentsMerged))))) {
+            $0.destination = nil
+            $0.documentSelection.isActive = false
+            $0.documentSelection.selectedDocuments = []
+        }
+    }
+
+    @Test
     func test_view_editTitleButtonTapped() async throws {
         let store = TestStore(initialState: DocumentListReducer.State.testValue(
             documentSelection: .testValue(

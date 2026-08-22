@@ -48,6 +48,15 @@ private struct DocumentListBottomToolbar: ViewModifier {
             }
             .sheet(
                 item: $store.scope(
+                    state: \.destination?.bulkEditMerge,
+                    action: \.destination.bulkEditMerge
+                )
+            ) { store in
+                DocumentBulkEditMergeView(store: store)
+                    .presentationDetents([.sheet])
+            }
+            .sheet(
+                item: $store.scope(
                     state: \.destination?.bulkEditStoragePath,
                     action: \.destination.bulkEditStoragePath
                 )
@@ -119,6 +128,13 @@ private struct DocumentListBottomToolbar: ViewModifier {
                 } label: {
                     Label(.editTitle, systemImage: "textformat")
                 }
+
+                Button {
+                    send(.mergeSelectedButtonTapped)
+                } label: {
+                    Label(.mergeDocuments, systemImage: "arrow.trianglehead.merge")
+                }
+                .disabled(store.documentSelection.selectedDocuments.count < 2)
 
                 Divider()
 

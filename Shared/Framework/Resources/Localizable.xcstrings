@@ -256,6 +256,88 @@
         }
       }
     },
+    "bulkEditMergeConfirmation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dieser Vorgang führt %lld Dokument zu einem neuen Dokument zusammen. Die Originale bleiben erhalten."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dieser Vorgang führt %lld Dokumente zu einem neuen Dokument zusammen. Die Originale bleiben erhalten."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This will merge %lld document into a new document. The originals are kept."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This will merge %lld documents into a new document. The originals are kept."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "bulkEditMergeDeleteOriginalsConfirmation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dieser Vorgang führt %lld Dokument zu einem neuen Dokument zusammen und löscht das Original."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Dieser Vorgang führt %lld Dokumente zu einem neuen Dokument zusammen und löscht die Originale."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This will merge %lld document into a new document and delete the original."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "This will merge %lld documents into a new document and delete the originals."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "bulkEditTitleConfirmation" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -933,6 +1015,23 @@
         }
       }
     },
+    "confirmMerge" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusammenführen bestätigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Confirm merge"
+          }
+        }
+      }
+    },
     "content" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1375,6 +1474,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Do you really want to delete this note? This cannot be undone."
+          }
+        }
+      }
+    },
+    "deleteOriginals" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Originale löschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete originals"
           }
         }
       }
@@ -2239,6 +2355,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Regular expression"
+          }
+        }
+      }
+    },
+    "merge" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusammenführen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge"
+          }
+        }
+      }
+    },
+    "mergeDocuments" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumente zusammenführen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge documents"
           }
         }
       }

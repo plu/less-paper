@@ -9,6 +9,11 @@ struct DocumentBulkEditConfirmationPresenter: Sendable {
 
     var present: @Sendable (_ message: LocalizedStringResource) async -> Bool = { _ in false }
 
+    var presentMerge: @Sendable (
+        _ deleteOriginals: Bool,
+        _ documentCount: Int
+    ) async -> Bool = { _, _ in false }
+
     var presentTags: @Sendable (
         _ addTags: [Tag],
         _ documentCount: Int,
@@ -22,6 +27,7 @@ extension DocumentBulkEditConfirmationPresenter: TestDependencyKey {
 
     static let previewValue = Self(
         present: { _ in false },
+        presentMerge: { _, _ in false },
         presentTags: { _, _, _ in false },
         presentTitle: { _ in false }
     )
@@ -33,6 +39,7 @@ extension DocumentBulkEditConfirmationPresenter: DependencyKey {
 
     static let liveValue = Self(
         present: present(message:),
+        presentMerge: presentMerge(deleteOriginals:documentCount:),
         presentTags: presentTags(addTags:documentCount:removeTags:),
         presentTitle: presentTitle(documentCount:)
     )
@@ -48,6 +55,22 @@ private extension DocumentBulkEditConfirmationPresenter {
             ConfirmationPopupView(
                 title: .confirmAssignment,
                 message: message,
+                cancel: { resolve(false) },
+                confirm: { resolve(true) }
+            )
+        } ?? false
+    }
+
+    static func presentMerge(deleteOriginals: Bool, documentCount: Int) async -> Bool {
+        @Dependency(\.popupPresenter)
+        var popupPresenter
+
+        return await popupPresenter.present { resolve in
+            ConfirmationPopupView(
+                title: .confirmMerge,
+                message: deleteOriginals
+                    ? .bulkEditMergeDeleteOriginalsConfirmation(documentCount)
+                    : .bulkEditMergeConfirmation(documentCount),
                 cancel: { resolve(false) },
                 confirm: { resolve(true) }
             )

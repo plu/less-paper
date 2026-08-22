@@ -5,6 +5,7 @@ public struct BulkEditDocumentsInput: Encodable, Equatable, Sendable {
 
     public enum Method: Equatable, Sendable {
         case delete
+        case merge(Merge)
         case modifyTags(ModifyTags)
         case setCorrespondent(SetCorrespondent)
         case setDocumentType(SetDocumentType)
@@ -24,6 +25,19 @@ public struct BulkEditDocumentsInput: Encodable, Equatable, Sendable {
 }
 
 public extension BulkEditDocumentsInput.Method {
+
+    struct Merge: Encodable, Equatable, Sendable {
+        public let archiveFallback: Bool
+        public let deleteOriginals: Bool
+
+        public init(
+            archiveFallback: Bool,
+            deleteOriginals: Bool
+        ) {
+            self.archiveFallback = archiveFallback
+            self.deleteOriginals = deleteOriginals
+        }
+    }
 
     struct ModifyTags: Encodable, Equatable, Sendable {
         public let addTags: [Tag.Id]
@@ -71,6 +85,8 @@ private extension BulkEditDocumentsInput.Method {
         switch self {
         case .delete:
             "delete"
+        case .merge:
+            "merge"
         case .modifyTags:
             "modify_tags"
         case .setCorrespondent:
@@ -96,6 +112,8 @@ extension BulkEditDocumentsInput {
         switch method {
         case .delete:
             break
+        case let .merge(parameters):
+            try container.encode(parameters, forKey: .parameters)
         case let .modifyTags(parameters):
             try container.encode(parameters, forKey: .parameters)
         case let .setCorrespondent(parameters):
@@ -117,6 +135,19 @@ public extension BulkEditDocumentsInput {
         .init(
             documents: documents,
             method: method
+        )
+    }
+}
+
+public extension BulkEditDocumentsInput.Method.Merge {
+
+    static func testValue(
+        archiveFallback: Bool = true,
+        deleteOriginals: Bool = false
+    ) -> Self {
+        .init(
+            archiveFallback: archiveFallback,
+            deleteOriginals: deleteOriginals
         )
     }
 }

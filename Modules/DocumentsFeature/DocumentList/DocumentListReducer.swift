@@ -39,6 +39,7 @@ public struct DocumentListReducer: Sendable {
             case editTitleButtonTapped
             case filterButtonTapped
             case importButtonTapped
+            case mergeSelectedButtonTapped
             case onAppear
             case onRefresh
             case onRowAppear(Document)
@@ -54,6 +55,7 @@ public struct DocumentListReducer: Sendable {
     public enum Destination {
         case bulkEditCorrespondent(DocumentBulkEditGenericValueReducer<Correspondent>)
         case bulkEditDocumentType(DocumentBulkEditGenericValueReducer<DocumentType>)
+        case bulkEditMerge(DocumentBulkEditMergeReducer)
         case bulkEditStoragePath(DocumentBulkEditGenericValueReducer<StoragePath>)
         case bulkEditTags(DocumentBulkEditTagsReducer)
         case bulkEditTitle(DocumentBulkEditTitleReducer)
@@ -241,6 +243,14 @@ public struct DocumentListReducer: Sendable {
                     state.documents[id: id]?.isUpdating = false
                 }
                 return .toast(error)
+            // No refetch, unlike the five bulk-edit delegates below: `bulk_edit.merge` queues the
+            // merged PDF through `consume_file`, so it does not exist yet, and `delete_originals`
+            // only fires once that consumption succeeds. Fetching here would show neither change.
+            case .destination(.presented(.bulkEditMerge(.delegate(.documentsMerged)))):
+                state.destination = nil
+                state.documentSelection.isActive = false
+                state.documentSelection.selectedDocuments = []
+                return .none
             case let .destination(.presented(.bulkEditCorrespondent(.delegate(.documentsUpdated(ids))))),
                  let .destination(.presented(.bulkEditDocumentType(.delegate(.documentsUpdated(ids))))),
                  let .destination(.presented(.bulkEditStoragePath(.delegate(.documentsUpdated(ids))))),
@@ -409,6 +419,16 @@ public struct DocumentListReducer: Sendable {
                     return .none
                 case .importButtonTapped:
                     return .send(.documentImport(.view(.importButtonTapped)))
+                case .mergeSelectedButtonTapped:
+                    guard state.documentSelection.selectedDocuments.count >= 2 else {
+                        return .none
+                    }
+                    state.destination = .bulkEditMerge(DocumentBulkEditMergeReducer.State(
+                        selectedDocuments: state.documentSelection.selectedDocuments,
+                        server: state.server,
+                        sort: state.filter.input.sort
+                    ))
+                    return .none
                 case .onAppear:
                     guard state.documents.isEmpty else {
                         return .none

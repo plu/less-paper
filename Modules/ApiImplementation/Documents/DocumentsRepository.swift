@@ -270,15 +270,24 @@ private extension Request where Response == GetDocumentsOutput {
     }
 
     init(input: GetDocumentsByIdsInput) {
+        var query: [(String, String?)] = [
+            ("id__in", input.ids.map { "\($0.rawValue)" }.joined(separator: ",")),
+            ("page", "1"),
+            ("page_size", "\(input.ids.count)"),
+            ("truncate_content", "true"),
+        ]
+
+        if let sortField = input.sortField {
+            query.append((
+                "ordering",
+                [(input.sortDirection ?? .ascending).rawValue, sortField.rawValue].joined()
+            ))
+        }
+
         self.init(
             path: "/api/documents/",
             method: .get,
-            query: [
-                ("id__in", input.ids.map { "\($0.rawValue)" }.joined(separator: ",")),
-                ("page", "1"),
-                ("page_size", "\(input.ids.count)"),
-                ("truncate_content", "true"),
-            ]
+            query: query
         )
     }
 }
