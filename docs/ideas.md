@@ -286,3 +286,60 @@ Reproduced on unmodified `main` as well as on the migration branch, so it predat
 auditing which other suites are bare `@Suite` and depending on a neighbour for their dependencies.
 
 Surfaced during: `docs/plans/2026-08-22-confirmation-popup-migration.md`, 2026-08-22.
+
+---
+
+## The list's action menu is already A–Z — so check what was actually seen
+
+Recorded because it was reported as needing sorting, and does not: `defaultActionsMenu` in
+`DocumentListTopTrailingToolbar` declares **Import, Scan, Select, Servers ▸**, which is A–Z in
+source order. It survives translation too — German is Importieren, Scannen, Selektieren, Server,
+alphabetical by coincidence of `Sel` < `Ser`. `selectActionsMenu` (Select all loaded, Select all
+matching, Select none) is likewise already sorted.
+
+So if a menu genuinely looked unsorted, it was one of these instead:
+
+- **The bulk-edit overflow menu** in `DocumentListBottomToolbar`: Edit title, Merge documents,
+  `Divider`, Delete documents. Not A–Z, and deliberately so — there is a comment explaining that
+  Delete sits behind the divider rather than one mistap from four reversible actions. Sorting it
+  would put Delete first, which is exactly what that comment exists to prevent.
+- **The saved-views menu** in `DocumentListTopLeadingToolbar`: All documents, `Divider`, then the
+  server's saved views in server order. Semantic, not alphabetical.
+
+There is also a rendering wrinkle worth confirming before anyone sorts anything by eye: UIKit
+orders menu elements from the anchor outwards, so a menu opened from a control near the **bottom**
+of the screen renders bottom-up — the first-declared item appears last. The bulk-edit overflow menu
+is anchored in the bottom toolbar and so is a candidate. If that is what happened, source order was
+never the problem and sorting it would make the rendered order worse.
+
+Note that #173 sorted the document *action* menus by source order, which is A–Z in **English
+only** — the labels are localised, so the row's reversible actions read Edit, Preview, Share, View
+in English and Bearbeiten, Vorschau, Teilen, Anzeigen in German, which is not alphabetical at all.
+Genuinely locale-correct sorting means rebuilding each menu as data and sorting on the resolved
+label at render time, which is a change of shape, not of order.
+
+#173 also settled the destructive case: Delete is held below a `Divider` rather than sorted, so
+alphabetising a menu never decides where its delete goes.
+
+Surfaced during: #173, verified against the catalog 2026-08-22.
+
+---
+
+## Document detail cannot delete
+
+`DocumentDetailView`'s toolbar offers Preview, Share and View ▸, plus an Edit button. The row's
+context menu offers all of those **and Delete**. So the one screen dedicated to a single document is
+the one screen that cannot delete it — you have to go back to the list and long-press the row.
+
+It is not just a missing menu item. Delete today is a row concern:
+`DocumentRowReducer` confirms via `DocumentDeleteConfirmationPresenter`, then sends
+`.delegate(.deleteDocument)`, and `DocumentListReducer` turns that into
+`runDeleteDocuments(ids:server:)` and drops the id from `state.documents`. The detail screen is
+pushed onto `state.path`, so deleting from there has to do the same work *and* pop itself — a
+delegate the list handles by deleting and removing the path element, rather than anything the
+detail reducer can finish alone.
+
+Worth deciding at the same time whether Edit should stay a toolbar button while Delete goes in the
+menu, or whether both belong in one place.
+
+Surfaced during: #173, 2026-08-22.

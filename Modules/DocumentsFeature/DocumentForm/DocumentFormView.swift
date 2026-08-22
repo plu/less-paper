@@ -114,11 +114,19 @@ struct DocumentFormView: View {
             ProgressView()
                 .controlSize(.large)
         } else {
+            // Not m3SurfaceBright, which the smaller fields use: it is the *brightest* surface, so
+            // against m3Surface it is invisible in light mode and a stark slab in dark. Over an
+            // area this size the outline is what says "editable", not the fill.
             TextEditor(text: contentBinding())
                 .accessibilityLabel(.content)
                 .font(.body)
                 .scrollContentBackground(.hidden)
-                .background(Color.m3SurfaceBright)
+                .padding(.x3)
+                .background(Color.m3SurfaceContainerLow)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                        .stroke(Color.m3OutlineVariant, lineWidth: 1)
+                )
                 .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
         }
     }

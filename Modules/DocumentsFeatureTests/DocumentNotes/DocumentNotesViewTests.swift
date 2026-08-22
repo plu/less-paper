@@ -68,14 +68,29 @@ struct DocumentNotesViewTests {
         )
     }
 
-    private func view(state: DocumentNotesReducer.State) -> some View {
+    // Read-only drops the swipe action from every row. The swipe itself cannot be captured, so
+    // this pins the rest of the row against the editable snapshot above.
+    @Test
+    func testSnapshot_readOnly() async throws {
+        assertSnapshot(
+            of: view(state: .testValue(notes: [.testValue()]), isReadOnly: true),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "readOnly"
+        )
+    }
+
+    private func view(
+        state: DocumentNotesReducer.State,
+        isReadOnly: Bool = false
+    ) -> some View {
         DocumentNotesView(
             store: Store(
                 initialState: state,
                 reducer: {
                     DocumentNotesReducer()
                 }
-            )
+            ),
+            isReadOnly: isReadOnly
         )
     }
 }

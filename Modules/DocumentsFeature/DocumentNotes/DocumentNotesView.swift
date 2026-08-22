@@ -15,6 +15,8 @@ struct DocumentNotesView: View {
     @Bindable
     var store: StoreOf<DocumentNotesReducer>
 
+    var isReadOnly = false
+
     @ViewBuilder
     private func content() -> some View {
         if let loadError = store.loadError {
@@ -32,7 +34,8 @@ struct DocumentNotesView: View {
             }
         } else if let notes = store.notes {
             if notes.isEmpty {
-                // No button: the composer pinned below the list is already the call to action.
+                // No button: editing, the composer pinned below the list is already the call to
+                // action, and read-only has nothing to offer.
                 EmptyListView(
                     systemImage: "note.text",
                     title: .noNotesFound
@@ -42,7 +45,7 @@ struct DocumentNotesView: View {
                     DocumentNoteRowView(
                         isDeleting: store.deletingNoteId == note.id,
                         note: note,
-                        deleteButtonTapped: { send(.deleteButtonTapped(note.id)) }
+                        deleteButtonTapped: isReadOnly ? nil : { send(.deleteButtonTapped(note.id)) }
                     )
                 }
                 .listStyle(.plain)

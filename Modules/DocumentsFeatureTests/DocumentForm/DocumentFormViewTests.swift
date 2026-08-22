@@ -48,6 +48,30 @@ struct DocumentFormViewTests {
         )
     }
 
+    // Dark mode: the editor's fill and outline are the whole point of the treatment, and
+    // m3SurfaceContainerLow only differs from m3Surface enough to judge in dark.
+    @Test
+    func testSnapshot_contentDarkMode() async throws {
+        assertSnapshot(
+            of: DocumentFormView(
+                store: Store(
+                    initialState: DocumentFormReducer.State.testValue(
+                        content: "Some invoice, and all the rest of the OCR text the server holds.",
+                        section: .content
+                    ),
+                    reducer: {
+                        DocumentFormReducer()
+                    }
+                )
+            ),
+            as: .image(
+                layout: .device(config: .iPhone12),
+                traits: .init(userInterfaceStyle: .dark)
+            ),
+            named: "contentDarkMode"
+        )
+    }
+
     @Test
     func testSnapshot_contentLoading() async throws {
         // The stub never returns, so the section stays in its loading state for the capture.

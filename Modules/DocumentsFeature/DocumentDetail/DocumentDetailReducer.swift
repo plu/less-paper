@@ -17,12 +17,14 @@ public struct DocumentDetailReducer: Sendable {
             case onAppear
             case previewButtonTapped
             case retryDownloadButtonTapped
+            case viewButtonTapped(DocumentViewerSection)
         }
     }
 
     @Reducer
     public enum Destination {
         case documentForm(DocumentFormReducer)
+        case documentViewer(DocumentViewerReducer)
     }
 
     @ObservableState
@@ -86,6 +88,13 @@ public struct DocumentDetailReducer: Sendable {
                     )
                 case .previewButtonTapped:
                     state.quickLookPreview = state.downloadResult?.value?.url
+                    return .none
+                case let .viewButtonTapped(section):
+                    state.destination = .documentViewer(DocumentViewerReducer.State(
+                        document: state.$document,
+                        section: section,
+                        server: state.server
+                    ))
                     return .none
                 case .retryDownloadButtonTapped:
                     state.downloadResult = nil

@@ -31,6 +31,17 @@ struct DocumentRowReducerTests {
         }
     }
 
+    @Test(arguments: DocumentViewerSection.allCases)
+    func test_view_viewButtonTapped(section: DocumentViewerSection) async throws {
+        let store = TestStore(initialState: DocumentRowReducer.State.testValue()) {
+            DocumentRowReducer()
+        }
+
+        await store.send(.view(.viewButtonTapped(section))) {
+            $0.destination = .documentViewer(.testValue(section: section))
+        }
+    }
+
     @Test
     func test_view_deleteButtonTapped_confirmed() async throws {
         let documentTitle = LockIsolated<String?>(nil)

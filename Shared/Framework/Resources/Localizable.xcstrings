@@ -2580,6 +2580,23 @@
         }
       }
     },
+    "noContentFound" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Inhalt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No content"
+          }
+        }
+      }
+    },
     "noNotesFound" : {
       "extractionState" : "manual",
       "localizations" : {

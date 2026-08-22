@@ -26,6 +26,7 @@ public struct DocumentRowReducer: Sendable {
             case previewButtonTapped
             case rowTapped
             case shareButtonTapped
+            case viewButtonTapped(DocumentViewerSection)
         }
     }
 
@@ -37,6 +38,7 @@ public struct DocumentRowReducer: Sendable {
     @Reducer
     public enum Destination {
         case documentForm(DocumentFormReducer)
+        case documentViewer(DocumentViewerReducer)
     }
 
     @ObservableState
@@ -148,6 +150,13 @@ public struct DocumentRowReducer: Sendable {
                     return .send(.delegate(.presentDocumentDetail(state.$document)))
                 case .shareButtonTapped:
                     return state.download(intent: .share)
+                case let .viewButtonTapped(section):
+                    state.destination = .documentViewer(DocumentViewerReducer.State(
+                        document: state.$document,
+                        section: section,
+                        server: state.server
+                    ))
+                    return .none
                 }
             case .binding, .delegate, .destination:
                 return .none

@@ -29,7 +29,15 @@ struct DocumentDetailView: View {
             DocumentFormView(store: store)
                 .presentationDetents([.large])
         }
+        .sheet(
+            item: $store.scope(state: \.destination?.documentViewer, action: \.destination.documentViewer)
+        ) { store in
+            DocumentViewerView(store: store)
+                .presentationDetents([.large])
+        }
         .toolbar {
+            // Not disabled while the download is in flight: the viewer needs no PDF, so the menu
+            // always has that submenu even before Preview and Share appear.
             Menu {
                 if let url = store.downloadedURL {
                     Button {
@@ -41,11 +49,14 @@ struct DocumentDetailView: View {
                     ShareLink(item: url) {
                         Label(.share, systemImage: "square.and.arrow.up")
                     }
+
+                    viewerMenu()
+                } else {
+                    viewerMenu()
                 }
             } label: {
                 Label(.moreActions, systemImage: "ellipsis.circle")
             }
-            .disabled(store.downloadedURL == nil)
 
             Button(action: {
                 send(.editDocumentButtonTapped)
@@ -57,6 +68,11 @@ struct DocumentDetailView: View {
 
     @Bindable
     var store: StoreOf<DocumentDetailReducer>
+
+    @ViewBuilder
+    private func viewerMenu() -> some View {
+        DocumentViewerMenu { send(.viewButtonTapped($0)) }
+    }
 
     @ViewBuilder
     private func errorView(error: String) -> some View {

@@ -40,6 +40,12 @@ struct DocumentRowView: View {
             DocumentFormView(store: store)
                 .presentationDetents([.large])
         }
+        .sheet(
+            item: $store.scope(state: \.destination?.documentViewer, action: \.destination.documentViewer)
+        ) { store in
+            DocumentViewerView(store: store)
+                .presentationDetents([.large])
+        }
     }
 
     @Bindable
@@ -47,6 +53,12 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func contextMenu() -> some View {
+        Button {
+            send(.editButtonTapped)
+        } label: {
+            Label(.edit, systemImage: "square.and.pencil")
+        }
+
         Button {
             send(.previewButtonTapped)
         } label: {
@@ -59,11 +71,12 @@ struct DocumentRowView: View {
             Label(.share, systemImage: "square.and.arrow.up")
         }
 
-        Button {
-            send(.editButtonTapped)
-        } label: {
-            Label(.edit, systemImage: "square.and.pencil")
-        }
+        DocumentViewerMenu { send(.viewButtonTapped($0)) }
+
+        // The reversible actions are A-Z; Delete is held out below the divider rather than taking
+        // whatever row its initial earns it — alphabetically that is the top, one mistap from the
+        // rest. Same shape as the bulk edit overflow menu.
+        Divider()
 
         Button(role: .destructive) {
             send(.deleteButtonTapped)

@@ -37,15 +37,18 @@ struct DocumentNoteRowView: View {
 
     let note: Note
 
-    let deleteButtonTapped: () -> Void
+    // nil in the read-only viewer, where a swipe must not reveal a delete the sheet does not offer.
+    let deleteButtonTapped: (() -> Void)?
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        Button(action: deleteButtonTapped) {
-            Image(systemName: "trash")
+        if let deleteButtonTapped {
+            Button(action: deleteButtonTapped) {
+                Image(systemName: "trash")
+            }
+            .accessibilityLabel(.deleteNote)
+            .tint(.m3Error)
         }
-        .accessibilityLabel(.deleteNote)
-        .tint(.m3Error)
     }
 }
 

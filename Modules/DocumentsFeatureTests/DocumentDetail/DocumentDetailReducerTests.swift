@@ -25,6 +25,17 @@ struct DocumentDetailReducerTests {
         }
     }
 
+    @Test(arguments: DocumentViewerSection.allCases)
+    func test_view_viewButtonTapped(section: DocumentViewerSection) async throws {
+        let store = TestStore(initialState: DocumentDetailReducer.State.testValue()) {
+            DocumentDetailReducer()
+        }
+
+        await store.send(.view(.viewButtonTapped(section))) {
+            $0.destination = .documentViewer(.testValue(section: section))
+        }
+    }
+
     @Test
     func test_view_editDocumentButtonTapped() async throws {
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue()) {
