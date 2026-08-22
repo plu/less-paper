@@ -86,6 +86,19 @@ struct DocumentViewerViewTests {
     }
 
     @Test
+    func testSnapshot_metadata() async throws {
+        assertSnapshot(
+            of: view(state: .testValue(
+                hasLoadedContent: true,
+                metadata: .testValue(),
+                section: .metadata
+            )),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "metadata"
+        )
+    }
+
+    @Test
     func testSnapshot_darkMode() async throws {
         assertSnapshot(
             of: view(state: .testValue(

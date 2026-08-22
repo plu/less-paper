@@ -157,6 +157,54 @@ struct DocumentViewerReducerTests {
     }
 
     @Test
+    func test_metadata_loadsThroughTheScopedChild() async throws {
+        let metadata = DocumentMetadata.testValue()
+        let store = TestStore(initialState: DocumentViewerReducer.State.testValue(
+            section: .metadata
+        )) {
+            DocumentViewerReducer()
+        } withDependencies: {
+            $0.getDocumentMetadata.execute = { _, _ in metadata }
+        }
+
+        await store.send(.metadata(.view(.onAppear))) {
+            $0.metadata.isLoading = true
+        }
+        await store.receive(\.metadata.metadataResult) {
+            $0.metadata.isLoading = false
+            $0.metadata.metadata = metadata
+        }
+    }
+
+    // The sheet scrolls the metadata card stack, but not the states that are centred in it.
+    @Test
+    func test_isContentScrollable_perSection() async throws {
+        let loaded = DocumentViewerReducer.State.testValue(
+            document: .testValue(content: "Some content"),
+            hasLoadedContent: true,
+            metadata: .testValue(),
+            notes: [.testValue()],
+            section: .metadata
+        )
+
+        #expect(loaded.isContentScrollable)
+
+        var loading = DocumentViewerReducer.State.testValue(section: .metadata)
+        #expect(!loading.isContentScrollable)
+
+        loading.metadata.loadError = "The request timed out."
+        #expect(!loading.isContentScrollable)
+
+        var notes = loaded
+        notes.section = .notes
+        #expect(!notes.isContentScrollable)
+
+        var content = loaded
+        content.section = .content
+        #expect(content.isContentScrollable)
+    }
+
+    @Test
     func test_view_closeButtonTapped() async throws {
         let dismissCalls = LockIsolated(0)
         let store = TestStore(initialState: DocumentViewerReducer.State.testValue(

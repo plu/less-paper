@@ -33,6 +33,11 @@ struct DocumentsRepository: Sendable {
         _ server: Server
     ) async throws -> Document
 
+    var getDocumentMetadata: @Sendable (
+        _ id: Document.Id,
+        _ server: Server
+    ) async throws -> DocumentMetadata
+
     var getDocuments: @Sendable (
         _ input: GetDocumentsInput,
         _ server: Server
@@ -67,6 +72,7 @@ extension DocumentsRepository: TestDependencyKey {
         downloadDocument: { _, _ in try .testValue() },
         getAllDocumentIds: { _, _ in .testValue() },
         getDocument: { _, _ in .testValue() },
+        getDocumentMetadata: { _, _ in .testValue() },
         getDocuments: { _, _ in .testValue() },
         getDocumentsByIds: { _, _ in [] },
         getNextArchiveSerialNumber: { _ in 1 },
@@ -80,6 +86,7 @@ extension DocumentsRepository: TestDependencyKey {
         downloadDocument: { _, _ in try .testValue() },
         getAllDocumentIds: { _, _ in .testValue() },
         getDocument: { _, _ in .testValue() },
+        getDocumentMetadata: { _, _ in .testValue() },
         getDocuments: { _, _ in .testValue() },
         getDocumentsByIds: { _, _ in [] },
         getNextArchiveSerialNumber: { _ in 1 },
@@ -103,6 +110,7 @@ extension DocumentsRepository: DependencyKey {
         downloadDocument: downloadDocument(id:server:),
         getAllDocumentIds: getAllDocumentIds(input:server:),
         getDocument: getDocument(id:server:),
+        getDocumentMetadata: getDocumentMetadata(id:server:),
         getDocuments: getDocuments(input:server:),
         getDocumentsByIds: getDocumentsByIds(input:server:),
         getNextArchiveSerialNumber: getNextArchiveSerialNumber(server:),
@@ -175,6 +183,19 @@ private extension DocumentsRepository {
             .client(server: server)
             .send(.init(
                 path: "/api/documents/\(id)/",
+                method: .get
+            ))
+            .value
+    }
+
+    static func getDocumentMetadata(
+        id: Document.Id,
+        server: Server
+    ) async throws -> DocumentMetadata {
+        try await APIClient
+            .client(server: server)
+            .send(.init(
+                path: "/api/documents/\(id)/metadata/",
                 method: .get
             ))
             .value

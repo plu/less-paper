@@ -137,6 +137,23 @@
         }
       }
     },
+    "archive" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archiv"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Archive"
+          }
+        }
+      }
+    },
     "asn" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -926,6 +943,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Change"
+          }
+        }
+      }
+    },
+    "checksum" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prüfsumme"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checksum"
           }
         }
       }
@@ -1968,6 +2002,23 @@
         }
       }
     },
+    "filename" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateiname"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filename"
+          }
+        }
+      }
+    },
     "filter" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2189,6 +2240,23 @@
         }
       }
     },
+    "language" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprache"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language"
+          }
+        }
+      }
+    },
     "licenses" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2376,6 +2444,23 @@
         }
       }
     },
+    "mediaFilename" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Media-Dateiname"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Media filename"
+          }
+        }
+      }
+    },
     "merge" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2406,6 +2491,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Merge documents"
+          }
+        }
+      }
+    },
+    "metadata" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadaten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadata"
           }
         }
       }
@@ -2457,6 +2559,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Two-Factor Authentication"
+          }
+        }
+      }
+    },
+    "mimeType" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Typ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
           }
         }
       }
@@ -2610,6 +2729,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No content"
+          }
+        }
+      }
+    },
+    "noMetadataFound" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Metadaten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No metadata"
           }
         }
       }
@@ -2862,6 +2998,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$(selected)lld of %2$(total)lld selected"
+          }
+        }
+      }
+    },
+    "original" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Original"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Original"
           }
         }
       }
@@ -3457,6 +3610,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show on dashboard"
+          }
+        }
+      }
+    },
+    "size" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größe"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Size"
           }
         }
       }

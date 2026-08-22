@@ -30,6 +30,8 @@ struct DocumentViewerView: View {
             case .content:
                 contentSection()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .metadata:
+                DocumentMetadataView(store: metadataStore)
             case .notes:
                 DocumentNotesView(store: notesStore, isReadOnly: true)
             }
@@ -39,6 +41,10 @@ struct DocumentViewerView: View {
 
     @Bindable
     var store: StoreOf<DocumentViewerReducer>
+
+    private var metadataStore: StoreOf<DocumentMetadataReducer> {
+        store.scope(state: \.metadata, action: \.metadata)
+    }
 
     private var notesStore: StoreOf<DocumentNotesReducer> {
         store.scope(state: \.notes, action: \.notes)

@@ -9,6 +9,7 @@ public struct DocumentViewerReducer: Sendable {
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
         case documentResult(Result<Document, Error>)
+        case metadata(DocumentMetadataReducer.Action)
         case notes(DocumentNotesReducer.Action)
         case view(View)
 
@@ -30,17 +31,30 @@ public struct DocumentViewerReducer: Sendable {
         var hasLoadedContent = false
 
         // Only real text scrolls. The loading, error and empty states are centred in the sheet
-        // instead, which its ScrollView would otherwise pin to the top.
+        // instead, which its ScrollView would otherwise pin to the top. Notes never scroll the
+        // sheet: the list inside them scrolls itself.
         var isContentScrollable: Bool {
-            guard section == .content, hasLoadedContent, loadError == nil else {
+            switch section {
+            case .content:
+                guard hasLoadedContent, loadError == nil else {
+                    return false
+                }
+                return !(document.content ?? "").isEmpty
+            case .metadata:
+                guard let value = metadata.metadata, metadata.loadError == nil else {
+                    return false
+                }
+                return !value.isEmpty
+            case .notes:
                 return false
             }
-            return !(document.content ?? "").isEmpty
         }
 
         var isLoadingDocument = false
 
         var loadError: String?
+
+        var metadata: DocumentMetadataReducer.State
 
         var notes: DocumentNotesReducer.State
 
@@ -54,6 +68,10 @@ public struct DocumentViewerReducer: Sendable {
             server: Server
         ) {
             self._document = document
+            self.metadata = DocumentMetadataReducer.State(
+                documentId: document.wrappedValue.id,
+                server: server
+            )
             self.notes = DocumentNotesReducer.State(
                 documentId: document.wrappedValue.id,
                 server: server
@@ -67,6 +85,9 @@ public struct DocumentViewerReducer: Sendable {
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
+        Scope(state: \.metadata, action: \.metadata) {
+            DocumentMetadataReducer()
+        }
         Scope(state: \.notes, action: \.notes) {
             DocumentNotesReducer()
         }
@@ -111,7 +132,7 @@ public struct DocumentViewerReducer: Sendable {
                         server: state.server
                     )
                 }
-            case .binding, .notes:
+            case .binding, .metadata, .notes:
                 return .none
             }
         }

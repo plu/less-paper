@@ -9,6 +9,7 @@ extension DocumentViewerReducer.State {
         document: Document = .testValue(),
         hasLoadedContent: Bool = false,
         loadError: String? = nil,
+        metadata: DocumentMetadata? = nil,
         notes: IdentifiedArrayOf<Note>? = nil,
         section: DocumentViewerSection = .content,
         server: Server = .testValue()
@@ -20,6 +21,7 @@ extension DocumentViewerReducer.State {
         )
         state.hasLoadedContent = hasLoadedContent
         state.loadError = loadError
+        state.metadata.metadata = metadata
         state.notes.notes = notes
         return state
     }

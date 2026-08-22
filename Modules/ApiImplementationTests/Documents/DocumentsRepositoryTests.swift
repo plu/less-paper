@@ -314,6 +314,51 @@ struct DocumentsRepositoryTests {
         #expect(fetchedContent.hasPrefix(truncatedContent))
     }
 
+    @Test(
+        .dependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_getDocumentMetadata_decodesBothArchiveStates() async throws {
+        let listed = try await repository.getDocuments(
+            input: .testValue(),
+            server: .testValue()
+        ).results
+
+        var metadata: [DocumentMetadata] = []
+        for document in listed.prefix(10) {
+            let value = try await repository.getDocumentMetadata(
+                id: document.id,
+                server: .testValue()
+            )
+            metadata.append(value)
+        }
+
+        // The fixtures hold both kinds, and the archived one is the only place the archive fields
+        // decode as anything but nil. Requiring one of each keeps a fixture change from quietly
+        // reducing this to a single-path test.
+        let archived = try #require(metadata.first(where: { $0.hasArchiveVersion }))
+        let notArchived = try #require(metadata.first(where: { !$0.hasArchiveVersion }))
+
+        #expect(archived.archiveChecksum?.isEmpty == false)
+        #expect(archived.archiveMediaFilename?.isEmpty == false)
+        #expect((archived.archiveSize ?? 0) > 0)
+
+        #expect(notArchived.archiveChecksum == nil)
+        #expect(notArchived.archiveMediaFilename == nil)
+        #expect(notArchived.archiveSize == nil)
+
+        for value in metadata {
+            #expect(value.originalMimeType == "application/pdf")
+            #expect(value.originalFilename?.hasSuffix(".pdf") == true)
+            #expect((value.originalSize ?? 0) > 0)
+            #expect(value.originalChecksum?.count == 64)
+            #expect(value.isEmpty == false)
+        }
+    }
+
     @Test
     func test_getDocumentsByIds_emptyIds_returnsEmpty() async throws {
         let documents = try await repository.getDocumentsByIds(
