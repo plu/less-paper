@@ -1,4 +1,5 @@
 import ApiInterface
+import Components
 import ComposableArchitecture
 import Foundation
 
@@ -43,7 +44,7 @@ public struct PdfPasswordRowReducer: Sendable {
             case let .view(viewAction):
                 switch viewAction {
                 case .deleteButtonTapped:
-                    return .send(.delegate(.deletePdfPassword))
+                    return .runConfirmDelete(name: state.pdfPassword.filename)
                 case .revealButtonTapped:
                     state.isRevealed.toggle()
                     return .none

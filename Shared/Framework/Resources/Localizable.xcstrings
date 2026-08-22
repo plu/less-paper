@@ -1495,6 +1495,23 @@
         }
       }
     },
+    "deletePdfPassword" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwort löschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete password"
+          }
+        }
+      }
+    },
     "deleteSavedView" : {
       "extractionState" : "manual",
       "localizations" : {

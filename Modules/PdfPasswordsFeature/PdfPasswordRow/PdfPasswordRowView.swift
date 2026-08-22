@@ -25,11 +25,15 @@ struct PdfPasswordRowView: View {
             send(.revealButtonTapped, animation: .default)
         }
         .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
+            // Not `role: .destructive`: that makes the List animate the row away the moment the
+            // button is tapped, leaving the row gone even when the confirmation is cancelled.
+            Button {
                 send(.deleteButtonTapped)
             } label: {
                 Label(.delete, systemImage: "trash")
             }
+            .accessibilityLabel(.deletePdfPassword)
+            .tint(.m3Error)
         }
     }
 }

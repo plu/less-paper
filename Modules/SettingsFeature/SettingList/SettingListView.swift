@@ -44,16 +44,16 @@ public struct SettingListView: View {
                     .listRowBackground(Color.m3SurfaceContainer)
 
                     NavigationLink(
-                        state: SettingListReducer.Path.State.savedViewList(SavedViewListReducer.State(server: store.server))
+                        state: SettingListReducer.Path.State.pdfPasswordList(PdfPasswordListReducer.State())
                     ) {
-                        Label(.savedViews, systemImage: "line.3.horizontal.decrease")
+                        Label(.pdfPasswords, systemImage: "key")
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
                     NavigationLink(
-                        state: SettingListReducer.Path.State.pdfPasswordList(PdfPasswordListReducer.State())
+                        state: SettingListReducer.Path.State.savedViewList(SavedViewListReducer.State(server: store.server))
                     ) {
-                        Label(.pdfPasswords, systemImage: "key")
+                        Label(.savedViews, systemImage: "line.3.horizontal.decrease")
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
