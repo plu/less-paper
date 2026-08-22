@@ -1,5 +1,6 @@
 import ApiInterface
 import Foundation
+import IdentifiedCollections
 import SwiftSharing
 
 extension DocumentFormReducer.State {
@@ -9,6 +10,7 @@ extension DocumentFormReducer.State {
         destination: DocumentFormReducer.Destination.State? = nil,
         document: Document = .testValue(),
         loadError: String? = nil,
+        notes: IdentifiedArrayOf<Note>? = nil,
         section: DocumentFormSection = .details,
         server: Server = .testValue()
     ) -> Self {
@@ -19,6 +21,7 @@ extension DocumentFormReducer.State {
         )
         state.content = content
         state.loadError = loadError
+        state.notes.notes = notes
         state.section = section
         return state
     }

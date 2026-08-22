@@ -90,4 +90,23 @@ struct DocumentFormViewTests {
             named: "contentError"
         )
     }
+
+    @Test
+    func testSnapshot_notes() async throws {
+        assertSnapshot(
+            of: DocumentFormView(
+                store: Store(
+                    initialState: DocumentFormReducer.State.testValue(
+                        notes: [.testValue()],
+                        section: .notes
+                    ),
+                    reducer: {
+                        DocumentFormReducer()
+                    }
+                )
+            ),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "notes"
+        )
+    }
 }

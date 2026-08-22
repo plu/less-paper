@@ -241,3 +241,35 @@ Whether the fix is re-seeding `ci`, or making the harness apps point at `dev`, o
 to reconcile rather than assume, is the open question.
 
 Surfaced during: the bulk edit title end-to-end verification, 2026-08-16.
+
+---
+
+## Migrate the remaining system confirmation dialogs to `ConfirmationPopupView`
+
+Confirmations are split between two mechanisms. Most list rows —
+`CorrespondentRow`, `DocumentTypeRow`, `StoragePathRow`, `TagRow`, `ServerRow` — set a
+`ConfirmationDialogState` destination and render it with `.confirmationDialog`. `DocumentRow` and
+`DocumentNotes` instead await a `@DependencyClient` presenter that shows `ConfirmationPopupView`
+through `PopupPresenter`.
+
+The custom popup is the one to keep, and not only for consistency. The notes section started on
+`.confirmationDialog` and it was visibly wrong: presented from inside the edit sheet, the system
+dialog rendered as a clipped popover anchored to the bottom edge with the cancel button pushed off
+screen entirely. Any of the remaining five would do the same if it were ever presented from within
+a sheet.
+
+The migration per row is mechanical and was done once already for notes in
+`docs/plans/2026-08-22-document-notes.md`: delete the `+ConfirmationDialogState.swift` file and the
+`Destination` case, add a presenter beside the reducer, replace the state mutation with a
+`runConfirmDelete` effect that awaits it and sends a `deleteConfirmed` action, and drop the
+`.confirmationDialog` modifier from the view. Tests move from asserting on destination state to
+stubbing the presenter.
+
+Two things to decide when picking it up. The five row presenters would be near-identical — worth
+one generic presenter in `Components` taking title and message, rather than five copies of
+`DocumentNoteDeleteConfirmationPresenter`. And the rows currently name the record in the message
+(`Do you really want to delete "Invoice"?`), which the generic version has to keep.
+
+The rule is already recorded in `AGENTS.md` so no new code adds to the pile.
+
+Surfaced during: `docs/plans/2026-08-22-document-notes.md`, 2026-08-22.

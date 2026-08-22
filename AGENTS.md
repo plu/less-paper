@@ -51,3 +51,43 @@ using `store.send(.view(…))`. Check for the annotation before copying a line b
 
 Builds are not warning-free by default, so a new warning is easy to miss. When touching a view,
 skim the build output for its file.
+
+## Confirmations use `ConfirmationPopupView`, never the system dialog
+
+**Never use `.confirmationDialog`, `.alert`, or `ConfirmationDialogState`.** Every confirmation in
+this app goes through `PopupPresenter` and `ConfirmationPopupView`.
+
+The system dialog is not just off-brand — inside a presented sheet it renders as a clipped popover
+anchored to the wrong edge, and the cancel button can be pushed off screen entirely. The custom
+popup is presented by `PopupPresenter` above everything and is unaffected.
+
+The shape is a `@DependencyClient` presenter that returns whether the user confirmed, with the
+reducer awaiting it inside an effect. `DocumentDeleteConfirmationPresenter` and
+`DocumentNoteDeleteConfirmationPresenter` are the two to copy:
+
+```swift
+// Wrong — off-brand, and clipped inside a sheet.
+state.destination = .confirmation(.confirmDelete(name: state.tag.name))
+
+// Right.
+return .runConfirmDelete(noteId: noteId)
+```
+
+```swift
+static func runConfirmDelete(noteId: Note.Id) -> Self {
+    @Dependency(\.documentNoteDeleteConfirmation.present)
+    var presentConfirmation
+
+    return .run { send in
+        guard await presentConfirmation() else {
+            return
+        }
+        await send(.deleteConfirmed(noteId))
+    }
+    .cancellable(id: CancelID.confirmDelete)
+}
+```
+
+Some list rows — `CorrespondentRow`, `DocumentTypeRow`, `StoragePathRow`, `TagRow`, `ServerRow` —
+still carry the old `ConfirmationDialogState` destination. They are the thing being migrated away
+from, not a pattern to copy.

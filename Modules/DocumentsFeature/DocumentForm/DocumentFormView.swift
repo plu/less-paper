@@ -11,7 +11,12 @@ import TagsFeature
 @ViewAction(for: DocumentFormReducer.self)
 struct DocumentFormView: View {
     var body: some View {
-        Sheet(isScrollingEnabled: store.section != .content) {
+        // The notes list spans the sheet edge to edge and insets its own rows instead, so its
+        // scroll indicator sits at the sheet's edge and rows clip there rather than 16pt short.
+        Sheet(
+            isScrollingEnabled: store.section == .details,
+            padding: store.section == .notes ? 0 : .x4
+        ) {
             SheetHeader(
                 title: .editDocument,
                 left: {
@@ -30,15 +35,28 @@ struct DocumentFormView: View {
             case .content:
                 contentSection()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .notes:
+                DocumentNotesView(store: notesStore)
             }
         } bottom: {
-            buttons()
+            // The composer takes the slot Reset and Save vacate: nothing in the notes section is
+            // staged, so neither button would have anything to act on.
+            switch store.section {
+            case .details, .content:
+                buttons()
+            case .notes:
+                DocumentNoteComposerView(store: notesStore)
+            }
         }
         .onAppear { send(.onAppear) }
     }
 
     @Bindable
     var store: StoreOf<DocumentFormReducer>
+
+    private var notesStore: StoreOf<DocumentNotesReducer> {
+        store.scope(state: \.notes, action: \.notes)
+    }
 
     @ViewBuilder
     private func sectionMenu() -> some View {

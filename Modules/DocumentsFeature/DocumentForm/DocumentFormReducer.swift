@@ -16,6 +16,7 @@ public struct DocumentFormReducer: Sendable {
         case destination(PresentationAction<Destination.Action>)
         case documentResult(Result<Document, Error>)
         case nextArchiveSerialNumber(Int)
+        case notes(DocumentNotesReducer.Action)
         case updateResult(Result<Document, Error>)
         case view(View)
 
@@ -80,6 +81,8 @@ public struct DocumentFormReducer: Sendable {
 
         var loadError: String?
 
+        var notes: DocumentNotesReducer.State
+
         var section = DocumentFormSection.details
 
         let server: Server
@@ -107,6 +110,10 @@ public struct DocumentFormReducer: Sendable {
                 document: document.wrappedValue,
                 server: server
             )
+            self.notes = DocumentNotesReducer.State(
+                documentId: document.wrappedValue.id,
+                server: server
+            )
             self.server = server
             self._correspondents = Shared(wrappedValue: [], .correspondents(server))
             self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
@@ -117,6 +124,9 @@ public struct DocumentFormReducer: Sendable {
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
+        Scope(state: \.notes, action: \.notes) {
+            DocumentNotesReducer()
+        }
         Reduce { state, action in
             switch action {
             case let .destination(.presented(.correspondentForm(.delegate(.correspondentSaved(correspondent))))):
@@ -220,7 +230,7 @@ public struct DocumentFormReducer: Sendable {
                         server: state.server
                     )
                 }
-            case .binding, .delegate, .destination:
+            case .binding, .delegate, .destination, .notes:
                 return .none
             }
         }

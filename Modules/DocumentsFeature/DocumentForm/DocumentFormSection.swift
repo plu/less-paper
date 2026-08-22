@@ -3,6 +3,7 @@ import Foundation
 enum DocumentFormSection: CaseIterable {
     case details
     case content
+    case notes
 }
 
 extension DocumentFormSection: CustomStringConvertible {
@@ -13,6 +14,8 @@ extension DocumentFormSection: CustomStringConvertible {
             String(localized: .details)
         case .content:
             String(localized: .content)
+        case .notes:
+            String(localized: .notes)
         }
     }
 }

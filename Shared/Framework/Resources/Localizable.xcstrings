@@ -18,6 +18,23 @@
         }
       }
     },
+    "addNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notiz hinzufügen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a note…"
+          }
+        }
+      }
+    },
     "alias" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1328,6 +1345,40 @@
         }
       }
     },
+    "deleteNote" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notiz löschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete note"
+          }
+        }
+      }
+    },
+    "deleteNoteConfirmation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Möchtest du diese Notiz wirklich löschen? Das kann nicht rückgängig gemacht werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do you really want to delete this note? This cannot be undone."
+          }
+        }
+      }
+    },
     "deleteSavedView" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2379,6 +2430,23 @@
         }
       }
     },
+    "noNotesFound" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Notizen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No notes yet"
+          }
+        }
+      }
+    },
     "noSavedViewsFound" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2477,6 +2545,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Not assigned"
+          }
+        }
+      }
+    },
+    "notes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notizen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes"
           }
         }
       }
