@@ -42,4 +42,24 @@ struct StoragePathListViewTests {
             named: "empty"
         )
     }
+
+    // Dark mode: `m3SurfaceContainerLowest` and the default list row background are both white in
+    // light mode, so a row that never sets `listRowBackground` only shows up against dark.
+    @Test
+    func testSnapshot_darkMode() async throws {
+        assertSnapshot(
+            of: StoragePathListView(
+                store: Store(
+                    initialState: .testValue(storagePaths: .previewValue),
+                    reducer: {
+                        StoragePathListReducer()
+                    }
+                )
+            ),
+            as: .image(
+                layout: .device(config: .iPhone12),
+                traits: .init(userInterfaceStyle: .dark)
+            )
+        )
+    }
 }
