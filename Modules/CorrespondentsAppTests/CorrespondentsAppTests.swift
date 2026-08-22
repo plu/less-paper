@@ -31,7 +31,7 @@ final class CorrespondentsAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete correspondent", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Correspondent\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete correspondent"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -47,7 +47,7 @@ final class CorrespondentsAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete correspondent", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Correspondent\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete correspondent"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No Correspondent matches the given query."].waitForExistence(timeout: timeout))
     }
 

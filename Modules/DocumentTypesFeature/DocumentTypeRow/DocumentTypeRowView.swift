@@ -20,13 +20,11 @@ struct DocumentTypeRowView: View {
             store.documentType.name,
             String(localized: .numberOfDocuments(store.documentType.documentCount))
         ].joined(separator: ", "))
-        .confirmationDialog($store.scope(state: \.destination?.confirmation, action: \.destination.confirmation))
         .listRowBackground(Color.m3SurfaceContainer)
         .opacity(store.isUpdating ? 0.5 : 1.0)
         .swipeActions(content: swipeActions)
     }
 
-    @Bindable
     var store: StoreOf<DocumentTypeRowReducer>
 
     @ViewBuilder

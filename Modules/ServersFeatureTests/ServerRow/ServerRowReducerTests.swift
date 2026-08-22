@@ -11,32 +11,38 @@ import Testing
 struct ServerRowReducerTests {
 
     @Test
-    func test_destination_confirmation_deleteButtonTapped() async throws {
+    func test_view_deleteButtonTapped_cancelled() async throws {
         let store = TestStore(initialState: ServerRowReducer.State(
-            destination: .confirmation(.confirmDelete(name: "dev")),
             server: .testValue()
         )) {
             ServerRowReducer()
+        } withDependencies: {
+            $0.deleteConfirmation.present = { _, _ in false }
         }
 
-        await store.send(.destination(.presented(.confirmation(.deleteButtonTapped)))) {
-            $0.destination = nil
-        }
-        await store.receive(\.delegate, .deleteServer)
+        await store.send(.view(.deleteButtonTapped))
     }
 
     @Test
-    func test_view_deleteButtonTapped() async throws {
+    func test_view_deleteButtonTapped_confirmed() async throws {
         let server = Server.testValue()
+        let presented = LockIsolated<(title: LocalizedStringResource, name: String)?>(nil)
         let store = TestStore(initialState: ServerRowReducer.State(
             server: server
         )) {
             ServerRowReducer()
+        } withDependencies: {
+            $0.deleteConfirmation.present = { title, name in
+                presented.setValue((title, name))
+                return true
+            }
         }
 
-        await store.send(.view(.deleteButtonTapped)) {
-            $0.destination = .confirmation(.confirmDelete(name: server.alias))
-        }
+        await store.send(.view(.deleteButtonTapped))
+        await store.receive(\.delegate, .deleteServer)
+
+        #expect(presented.value?.title == .deleteServer)
+        #expect(presented.value?.name == server.alias)
     }
 
     @Test
@@ -84,7 +90,7 @@ struct ServerRowReducerTests {
         #expect(selectedServer == server)
     }
 
-    /// Being offline must not leave the user stranded on the server list.
+    // Being offline must not leave the user stranded on the server list.
     @Test
     func test_view_serverTapped_selectsEvenWhenSyncFails() async throws {
         let server = Server.testValue(alias: "Other", id: "other")

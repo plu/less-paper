@@ -37,7 +37,7 @@ final class SavedViewsAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete saved view", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Saved View\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete saved view"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -53,7 +53,7 @@ final class SavedViewsAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete saved view", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Saved View\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete saved view"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No SavedView matches the given query."].waitForExistence(timeout: timeout))
     }
 

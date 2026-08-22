@@ -33,7 +33,7 @@ final class StoragePathsAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete storage path", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Storage Path\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete storage path"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -49,7 +49,7 @@ final class StoragePathsAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete storage path", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Storage Path\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete storage path"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No StoragePath matches the given query."].waitForExistence(timeout: timeout))
     }
 

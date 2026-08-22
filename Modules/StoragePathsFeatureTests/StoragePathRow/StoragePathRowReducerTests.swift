@@ -10,42 +10,41 @@ import Testing
 struct StoragePathRowReducerTests {
 
     @Test
-    func test_destination_confirmation_deleteButtonTapped() async throws {
-        let store = TestStore(initialState: StoragePathRowReducer.State(
-            storagePath: .testValue(),
-            destination: .confirmation(.confirmDelete(name: "Inbox")),
-            server: .testValue()
-        )) {
+    func test_view_deleteButtonTapped_cancelled() async throws {
+        let store = TestStore(initialState: StoragePathRowReducer.State.testValue()) {
             StoragePathRowReducer()
+        } withDependencies: {
+            $0.deleteConfirmation.present = { _, _ in false }
         }
 
-        await store.send(.destination(.presented(.confirmation(.deleteButtonTapped)))) {
-            $0.destination = nil
-        }
-        await store.receive(\.delegate, .deleteStoragePath)
+        await store.send(.view(.deleteButtonTapped))
     }
 
     @Test
-    func test_view_deleteButtonTapped() async throws {
+    func test_view_deleteButtonTapped_confirmed() async throws {
         let storagePath = StoragePath.testValue()
-        let store = TestStore(initialState: StoragePathRowReducer.State(
-            storagePath: storagePath,
-            server: .testValue()
+        let presented = LockIsolated<(title: LocalizedStringResource, name: String)?>(nil)
+        let store = TestStore(initialState: StoragePathRowReducer.State.testValue(
+            storagePath: storagePath
         )) {
             StoragePathRowReducer()
+        } withDependencies: {
+            $0.deleteConfirmation.present = { title, name in
+                presented.setValue((title, name))
+                return true
+            }
         }
 
-        await store.send(.view(.deleteButtonTapped)) {
-            $0.destination = .confirmation(.confirmDelete(name: storagePath.name))
-        }
+        await store.send(.view(.deleteButtonTapped))
+        await store.receive(\.delegate, .deleteStoragePath)
+
+        #expect(presented.value?.title == .deleteStoragePath)
+        #expect(presented.value?.name == storagePath.name)
     }
 
     @Test
     func test_view_editButtonTapped() async throws {
-        let store = TestStore(initialState: StoragePathRowReducer.State(
-            storagePath: .testValue(),
-            server: .testValue()
-        )) {
+        let store = TestStore(initialState: StoragePathRowReducer.State.testValue()) {
             StoragePathRowReducer()
         }
 

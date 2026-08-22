@@ -88,6 +88,18 @@ static func runConfirmDelete(noteId: Note.Id) -> Self {
 }
 ```
 
-Some list rows — `CorrespondentRow`, `DocumentTypeRow`, `StoragePathRow`, `TagRow`, `ServerRow` —
-still carry the old `ConfirmationDialogState` destination. They are the thing being migrated away
-from, not a pattern to copy.
+For the common case — deleting a named record — there is one shared presenter already:
+`Components/Popup/DeleteConfirmationPresenter.swift`. It takes the entity title and the record's
+name and renders `Delete tag` over `Do you really want to delete "Inbox"?`:
+
+```swift
+@Dependency(\.deleteConfirmation.present)
+var presentConfirmation
+
+guard await presentConfirmation(.deleteTag, name) else {
+    return
+}
+```
+
+Reach for that first. Write a presenter of your own only when the popup needs custom content, as
+`DocumentBulkEditConfirmationPresenter` does.

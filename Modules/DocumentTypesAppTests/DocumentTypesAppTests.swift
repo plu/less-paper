@@ -31,7 +31,7 @@ final class DocumentTypesAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete document type", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Document Type\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete document type"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -47,7 +47,7 @@ final class DocumentTypesAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete document type", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Test Document Type\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete document type"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No DocumentType matches the given query."].waitForExistence(timeout: timeout))
     }
 

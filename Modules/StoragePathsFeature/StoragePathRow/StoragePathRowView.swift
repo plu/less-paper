@@ -20,13 +20,11 @@ struct StoragePathRowView: View {
             store.storagePath.name,
             String(localized: .numberOfDocuments(store.storagePath.documentCount))
         ].joined(separator: ", "))
-        .confirmationDialog($store.scope(state: \.destination?.confirmation, action: \.destination.confirmation))
         .listRowBackground(Color.m3SurfaceContainer)
         .opacity(store.isUpdating ? 0.5 : 1.0)
         .swipeActions(content: swipeActions)
     }
 
-    @Bindable
     var store: StoreOf<StoragePathRowReducer>
 
     @ViewBuilder

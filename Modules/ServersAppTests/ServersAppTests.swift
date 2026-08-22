@@ -40,7 +40,7 @@ final class ServersAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete server", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"CI Updated\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete server"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
         XCTAssertTrue(app.staticTexts["No servers found"].waitForExistence(timeout: timeout))
     }

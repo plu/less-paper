@@ -36,13 +36,11 @@ struct ServerRowView: View {
                 store.server.alias,
                 store.server.url.absoluteString
             ].joined(separator: ", "))
-            .confirmationDialog($store.scope(state: \.destination?.confirmation, action: \.destination.confirmation))
         }
         .listRowBackground(Color.m3SurfaceContainer)
         .swipeActions(content: swipeActions)
     }
 
-    @Bindable
     var store: StoreOf<ServerRowReducer>
 
     @ViewBuilder

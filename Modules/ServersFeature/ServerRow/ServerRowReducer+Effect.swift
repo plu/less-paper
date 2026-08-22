@@ -1,8 +1,22 @@
 import ApiInterface
+import Components
 import ComposableArchitecture
 import SwiftSharing
 
 extension Effect where Action == ServerRowReducer.Action {
+    static func runConfirmDelete(name: String) -> Self {
+        @Dependency(\.deleteConfirmation.present)
+        var presentConfirmation
+
+        return .run { send in
+            guard await presentConfirmation(.deleteServer, name) else {
+                return
+            }
+            await send(.delegate(.deleteServer), animation: .default)
+        }
+        .cancellable(id: CancelID.confirmDelete)
+    }
+
     static func runSelectServer(
         server: Server
     ) -> Self {
@@ -35,5 +49,6 @@ extension Effect where Action == ServerRowReducer.Action {
 }
 
 private enum CancelID {
+    case confirmDelete
     case selectServer
 }

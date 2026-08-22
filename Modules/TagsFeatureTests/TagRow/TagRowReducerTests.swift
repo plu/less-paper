@@ -10,34 +10,39 @@ import Testing
 struct TagRowReducerTests {
 
     @Test
-    func test_destination_confirmation_deleteButtonTapped() async throws {
+    func test_view_deleteButtonTapped_cancelled() async throws {
         let store = TestStore(initialState: TagRowReducer.State(
-            destination: .confirmation(.confirmDelete(name: "Inbox")),
             server: .testValue(),
-            tag: .testValue()
+            tag: .testValue(name: "Inbox")
         )) {
             TagRowReducer()
+        } withDependencies: {
+            $0.deleteConfirmation.present = { _, _ in false }
         }
 
-        await store.send(.destination(.presented(.confirmation(.deleteButtonTapped)))) {
-            $0.destination = nil
-        }
-        await store.receive(\.delegate, .deleteTag)
+        await store.send(.view(.deleteButtonTapped))
     }
 
     @Test
-    func test_view_deleteButtonTapped() async throws {
-        let tag = Tag.testValue()
+    func test_view_deleteButtonTapped_confirmed() async throws {
+        let presented = LockIsolated<(title: LocalizedStringResource, name: String)?>(nil)
         let store = TestStore(initialState: TagRowReducer.State(
             server: .testValue(),
-            tag: tag
+            tag: .testValue(name: "Inbox")
         )) {
             TagRowReducer()
+        } withDependencies: {
+            $0.deleteConfirmation.present = { title, name in
+                presented.setValue((title, name))
+                return true
+            }
         }
 
-        await store.send(.view(.deleteButtonTapped)) {
-            $0.destination = .confirmation(.confirmDelete(name: tag.name))
-        }
+        await store.send(.view(.deleteButtonTapped))
+        await store.receive(\.delegate, .deleteTag)
+
+        #expect(presented.value?.title == .deleteTag)
+        #expect(presented.value?.name == "Inbox")
     }
 
     @Test

@@ -31,7 +31,7 @@ final class TagsAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete tag", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Inbox\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete tag"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         app.cells.firstMatch.waitForNonExistence(timeout: timeout)
     }
 
@@ -47,7 +47,7 @@ final class TagsAppTests: XCTestCase {
 
         app.tapSwipeAction("Delete tag", in: app.cells.firstMatch, timeout: timeout)
         XCTAssertTrue(app.staticTexts["Do you really want to delete \"Inbox\"?"].waitForExistence(timeout: timeout))
-        app.sheets.buttons["Delete tag"].firstMatch.tap()
+        app.buttons["Confirm"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["No Tag matches the given query."].waitForExistence(timeout: timeout))
     }
 

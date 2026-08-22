@@ -10,42 +10,41 @@ import Testing
 struct CorrespondentRowReducerTests {
 
     @Test
-    func test_destination_confirmation_deleteButtonTapped() async throws {
-        let store = TestStore(initialState: CorrespondentRowReducer.State(
-            correspondent: .testValue(),
-            destination: .confirmation(.confirmDelete(name: "Inbox")),
-            server: .testValue()
-        )) {
+    func test_view_deleteButtonTapped_cancelled() async throws {
+        let store = TestStore(initialState: CorrespondentRowReducer.State.testValue()) {
             CorrespondentRowReducer()
+        } withDependencies: {
+            $0.deleteConfirmation.present = { _, _ in false }
         }
 
-        await store.send(.destination(.presented(.confirmation(.deleteButtonTapped)))) {
-            $0.destination = nil
-        }
-        await store.receive(\.delegate, .deleteCorrespondent)
+        await store.send(.view(.deleteButtonTapped))
     }
 
     @Test
-    func test_view_deleteButtonTapped() async throws {
+    func test_view_deleteButtonTapped_confirmed() async throws {
         let correspondent = Correspondent.testValue()
-        let store = TestStore(initialState: CorrespondentRowReducer.State(
-            correspondent: correspondent,
-            server: .testValue()
+        let presented = LockIsolated<(title: LocalizedStringResource, name: String)?>(nil)
+        let store = TestStore(initialState: CorrespondentRowReducer.State.testValue(
+            correspondent: correspondent
         )) {
             CorrespondentRowReducer()
+        } withDependencies: {
+            $0.deleteConfirmation.present = { title, name in
+                presented.setValue((title, name))
+                return true
+            }
         }
 
-        await store.send(.view(.deleteButtonTapped)) {
-            $0.destination = .confirmation(.confirmDelete(name: correspondent.name))
-        }
+        await store.send(.view(.deleteButtonTapped))
+        await store.receive(\.delegate, .deleteCorrespondent)
+
+        #expect(presented.value?.title == .deleteCorrespondent)
+        #expect(presented.value?.name == correspondent.name)
     }
 
     @Test
     func test_view_editButtonTapped() async throws {
-        let store = TestStore(initialState: CorrespondentRowReducer.State(
-            correspondent: .testValue(),
-            server: .testValue()
-        )) {
+        let store = TestStore(initialState: CorrespondentRowReducer.State.testValue()) {
             CorrespondentRowReducer()
         }
 

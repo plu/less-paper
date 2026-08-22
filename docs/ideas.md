@@ -244,32 +244,45 @@ Surfaced during: the bulk edit title end-to-end verification, 2026-08-16.
 
 ---
 
-## Migrate the remaining system confirmation dialogs to `ConfirmationPopupView`
+## `testCreate` fails as the first XCUITest of a cold run
 
-Confirmations are split between two mechanisms. Most list rows —
-`CorrespondentRow`, `DocumentTypeRow`, `StoragePathRow`, `TagRow`, `ServerRow` — set a
-`ConfirmationDialogState` destination and render it with `.confirmationDialog`. `DocumentRow` and
-`DocumentNotes` instead await a `@DependencyClient` presenter that shows `ConfirmationPopupView`
-through `PopupPresenter`.
+Observed on three of the six app-test targets on 2026-08-22 — `TagsApp`, `DocumentTypesApp`,
+`SavedViewsApp` — always with the same shape:
 
-The custom popup is the one to keep, and not only for consistency. The notes section started on
-`.confirmationDialog` and it was visibly wrong: presented from inside the edit sheet, the system
-dialog rendered as a clipped popover anchored to the bottom edge with the cancel button pushed off
-screen entirely. Any of the remaining five would do the same if it were ever presented from within
-a sheet.
+```
+Failed to tap "Add tag" Button: No matches found for first query match sequence:
+`Descendants matching type Button` -> `Elements matching predicate '"Add tag" IN identifiers'`
+```
 
-The migration per row is mechanical and was done once already for notes in
-`docs/plans/2026-08-22-document-notes.md`: delete the `+ConfirmationDialogState.swift` file and the
-`Destination` case, add a presenter beside the reducer, replace the state mutation with a
-`runConfirmDelete` effect that awaits it and sends a `deleteConfirmed` action, and drop the
-`.confirmationDialog` modifier from the view. Tests move from asserting on destination state to
-stubbing the presenter.
+Every one of them passes when re-run alone with
+`-only-testing:TagsAppTests/TagsAppTests/testCreate`, and `CorrespondentsApp` and `StoragePathsApp`
+never failed at all. `testCreate` is alphabetically first, so it is the test that absorbs the very
+first `app.launch()` of a run — the toolbar button is queried before the list has finished its
+first layout.
 
-Two things to decide when picking it up. The five row presenters would be near-identical — worth
-one generic presenter in `Components` taking title and message, rather than five copies of
-`DocumentNoteDeleteConfirmationPresenter`. And the rows currently name the record in the message
-(`Do you really want to delete "Invoice"?`), which the generic version has to keep.
+Unrelated to what the test asserts: `testCreate` runs with the list emptied, so no row view is even
+instantiated. A `waitForExistence` on the button before tapping would likely settle it, but the
+right fix may be in `UITestSupport` so every target gets it at once.
 
-The rule is already recorded in `AGENTS.md` so no new code adds to the pile.
+Surfaced during: `docs/plans/2026-08-22-confirmation-popup-migration.md`, 2026-08-22.
 
-Surfaced during: `docs/plans/2026-08-22-document-notes.md`, 2026-08-22.
+---
+
+## `ServerRowReducerTests` cannot be run on its own
+
+```
+tuist test ServersFeature --no-selective-testing -- -only-testing:ServersFeatureTests/ServerRowReducerTests
+```
+
+fails `test_view_serverTapped_fillsCachesBeforeSelecting` with an issue recorded at
+swift-dependencies' `TimeZone.swift:22` — the "blank TimeZone dependency" report. The full
+`ServersFeature` suite passes, so CI is green and has always been green.
+
+The suite is declared as a bare `@Suite` with no `.dependencies()` trait, unlike e.g.
+`SavedViewRowViewTests`, so it is relying on some other suite in the same bundle having established
+`\.timeZone` before it runs. That coupling is invisible until the suite is run alone.
+
+Reproduced on unmodified `main` as well as on the migration branch, so it predates both. Worth
+auditing which other suites are bare `@Suite` and depending on a neighbour for their dependencies.
+
+Surfaced during: `docs/plans/2026-08-22-confirmation-popup-migration.md`, 2026-08-22.
