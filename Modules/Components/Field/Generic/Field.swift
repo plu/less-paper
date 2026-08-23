@@ -24,7 +24,7 @@ public struct Field<Input: View>: View {
                 .frame(minHeight: scaledMetric * minHeight)
                 .padding(.horizontal, scaledMetric * padding)
                 .padding(scaledMetric * 2)
-                .background(Color.m3SurfaceBright)
+                .background(fillColor)
                 .overlay(Capsule().stroke(borderColor, lineWidth: scaledMetric * 2).padding(scaledMetric * 2))
                 .clipShape(Capsule())
                 .font(.body)
@@ -61,6 +61,15 @@ public struct Field<Input: View>: View {
         error != nil ? .m3Error : .m3Outline
     }
 
+    // The title capsule deliberately keeps `m3SurfaceBright`: it sits over the sheet, masking the
+    // border line behind the label, so tinting it would draw a grey pill against the background
+    // instead of blending into it.
+    private var fillColor: Color {
+        isReadOnly ? .m3SurfaceContainerHigh : .m3SurfaceBright
+    }
+
+    private var isReadOnly = false
+
     @ScaledMetric
     private var scaledMetric: Double = 1.0
 
@@ -82,6 +91,12 @@ public struct Field<Input: View>: View {
 }
 
 public extension Field {
+    func readOnly(_ isReadOnly: Bool = true) -> Self {
+        var copy = self
+        copy.isReadOnly = isReadOnly
+        return copy
+    }
+
     func state<Value: Equatable>(
         _ state: Binding<FieldState<Value>>
     ) -> some View {

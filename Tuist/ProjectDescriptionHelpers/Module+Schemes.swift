@@ -53,6 +53,7 @@ public extension Module {
              .certificatesFeature,
              .components,
              .correspondentsFeature,
+             .customFieldsFeature,
              .documentTypesFeature,
              .documentsFeature,
              .imageFeature,
@@ -84,6 +85,7 @@ public extension Module {
                 )
             ]
         case .correspondentsApp,
+             .customFieldsApp,
              .documentTypesApp,
              .documentsApp,
              .savedViewsApp,
@@ -120,6 +122,8 @@ public extension Module {
              .componentsTests,
              .correspondentsAppTests,
              .correspondentsFeatureTests,
+             .customFieldsAppTests,
+             .customFieldsFeatureTests,
              .documentTypesAppTests,
              .documentTypesFeatureTests,
              .documentsAppTests,
@@ -161,6 +165,8 @@ extension Module {
         switch self {
         case .correspondentsApp:
             [.testableTarget(target: .target(.correspondentsAppTests))]
+        case .customFieldsApp:
+            [.testableTarget(target: .target(.customFieldsAppTests))]
         case .documentTypesApp:
             [.testableTarget(target: .target(.documentTypesAppTests))]
         case .documentsApp:

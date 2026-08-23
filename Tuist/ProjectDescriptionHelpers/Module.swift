@@ -36,6 +36,10 @@ public enum Module: String, CaseIterable {
     case correspondentsAppTests = "CorrespondentsAppTests"
     case correspondentsFeature = "CorrespondentsFeature"
     case correspondentsFeatureTests = "CorrespondentsFeatureTests"
+    case customFieldsApp = "CustomFieldsApp"
+    case customFieldsAppTests = "CustomFieldsAppTests"
+    case customFieldsFeature = "CustomFieldsFeature"
+    case customFieldsFeatureTests = "CustomFieldsFeatureTests"
     case documentTypesApp = "DocumentTypesApp"
     case documentTypesAppTests = "DocumentTypesAppTests"
     case documentTypesFeature = "DocumentTypesFeature"
@@ -132,6 +136,7 @@ extension Module {
              .certificatesFeature,
              .components,
              .correspondentsFeature,
+             .customFieldsFeature,
              .documentTypesFeature,
              .documentsFeature,
              .imageFeature,
@@ -155,6 +160,9 @@ extension Module {
              .correspondentsApp,
              .correspondentsAppTests,
              .correspondentsFeatureTests,
+             .customFieldsApp,
+             .customFieldsAppTests,
+             .customFieldsFeatureTests,
              .documentTypesApp,
              .documentTypesAppTests,
              .documentTypesFeatureTests,
@@ -230,6 +238,7 @@ extension Module {
         switch self {
         case .app,
              .correspondentsApp,
+             .customFieldsApp,
              .documentTypesApp,
              .documentsApp,
              .savedViewsApp,
@@ -246,6 +255,7 @@ extension Module {
              .certificatesFeature,
              .components,
              .correspondentsFeature,
+             .customFieldsFeature,
              .documentTypesFeature,
              .documentsFeature,
              .imageFeature,
@@ -267,6 +277,7 @@ extension Module {
              .certificatesFeatureTests,
              .componentsTests,
              .correspondentsFeatureTests,
+             .customFieldsFeatureTests,
              .documentTypesFeatureTests,
              .documentsFeatureTests,
              .imageFeatureTests,
@@ -281,6 +292,7 @@ extension Module {
              .tagsFeatureTests:
             .unitTests
         case .correspondentsAppTests,
+             .customFieldsAppTests,
              .documentTypesAppTests,
              .documentsAppTests,
              .savedViewsAppTests,

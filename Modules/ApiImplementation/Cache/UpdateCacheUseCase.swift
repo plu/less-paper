@@ -19,6 +19,9 @@ private extension UpdateCacheUseCase {
         @Dependency(\.getCurrentUser.execute)
         var getCurrentUser
 
+        @Dependency(\.getCustomFields.execute)
+        var getCustomFields
+
         @Dependency(\.getDocumentTypes.execute)
         var getDocumentTypes
 
@@ -41,6 +44,7 @@ private extension UpdateCacheUseCase {
         var getUsers
 
         async let correspondents = try await getCorrespondents(server)
+        async let customFields = try await getCustomFields(server)
         async let documentTypes = try await getDocumentTypes(server)
         async let currentUser = try await getCurrentUser(server)
         async let groups = try await getGroups(server)
@@ -51,6 +55,7 @@ private extension UpdateCacheUseCase {
         async let users = try await getUsers(server)
 
         _ = try await correspondents
+        _ = try await customFields
         _ = try await documentTypes
         _ = try await currentUser
         _ = try await groups

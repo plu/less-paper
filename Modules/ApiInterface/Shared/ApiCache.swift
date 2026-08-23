@@ -12,6 +12,11 @@ public struct ApiCache: Sendable {
         _ server: Server
     ) -> Correspondent?
 
+    public var customField: @Sendable (
+        _ id: CustomField.Id?,
+        _ server: Server
+    ) -> CustomField?
+
     public var documentType: @Sendable (
         _ id: DocumentType.Id?,
         _ server: Server
@@ -41,6 +46,7 @@ public struct ApiCache: Sendable {
 extension ApiCache: DependencyKey, TestDependencyKey {
     public static let liveValue = Self(
         correspondent: correspondent(id:server:),
+        customField: customField(id:server:),
         documentType: documentType(id:server:),
         group: group(id:server:),
         storagePath: storagePath(id:server:),
@@ -50,6 +56,7 @@ extension ApiCache: DependencyKey, TestDependencyKey {
 
     public static let previewValue = Self(
         correspondent: { _, _ in .testValue() },
+        customField: { _, _ in .testValue() },
         documentType: { _, _ in .testValue() },
         group: group(id:server:),
         storagePath: { _, _ in .testValue() },
@@ -87,6 +94,25 @@ extension ApiCache {
         let cache = Shared(.correspondents(server))
 
         correspondents.withValue { $0[server] = cache }
+
+        return cache.wrappedValue[id: id]
+    }
+
+    static func customField(
+        id: CustomField.Id?,
+        server: Server
+    ) -> CustomField? {
+        guard let id else {
+            return nil
+        }
+
+        if let cache = customFields[server] {
+            return cache.wrappedValue[id: id]
+        }
+
+        let cache = Shared(.customFields(server))
+
+        customFields.withValue { $0[server] = cache }
 
         return cache.wrappedValue[id: id]
     }
@@ -187,6 +213,7 @@ extension ApiCache {
     }
 
     private static let correspondents: LockIsolated<[Server: Shared<IdentifiedArrayOf<Correspondent>>]> = .init([:])
+    private static let customFields: LockIsolated<[Server: Shared<IdentifiedArrayOf<CustomField>>]> = .init([:])
     private static let documentTypes: LockIsolated<[Server: Shared<IdentifiedArrayOf<DocumentType>>]> = .init([:])
     private static let groups: LockIsolated<[Server: Shared<IdentifiedArrayOf<Group>>]> = .init([:])
     private static let storagePaths: LockIsolated<[Server: Shared<IdentifiedArrayOf<StoragePath>>]> = .init([:])

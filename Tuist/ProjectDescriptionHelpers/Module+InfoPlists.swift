@@ -71,6 +71,7 @@ extension Module {
                 ],
             ])
         case .correspondentsApp,
+             .customFieldsApp,
              .documentTypesApp,
              .documentsApp,
              .savedViewsApp,

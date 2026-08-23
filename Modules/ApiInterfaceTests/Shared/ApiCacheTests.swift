@@ -38,6 +38,32 @@ struct ApiCacheTests {
     }
 
     @Test
+    func customField_hit() async throws {
+        @Shared(.customFields(.testValue()))
+        var customFields: IdentifiedArrayOf<CustomField> = [.testValue()]
+        let cache = ApiCache.liveValue
+
+        let result = cache.customField(
+            id: 1,
+            server: .testValue()
+        )
+
+        #expect(result == .testValue())
+    }
+
+    @Test
+    func customField_miss() async throws {
+        let cache = ApiCache.liveValue
+
+        let result = cache.customField(
+            id: 999,
+            server: .testValue()
+        )
+
+        #expect(result == nil)
+    }
+
+    @Test
     func documentType_hit() async throws {
         @Shared(.documentTypes(.testValue()))
         var documentTypes: IdentifiedArrayOf<DocumentType> = [.testValue()]

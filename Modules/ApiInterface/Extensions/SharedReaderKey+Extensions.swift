@@ -28,6 +28,20 @@ public extension SharedReaderKey where Self == FileStorageKey<IdentifiedArrayOf<
     }
 }
 
+public extension SharedReaderKey where Self == FileStorageKey<IdentifiedArrayOf<CustomField>>.Default {
+
+    static func customFields(_ server: Server) -> Self {
+        Self[
+            .fileStorage(
+                .applicationGroupDirectory.appending(component: "\(server.id)-custom-fields.json"),
+                decoder: .apiDecoder,
+                encoder: .apiEncoder
+            ),
+            default: []
+        ]
+    }
+}
+
 public extension SharedReaderKey where Self == FileStorageKey<IdentifiedArrayOf<DocumentType>>.Default {
 
     static func documentTypes(_ server: Server) -> Self {

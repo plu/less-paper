@@ -2,6 +2,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import CorrespondentsFeature
+import CustomFieldsFeature
 import Dependencies
 import DocumentTypesFeature
 import Foundation
@@ -35,6 +36,7 @@ public struct SettingListReducer {
     @Reducer
     public enum Path {
         case correspondentList(CorrespondentListReducer)
+        case customFieldList(CustomFieldListReducer)
         case documentTypeList(DocumentTypeListReducer)
         case licenseList(LicenseListReducer)
         case pdfPasswordList(PdfPasswordListReducer)

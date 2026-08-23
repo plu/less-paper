@@ -1,5 +1,6 @@
 import ComposableArchitecture
 import CorrespondentsFeature
+import CustomFieldsFeature
 import DocumentTypesFeature
 import LicensesFeature
 import PdfPasswordsFeature
@@ -33,6 +34,13 @@ public struct SettingListView: View {
                         state: SettingListReducer.Path.State.correspondentList(CorrespondentListReducer.State(server: store.server))
                     ) {
                         Label(.correspondents, systemImage: "person")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.customFieldList(CustomFieldListReducer.State(server: store.server))
+                    ) {
+                        Label(.customFields, systemImage: "list.bullet.rectangle")
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
@@ -123,6 +131,8 @@ public struct SettingListView: View {
             switch store.case {
             case let .correspondentList(store):
                 CorrespondentListView(store: store)
+            case let .customFieldList(store):
+                CustomFieldListView(store: store)
             case let .documentTypeList(store):
                 DocumentTypeListView(store: store)
             case let .license(license):

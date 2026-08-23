@@ -176,6 +176,42 @@ extension Module {
                 .target(.correspondentsFeature),
                 .target(.testSupport),
             ]
+        case .customFieldsApp:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .target(.apiImplementation),
+                .target(.apiInterface),
+                .target(.customFieldsFeature)
+            ]
+        case .customFieldsAppTests:
+            [
+                .external(.dependencies),
+                .target(.apiImplementation),
+                .target(.apiInterface),
+                .target(.customFieldsApp),
+                .target(.customFieldsFeature),
+                .target(.uiTestSupport),
+            ]
+        case .customFieldsFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .external(.tagged),
+                .target(.apiInterface),
+                .target(.components),
+            ]
+        case .customFieldsFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .external(.snapshotTesting),
+                .target(.apiInterface),
+                .target(.components),
+                .target(.customFieldsFeature),
+                .target(.testSupport),
+            ]
         case .documentTypesApp:
             [
                 .external(.composableArchitecture),
@@ -426,6 +462,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.correspondentsFeature),
+                .target(.customFieldsFeature),
                 .target(.documentTypesFeature),
                 .target(.licensesFeature),
                 .target(.pdfPasswordsFeature),
@@ -494,6 +531,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.correspondentsFeature),
+                .target(.customFieldsFeature),
                 .target(.documentTypesFeature),
                 .target(.shareFeature),
                 .target(.storagePathsFeature),
