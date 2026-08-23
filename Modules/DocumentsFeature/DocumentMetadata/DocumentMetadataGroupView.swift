@@ -44,7 +44,11 @@ struct DocumentMetadataGroupView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
-                .background(RoundedRectangle(cornerRadius: Constants.cornerRadius).foregroundStyle(Color.m3SurfaceContainer))
+                // One step lighter than the container the permission groups use, because the rows
+                // inside are read-only fields: `m3SurfaceContainerHigh` on `m3SurfaceContainer` is
+                // a six-per-channel difference in light mode, which leaves the fields legible only
+                // by their outline. Dark mode has the contrast either way.
+                .background(RoundedRectangle(cornerRadius: Constants.cornerRadius).foregroundStyle(Color.m3SurfaceContainerLow))
             }
         }
     }
@@ -56,7 +60,8 @@ struct DocumentMetadataGroupView: View {
     @ViewBuilder
     private func rowView(row: Row) -> some View {
         // The same Field the forms use, with a Text where they put a control: nothing here is
-        // editable, and the label belongs in the capsule rather than opposite the value.
+        // editable, and the label belongs in the capsule rather than opposite the value. `readOnly`
+        // dims the fill, the same treatment the locked data type gets in the custom field form.
         Field(row.title) {
             Text(row.value ?? "")
                 .font(row.isMonospaced ? .body.monospaced() : .body)
@@ -67,6 +72,7 @@ struct DocumentMetadataGroupView: View {
                 .truncationMode(.middle)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .readOnly()
         .accessibilityElement()
         .accessibilityLabel(Text(row.title))
         .accessibilityValue(row.value ?? "")
