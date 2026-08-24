@@ -44,7 +44,6 @@ struct SavedViewFormReducerTests {
             SavedViewFormReducer()
         } withDependencies: {
             $0.saveSavedView.execute = { _, _, _ in .testValue() }
-            $0.setSavedViewVisibility.execute = { _, _, _, _ in }
         }
 
         await store.send(.view(.saveButtonTapped))
@@ -58,7 +57,8 @@ struct SavedViewFormReducerTests {
     }
 
     @Test
-    func test_view_saveButtonTapped_success_appliesVisibilityToSavedViewSentDownstream() async throws {
+    func test_view_saveButtonTapped_success_sendsVisibilityWithTheInput() async throws {
+        let inputReceived = LockIsolated<SaveSavedViewInput?>(nil)
         let store = TestStore(
             initialState: SavedViewFormReducer.State.testValue(
                 input: .testValue(showInSidebar: true, showOnDashboard: true)
@@ -66,8 +66,10 @@ struct SavedViewFormReducerTests {
         ) {
             SavedViewFormReducer()
         } withDependencies: {
-            $0.saveSavedView.execute = { _, _, _ in .testValue(showInSidebar: false, showOnDashboard: false) }
-            $0.setSavedViewVisibility.execute = { _, _, _, _ in }
+            $0.saveSavedView.execute = { _, input, _ in
+                inputReceived.setValue(input)
+                return .testValue(showInSidebar: true, showOnDashboard: true)
+            }
         }
 
         await store.send(.view(.saveButtonTapped))
@@ -78,6 +80,9 @@ struct SavedViewFormReducerTests {
         await store.receive(\.binding, .set(\.isSaving, false)) {
             $0.isSaving = false
         }
+
+        #expect(inputReceived.value?.showInSidebar == true)
+        #expect(inputReceived.value?.showOnDashboard == true)
     }
 
     @Test

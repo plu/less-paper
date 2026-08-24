@@ -72,6 +72,8 @@ extension SavedViewFormInput {
             name: name.value,
             owner: owner,
             setPermissions: setPermissions,
+            showInSidebar: showInSidebar,
+            showOnDashboard: showOnDashboard,
             sortField: sortField,
             sortReverse: sortDirection.sortReverse
         )

@@ -6,22 +6,14 @@ extension Effect where Action == SavedViewFormReducer.Action {
     static func runSaveSavedView(
         id: SavedView.Id?,
         input: SaveSavedViewInput,
-        showInSidebar: Bool,
-        showOnDashboard: Bool,
         server: Server
     ) -> Self {
         @Dependency(\.saveSavedView.execute)
         var saveSavedView
 
-        @Dependency(\.setSavedViewVisibility.execute)
-        var setSavedViewVisibility
-
         return .run { send in
             await send(.binding(.set(\.isSaving, true)))
-            var savedView = try await saveSavedView(id, input, server)
-            try await setSavedViewVisibility(savedView.id, showInSidebar, showOnDashboard, server)
-            savedView.showInSidebar = showInSidebar
-            savedView.showOnDashboard = showOnDashboard
+            let savedView = try await saveSavedView(id, input, server)
             await send(.delegate(.savedViewSaved(savedView)), animation: .default)
             await send(.binding(.set(\.isSaving, false)))
         } catch: { error, send in

@@ -84,8 +84,6 @@ public struct SavedViewFormReducer: Sendable {
                     return .runSaveSavedView(
                         id: state.savedViewId,
                         input: state.input.apiValue,
-                        showInSidebar: state.input.showInSidebar,
-                        showOnDashboard: state.input.showOnDashboard,
                         server: state.server
                     )
                 }

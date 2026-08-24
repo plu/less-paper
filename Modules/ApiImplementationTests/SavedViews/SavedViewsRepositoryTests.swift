@@ -40,17 +40,6 @@ struct SavedViewsRepositoryTests {
     }
 
     @Test
-    func setSavedViewVisibility_returnsTestValue() async throws {
-        let output = try await repository.setSavedViewVisibility(
-            id: 1,
-            input: .testValue(),
-            server: .testValue()
-        )
-
-        expectNoDifference(output, .testValue())
-    }
-
-    @Test
     func updateSavedView_returnsTestValue() async throws {
         let output = try await repository.updateSavedView(
             id: 1,

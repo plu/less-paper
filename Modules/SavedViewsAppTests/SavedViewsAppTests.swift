@@ -95,18 +95,18 @@ final class SavedViewsAppTests: XCTestCase {
     }
 
     private func createTestSavedView() async throws {
-        @Dependency(\.savedViewsRepository)
-        var savedViewsRepository
+        @Dependency(\.saveSavedView.execute)
+        var saveSavedView
 
-        @Dependency(\.setSavedViewVisibility.execute)
-        var setSavedViewVisibility
-
-        let savedView = try await savedViewsRepository.createSavedView(
-            input: .init(name: "Test Saved View"),
-            server: server
+        _ = try await saveSavedView(
+            nil,
+            .init(
+                name: "Test Saved View",
+                showInSidebar: true,
+                showOnDashboard: true
+            ),
+            server
         )
-
-        try await setSavedViewVisibility(savedView.id, true, true, server)
     }
 
     private func deleteAllSavedViews() async throws {

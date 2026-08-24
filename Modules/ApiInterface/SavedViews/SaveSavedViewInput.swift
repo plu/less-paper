@@ -11,6 +11,12 @@ public struct SaveSavedViewInput: Codable, Equatable, Sendable {
 
     public var setPermissions: Permissions?
 
+    // Only carried on API < 10, where the saved view serializer still owns visibility and requires
+    // both fields on create. From 10 on they live in UISettings and are stripped before the request.
+    public var showInSidebar: Bool?
+
+    public var showOnDashboard: Bool?
+
     public var sortField: SortField
 
     public var sortReverse: Bool
@@ -20,6 +26,8 @@ public struct SaveSavedViewInput: Codable, Equatable, Sendable {
         name: String,
         owner: Clearable<User.Id>? = nil,
         setPermissions: Permissions? = nil,
+        showInSidebar: Bool? = nil,
+        showOnDashboard: Bool? = nil,
         sortField: SortField = .added,
         sortReverse: Bool = true
     ) {
@@ -27,6 +35,8 @@ public struct SaveSavedViewInput: Codable, Equatable, Sendable {
         self.name = name
         self.owner = owner
         self.setPermissions = setPermissions
+        self.showInSidebar = showInSidebar
+        self.showOnDashboard = showOnDashboard
         self.sortField = sortField
         self.sortReverse = sortReverse
     }
@@ -43,6 +53,8 @@ public extension SaveSavedViewInput {
             name: savedView?.name ?? "",
             owner: savedView?.owner.ifPresent { .value($0) },
             setPermissions: setPermissions,
+            showInSidebar: savedView?.showInSidebar,
+            showOnDashboard: savedView?.showOnDashboard,
             sortField: savedView?.sortField ?? .created,
             sortReverse: savedView?.sortDirection.sortReverse ?? true
         )
@@ -56,6 +68,8 @@ public extension SaveSavedViewInput {
         name: String = "Test SavedView",
         owner: Clearable<User.Id>? = .value(1),
         setPermissions: Permissions = .testValue(),
+        showInSidebar: Bool? = nil,
+        showOnDashboard: Bool? = nil,
         sortField: SortField = .added,
         sortReverse: Bool = true
     ) -> Self {
@@ -64,6 +78,8 @@ public extension SaveSavedViewInput {
             name: name,
             owner: owner,
             setPermissions: setPermissions,
+            showInSidebar: showInSidebar,
+            showOnDashboard: showOnDashboard,
             sortField: sortField,
             sortReverse: sortReverse
         )
