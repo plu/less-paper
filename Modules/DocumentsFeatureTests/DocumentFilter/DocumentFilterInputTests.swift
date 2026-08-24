@@ -1122,3 +1122,162 @@ struct DocumentFilterInputTests {
         ])
     }
 }
+
+@Suite(
+    .dependencies()
+)
+struct DocumentFilterInputCustomFieldQueryTests {
+
+    @Test
+    func parsesCustomFieldQuery() {
+        let input = DocumentFilterInput(
+            filterRules: [.init(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exists",true]]]"#)],
+            server: .testValue(),
+            sortDirection: nil,
+            sortField: nil
+        )
+
+        expectNoDifference(
+            input.customFieldQuery,
+            .group(.and, [.atom(.init(field: 7, op: .exists, value: .bool(true)))])
+        )
+        #expect(input.unsupportedFilterRules.isEmpty)
+    }
+
+    @Test
+    func migratesHasCustomFieldsAllToAnAndOfExists() {
+        let input = DocumentFilterInput(
+            filterRules: [
+                .init(ruleType: .hasCustomFieldsAll, value: "7"),
+                .init(ruleType: .hasCustomFieldsAll, value: "8")
+            ],
+            server: .testValue(),
+            sortDirection: nil,
+            sortField: nil
+        )
+
+        expectNoDifference(input.customFieldQuery, .group(.and, [
+            .atom(.init(field: 7, op: .exists, value: .bool(true))),
+            .atom(.init(field: 8, op: .exists, value: .bool(true)))
+        ]))
+        #expect(input.unsupportedFilterRules.isEmpty)
+    }
+
+    @Test
+    func migratesCommaSeparatedIdsInASingleLegacyRule() {
+        let input = DocumentFilterInput(
+            filterRules: [.init(ruleType: .hasCustomFieldsAny, value: "7,8")],
+            server: .testValue(),
+            sortDirection: nil,
+            sortField: nil
+        )
+
+        expectNoDifference(input.customFieldQuery, .group(.or, [
+            .atom(.init(field: 7, op: .exists, value: .bool(true))),
+            .atom(.init(field: 8, op: .exists, value: .bool(true)))
+        ]))
+    }
+
+    // A saved view written by an older client can carry both shapes at once, so the migrated
+    // conditions join the decoded query rather than replacing it.
+    @Test
+    func combinesALegacyRuleWithADecodedQuery() {
+        let input = DocumentFilterInput(
+            filterRules: [
+                .init(ruleType: .customFieldsQuery, value: #"["OR",[[9,"exists",true]]]"#),
+                .init(ruleType: .hasCustomFieldsAll, value: "7")
+            ],
+            server: .testValue(),
+            sortDirection: nil,
+            sortField: nil
+        )
+
+        expectNoDifference(input.customFieldQuery, .group(.and, [
+            .group(.or, [.atom(.init(field: 9, op: .exists, value: .bool(true)))]),
+            .atom(.init(field: 7, op: .exists, value: .bool(true)))
+        ]))
+    }
+
+    @Test
+    func preservesAMalformedQueryAsUnsupported() {
+        let rule = FilterRule(ruleType: .customFieldsQuery, value: "notjson")
+        let input = DocumentFilterInput(
+            filterRules: [rule],
+            server: .testValue(),
+            sortDirection: nil,
+            sortField: nil
+        )
+
+        #expect(input.customFieldQuery == nil)
+        expectNoDifference(input.unsupportedFilterRules, [rule])
+    }
+
+    @Test
+    func emitsExactlyOneRule() {
+        var input = DocumentFilterInput.testValue()
+        input.customFieldQuery = .group(.and, [.atom(.init(field: 7, op: .exists, value: .bool(true)))])
+
+        expectNoDifference(
+            input.filterRules,
+            [.init(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exists",true]]]"#)]
+        )
+    }
+
+    // `["AND",[]]` is a 400 from the server — "Invalid expression list. Must be nonempty." — so an
+    // untouched builder has to produce no rule at all rather than an empty one.
+    @Test
+    func emitsNoRuleForAnEmptyQuery() {
+        var input = DocumentFilterInput.testValue()
+        input.customFieldQuery = .group(.and, [])
+
+        #expect(input.filterRules.isEmpty)
+    }
+
+    @Test
+    func emitsNoRuleWhenThereIsNoQuery() {
+        let input = DocumentFilterInput.testValue()
+
+        #expect(input.filterRules.isEmpty)
+    }
+
+    @Test
+    func prunesIncompleteAtomsBeforeSending() {
+        var input = DocumentFilterInput.testValue()
+        input.customFieldQuery = .group(.and, [
+            .atom(.init(field: 7, op: .icontains, value: .string(""))),
+            .atom(.init(field: 8, op: .exists, value: .bool(true)))
+        ])
+
+        expectNoDifference(
+            input.filterRules,
+            [.init(ruleType: .customFieldsQuery, value: #"["AND",[[8,"exists",true]]]"#)]
+        )
+    }
+
+    @Test
+    func roundTripsAQueryThroughRulesUnchanged() {
+        let json = #"["AND",[[7,"icontains","a"],["OR",[[8,"gt",5],["NOT",[9,"exists",true]]]]]]"#
+        let input = DocumentFilterInput(
+            filterRules: [.init(ruleType: .customFieldsQuery, value: json)],
+            server: .testValue(),
+            sortDirection: nil,
+            sortField: nil
+        )
+
+        expectNoDifference(input.filterRules, [.init(ruleType: .customFieldsQuery, value: json)])
+    }
+
+    @Test
+    func leavesTheCustomFieldsTextSearchAlone() {
+        let input = DocumentFilterInput(
+            filterRules: [.init(ruleType: .customFieldsText, value: "invoice")],
+            server: .testValue(),
+            sortDirection: nil,
+            sortField: nil
+        )
+
+        #expect(input.customFieldQuery == nil)
+        #expect(input.searchType == .customFields)
+        #expect(input.searchValue == "invoice")
+    }
+}

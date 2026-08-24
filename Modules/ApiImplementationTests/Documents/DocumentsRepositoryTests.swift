@@ -416,7 +416,13 @@ struct DocumentsRepositoryTests {
             server: .testValue()
         )
 
-        #expect(ascending.map(\.id) == descending.map(\.id).reversed())
+        // Compared by title rather than by id: two documents can share a title, and a tie does not
+        // reverse — the database hands back the tied rows in the same physical order whichever
+        // direction it reads the sorted column, so `ascending.ids != descending.ids.reversed()` as
+        // soon as the sample contains a duplicate title. Titles always reverse cleanly, because
+        // ascending and reversed-descending are both non-decreasing orderings of the same values.
+        #expect(ascending.map(\.title) == descending.map(\.title).reversed())
+        #expect(Set(ascending.map(\.id)) == Set(ids))
         #expect(ascending.map(\.title) == ascending.map(\.title).sorted())
     }
 

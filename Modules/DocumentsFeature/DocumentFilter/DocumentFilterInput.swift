@@ -44,6 +44,7 @@ public struct DocumentFilterInput: Equatable {
 
     var asnType = DocumentFilterASNType.equals
     var correspondent = ListFilter<Correspondent>()
+    var customFieldQuery: CustomFieldQuery?
     var date = DateFilter()
     var documentType = ListFilter<DocumentType>()
     var searchType = DocumentFilterSearchType.titleContent
@@ -91,6 +92,7 @@ extension DocumentFilterInput {
         var tags
 
         correspondent.selection = []
+        customFieldQuery = nil
         date = .init()
         documentType.selection = []
         sort.direction = sortDirection ?? .descending
@@ -100,6 +102,8 @@ extension DocumentFilterInput {
         unsupportedFilterRules = []
 
         var dateRules = [FilterRule]()
+        var allCustomFieldIds = [CustomField.Id]()
+        var anyCustomFieldIds = [CustomField.Id]()
 
         for filterRule in filterRules ?? [] {
             if filterRule.ruleType.dateType != nil {
@@ -126,6 +130,16 @@ extension DocumentFilterInput {
             case .customFieldsText:
                 searchType = .customFields
                 setSearchValue(filterRule)
+            case .customFieldsQuery:
+                guard let value = filterRule.value, let query = CustomFieldQuery(json: value) else {
+                    unsupportedFilterRules.append(filterRule)
+                    continue
+                }
+                customFieldQuery = query
+            case .hasCustomFieldsAll:
+                allCustomFieldIds.append(contentsOf: filterRule.value.ids().map(CustomField.Id.init(rawValue:)))
+            case .hasCustomFieldsAny:
+                anyCustomFieldIds.append(contentsOf: filterRule.value.ids().map(CustomField.Id.init(rawValue:)))
             case .correspondent:
                 correspondent.rule = .notAssigned
             case .documentType:
@@ -195,6 +209,30 @@ extension DocumentFilterInput {
         }
 
         apply(dateRules)
+        applyLegacyCustomFieldIds(all: allCustomFieldIds, any: anyCustomFieldIds)
+    }
+
+    // `has_custom_fields__id__all` and `__in` predate `custom_field_query`; the web client upgrades
+    // them to an AND and an OR of `exists` on read, and so do we. A saved view written by an older
+    // client can carry a modern query as well, so these join it rather than replace it.
+    private mutating func applyLegacyCustomFieldIds(all: [CustomField.Id], any: [CustomField.Id]) {
+        var migrated = [CustomFieldQuery]()
+
+        if !all.isEmpty {
+            migrated.append(contentsOf: all.map { .atom(.init(field: $0, op: .exists, value: .bool(true))) })
+        }
+        if !any.isEmpty {
+            migrated.append(.group(.or, any.map { .atom(.init(field: $0, op: .exists, value: .bool(true))) }))
+        }
+
+        guard !migrated.isEmpty else {
+            return
+        }
+
+        if let customFieldQuery {
+            migrated.insert(customFieldQuery, at: 0)
+        }
+        customFieldQuery = migrated.count == 1 ? migrated[0] : .group(.and, migrated)
     }
 
     private mutating func apply(_ dateRules: [FilterRule]) {
@@ -358,6 +396,10 @@ extension DocumentFilterInput {
             ))
         }
 
+        if let value = customFieldQuery?.pruned?.json {
+            filterRules.append(.init(ruleType: .customFieldsQuery, value: value))
+        }
+
         filterRules.append(contentsOf: unsupportedFilterRules)
 
         return filterRules
@@ -400,6 +442,7 @@ extension DocumentFilterInput {
     static func testValue(
         asnType: DocumentFilterASNType = .equals,
         correspondent: ListFilter<Correspondent> = .init(),
+        customFieldQuery: CustomFieldQuery? = nil,
         documentType: ListFilter<DocumentType> = .init(),
         searchType: DocumentFilterSearchType = .titleContent,
         searchValue: String = "",
@@ -411,6 +454,7 @@ extension DocumentFilterInput {
         .init(
             asnType: asnType,
             correspondent: correspondent,
+            customFieldQuery: customFieldQuery,
             documentType: documentType,
             searchType: searchType,
             searchValue: searchValue,

@@ -322,3 +322,52 @@ struct FilterRuleTests {
         #expect(decoded == rule)
     }
 }
+
+// `FilterRule.==` compares comma-split fragments, and a custom field query's JSON value is full of
+// commas. These characterize what that means for the filter sheet's unsaved-changes indicator,
+// which compares a saved view's rules against the current ones.
+@Suite
+struct FilterRuleCustomFieldQueryEqualityTests {
+
+    @Test
+    func aQueryEqualsAnIdenticallyBuiltRule() {
+        let json = #"["AND",[[7,"exact","a"],[8,"exact","b"]]]"#
+        let rule = FilterRule(ruleType: .customFieldsQuery, value: json)
+        let same = FilterRule(ruleType: .customFieldsQuery, value: String(json))
+
+        #expect(rule == same)
+    }
+
+    @Test
+    func swappingTwoAtomsValuesIsNotEqual() {
+        #expect(FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exact","a"],[8,"exact","b"]]]"#)
+            != FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exact","b"],[8,"exact","a"]]]"#))
+    }
+
+    @Test
+    func changingAnOperatorIsNotEqual() {
+        #expect(FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"gt",5]]]"#)
+            != FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"lt",5]]]"#))
+    }
+
+    @Test
+    func changingALogicalOperatorIsNotEqual() {
+        #expect(FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exists",true]]]"#)
+            != FilterRule(ruleType: .customFieldsQuery, value: #"["OR",[[7,"exists",true]]]"#))
+    }
+
+    @Test
+    func addingAConditionIsNotEqual() {
+        #expect(FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exists",true]]]"#)
+            != FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exists",true],[8,"exists",true]]]"#))
+    }
+
+    // Reordering atoms is *not* equal either: the fragments carry their bracket runs, so `[[7`
+    // and `[8` never line up with `[[8` and `[7`. The comma-splitting turns out not to lose
+    // anything for this rule type, which is why `FilterRule` needs no change to support it.
+    @Test
+    func reorderingWholeAtomsIsNotEqual() {
+        #expect(FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exists",true],[8,"exists",true]]]"#)
+            != FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[8,"exists",true],[7,"exists",true]]]"#))
+    }
+}

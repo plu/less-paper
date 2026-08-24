@@ -25,6 +25,7 @@ struct DocumentFilterView: View {
                 documentTypeField()
                 storagePathField()
                 tagField()
+                customFieldField()
                 dateField()
                 sortField()
             }
@@ -122,6 +123,26 @@ struct DocumentFilterView: View {
                 title: .storagePath
             )
             .presentationDetents([.sheet])
+        }
+    }
+
+    @ViewBuilder
+    private func customFieldField() -> some View {
+        DocumentFilterCustomFieldField(
+            fields: store.customFields,
+            query: store.input.customFieldQuery
+        )
+        .onTapGesture {
+            send(.customFieldButtonTapped)
+        }
+        .sheet(
+            item: $store.scope(
+                state: \.destination?.customFieldQuery,
+                action: \.destination.customFieldQuery
+            )
+        ) { store in
+            CustomFieldQueryCardsView(store: store)
+                .presentationDetents([.sheet])
         }
     }
 

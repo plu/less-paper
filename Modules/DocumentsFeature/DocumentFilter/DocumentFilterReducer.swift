@@ -29,6 +29,7 @@ public struct DocumentFilterReducer: Sendable {
             case asnTypeButtonTapped(DocumentFilterASNType)
             case closeButtonTapped
             case correspondentButtonTapped
+            case customFieldButtonTapped
             case dateButtonTapped
             case documentTypeButtonTapped
             case resetButtonTapped
@@ -47,6 +48,7 @@ public struct DocumentFilterReducer: Sendable {
     @Reducer
     public enum Destination {
         case correspondentList(DocumentFilterGenericValueListReducer<Correspondent>)
+        case customFieldQuery(CustomFieldQueryCardsReducer)
         case date(DocumentFilterDateReducer)
         case documentTypeList(DocumentFilterGenericValueListReducer<DocumentType>)
         case savedViewForm(SavedViewFormReducer)
@@ -87,6 +89,9 @@ public struct DocumentFilterReducer: Sendable {
         var correspondents: IdentifiedArrayOf<Correspondent>
 
         @Shared
+        var customFields: IdentifiedArrayOf<CustomField>
+
+        @Shared
         var documentTypes: IdentifiedArrayOf<DocumentType>
 
         @Shared
@@ -109,6 +114,7 @@ public struct DocumentFilterReducer: Sendable {
             self.savedView = savedView
             self.server = server
             self._correspondents = Shared(wrappedValue: [], .correspondents(server))
+            self._customFields = Shared(wrappedValue: [], .customFields(server))
             self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
             self._savedViews = Shared(wrappedValue: [], .savedViews(server))
             self._storagePaths = Shared(wrappedValue: [], .storagePaths(server))
@@ -123,6 +129,9 @@ public struct DocumentFilterReducer: Sendable {
             case let .destination(.presented(.correspondentList(.delegate(.filterUpdated(rule: rule, selection: selection))))):
                 state.input.correspondent.rule = rule
                 state.input.correspondent.selection = selection
+                return .runFilterUpdated(state)
+            case let .destination(.presented(.customFieldQuery(.delegate(.filterUpdated(query))))):
+                state.input.customFieldQuery = query
                 return .runFilterUpdated(state)
             case let .destination(.presented(.date(.delegate(.filterUpdated(date))))):
                 state.input.date = date
@@ -175,6 +184,12 @@ public struct DocumentFilterReducer: Sendable {
                         rule: state.input.correspondent.rule,
                         selection: state.input.correspondent.selection,
                         values: state.correspondents
+                    ))
+                    return .none
+                case .customFieldButtonTapped:
+                    state.destination = .customFieldQuery(CustomFieldQueryCardsReducer.State(
+                        fields: state.customFields,
+                        query: state.input.customFieldQuery
                     ))
                     return .none
                 case .dateButtonTapped:
