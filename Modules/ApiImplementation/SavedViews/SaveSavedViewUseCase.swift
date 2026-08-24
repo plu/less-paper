@@ -19,7 +19,11 @@ private extension SaveSavedViewUseCase {
         server: Server
     ) async throws -> SaveSavedViewOutput {
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
+
+        // Not yet negotiated reads as the oldest server this app supports: the newer shape is the
+        // one that has to be earned by a version we have actually seen.
+        let version = apiVersion ?? ApiVersion.minimumSupported
 
         @Shared(.savedViews(server))
         var cache: IdentifiedArrayOf<SavedView> = []
@@ -31,7 +35,7 @@ private extension SaveSavedViewUseCase {
         // UISettings. Older versions require both on create, so there they have to ride along in
         // the body — a POST without them is rejected before anything else can set them.
         var body = input
-        if apiVersion >= 10 {
+        if version >= 10 {
             body.showInSidebar = nil
             body.showOnDashboard = nil
         }
@@ -51,7 +55,7 @@ private extension SaveSavedViewUseCase {
             )
         }
 
-        if apiVersion >= 10,
+        if version >= 10,
            let showInSidebar = input.showInSidebar,
            let showOnDashboard = input.showOnDashboard {
             try await updateUISettings(

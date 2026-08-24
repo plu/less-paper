@@ -17,7 +17,11 @@ final class CorrespondentsAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.buttons["Add correspondent"].firstMatch.tap()
+        // The app renders a ProgressView until `updateCache` resolves, so the button does not
+        // exist at launch. Tapping straight away races that fetch.
+        let addButton = app.buttons["Add correspondent"].firstMatch
+        XCTAssertTrue(addButton.waitForExistence(timeout: timeout))
+        addButton.tap()
         app.textFields["Name"].tap()
         app.typeText("New Correspondent")
         app.buttons["Save"].tap()

@@ -50,6 +50,9 @@ struct ShareApp: App {
     }
 
     private func presentWithServer() {
+        @Dependency(\.negotiateApiVersion.execute)
+        var negotiateApiVersion
+
         @Dependency(\.updateCache.execute)
         var updateCache
 
@@ -72,6 +75,9 @@ struct ShareApp: App {
         }
 
         Task {
+            // Negotiate first, as adding a server does in the real app. Without it every request
+            // carries the un-probed default, which a server outside that version answers 406 to.
+            _ = try await negotiateApiVersion(.testValue())
             try await updateCache(.testValue())
         }
 

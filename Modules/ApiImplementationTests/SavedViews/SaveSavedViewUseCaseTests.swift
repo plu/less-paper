@@ -106,7 +106,7 @@ struct SaveSavedViewUseCaseTests {
     func execute_onVersion10_movesVisibilityIntoUISettings() async throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
         $apiVersion.withLock { $0 = 10 }
 
         let inputReceived = LockIsolated<SaveSavedViewInput?>(nil)
@@ -165,7 +165,7 @@ struct SaveSavedViewUseCaseTests {
     func execute_withoutVisibility_leavesUISettingsAlone() async throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
         $apiVersion.withLock { $0 = 10 }
 
         let uiSettingsRequested = LockIsolated(false)

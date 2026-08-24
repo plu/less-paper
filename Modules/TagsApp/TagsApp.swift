@@ -19,6 +19,10 @@ struct TagsApp: App {
                 ProgressView()
                     .task {
                         do {
+                            // Negotiate first, as adding a server does in the real app. Without
+                            // it every request carries the un-probed default, which a server
+                            // outside that version answers 406 to.
+                            _ = try await negotiateApiVersion(.testValue())
                             try await updateCache(.testValue())
                             isInitialised = true
                         } catch {
@@ -45,6 +49,9 @@ struct TagsApp: App {
             TagListReducer()
         }
     )
+
+    @Dependency(\.negotiateApiVersion.execute)
+    private var negotiateApiVersion
 
     @Dependency(\.updateCache.execute)
     private var updateCache

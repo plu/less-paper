@@ -17,7 +17,11 @@ final class DocumentTypesAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.buttons["Add document type"].firstMatch.tap()
+        // The app renders a ProgressView until `updateCache` resolves, so the button does not
+        // exist at launch. Tapping straight away races that fetch.
+        let addButton = app.buttons["Add document type"].firstMatch
+        XCTAssertTrue(addButton.waitForExistence(timeout: timeout))
+        addButton.tap()
         app.textFields["Name"].tap()
         app.typeText("New Document Type")
         app.buttons["Save"].tap()

@@ -53,7 +53,7 @@ struct GetSavedViewsUseCaseTests {
     func execute_onVersion9_usesPayloadFieldsAndSkipsUiSettings() async throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
 
         let uiSettingsRequested = LockIsolated(false)
 
@@ -81,7 +81,7 @@ struct GetSavedViewsUseCaseTests {
     func execute_onVersion10_overlaysVisibilityFromUiSettings() async throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
         $apiVersion.withLock { $0 = 10 }
 
         try await withDependencies {

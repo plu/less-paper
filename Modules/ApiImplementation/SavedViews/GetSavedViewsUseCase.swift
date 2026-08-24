@@ -17,7 +17,11 @@ private extension GetSavedViewsUseCase {
         server: Server
     ) async throws -> [SavedView] {
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
+
+        // Not yet negotiated reads as the oldest server this app supports: the newer shape is the
+        // one that has to be earned by a version we have actually seen.
+        let version = apiVersion ?? ApiVersion.minimumSupported
 
         @Shared(.savedViews(server))
         var cache: IdentifiedArrayOf<SavedView> = []
@@ -44,7 +48,7 @@ private extension GetSavedViewsUseCase {
 
         // v10 removed show_on_dashboard/show_in_sidebar from saved views and moved them into
         // UISettings. On v9 the payload is authoritative and the extra request is pure waste.
-        if apiVersion >= 10 {
+        if version >= 10 {
             let uiSettings = try await uiSettingsRepository.getUISettings(
                 input: .init(),
                 server: server

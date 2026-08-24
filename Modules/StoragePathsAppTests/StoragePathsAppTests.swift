@@ -17,7 +17,11 @@ final class StoragePathsAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.buttons["Add storage path"].firstMatch.tap()
+        // The app renders a ProgressView until `updateCache` resolves, so the button does not
+        // exist at launch. Tapping straight away races that fetch.
+        let addButton = app.buttons["Add storage path"].firstMatch
+        XCTAssertTrue(addButton.waitForExistence(timeout: timeout))
+        addButton.tap()
         app.textFields["Name"].tap()
         app.typeText("New Storage Path")
         app.textFields["Path"].tap()

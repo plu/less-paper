@@ -16,7 +16,7 @@ struct NegotiateApiVersionUseCaseTests {
     func execute_storesTheAdvertisedVersion() async throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
 
         try await withDependencies {
             $0.apiVersionRepository.getAdvertisedApiVersion = { _ in 10 }
@@ -32,7 +32,7 @@ struct NegotiateApiVersionUseCaseTests {
     func execute_clampsAServerAheadOfTheClient() async throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
 
         try await withDependencies {
             $0.apiVersionRepository.getAdvertisedApiVersion = { _ in 12 }
@@ -47,7 +47,7 @@ struct NegotiateApiVersionUseCaseTests {
     func execute_throwsAndLeavesTheCacheAloneForAServerBelowTheFloor() async throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
 
         await withDependencies {
             $0.apiVersionRepository.getAdvertisedApiVersion = { _ in 6 }
@@ -57,7 +57,7 @@ struct NegotiateApiVersionUseCaseTests {
             }
         }
 
-        #expect(apiVersion == ApiVersion.minimumSupported)
+        #expect(apiVersion == nil)
     }
 
     @Test

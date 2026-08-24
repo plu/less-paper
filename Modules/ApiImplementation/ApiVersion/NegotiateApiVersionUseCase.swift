@@ -19,7 +19,7 @@ private extension NegotiateApiVersionUseCase {
         var repository
 
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
 
         let negotiated = try ApiVersion.negotiated(
             from: try await repository.getAdvertisedApiVersion(server: server)

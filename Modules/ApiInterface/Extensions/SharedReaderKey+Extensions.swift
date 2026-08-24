@@ -185,10 +185,12 @@ public extension SharedReaderKey where Self == FileStorageKey<[Tag.Id]>.Default 
     }
 }
 
-public extension SharedReaderKey where Self == FileStorageKey<Int>.Default {
+public extension SharedReaderKey where Self == FileStorageKey<Int?>.Default {
 
-    // The default is the floor rather than the ceiling on purpose: an un-probed server must never
-    // send a version it might answer 406 to, and every server this app supports accepts 9.
+    // No default on purpose. There is no version that is safe to guess: the supported range spans
+    // servers that accept 8 and reject 9 as well as servers that accept 9 and reject 8, and a
+    // rejection comes back 406 with no X-Api-Version to learn from. Absent means "not negotiated
+    // yet", and the client says nothing until it is.
     static func apiVersion(_ server: Server) -> Self {
         Self[
             .fileStorage(
@@ -196,7 +198,7 @@ public extension SharedReaderKey where Self == FileStorageKey<Int>.Default {
                 decoder: .apiDecoder,
                 encoder: .apiEncoder
             ),
-            default: ApiVersion.minimumSupported
+            default: nil
         ]
     }
 }

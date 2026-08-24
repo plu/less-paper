@@ -13,15 +13,20 @@ import TestSupport
 )
 struct ApiClientDelegateTests {
 
+    // Naming a version before negotiating one cannot be made safe: a server outside the range the
+    // guess belongs to answers 406, and a 406 carries no X-Api-Version to learn from — so the
+    // client that guessed wrong never gets a successful response to correct itself with, and stays
+    // stuck on every request. Saying nothing lets the server answer with its own version, which
+    // `validateResponse` then stores.
     @Test
-    func willSendRequest_fallsBackToTheMinimumSupportedVersion() async throws {
-        let server = Server.testValue(headers: [])
+    func willSendRequest_omitsTheVersionUntilOneHasBeenNegotiated() async throws {
+        let server = Server.testValue(headers: [], id: "un-negotiated")
         let delegate = ApiClientDelegate(server: server)
         var request = URLRequest(url: server.url.appending(path: "/api/documents/"))
 
         try await delegate.client(APIClient(baseURL: server.url), willSendRequest: &request)
 
-        #expect(request.value(forHTTPHeaderField: "Accept") == "application/json; version=8")
+        #expect(request.value(forHTTPHeaderField: "Accept") == nil)
     }
 
     // A Paperless behind a reverse proxy without PAPERLESS_PROXY_SSL_HEADER believes it is serving
@@ -118,7 +123,7 @@ struct ApiClientDelegateTests {
     func willSendRequest_usesTheNegotiatedVersion() async throws {
         let server = Server.testValue(headers: [])
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
         $apiVersion.withLock { $0 = 10 }
 
         let delegate = ApiClientDelegate(server: server)
@@ -133,7 +138,7 @@ struct ApiClientDelegateTests {
     func validateResponse_storesTheAdvertisedVersion() throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
 
         let delegate = ApiClientDelegate(server: server)
         try delegate.client(
@@ -150,7 +155,7 @@ struct ApiClientDelegateTests {
     func validateResponse_clampsAServerAheadOfTheClient() throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
 
         let delegate = ApiClientDelegate(server: server)
         try delegate.client(
@@ -169,7 +174,7 @@ struct ApiClientDelegateTests {
     func validateResponse_leavesTheCacheAloneWhenTheHeaderIsAbsent() throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
         $apiVersion.withLock { $0 = 10 }
 
         let delegate = ApiClientDelegate(server: server)
@@ -189,7 +194,7 @@ struct ApiClientDelegateTests {
     func validateResponse_ignoresAVersionBelowTheFloor() throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
         $apiVersion.withLock { $0 = 10 }
 
         let delegate = ApiClientDelegate(server: server)

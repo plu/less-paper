@@ -32,9 +32,11 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         // before the probe ever gets to tell the user the server is too old.
         if sendsApiVersion, !isTokenRequest {
             @Shared(.apiVersion(server))
-            var apiVersion: Int
+            var apiVersion: Int?
 
-            request.setValue("application/json; version=\(apiVersion)", forHTTPHeaderField: "Accept")
+            if let apiVersion {
+                request.setValue("application/json; version=\(apiVersion)", forHTTPHeaderField: "Accept")
+            }
         }
 
         for header in server.headers {
@@ -70,7 +72,7 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         }
 
         @Shared(.apiVersion(server))
-        var apiVersion: Int
+        var apiVersion: Int?
 
         guard apiVersion != negotiated else {
             return

@@ -17,7 +17,11 @@ final class TagsAppTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        app.buttons["Add tag"].firstMatch.tap()
+        // The app renders a ProgressView until `updateCache` resolves, so the button does not
+        // exist at launch. Tapping straight away races that fetch.
+        let addButton = app.buttons["Add tag"].firstMatch
+        XCTAssertTrue(addButton.waitForExistence(timeout: timeout))
+        addButton.tap()
         app.textFields["Name"].tap()
         app.typeText("New tag")
         app.buttons["Save"].tap()
