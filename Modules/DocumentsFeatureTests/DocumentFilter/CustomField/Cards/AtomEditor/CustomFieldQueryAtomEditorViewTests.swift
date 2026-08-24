@@ -35,9 +35,9 @@ struct CustomFieldQueryAtomEditorViewTests {
     func snapshot(name: String, atom: CustomFieldQuery.Atom) async throws {
         assertSnapshot(
             of: CustomFieldQueryAtomEditorView(
-                editor: .init(atom: atom, path: [0]),
-                fields: IdentifiedArray(uniqueElements: [CustomField].previewValue),
-                onViewAction: { _ in }
+                store: Store(initialState: .testValue(atom: atom)) {
+                    CustomFieldQueryAtomEditorReducer()
+                }
             ),
             as: .image(layout: .device(config: .iPhone12)),
             named: name

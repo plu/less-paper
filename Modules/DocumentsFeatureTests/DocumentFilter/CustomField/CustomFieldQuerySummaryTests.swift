@@ -21,7 +21,8 @@ struct CustomFieldQuerySummaryTests {
             name: "Status"
         ),
         .testValue(dataType: .boolean, id: 3, name: "Paid"),
-        .testValue(dataType: .date, id: 4, name: "Due date")
+        .testValue(dataType: .date, id: 4, name: "Due date"),
+        .testValue(dataType: .documentLink, id: 6, name: "Link")
     ]
 
     @Test
@@ -112,6 +113,22 @@ struct CustomFieldQuerySummaryTests {
     func anUnknownFieldIsNamedByItsId() {
         let query = CustomFieldQuery.atom(.init(field: 999, op: .exists, value: .bool(true)))
         expectNoDifference(query.summary(fields: fields), "Unknown field (999) exists")
+    }
+
+    // Document ids mean nothing to a reader, and resolving titles here would mean the filter
+    // sheet could not render until they loaded.
+    @Test
+    func aDocumentLinkConditionSummarisesAsACount() {
+        let query = CustomFieldQuery.atom(.init(field: 6, op: .contains, value: .array([.number(10), .number(11)])))
+
+        expectNoDifference(query.summary(fields: fields), "Link contains 2 documents")
+    }
+
+    @Test
+    func aSingleLinkedDocumentReadsInTheSingular() {
+        let query = CustomFieldQuery.atom(.init(field: 6, op: .contains, value: .array([.number(10)])))
+
+        expectNoDifference(query.summary(fields: fields), "Link contains 1 document")
     }
 
     @Test

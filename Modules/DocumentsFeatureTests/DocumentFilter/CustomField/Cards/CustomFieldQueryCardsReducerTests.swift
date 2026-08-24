@@ -40,7 +40,7 @@ struct CustomFieldQueryCardsReducerTests {
         await store.send(.view(.addConditionTapped([]))) {
             let atom = CustomFieldQuery.Atom(field: 1, op: .exists, value: .bool(true))
             $0.query = .group(.and, [.atom(atom)])
-            $0.editor = .init(atom: atom, path: [0])
+            $0.editor = $0.makeEditor(atom: atom, path: [0])
         }
     }
 
@@ -59,7 +59,7 @@ struct CustomFieldQueryCardsReducerTests {
         let store = Self.store(.testValue(query: .group(.and, [.atom(atom)])))
 
         await store.send(.view(.rowTapped([0]))) {
-            $0.editor = .init(atom: atom, path: [0])
+            $0.editor = $0.makeEditor(atom: atom, path: [0])
         }
     }
 
@@ -70,60 +70,8 @@ struct CustomFieldQueryCardsReducerTests {
         let store = Self.store(.testValue(query: .group(.and, [.negation(.atom(atom))])))
 
         await store.send(.view(.rowTapped([0]))) {
-            $0.editor = .init(atom: atom, path: [0, 0])
+            $0.editor = $0.makeEditor(atom: atom, path: [0, 0])
         }
-    }
-
-    @Test
-    func changingTheFieldWritesThroughAndPublishes() async {
-        let atom = CustomFieldQuery.Atom(field: 1, op: .icontains, value: .string("a"))
-        let store = Self.store(.testValue(
-            editor: .init(atom: atom, path: [0]),
-            query: .group(.and, [.atom(atom)])
-        ))
-
-        await store.send(.view(.editorFieldChanged(2))) {
-            let updated = CustomFieldQuery.Atom(field: 2, op: .exists, value: .bool(true))
-            $0.editor?.atom = updated
-            $0.query = .group(.and, [.atom(updated)])
-        }
-        await store.receive(\.delegate.filterUpdated, .group(.and, [.atom(.init(field: 2, op: .exists, value: .bool(true)))]))
-    }
-
-    @Test
-    func changingTheValuePublishesThePrunedQuery() async {
-        let atom = CustomFieldQuery.Atom(field: 1, op: .icontains, value: .string(""))
-        let store = Self.store(.testValue(
-            editor: .init(atom: atom, path: [0]),
-            query: .group(.and, [.atom(atom)])
-        ))
-
-        await store.send(.view(.editorValueChanged(.string("invoice")))) {
-            let updated = CustomFieldQuery.Atom(field: 1, op: .icontains, value: .string("invoice"))
-            $0.editor?.atom = updated
-            $0.query = .group(.and, [.atom(updated)])
-        }
-        await store.receive(
-            \.delegate.filterUpdated,
-            .group(.and, [.atom(.init(field: 1, op: .icontains, value: .string("invoice")))])
-        )
-    }
-
-    // An incomplete atom must never reach the server: the match count refreshes on every keystroke.
-    @Test
-    func anIncompleteAtomIsPrunedFromWhatIsPublished() async {
-        let atom = CustomFieldQuery.Atom(field: 1, op: .icontains, value: .string("a"))
-        let store = Self.store(.testValue(
-            editor: .init(atom: atom, path: [0]),
-            query: .group(.and, [.atom(atom)])
-        ))
-
-        await store.send(.view(.editorValueChanged(.string("")))) {
-            let updated = CustomFieldQuery.Atom(field: 1, op: .icontains, value: .string(""))
-            $0.editor?.atom = updated
-            $0.query = .group(.and, [.atom(updated)])
-        }
-        await store.receive(\.delegate.filterUpdated, nil)
     }
 
     @Test
@@ -198,129 +146,5 @@ struct CustomFieldQueryCardsReducerTests {
         let state = CustomFieldQueryCardsReducer.State.testValue(fields: [])
 
         #expect(!state.canAddCondition(at: []))
-    }
-}
-
-@MainActor
-@Suite(
-    .dependencies()
-)
-struct CustomFieldQueryCardsSelectOptionTests {
-
-    private static let fields = IdentifiedArray(uniqueElements: [CustomField].previewValue)
-
-    private static let store = { (state: CustomFieldQueryCardsReducer.State) in
-        TestStore(initialState: state) {
-            CustomFieldQueryCardsReducer()
-        }
-    }
-
-    private static func editing(_ atom: CustomFieldQuery.Atom) -> CustomFieldQueryCardsReducer.State {
-        .testValue(
-            editor: .init(atom: atom, path: [0]),
-            fields: fields,
-            query: .group(.and, [.atom(atom)])
-        )
-    }
-
-    // Field 5 in the preview data is a select with options "Open" and "Closed". Switching it to a
-    // string operator used to leave an empty value, which renders as a blank picker and logs
-    // "the selection ... is invalid and does not have an associated tag".
-    @Test
-    func switchingASelectFieldToEqualToSeedsTheFirstOption() async {
-        let atom = CustomFieldQuery.Atom(field: 5, op: .exists, value: .bool(true))
-        let store = Self.store(Self.editing(atom))
-
-        await store.send(.view(.editorOperatorChanged(.exact))) {
-            let updated = CustomFieldQuery.Atom(field: 5, op: .exact, value: .string("aqgT3m4XZw8aw3Ou"))
-            $0.editor?.atom = updated
-            $0.query = .group(.and, [.atom(updated)])
-        }
-        await store.receive(
-            \.delegate.filterUpdated,
-            .group(.and, [.atom(.init(field: 5, op: .exact, value: .string("aqgT3m4XZw8aw3Ou")))])
-        )
-    }
-
-    @Test
-    func choosingASelectFieldSeedsTheFirstOption() async {
-        let atom = CustomFieldQuery.Atom(field: 1, op: .exact, value: .string("free text"))
-        let store = Self.store(Self.editing(atom))
-
-        await store.send(.view(.editorFieldChanged(5))) {
-            let updated = CustomFieldQuery.Atom(field: 5, op: .exact, value: .string("aqgT3m4XZw8aw3Ou"))
-            $0.editor?.atom = updated
-            $0.query = .group(.and, [.atom(updated)])
-        }
-        await store.receive(
-            \.delegate.filterUpdated,
-            .group(.and, [.atom(.init(field: 5, op: .exact, value: .string("aqgT3m4XZw8aw3Ou")))])
-        )
-    }
-
-    @Test
-    func openingAndDismissingTheOptionSheet() async {
-        let store = Self.store(Self.editing(.init(field: 5, op: .in, value: .array([]))))
-
-        await store.send(.view(.editorOptionsTapped)) {
-            $0.editor?.isSelectingOptions = true
-        }
-        await store.send(.view(.editorOptionsDismissed)) {
-            $0.editor?.isSelectingOptions = false
-        }
-    }
-
-    @Test
-    func togglingAnOptionAddsAndRemovesIt() async {
-        let store = Self.store(Self.editing(.init(field: 5, op: .in, value: .array([]))))
-
-        await store.send(.view(.editorOptionToggled("aqgT3m4XZw8aw3Ou"))) {
-            let updated = CustomFieldQuery.Atom(
-                field: 5,
-                op: .in,
-                value: .array([.string("aqgT3m4XZw8aw3Ou")])
-            )
-            $0.editor?.atom = updated
-            $0.query = .group(.and, [.atom(updated)])
-        }
-        await store.receive(
-            \.delegate.filterUpdated,
-            .group(.and, [.atom(.init(field: 5, op: .in, value: .array([.string("aqgT3m4XZw8aw3Ou")])))])
-        )
-
-        // An empty subset is an unfinished condition, so it prunes away rather than being sent.
-        await store.send(.view(.editorOptionToggled("aqgT3m4XZw8aw3Ou"))) {
-            let updated = CustomFieldQuery.Atom(field: 5, op: .in, value: .array([]))
-            $0.editor?.atom = updated
-            $0.query = .group(.and, [.atom(updated)])
-        }
-        await store.receive(\.delegate.filterUpdated, nil)
-    }
-
-    // Set iteration order is not stable, so the emitted rule has to be sorted or the same
-    // selection would produce different JSON between openings of the sheet.
-    @Test
-    func selectedOptionsAreEmittedInASortedOrder() async {
-        let store = Self.store(Self.editing(
-            .init(field: 5, op: .in, value: .array([.string("MOddUdj2nhfCEsqp")]))
-        ))
-
-        await store.send(.view(.editorOptionToggled("aqgT3m4XZw8aw3Ou"))) {
-            let updated = CustomFieldQuery.Atom(
-                field: 5,
-                op: .in,
-                value: .array([.string("MOddUdj2nhfCEsqp"), .string("aqgT3m4XZw8aw3Ou")])
-            )
-            $0.editor?.atom = updated
-            $0.query = .group(.and, [.atom(updated)])
-        }
-        await store.receive(
-            \.delegate.filterUpdated,
-            .group(.and, [.atom(.init(
-                field: 5,
-                op: .in,
-                value: .array([.string("MOddUdj2nhfCEsqp"), .string("aqgT3m4XZw8aw3Ou")])
-            ))])
-        )
     }
 }

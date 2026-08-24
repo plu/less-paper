@@ -69,10 +69,19 @@ private extension CustomFieldQuery.Atom {
     private func valueSummary(field: CustomField?) -> String {
         switch value {
         case let .array(elements):
-            elements.map { text(for: $0, field: field) }.joined(separator: ", ")
+            arraySummary(elements, field: field)
         default:
             text(for: value, field: field)
         }
+    }
+
+    // A documentlink array holds document ids, which say nothing to a reader. Resolving titles
+    // here would mean the filter sheet could not render until they loaded, so it counts them.
+    private func arraySummary(_ elements: [JSONValue], field: CustomField?) -> String {
+        guard field?.dataType == .documentLink else {
+            return elements.map { text(for: $0, field: field) }.joined(separator: ", ")
+        }
+        return String(localized: .numberOfDocuments(elements.count))
     }
 
     private func text(for value: JSONValue, field: CustomField?) -> String {

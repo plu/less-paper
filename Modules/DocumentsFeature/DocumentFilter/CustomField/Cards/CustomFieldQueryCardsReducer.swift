@@ -9,6 +9,7 @@ public struct CustomFieldQueryCardsReducer: Sendable {
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
         case delegate(Delegate)
+        case editor(PresentationAction<CustomFieldQueryAtomEditorReducer.Action>)
         case view(View)
 
         @CasePathable
@@ -21,13 +22,6 @@ public struct CustomFieldQueryCardsReducer: Sendable {
             case addGroupTapped(CustomFieldQuery.Path)
             case closeButtonTapped
             case deleteTapped(CustomFieldQuery.Path)
-            case editorDismissed
-            case editorFieldChanged(CustomField.Id)
-            case editorOperatorChanged(CustomFieldQueryOperator)
-            case editorOptionToggled(String)
-            case editorOptionsDismissed
-            case editorOptionsTapped
-            case editorValueChanged(JSONValue)
             case logicalOperatorTapped(CustomFieldQuery.Path, CustomFieldQueryLogicalOperator)
             case negationToggled(CustomFieldQuery.Path)
             case rowTapped(CustomFieldQuery.Path)
@@ -37,20 +31,8 @@ public struct CustomFieldQueryCardsReducer: Sendable {
     @ObservableState
     public struct State: Equatable, Sendable {
 
-        // The editor edits a copy addressed by path rather than a binding into the tree: the sheet
-        // outlives a delete of the row that opened it, and writing back through a stale path would
-        // land on whatever moved into that index.
-        public struct Editor: Equatable, Identifiable, Sendable {
-            var atom: CustomFieldQuery.Atom
-            var isSelectingOptions = false
-            let path: CustomFieldQuery.Path
-
-            public var id: CustomFieldQuery.Path {
-                path
-            }
-        }
-
-        var editor: Editor?
+        @Presents
+        var editor: CustomFieldQueryAtomEditorReducer.State?
 
         // The root is always a group so there is somewhere to add the first condition to. An
         // all-empty root serializes to nothing, which is what the server needs.
@@ -58,8 +40,17 @@ public struct CustomFieldQueryCardsReducer: Sendable {
 
         let fields: IdentifiedArrayOf<CustomField>
 
+        let server: Server
+
         func children(at path: CustomFieldQuery.Path) -> [CustomFieldQuery] {
             query[path]?.children ?? []
+        }
+
+        func makeEditor(
+            atom: CustomFieldQuery.Atom,
+            path: CustomFieldQuery.Path
+        ) -> CustomFieldQueryAtomEditorReducer.State {
+            .init(atom: atom, fields: fields, path: path, server: server)
         }
 
         func canAddCondition(at path: CustomFieldQuery.Path) -> Bool {
@@ -71,12 +62,14 @@ public struct CustomFieldQueryCardsReducer: Sendable {
         }
 
         init(
-            editor: Editor? = nil,
+            editor: CustomFieldQueryAtomEditorReducer.State? = nil,
             fields: IdentifiedArrayOf<CustomField>,
-            query: CustomFieldQuery?
+            query: CustomFieldQuery?,
+            server: Server
         ) {
             self.editor = editor
             self.fields = fields
+            self.server = server
             // A bare atom loaded from a saved view is wrapped so the sheet always has a group to
             // add siblings to; `["AND",[atom]]` and a bare atom mean the same thing to the server.
             switch query {
@@ -94,6 +87,12 @@ public struct CustomFieldQueryCardsReducer: Sendable {
         BindingReducer()
         Reduce { state, action in
             switch action {
+            case let .editor(.presented(.delegate(.atomChanged(atom)))):
+                guard let path = state.editor?.path else {
+                    return .none
+                }
+                state.query[path] = .atom(atom)
+                return .send(.delegate(.filterUpdated(state.query.pruned)))
             case let .view(viewAction):
                 switch viewAction {
                 case let .addConditionTapped(path):
@@ -104,7 +103,7 @@ public struct CustomFieldQueryCardsReducer: Sendable {
                     }
                     state.query.append(.atom(atom), to: path)
                     let index = max((state.query[path]?.children?.count ?? 1) - 1, 0)
-                    state.editor = .init(atom: atom, path: path + [index])
+                    state.editor = state.makeEditor(atom: atom, path: path + [index])
                     return .none
                 case let .addGroupTapped(path):
                     state.query.append(.group(.and, []), to: path)
@@ -114,46 +113,6 @@ public struct CustomFieldQueryCardsReducer: Sendable {
                 case let .deleteTapped(path):
                     state.query.remove(at: path)
                     return .send(.delegate(.filterUpdated(state.query.pruned)))
-                case .editorDismissed:
-                    state.editor = nil
-                    return .send(.delegate(.filterUpdated(state.query.pruned)))
-                case let .editorFieldChanged(id):
-                    guard let field = state.fields[id: id] else {
-                        return .none
-                    }
-                    state.editor?.atom.setField(field)
-                    return .applyEditor(&state)
-                case let .editorOperatorChanged(queryOperator):
-                    guard let editor = state.editor else {
-                        return .none
-                    }
-                    let field = state.fields[id: editor.atom.field]
-                    state.editor?.atom.setOperator(queryOperator, field: field)
-                    return .applyEditor(&state)
-                case let .editorOptionToggled(optionId):
-                    guard let editor = state.editor else {
-                        return .none
-                    }
-                    var selected = Set(editor.atom.value.arrayValue?.compactMap(\.stringValue) ?? [])
-                    if selected.contains(optionId) {
-                        selected.remove(optionId)
-                    } else {
-                        selected.insert(optionId)
-                    }
-                    // Sorted so the emitted rule is stable between openings of the sheet rather
-                    // than following Set iteration order.
-                    let value = JSONValue.array(selected.sorted().map { .string($0) })
-                    state.editor?.atom.value = value
-                    return .applyEditor(&state)
-                case .editorOptionsDismissed:
-                    state.editor?.isSelectingOptions = false
-                    return .none
-                case .editorOptionsTapped:
-                    state.editor?.isSelectingOptions = true
-                    return .none
-                case let .editorValueChanged(value):
-                    state.editor?.atom.value = value
-                    return .applyEditor(&state)
                 case let .logicalOperatorTapped(path, logicalOperator):
                     guard let children = state.query[path]?.children else {
                         return .none
@@ -173,7 +132,7 @@ public struct CustomFieldQueryCardsReducer: Sendable {
                 case let .rowTapped(path):
                     switch state.query[path] {
                     case let .atom(atom):
-                        state.editor = .init(atom: atom, path: path)
+                        state.editor = state.makeEditor(atom: atom, path: path)
                     case .group:
                         return .none
                     case let .negation(child):
@@ -182,27 +141,20 @@ public struct CustomFieldQueryCardsReducer: Sendable {
                         guard case let .atom(atom) = child else {
                             return .none
                         }
-                        state.editor = .init(atom: atom, path: path + [0])
+                        state.editor = state.makeEditor(atom: atom, path: path + [0])
                     case .none:
                         return .none
                     }
                     return .none
                 }
-            case .binding, .delegate:
+            case .binding, .delegate, .editor:
                 return .none
             }
+        }
+        .ifLet(\.$editor, action: \.editor) {
+            CustomFieldQueryAtomEditorReducer()
         }
     }
 
     public init() {}
-}
-
-private extension Effect where Action == CustomFieldQueryCardsReducer.Action {
-    static func applyEditor(_ state: inout CustomFieldQueryCardsReducer.State) -> Self {
-        guard let editor = state.editor else {
-            return .none
-        }
-        state.query[editor.path] = .atom(editor.atom)
-        return .send(.delegate(.filterUpdated(state.query.pruned)))
-    }
 }

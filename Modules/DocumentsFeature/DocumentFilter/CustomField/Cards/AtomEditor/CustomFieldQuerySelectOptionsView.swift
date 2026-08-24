@@ -8,7 +8,7 @@ struct CustomFieldQuerySelectOptionsView: View {
 
     let field: CustomField?
 
-    let onViewAction: (CustomFieldQueryCardsReducer.Action.View) -> Void
+    let onViewAction: (CustomFieldQueryAtomEditorReducer.Action.View) -> Void
 
     let selected: Set<String>
 
@@ -34,7 +34,7 @@ struct CustomFieldQuerySelectOptionsView: View {
     @ViewBuilder
     private func closeButton() -> some View {
         SheetCloseButton {
-            onViewAction(.editorOptionsDismissed)
+            onViewAction(.optionsDismissed)
         }
     }
 
@@ -55,7 +55,7 @@ struct CustomFieldQuerySelectOptionsView: View {
         let id = option.id ?? ""
 
         Button {
-            onViewAction(.editorOptionToggled(id))
+            onViewAction(.optionToggled(id))
         } label: {
             HStack(spacing: .x4) {
                 Image(systemName: selected.contains(id) ? "checkmark.circle.fill" : "circle")

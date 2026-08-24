@@ -1,17 +1,19 @@
 import ApiInterface
 import IdentifiedCollections
 
-extension CustomFieldQueryCardsReducer.State {
+extension CustomFieldQueryAtomEditorReducer.State {
     static func testValue(
-        editor: CustomFieldQueryAtomEditorReducer.State? = nil,
+        atom: CustomFieldQuery.Atom = .init(field: 1, op: .exists, value: .bool(true)),
         fields: IdentifiedArrayOf<CustomField> = IdentifiedArray(uniqueElements: [CustomField].previewValue),
-        query: CustomFieldQuery? = nil,
+        isSelectingOptions: Bool = false,
+        path: CustomFieldQuery.Path = [0],
         server: Server = .testValue()
     ) -> Self {
         .init(
-            editor: editor,
+            atom: atom,
+            isSelectingOptions: isSelectingOptions,
             fields: fields,
-            query: query,
+            path: path,
             server: server
         )
     }

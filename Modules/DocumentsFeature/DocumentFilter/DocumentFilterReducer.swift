@@ -189,7 +189,8 @@ public struct DocumentFilterReducer: Sendable {
                 case .customFieldButtonTapped:
                     state.destination = .customFieldQuery(CustomFieldQueryCardsReducer.State(
                         fields: state.customFields,
-                        query: state.input.customFieldQuery
+                        query: state.input.customFieldQuery,
+                        server: state.server
                     ))
                     return .none
                 case .dateButtonTapped:

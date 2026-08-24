@@ -1,17 +1,14 @@
 import ApiInterface
 import Components
+import ComposableArchitecture
 import IdentifiedCollections
 import SwiftUI
 
-// Not `@ViewAction`: the editor is presented from a sheet item rather than scoped to a child
-// store, so it takes the parent's `send` and posts view actions through it.
+@ViewAction(for: CustomFieldQueryAtomEditorReducer.self)
 struct CustomFieldQueryAtomEditorView: View {
 
-    let editor: CustomFieldQueryCardsReducer.State.Editor
-
-    let fields: IdentifiedArrayOf<CustomField>
-
-    let onViewAction: (CustomFieldQueryCardsReducer.Action.View) -> Void
+    @Bindable
+    var store: StoreOf<CustomFieldQueryAtomEditorReducer>
 
     var body: some View {
         Sheet {
@@ -23,10 +20,19 @@ struct CustomFieldQueryAtomEditorView: View {
                 valueEditor()
             }
         }
+        .task {
+            await send(.onAppear).finish()
+        }
+        .sheet(
+            item: $store.scope(state: \.documentPicker, action: \.documentPicker)
+        ) { store in
+            CustomFieldQueryDocumentPickerView(store: store)
+                .presentationDetents([.sheet])
+        }
         .sheet(isPresented: isSelectingOptions) {
             CustomFieldQuerySelectOptionsView(
                 field: field,
-                onViewAction: onViewAction,
+                onViewAction: { send($0) },
                 selected: selectedOptionIds
             )
             .presentationDetents([.sheet])
@@ -34,24 +40,28 @@ struct CustomFieldQueryAtomEditorView: View {
     }
 
     private var atom: CustomFieldQuery.Atom {
-        editor.atom
+        store.atom
+    }
+
+    private var fields: IdentifiedArrayOf<CustomField> {
+        store.fields
     }
 
     @ViewBuilder
     private func closeButton() -> some View {
         SheetCloseButton {
-            onViewAction(.editorDismissed)
+            send(.closeButtonTapped)
         }
     }
 
     private var isSelectingOptions: Binding<Bool> {
         Binding(
-            get: { editor.isSelectingOptions },
+            get: { store.isSelectingOptions },
             set: { isPresented in
                 guard !isPresented else {
                     return
                 }
-                onViewAction(.editorOptionsDismissed)
+                send(.optionsDismissed)
             }
         )
     }
@@ -64,11 +74,11 @@ struct CustomFieldQueryAtomEditorView: View {
     }
 
     private var selectedOptionIds: Set<String> {
-        Set(atom.value.arrayValue?.compactMap(\.stringValue) ?? [])
+        store.selectedOptionIds
     }
 
     private var field: CustomField? {
-        fields[id: atom.field]
+        store.field
     }
 
     @ViewBuilder
@@ -77,7 +87,7 @@ struct CustomFieldQueryAtomEditorView: View {
             HStack {
                 Picker("", selection: Binding(
                     get: { atom.field },
-                    set: { onViewAction(.editorFieldChanged($0)) }
+                    set: { send(.fieldChanged($0)) }
                 )) {
                     ForEach(fields) { field in
                         Text(field.name).tag(field.id)
@@ -98,7 +108,7 @@ struct CustomFieldQueryAtomEditorView: View {
             HStack {
                 Picker("", selection: Binding(
                     get: { atom.op },
-                    set: { onViewAction(.editorOperatorChanged($0)) }
+                    set: { send(.operatorChanged($0)) }
                 )) {
                     ForEach(CustomFieldQueryOperator.operators(for: field?.dataType ?? .string)) { queryOperator in
                         Text(queryOperator.description).tag(queryOperator)
@@ -117,7 +127,13 @@ struct CustomFieldQueryAtomEditorView: View {
     private func valueEditor() -> some View {
         switch atom.op.valueKind {
         case .array:
-            selectOptions()
+            // A documentlink field has no select options; its array holds document ids.
+            switch field?.dataType {
+            case .documentLink:
+                documentLinkValue()
+            default:
+                selectOptions()
+            }
         case .boolean:
             booleanToggle()
         case .number:
@@ -138,7 +154,7 @@ struct CustomFieldQueryAtomEditorView: View {
                         }
                         return flag
                     },
-                    set: { onViewAction(.editorValueChanged(.bool($0))) }
+                    set: { send(.valueChanged(.bool($0))) }
                 )) {
                     Text(.value)
                 }
@@ -160,7 +176,7 @@ struct CustomFieldQueryAtomEditorView: View {
                     }
                     return number.rounded() == number ? String(Int(number)) : String(number)
                 },
-                set: { onViewAction(.editorValueChanged(.number(Double($0) ?? 0))) }
+                set: { send(.valueChanged(.number(Double($0) ?? 0))) }
             ))
             .keyboardType(.decimalPad)
             .textFieldStyle(.plain)
@@ -179,7 +195,7 @@ struct CustomFieldQueryAtomEditorView: View {
                             }
                             return text
                         },
-                        set: { onViewAction(.editorValueChanged(.string($0))) }
+                        set: { send(.valueChanged(.string($0))) }
                     )) {
                         ForEach(options, id: \.label) { option in
                             Text(option.label).tag(option.id ?? "")
@@ -201,11 +217,37 @@ struct CustomFieldQueryAtomEditorView: View {
                         }
                         return text
                     },
-                    set: { onViewAction(.editorValueChanged(.string($0))) }
+                    set: { send(.valueChanged(.string($0))) }
                 ))
                 .keyboardType(field?.dataType == .date ? .numbersAndPunctuation : .default)
                 .textFieldStyle(.plain)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func documentLinkValue() -> some View {
+        Field(.value) {
+            HStack(spacing: .x3) {
+                if store.linkedDocumentIds.isEmpty {
+                    Text(.any).capsule()
+                    Spacer()
+                } else {
+                    ScrollView(.horizontal) {
+                        LazyHStack(spacing: .x3) {
+                            ForEach(store.linkedDocumentIds, id: \.self) { id in
+                                Text(store.linkedDocuments[id: id]?.title ?? "#\(id.rawValue)")
+                                    .capsule()
+                            }
+                        }
+                    }
+                    .scrollIndicators(.hidden)
+                }
+            }
+        }
+        .contentShape(.capsule)
+        .onTapGesture {
+            send(.documentPickerTapped)
         }
     }
 
@@ -230,7 +272,7 @@ struct CustomFieldQueryAtomEditorView: View {
         }
         .contentShape(.capsule)
         .onTapGesture {
-            onViewAction(.editorOptionsTapped)
+            send(.optionsTapped)
         }
     }
 

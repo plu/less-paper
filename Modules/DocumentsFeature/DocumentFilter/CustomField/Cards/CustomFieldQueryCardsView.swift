@@ -18,33 +18,16 @@ struct CustomFieldQueryCardsView: View {
                 state: store.state
             )
         }
-        .sheet(item: editorBinding, content: editor(_:))
+        .sheet(
+            item: $store.scope(state: \.editor, action: \.editor)
+        ) { store in
+            CustomFieldQueryAtomEditorView(store: store)
+                .presentationDetents([.sheet])
+        }
     }
 
     @Bindable
     var store: StoreOf<CustomFieldQueryCardsReducer>
-
-    private var editorBinding: Binding<CustomFieldQueryCardsReducer.State.Editor?> {
-        Binding(
-            get: { store.editor },
-            set: { editor in
-                guard editor == nil else {
-                    return
-                }
-                send(.editorDismissed)
-            }
-        )
-    }
-
-    @ViewBuilder
-    private func editor(_ editor: CustomFieldQueryCardsReducer.State.Editor) -> some View {
-        CustomFieldQueryAtomEditorView(
-            editor: editor,
-            fields: store.fields,
-            onViewAction: { send($0) }
-        )
-        .presentationDetents([.sheet])
-    }
 
     @ViewBuilder
     private func closeButton() -> some View {
