@@ -39,12 +39,14 @@ extension ApiVersionRepository: DependencyKey {
 private extension ApiVersionRepository {
 
     // ApiVersionMiddleware only sets X-Api-Version for authenticated users, so the probe has to hit
-    // an endpoint that actually authenticates — /api/token/ would always come back bare.
+    // an endpoint that actually authenticates — /api/token/ would always come back bare. It also
+    // has to ask without naming a version, because a server that rejects the guess answers 406 and
+    // that response carries no X-Api-Version at all.
     static func getAdvertisedApiVersion(
         server: Server
     ) async throws -> Int? {
         let response = try await APIClient
-            .client(server: server)
+            .client(server: server, sendsApiVersion: false)
             .send(Request<GetUISettingsOutput>(
                 path: "/api/ui_settings/",
                 method: .get

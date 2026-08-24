@@ -18,13 +18,18 @@ struct ApiVersionTests {
 
     @Test
     func negotiated_acceptsTheFloor() throws {
+        #expect(try ApiVersion.negotiated(from: 8) == 8)
+    }
+
+    @Test
+    func negotiated_acceptsAVersionBetweenTheFloorAndTheClientMaximum() throws {
         #expect(try ApiVersion.negotiated(from: 9) == 9)
     }
 
     @Test
     func negotiated_rejectsAServerBelowTheFloor() {
-        #expect(throws: ApiVersionError.unsupportedServer(8)) {
-            try ApiVersion.negotiated(from: 8)
+        #expect(throws: ApiVersionError.unsupportedServer(7)) {
+            try ApiVersion.negotiated(from: 7)
         }
     }
 
@@ -42,7 +47,7 @@ struct ApiVersionTests {
         let description = ApiVersionError.unsupportedServer(6).errorDescription
 
         #expect(description?.contains("6") == true)
-        #expect(description?.contains("9") == true)
+        #expect(description?.contains("8") == true)
     }
 
     @Test

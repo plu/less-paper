@@ -4,7 +4,7 @@ public enum ApiVersion {
 
     public static let clientMaximum = 10
 
-    public static let minimumSupported = 9
+    public static let minimumSupported = 8
 
     public static func negotiated(from advertised: Int?) throws -> Int {
         guard let advertised, advertised >= minimumSupported else {

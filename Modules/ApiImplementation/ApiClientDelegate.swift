@@ -8,6 +8,9 @@ struct ApiClientDelegate: Sendable {
 
     let server: Server
 
+    // Cleared by the version probe, which cannot name a version it has not negotiated yet.
+    var sendsApiVersion = true
+
     @Dependency(\.authenticationProvider)
     private var authenticationProvider
 }
@@ -22,16 +25,23 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         // correctly authenticated request comes back 401. The configured server is authoritative.
         request.url = request.url?.movedToOrigin(of: server.url)
 
-        @Shared(.apiVersion(server))
-        var apiVersion: Int
+        let isTokenRequest = request.url?.path().contains("/api/token/") == true
 
-        request.setValue("application/json; version=\(apiVersion)", forHTTPHeaderField: "Accept")
+        // /api/token/ is unauthenticated and returns nothing versioned, but a server that does not
+        // speak the version we ask for answers 406 — demanding one here fails the login outright,
+        // before the probe ever gets to tell the user the server is too old.
+        if sendsApiVersion, !isTokenRequest {
+            @Shared(.apiVersion(server))
+            var apiVersion: Int
+
+            request.setValue("application/json; version=\(apiVersion)", forHTTPHeaderField: "Accept")
+        }
 
         for header in server.headers {
             request.setValue(header.value, forHTTPHeaderField: header.name)
         }
 
-        guard request.url?.path().contains("/api/token/") == false else {
+        guard !isTokenRequest else {
             return
         }
 

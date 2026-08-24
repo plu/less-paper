@@ -17,11 +17,11 @@ struct ApiClientDelegateTests {
     func willSendRequest_fallsBackToTheMinimumSupportedVersion() async throws {
         let server = Server.testValue(headers: [])
         let delegate = ApiClientDelegate(server: server)
-        var request = URLRequest(url: server.url.appending(path: "/api/token/"))
+        var request = URLRequest(url: server.url.appending(path: "/api/documents/"))
 
         try await delegate.client(APIClient(baseURL: server.url), willSendRequest: &request)
 
-        #expect(request.value(forHTTPHeaderField: "Accept") == "application/json; version=9")
+        #expect(request.value(forHTTPHeaderField: "Accept") == "application/json; version=8")
     }
 
     // A Paperless behind a reverse proxy without PAPERLESS_PROXY_SSL_HEADER believes it is serving
@@ -78,11 +78,40 @@ struct ApiClientDelegateTests {
             .testValue(id: "1", name: "Accept", value: "application/json; version=9")
         ])
         let delegate = ApiClientDelegate(server: server)
-        var request = URLRequest(url: server.url.appending(path: "/api/token/"))
+        var request = URLRequest(url: server.url.appending(path: "/api/documents/"))
 
         try await delegate.client(APIClient(baseURL: server.url), willSendRequest: &request)
 
         #expect(request.value(forHTTPHeaderField: "Accept") == "application/json; version=9")
+    }
+
+    // /api/token/ is unauthenticated and returns nothing versioned, but a server that does not
+    // speak the version we ask for answers 406 — demanding one here fails the login outright,
+    // before the probe ever gets to tell the user the server is too old.
+    @Test
+    func willSendRequest_omitsTheVersionFromTheTokenRequest() async throws {
+        let server = Server.testValue(headers: [])
+        let delegate = ApiClientDelegate(server: server)
+        var request = URLRequest(url: server.url.appending(path: "/api/token/"))
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        try await delegate.client(APIClient(baseURL: server.url), willSendRequest: &request)
+
+        #expect(request.value(forHTTPHeaderField: "Accept") == "application/json")
+    }
+
+    // The probe cannot name a version it has not negotiated yet: a server that rejects the guess
+    // answers 406, and that response carries no X-Api-Version to negotiate from.
+    @Test
+    func willSendRequest_omitsTheVersionWhenTheDelegateDoesNotSendOne() async throws {
+        let server = Server.testValue(headers: [])
+        let delegate = ApiClientDelegate(server: server, sendsApiVersion: false)
+        var request = URLRequest(url: server.url.appending(path: "/api/ui_settings/"))
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        try await delegate.client(APIClient(baseURL: server.url), willSendRequest: &request)
+
+        #expect(request.value(forHTTPHeaderField: "Accept") == "application/json")
     }
 
     @Test
