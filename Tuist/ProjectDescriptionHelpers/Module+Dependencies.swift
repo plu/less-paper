@@ -360,23 +360,6 @@ extension Module {
                 .target(.savedViewsFeature),
                 .target(.testSupport),
             ]
-        case .serversApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.serversFeature),
-            ]
-        case .serversAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.serversApp),
-                .target(.serversFeature),
-                .target(.uiTestSupport),
-            ]
         case .serversFeature:
             [
                 .external(.composableArchitecture),

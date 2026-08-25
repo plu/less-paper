@@ -72,7 +72,6 @@ extension Module {
             ])
         case .customFieldsApp,
              .documentsApp,
-             .serversApp,
              .shareApp:
             .extendingDefault(with: [
                 "CFBundleDisplayName": .string(rawValue.replacingOccurrences(of: "App", with: "")),

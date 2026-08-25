@@ -55,8 +55,6 @@ public enum Module: String, CaseIterable {
     case permissionsFeatureTests = "PermissionsFeatureTests"
     case savedViewsFeature = "SavedViewsFeature"
     case savedViewsFeatureTests = "SavedViewsFeatureTests"
-    case serversApp = "ServersApp"
-    case serversAppTests = "ServersAppTests"
     case serversFeature = "ServersFeature"
     case serversFeatureTests = "ServersFeatureTests"
     case settingsFeature = "SettingsFeature"
@@ -160,8 +158,6 @@ extension Module {
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
              .savedViewsFeatureTests,
-             .serversApp,
-             .serversAppTests,
              .serversFeatureTests,
              .settingsFeatureTests,
              .shareApp,
@@ -188,7 +184,6 @@ extension Module {
     var entitlements: ProjectDescription.Entitlements? {
         switch self {
         case .app,
-             .serversApp,
              .shareApp,
              .shareExtension:
             .dictionary([
@@ -216,7 +211,6 @@ extension Module {
         case .app,
              .customFieldsApp,
              .documentsApp,
-             .serversApp,
              .shareApp:
             .app
         case .apiImplementation,
@@ -265,7 +259,6 @@ extension Module {
         case .appUITests,
              .customFieldsAppTests,
              .documentsAppTests,
-             .serversAppTests,
              .shareAppTests:
             .uiTests
         case .shareExtension:
