@@ -4,6 +4,10 @@ import XCTest
 @MainActor
 final class EntityLifecycleJourneyTests: UITestCase {
 
+    func testCorrespondentLifecycle() async throws {
+        runLifecycle(for: .correspondent, section: "Correspondents")
+    }
+
     func testTagLifecycle() async throws {
         runLifecycle(for: .tag, section: "Tags")
     }
