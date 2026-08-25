@@ -60,6 +60,39 @@ final class EntityLifecycleJourneyTests: UITestCase {
         runLifecycle(for: .tag, section: "Tags")
     }
 
+    func testDeletingATagRemovedServerSideSurfacesTheConflict() async throws {
+        launch()
+
+        let settings = SettingsScreen(app: app, timeout: timeout)
+        XCTAssertTrue(settings.open(), "Could not open the Settings tab")
+        XCTAssertTrue(settings.openSection("Tags"), "Could not open the Tags section")
+
+        let list = EntityListScreen(app: app, entity: .tag, timeout: timeout)
+        let name = "\(user.namespace)-stale"
+
+        XCTAssertTrue(list.create(named: name), "Could not create \(name)")
+        let row = try XCTUnwrap(list.row(named: name), "The created \(name) never appeared")
+
+        try await Fixtures.deleteTag(named: name)
+
+        app.tapSwipeAction("Delete tag", in: row, timeout: timeout)
+        let confirm = app.buttons["Confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: timeout), "No delete confirmation appeared")
+        confirm.tap()
+
+        XCTAssertTrue(
+            app.otherElements["Toast"].waitForExistence(timeout: timeout),
+            "The failed delete surfaced no toast"
+        )
+
+        // The row must outlive the failed delete. Removing it optimistically would report a success
+        // the server never granted.
+        XCTAssertTrue(
+            app.staticTexts[name].exists,
+            "The row disappeared even though the delete failed"
+        )
+    }
+
     // The test user owns nothing at start, so every list here opens empty and no method can see
     // another's rows.
     private func runLifecycle(
