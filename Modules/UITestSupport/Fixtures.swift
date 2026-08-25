@@ -40,6 +40,71 @@ public enum Fixtures {
         }
     }
 
+    // Uploaded as the test user, not as admin: paperless owns a document to whoever created it, and
+    // an admin-owned one would be invisible to the user the journey runs as.
+    //
+    // Consumption is asynchronous — the document only gets an id once the consumer has finished, in
+    // about three seconds — so this polls for it rather than sleeping a guessed interval.
+    public static func uploadDocument(
+        titled title: String,
+        token: String
+    ) async throws -> Document.Id {
+        try await withUserDependencies(token: token) {
+            @Dependency(\.documentsRepository)
+            var documentsRepository
+
+            try await documentsRepository.createDocument(
+                input: CreateDocumentInput(
+                    archiveSerialNumber: nil,
+                    correspondent: nil,
+                    createdDate: Date(),
+                    documentType: nil,
+                    storagePath: nil,
+                    tags: [],
+                    title: title,
+                    url: .projectRoot.appending(path: "docker/data/Sonos One.pdf")
+                ),
+                server: .testValue()
+            )
+
+            for _ in 0 ..< 60 {
+                let documents = try await documentsRepository.getDocuments(
+                    input: GetDocumentsInput(),
+                    server: .testValue()
+                ).results
+
+                if let document = documents.first(where: { $0.title == title }) {
+                    return document.id
+                }
+                try await Task.sleep(for: .milliseconds(500))
+            }
+
+            throw ConsumptionTimeout(title: title)
+        }
+    }
+
+    public static func deleteDocument(
+        id: Document.Id,
+        token: String
+    ) async throws {
+        try await withUserDependencies(token: token) {
+            @Dependency(\.documentsRepository)
+            var documentsRepository
+
+            _ = try await documentsRepository.bulkEditDocuments(
+                input: BulkEditDocumentsInput(
+                    documents: [id],
+                    method: .delete
+                ),
+                server: .testValue()
+            )
+        }
+    }
+
+    struct ConsumptionTimeout: Error {
+        let title: String
+    }
+
     // Deletes as admin: a superuser can remove an object the per-test user owns, and the test knows
     // the tag only by the name it typed into the form.
     public static func deleteTag(named name: String) async throws {

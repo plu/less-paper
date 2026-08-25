@@ -14,6 +14,8 @@ public struct TestUser: Sendable {
 
     public let password: String
 
+    public let token: String
+
     public static func create() async throws -> Self {
         let namespace = "uit-\(UUID().uuidString.prefix(8).lowercased())"
         let password = "T3st!\(UUID().uuidString.prefix(12))"
@@ -57,7 +59,8 @@ public struct TestUser: Sendable {
             ),
             id: user.id,
             namespace: namespace,
-            password: password
+            password: password,
+            token: token
         )
     }
 
@@ -96,6 +99,22 @@ public struct TestUser: Sendable {
 }
 
 @discardableResult
+// Scoped to one user's token rather than admin's. A document created through the API is owned by
+// its creator, so a fixture that uploads as admin produces a document the journey's own user cannot
+// see.
+public func withUserDependencies<R>(
+    token: String,
+    isolation: isolated (any Actor)? = #isolation,
+    operation: () async throws -> R
+) async rethrows -> R {
+    try await withDependencies {
+        $0.authenticationProvider = AuthenticationProvider(getToken: { _ in token })
+        $0.context = .live
+    } operation: {
+        try await operation()
+    }
+}
+
 public func withAdminDependencies<R>(
     isolation: isolated (any Actor)? = #isolation,
     operation: () async throws -> R
