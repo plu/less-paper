@@ -14,6 +14,68 @@
 
 **Scope:** Journeys 5–8 and 10, plus deletion of the `SettingsApp`, `CorrespondentsApp`, `DocumentTypesApp`, `StoragePathsApp` and `SavedViewsApp` pairs. Journeys 2, 9, 11 and 12 — and the `CustomFieldsApp`, `DocumentsApp` and `ServersApp` deletions that depend on them — are a later slice.
 
+## Execution notes
+
+Executed 2026-08-25. All ten targets landed; every task verified green before its harness was
+deleted.
+
+### Measured runtime
+
+`AppUITests` is nine journeys in **333s** wall clock, serial. Per journey, from the final full run:
+
+| Journey | Duration |
+|---|---|
+| `testTappingADocumentLinkFieldOpensThePicker` | 42s |
+| `testCorrespondentLifecycle` | 44s |
+| `testDeletingATagRemovedServerSideSurfacesTheConflict` | 29s |
+| `testDocumentTypeLifecycle` | 43s |
+| `testSavedViewLifecycle` | 46s |
+| `testStoragePathLifecycle` | 46s |
+| `testTagLifecycle` | 43s |
+| `testAddingAServerReachesTheMainScreen` | 28s |
+| `testSettingsListsEverySection` | 9s |
+
+Plan 1 measured 29s / 11s / 44s for its three journeys, so the five added here cost roughly 210s and
+the per-journey figure is unchanged — each lifecycle is dominated by the per-test user creation and
+app launch, not by what it then does. The whole suite, unit targets included, is **1160 tests**.
+
+That is the number the parent spec's sequence step 7 wanted before revisiting the `CI_UI_TESTS`
+gate. It wants it again once `CustomFieldsApp`, `DocumentsApp` and `ServersApp` are gone.
+
+### Corrections to this plan
+
+- **Every `tuist test` command here is missing `--no-selective-testing`.** Tuist hashes the test
+  targets and skips those unchanged since the last green run, so the second run of an untouched
+  `AppUITests` exits with *"The scheme Less Paper's test action has no tests to run, finishing
+  early"* and a success status. That reads as a pass and is not one. Every verification step needs
+  the flag.
+- **`mise run docker:start` cannot be run from the agent VM**, which has no nested virtualization.
+  The dev instance on the host stands in via `TUIST_PAPERLESS_TEST_URL`; see `AGENTS.md`.
+- **Task 6's steps jump from 3 to 6.** Numbering only — no step is missing.
+- **Task 7 names the journey `testDeletingATagRemovedServerSideSurfacesTheConflict`** while the spec
+  calls it `testDeletingATagRemovedServerSide`. The plan's name is the one in the tree.
+
+### One defect found, in the test driver rather than the app
+
+`testDocumentTypeLifecycle` failed on its first run: *the renamed
+uit-6dda3227-document-types never appeared in the list*. The UI hierarchy captured at failure showed
+the list held `uit-6dda3227-document Updated-types` — the suffix inserted **mid-name**.
+
+`EntityListScreen.type` tapped the centre of the field, which on edit already holds the name, so the
+caret landed between whichever two characters sat under the midpoint. It looked entity-specific and
+is not: the namespace is eight random hex characters, so whether the text ends before or after the
+midpoint shifts run to run. Tags passed only because the shorter name clears the midpoint every
+time, and correspondents passed by the same luck. Latent flakiness in all five journeys, not a
+document-type quirk.
+
+Fixed in `f5c7831` by tapping the trailing edge, where an append has to start. An empty field still
+focuses at position 0, so `create` is unaffected.
+
+### Accessibility identifiers added
+
+One, as the spec predicted: `Toast` on `ToastView`, for journey 10. The four entity lifecycles
+needed none — every element matched on an existing label, which now holds across seven journeys.
+
 ## Global Constraints
 
 - **Comments:** Only `//`. Never `///`, never `/** */`. Comment only when a future reader would otherwise stop and wonder why — never restate the code. (`AGENTS.md`)
