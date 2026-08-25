@@ -138,4 +138,34 @@ struct DocumentViewerViewTests {
             )
         )
     }
+
+    // Reproduces the blank Custom fields section: the document carries two fields, so this must
+    // render them rather than an empty sheet.
+    @Test
+    func testSnapshot_customFields() async throws {
+        let document = Document.testValue(
+            customFields: [
+                .init(field: 3, value: .bool(true)),
+                .init(field: 6, value: .array([.number(2)])),
+            ],
+            id: 1
+        )
+        var state = DocumentViewerReducer.State.testValue(
+            document: document,
+            section: .customFields
+        )
+        state.customFields.$customFields.withLock {
+            $0 = [
+                .testValue(dataType: .boolean, id: 3, name: "bool2"),
+                .testValue(dataType: .documentLink, id: 6, name: "link"),
+            ]
+        }
+        state.customFields.linkedDocuments = [.testValue(id: 2, title: "Test")]
+
+        assertSnapshot(
+            of: view(state: state),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "customFields"
+        )
+    }
 }

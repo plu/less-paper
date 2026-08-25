@@ -8,6 +8,8 @@ import Tagged
 public struct DocumentViewerReducer: Sendable {
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
+        case customFields(DocumentCustomFieldsReducer.Action)
+        case destination(PresentationAction<Destination.Action>)
         case documentResult(Result<Document, Error>)
         case metadata(DocumentMetadataReducer.Action)
         case notes(DocumentNotesReducer.Action)
@@ -20,11 +22,24 @@ public struct DocumentViewerReducer: Sendable {
         }
     }
 
+    // Swift allows the mutual recursion with DocumentDetailReducer, whose own Destination holds a
+    // viewer; only the synthesised Equatable needs the hand-written conformance at the bottom of
+    // this file, which every Destination in this codebase carries.
+    @Reducer
+    public enum Destination {
+        case documentDetail(DocumentDetailReducer)
+    }
+
     @ObservableState
     public struct State: Equatable {
 
+        @Presents
+        var destination: Destination.State?
+
         @Shared
         var document: Document
+
+        var customFields: DocumentCustomFieldsReducer.State
 
         // The list payload carries a truncated content string, so `document.content` is never a
         // reliable signal that the full text has arrived. This flag is.
@@ -40,6 +55,10 @@ public struct DocumentViewerReducer: Sendable {
                     return false
                 }
                 return !(document.content ?? "").isEmpty
+            case .customFields:
+                // The section scrolls its own content so the scroll view reaches the sheet's
+                // edges, which the sheet's own padding would inset.
+                return false
             case .metadata:
                 guard let value = metadata.metadata, metadata.loadError == nil else {
                     return false
@@ -68,6 +87,10 @@ public struct DocumentViewerReducer: Sendable {
             server: Server
         ) {
             self._document = document
+            self.customFields = DocumentCustomFieldsReducer.State(
+                document: document,
+                server: server
+            )
             self.metadata = DocumentMetadataReducer.State(
                 documentId: document.wrappedValue.id,
                 server: server
@@ -85,6 +108,9 @@ public struct DocumentViewerReducer: Sendable {
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
+        Scope(state: \.customFields, action: \.customFields) {
+            DocumentCustomFieldsReducer()
+        }
         Scope(state: \.metadata, action: \.metadata) {
             DocumentMetadataReducer()
         }
@@ -93,6 +119,14 @@ public struct DocumentViewerReducer: Sendable {
         }
         Reduce { state, action in
             switch action {
+            case let .customFields(.delegate(.openDocument(document))):
+                state.destination = .documentDetail(DocumentDetailReducer.State(
+                    document: Shared(value: document),
+                    server: state.server
+                ))
+                return .none
+            case .customFields, .destination:
+                return .none
             case let .documentResult(result):
                 state.isLoadingDocument = false
                 switch result {
@@ -136,5 +170,8 @@ public struct DocumentViewerReducer: Sendable {
                 return .none
             }
         }
+        .ifLet(\.$destination, action: \.destination)
     }
 }
+
+extension DocumentViewerReducer.Destination.State: Equatable {}

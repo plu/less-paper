@@ -12,7 +12,7 @@ struct DocumentViewerView: View {
         // own rows instead.
         Sheet(
             isScrollingEnabled: store.isContentScrollable,
-            padding: store.section == .notes ? 0 : .x4
+            padding: store.section == .customFields || store.section == .notes ? 0 : .x4
         ) {
             SheetHeader(
                 title: store.section.localized,
@@ -30,6 +30,8 @@ struct DocumentViewerView: View {
             case .content:
                 contentSection()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .customFields:
+                DocumentCustomFieldsView(store: customFieldsStore)
             case .metadata:
                 DocumentMetadataView(store: metadataStore)
             case .notes:
@@ -37,10 +39,38 @@ struct DocumentViewerView: View {
             }
         }
         .onAppear { send(.onAppear) }
+        .sheet(
+            item: $store.scope(
+                state: \.destination?.documentDetail,
+                action: \.destination.documentDetail
+            )
+        ) { store in
+            // DocumentDetailView puts its title and its whole toolbar on a navigation bar, which
+            // exists only inside a NavigationStack. Pushed from the document list it inherits one;
+            // presented as a sheet it has none, and SwiftUI drops both without complaint.
+            NavigationStack {
+                DocumentDetailView(store: store)
+                    // Inline, unlike the pushed detail: a document title is long enough that a large
+                    // one takes a third of the sheet and still truncates.
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            // A pushed detail is left by its back button. A presented one has none,
+                            // so it needs somewhere to go besides a swipe.
+                            DocumentDetailSheetCloseButton()
+                        }
+                    }
+            }
+            .presentationDetents([.large])
+        }
     }
 
     @Bindable
     var store: StoreOf<DocumentViewerReducer>
+
+    private var customFieldsStore: StoreOf<DocumentCustomFieldsReducer> {
+        store.scope(state: \.customFields, action: \.customFields)
+    }
 
     private var metadataStore: StoreOf<DocumentMetadataReducer> {
         store.scope(state: \.metadata, action: \.metadata)
@@ -108,4 +138,21 @@ struct DocumentViewerView: View {
             }
         )
     )
+}
+
+// Dismisses through the environment rather than by sending an action: the sheet is bound to the
+// destination, so SwiftUI clearing it is what tells the reducer.
+private struct DocumentDetailSheetCloseButton: View {
+
+    var body: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "xmark")
+                .accessibilityLabel(.close)
+        }
+    }
+
+    @Environment(\.dismiss)
+    private var dismiss
 }

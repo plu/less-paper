@@ -221,4 +221,68 @@ struct DocumentViewerReducerTests {
 
         #expect(dismissCalls.value == 1)
     }
+
+    // The whole document, not just its fields: presenting DocumentDetailReducer here works because
+    // Swift permits the mutual recursion with its own Destination, which holds a viewer.
+    @Test
+    func openingALinkPresentsThatDocumentsDetail() async throws {
+        let linked = Document.testValue(id: 2, title: "Contract")
+        let store = TestStore(
+            initialState: DocumentViewerReducer.State.testValue(section: .customFields)
+        ) {
+            DocumentViewerReducer()
+        }
+
+        await store.send(.customFields(.delegate(.openDocument(linked)))) {
+            $0.destination = .documentDetail(
+                DocumentDetailReducer.State(document: Shared(value: linked), server: $0.server)
+            )
+        }
+    }
+
+    @Test
+    func dismissingTheSheetClearsTheDestination() async throws {
+        let linked = Document.testValue(id: 2, title: "Contract")
+        let store = TestStore(
+            initialState: DocumentViewerReducer.State.testValue(section: .customFields)
+        ) {
+            DocumentViewerReducer()
+        }
+
+        await store.send(.customFields(.delegate(.openDocument(linked)))) {
+            $0.destination = .documentDetail(
+                DocumentDetailReducer.State(document: Shared(value: linked), server: $0.server)
+            )
+        }
+
+        await store.send(.destination(.dismiss)) {
+            $0.destination = nil
+        }
+    }
+
+    // The viewer is built from the list payload and replaces $document once the full document
+    // arrives. The section shares that document rather than copying it at init, or fields the list
+    // payload omitted would never appear.
+    @Test
+    func theSectionSeesFieldsThatArriveWithTheFullDocument() async throws {
+        let store = TestStore(
+            initialState: DocumentViewerReducer.State.testValue(
+                document: .testValue(customFields: [], id: 1),
+                section: .customFields
+            )
+        ) {
+            DocumentViewerReducer()
+        }
+        store.exhaustivity = .off
+
+        #expect(store.state.customFields.document.customFields.isEmpty)
+
+        let full = Document.testValue(
+            customFields: [.init(field: 3, value: .bool(true))],
+            id: 1
+        )
+        await store.send(.documentResult(.success(full)))
+
+        #expect(store.state.customFields.document.customFields.count == 1)
+    }
 }

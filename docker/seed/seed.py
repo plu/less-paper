@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Seed the local paperless-ngx dev instance with a realistic fixture.
 
-See docs/plans/2026-08-09-docker-seed-data.md for the design.
+See docs/superpowers/specs/2026-08-09-docker-seed-data-design.md for the design.
 """
 
 import argparse

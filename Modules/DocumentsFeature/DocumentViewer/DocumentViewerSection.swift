@@ -2,6 +2,7 @@ import Foundation
 
 public enum DocumentViewerSection: CaseIterable, Sendable {
     case content
+    case customFields
     case metadata
     case notes
 }
@@ -12,6 +13,8 @@ extension DocumentViewerSection {
         switch self {
         case .content:
             .content
+        case .customFields:
+            .customFields
         case .metadata:
             .metadata
         case .notes:
@@ -23,6 +26,8 @@ extension DocumentViewerSection {
         switch self {
         case .content:
             "text.alignleft"
+        case .customFields:
+            "list.bullet.rectangle"
         case .metadata:
             "info.circle"
         case .notes:

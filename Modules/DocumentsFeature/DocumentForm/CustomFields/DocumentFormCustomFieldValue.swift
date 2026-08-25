@@ -171,3 +171,43 @@ private extension DateFormatter {
         return formatter
     }()
 }
+
+extension DocumentFormCustomFieldValue {
+
+    // nil means "render nothing": either the value is empty, so DocumentMetadataGroupView drops the
+    // row, or it is a document link, which is a row of capsules rather than a string.
+    func displayValue(field: CustomField) -> String? {
+        switch self {
+        case let .boolean(flag):
+            String(localized: flag ? .yes : .no)
+        case let .date(date):
+            date.map { DateFormatter.customFieldDisplay.string(from: $0) }
+        case .documentLink:
+            nil
+        case let .monetary(currency, amount):
+            amount.isEmpty ? nil : "\(currency) \(amount)"
+        case let .number(text):
+            text.isEmpty ? nil : text
+        case let .select(id):
+            id.map { optionLabel(for: $0, field: field) }
+        case let .text(text):
+            text.isEmpty ? nil : text
+        case let .unsupported(json):
+            json == .null ? nil : String(describing: json)
+        }
+    }
+
+    private func optionLabel(for id: String, field: CustomField) -> String {
+        field.extraData?.selectOptions?.first { $0.id == id }?.label ?? id
+    }
+}
+
+private extension DateFormatter {
+
+    static let customFieldDisplay: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+}

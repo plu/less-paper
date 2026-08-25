@@ -4,7 +4,8 @@ Good-to-implement ideas surfaced while working on something else and deliberatel
 scope at the time. Not a commitment and not prioritised — a place to park things so they are not
 rediscovered from scratch.
 
-When picking one up, move it out of here and into a `docs/plans/` document.
+When picking one up, move it out of here into a design in `docs/superpowers/specs/` and, once that
+is settled, a plan in `docs/superpowers/plans/`.
 
 ---
 
@@ -18,7 +19,7 @@ Closing this needs either a client-side filter-rule evaluator (large, and it sti
 documents the client has never loaded) or a re-fetch of the other tab. Both were rejected as
 disproportionate at the time.
 
-Surfaced during: `docs/plans/2026-08-12-cross-tab-document-sync.md`.
+Surfaced during: `docs/superpowers/specs/2026-08-12-cross-tab-document-sync-design.md`.
 
 ---
 
@@ -37,7 +38,7 @@ what remains is list membership. From the share extension it is harder than it l
 separate process, so it cannot send an action into the app's store. It would need the app to notice
 on its next foreground, which is a trigger #131 added for statistics and could reuse.
 
-Surfaced during: `docs/plans/2026-08-12-cross-tab-document-sync.md`, re-verified 2026-08-15.
+Surfaced during: `docs/superpowers/specs/2026-08-12-cross-tab-document-sync-design.md`, re-verified 2026-08-15.
 
 ---
 
@@ -50,7 +51,7 @@ web UI.
 Would need a list screen plus restore and empty-trash actions. Worth pairing with an undo affordance
 on the delete itself, which today is a confirmation popup and nothing more.
 
-Surfaced during: `docs/plans/2026-08-14-delete-document.md`.
+Surfaced during: `docs/superpowers/specs/2026-08-14-delete-document-design.md`.
 
 ---
 
@@ -68,7 +69,7 @@ idea above would do.
 Fixing it means pointing `defaultAppStorage` at the group suite in both targets, and deciding
 whether to migrate the existing values or let them re-read as 0 on the next refresh.
 
-Surfaced during: `docs/plans/2026-08-14-delete-document.md` and the #131 inbox count work.
+Surfaced during: `docs/superpowers/specs/2026-08-14-delete-document-design.md` and the #131 inbox count work.
 
 ---
 
@@ -153,7 +154,7 @@ template you used last time, so `{created_year}-{correspondent}` gets retyped fo
 `@Shared(.appStorage)` key per server would cover it, but note the caveat already recorded under
 "`appStorage` does not use the app group".
 
-Surfaced during: `docs/plans/2026-08-16-bulk-edit-title.md`.
+Surfaced during: `docs/superpowers/specs/2026-08-16-bulk-edit-title-design.md`.
 
 ---
 
@@ -166,7 +167,7 @@ makes it much harder to discover than the four edit actions beside it.
 Anything else that wants a place there needs the row to change shape first — a scrolling row, a
 second line, or grouping the four edit actions behind one "Edit" menu.
 
-Surfaced during: `docs/plans/2026-08-16-bulk-edit-title.md`.
+Surfaced during: `docs/superpowers/specs/2026-08-16-bulk-edit-title-design.md`.
 
 ---
 
@@ -184,7 +185,7 @@ change to one screen.
 Less acute here than it was in the sheet: a list scrolls freely, so the obscured row can be brought
 up by scrolling further, whereas the sheet's compressed content had nowhere to go. Still wrong.
 
-Surfaced during: `docs/plans/2026-08-16-filter-match-count.md`.
+Surfaced during: `docs/superpowers/specs/2026-08-16-filter-match-count-design.md`.
 
 ---
 
@@ -197,7 +198,7 @@ still reads "No documents found".
 For a new user who has uploaded nothing that is an onboarding moment, not a failure, and it wants
 copy that belongs with a wider first-run story rather than a lone string swap.
 
-Surfaced during: `docs/plans/2026-08-16-document-list-empty-states.md`.
+Surfaced during: `docs/superpowers/specs/2026-08-16-document-list-empty-states-design.md`.
 
 ---
 
@@ -264,7 +265,7 @@ Unrelated to what the test asserts: `testCreate` runs with the list emptied, so 
 instantiated. A `waitForExistence` on the button before tapping would likely settle it, but the
 right fix may be in `UITestSupport` so every target gets it at once.
 
-Surfaced during: `docs/plans/2026-08-22-confirmation-popup-migration.md`, 2026-08-22.
+Surfaced during: `docs/superpowers/specs/2026-08-22-confirmation-popup-migration-design.md`, 2026-08-22.
 
 ---
 
@@ -285,7 +286,7 @@ The suite is declared as a bare `@Suite` with no `.dependencies()` trait, unlike
 Reproduced on unmodified `main` as well as on the migration branch, so it predates both. Worth
 auditing which other suites are bare `@Suite` and depending on a neighbour for their dependencies.
 
-Surfaced during: `docs/plans/2026-08-22-confirmation-popup-migration.md`, 2026-08-22.
+Surfaced during: `docs/superpowers/specs/2026-08-22-confirmation-popup-migration-design.md`, 2026-08-22.
 
 ---
 
