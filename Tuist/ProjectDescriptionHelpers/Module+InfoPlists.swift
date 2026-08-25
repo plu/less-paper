@@ -76,7 +76,6 @@ extension Module {
              .documentsApp,
              .savedViewsApp,
              .serversApp,
-             .settingsApp,
              .shareApp,
              .storagePathsApp:
             .extendingDefault(with: [

@@ -447,23 +447,6 @@ extension Module {
                 .target(.serversFeature),
                 .target(.testSupport),
             ]
-        case .settingsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .external(.sharing),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.settingsFeature),
-            ]
-        case .settingsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.settingsApp),
-                .target(.settingsFeature),
-            ]
         case .settingsFeature:
             [
                 .external(.composableArchitecture),

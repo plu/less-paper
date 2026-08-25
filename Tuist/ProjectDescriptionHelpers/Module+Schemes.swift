@@ -92,7 +92,6 @@ public extension Module {
              .documentsApp,
              .savedViewsApp,
              .serversApp,
-             .settingsApp,
              .shareApp,
              .storagePathsApp:
             [
@@ -138,7 +137,6 @@ public extension Module {
              .savedViewsFeatureTests,
              .serversAppTests,
              .serversFeatureTests,
-             .settingsAppTests,
              .settingsFeatureTests,
              .shareAppTests,
              .shareFeatureTests,
@@ -174,8 +172,6 @@ extension Module {
             [.testableTarget(target: .target(.documentsAppTests))]
         case .savedViewsApp:
             [.testableTarget(target: .target(.savedViewsAppTests))]
-        case .settingsApp:
-            [.testableTarget(target: .target(.settingsAppTests))]
         case .serversApp:
             [.testableTarget(target: .target(.serversAppTests))]
         case .shareApp:

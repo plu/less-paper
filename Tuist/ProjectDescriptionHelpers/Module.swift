@@ -65,8 +65,6 @@ public enum Module: String, CaseIterable {
     case serversAppTests = "ServersAppTests"
     case serversFeature = "ServersFeature"
     case serversFeatureTests = "ServersFeatureTests"
-    case settingsApp = "SettingsApp"
-    case settingsAppTests = "SettingsAppTests"
     case settingsFeature = "SettingsFeature"
     case settingsFeatureTests = "SettingsFeatureTests"
     case shareApp = "ShareApp"
@@ -179,8 +177,6 @@ extension Module {
              .serversApp,
              .serversAppTests,
              .serversFeatureTests,
-             .settingsApp,
-             .settingsAppTests,
              .settingsFeatureTests,
              .shareApp,
              .shareAppTests,
@@ -209,7 +205,6 @@ extension Module {
         switch self {
         case .app,
              .serversApp,
-             .settingsApp,
              .shareApp,
              .shareExtension:
             .dictionary([
@@ -241,7 +236,6 @@ extension Module {
              .documentsApp,
              .savedViewsApp,
              .serversApp,
-             .settingsApp,
              .shareApp,
              .storagePathsApp:
             .app
@@ -295,7 +289,6 @@ extension Module {
              .documentsAppTests,
              .savedViewsAppTests,
              .serversAppTests,
-             .settingsAppTests,
              .shareAppTests,
              .storagePathsAppTests:
             .uiTests
