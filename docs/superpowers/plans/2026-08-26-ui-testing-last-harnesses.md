@@ -12,6 +12,92 @@
 
 **Parent spec:** [2026-08-24-ui-testing-rework-design.md](../specs/2026-08-24-ui-testing-rework-design.md)
 
+## Execution notes
+
+Executed 2026-08-25. All seven targets landed; every deletion was gated on a green run of the
+journey replacing it. `ShareApp` is now the only harness app in the tree.
+
+### Where the rework ended up
+
+| | Rework start | After slice 2 | Now |
+|---|---|---|---|
+| Harness apps | 10 | 4 | **1** (`ShareApp`, permanent) |
+| XCUITest targets | 20 | 5 | **2** |
+| Journeys | 0 | 9 | **14** |
+| Modules | 62 | 52 | **46** |
+
+Whole suite: **1167 tests, 0 failures.** `AppUITests` is 14 journeys in **586s** serial.
+
+| Journey | Duration |
+|---|---|
+| `testAddingSwitchingEditingAndDeletingASecondServer` | 72s |
+| `testEditingACustomFieldValuePersistsIt` | 62s |
+| `testSelectCustomFieldRoundTripsItsOptions` | 49s |
+| `testCustomFieldLifecycle` | 48s |
+| `testSavedViewLifecycle` | 47s |
+| `testStoragePathLifecycle` | 45s |
+| `testDocumentTypeLifecycle` | 44s |
+| `testCorrespondentLifecycle` | 43s |
+| `testTagLifecycle` | 43s |
+| `testTappingADocumentLinkFieldOpensThePicker` | 37s |
+| `testFilteringTheCorpusAndOpeningADocument` | 29s |
+| `testDeletingATagRemovedServerSideSurfacesTheConflict` | 29s |
+| `testAddingAServerReachesTheMainScreen` | 28s |
+| `testSettingsListsEverySection` | 10s |
+
+### The `CI_UI_TESTS` gate — recommendation, not a change
+
+The parent spec's sequence step 7 wanted this number before revisiting the gate. **CI is left
+exactly as it is**; changing when UI tests run on other people's pull requests is the repo owner's
+call, and this section is the input to it.
+
+What the numbers say:
+
+- **Test-case time barely moved.** The parent spec measured 37 harness tests at ~550s. Fourteen
+  journeys cost 586s. Fewer, deeper tests cost about what the shallow grid did — as designed, since
+  the spec's stated purpose was fidelity rather than speed.
+- **The overhead did collapse.** Ten app builds, ten XCUITest bundle builds and ten
+  install-and-launch cycles became two and two. That was the prediction the design rested on, and it
+  held.
+- **In CI, UI tests are worth about ten minutes.** The same branch ran **2m** with
+  `--skip-ui-tests` and **12m** with them (run 32899567626).
+
+**Recommendation: keep the gate.** Ten minutes on every pull request is a real cost for a suite whose
+whole value is catching assembled-app regressions, which the label already buys on the PRs that
+matter — and `main` runs them on every merge, so nothing reaches a release untested. Two things
+would change that answer: journeys running in parallel, which is blocked on `OrphanSweep` learning
+to skip in-flight users, and a CI runner closer to the container.
+
+One caveat for whoever revisits this: a `main` run failed on 2026-08-25 with
+`NSURLErrorDomain -1005 "The network connection was lost."` across five harness tests. It was
+infrastructure, not code — the next run was green — but it is the failure mode to expect from a
+suite that talks to a container over the network, and it argues for retries before it argues for
+running more often.
+
+### Corrections to this plan
+
+- **Task 2's journey could not assert what the harness did.** `ServersAppTests.testCRUD` ends on the
+  `No servers found` empty state; a journey cannot reach it, because the app is running on the
+  seeded server and deleting it logs the app out. The journey adds a second server and asserts the
+  first survives its deletion. Recorded in `AGENTS.md` as a trap, not just here.
+- **Switching servers empties the settings navigation stack.** Writing `selectedServer` rebuilds
+  `MainReducer.State`, so the app lands back on the main screen and the Servers section has to be
+  reopened after every switch. The first draft tapped what it assumed was a back button and hit
+  `More actions` on the Inbox screen instead.
+- **Task 5 needed an authentication scope the plan did not anticipate.** Uploading as admin produces
+  a document owned by admin, which the journey's own user cannot see. `withUserDependencies` scopes
+  the API client to the test user's token.
+
+### Accessibility identifiers added
+
+One: `PDF` on `PDFKitView`, for journey 11. Only the identifier — making the `PDFView` an
+accessibility element would have hidden its page content from VoiceOver, trading a real regression
+for a test's convenience.
+
+That is two across the whole rework, counting `Toast` from slice 2. The parent spec named identifier
+work as "the most likely source of unplanned effort" and singled out the custom-field matrix and
+document browsing as the riskiest screens. Both were written in this slice, and neither needed one.
+
 ## Global Constraints
 
 - **Comments:** Only `//`. Never `///`, never `/** */`. Comment only when a future reader would otherwise stop and wonder why. (`AGENTS.md`)
