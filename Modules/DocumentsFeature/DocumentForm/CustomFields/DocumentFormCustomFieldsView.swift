@@ -58,6 +58,16 @@ struct DocumentFormCustomFieldsView: View {
                 addMenu()
             }
             .frame(maxWidth: .infinity)
+            // Only the rows can open the picker, so it hangs here rather than off the empty state.
+            .sheet(
+                item: $store.scope(
+                    state: \.destination?.documentPicker,
+                    action: \.destination.documentPicker
+                )
+            ) { store in
+                DocumentPickerView(store: store)
+                    .presentationDetents([.sheet])
+            }
         }
     }
 
