@@ -128,7 +128,6 @@ struct ShareFormView: View {
                     .resizable()
                     .scaledToFill()
                     .frame(width: 114, height: 154)
-                    .aspectRatio(contentMode: .fill)
                     .clipped()
                     .shadow(radius: 5)
             } else {

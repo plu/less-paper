@@ -5,7 +5,7 @@ public struct EmptyListView<Content: View>: View {
     public var body: some View {
         VStack(spacing: .x4) {
             Image(systemName: systemImage)
-                .aspectRatio(contentMode: .fit)
+                .scaledToFit()
                 .font(.system(size: 128))
                 .fontWeight(.medium)
                 .foregroundStyle(Color.m3OutlineVariant)

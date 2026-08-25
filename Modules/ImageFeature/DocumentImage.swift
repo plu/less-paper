@@ -12,7 +12,7 @@ public struct DocumentImage: View {
                 if let image = state.image {
                     image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .scaledToFill()
                         .frame(width: size.width, height: size.height)
                         .clipped()
                 } else if state.error != nil {
@@ -20,7 +20,7 @@ public struct DocumentImage: View {
                         Color.m3ErrorContainer
                         Image(systemName: "photo.trianglebadge.exclamationmark")
                             .resizable()
-                            .aspectRatio(contentMode: .fit)
+                            .scaledToFit()
                             .frame(width: size.width * 0.5, height: size.height * 0.5)
                             .clipped()
                             .foregroundStyle(Color.m3OnErrorContainer)
