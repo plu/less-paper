@@ -15,7 +15,7 @@ struct DocumentFormCustomFieldsView: View {
                 Button {
                     store.send(.view(.createCustomFieldButtonTapped))
                 } label: {
-                    Text(.newCustomField)
+                    Label(.newCustomField, systemImage: "plus.circle")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.primary())
@@ -30,6 +30,16 @@ struct DocumentFormCustomFieldsView: View {
             }
             // Without this the empty state is laid out at its intrinsic width — a column narrow
             // enough to hyphenate the title and clip the button into a circle.
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if store.input.customFields.isEmpty {
+            EmptyListView(
+                systemImage: "list.bullet.rectangle",
+                title: .noCustomFieldsAttached
+            ) {
+                addMenu(isProminent: true)
+            }
+            // Same reason as the no-definitions state above: without this the empty state lays out
+            // at its intrinsic width and clips the button.
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             VStack(spacing: .x3) {
@@ -47,12 +57,6 @@ struct DocumentFormCustomFieldsView: View {
                             value: $row.value
                         )
                     }
-                }
-
-                if store.input.customFields.isEmpty {
-                    Text(.noCustomFieldsAttached)
-                        .font(.subheadline)
-                        .foregroundColor(.m3Outline)
                 }
 
                 addMenu()
@@ -78,8 +82,31 @@ struct DocumentFormCustomFieldsView: View {
         store.customFields.filter { store.input.customFields[id: $0.id] == nil }
     }
 
+    // Prominent in an empty state, where it is the only call to action; subdued below a list of
+    // rows, where it is subordinate to them.
     @ViewBuilder
-    private func addMenu() -> some View {
+    private func addMenu(isProminent: Bool = false) -> some View {
+        Group {
+            if isProminent {
+                addMenuContent(systemImage: "plus.circle")
+                    .buttonStyle(.primary())
+            } else {
+                addMenuContent(systemImage: "plus")
+                    .buttonStyle(.secondary())
+            }
+        }
+        .sheet(
+            item: $store.scope(
+                state: \.destination?.customFieldForm,
+                action: \.destination.customFieldForm
+            )
+        ) { store in
+            CustomFieldFormView(store: store)
+        }
+    }
+
+    @ViewBuilder
+    private func addMenuContent(systemImage: String) -> some View {
         Menu {
             Button {
                 store.send(.view(.createCustomFieldButtonTapped))
@@ -97,17 +124,8 @@ struct DocumentFormCustomFieldsView: View {
                 }
             }
         } label: {
-            Label(.addCustomField, systemImage: "plus")
+            Label(.addCustomField, systemImage: systemImage)
                 .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.secondary())
-        .sheet(
-            item: $store.scope(
-                state: \.destination?.customFieldForm,
-                action: \.destination.customFieldForm
-            )
-        ) { store in
-            CustomFieldFormView(store: store)
         }
     }
 }
