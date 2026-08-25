@@ -151,3 +151,36 @@ This overrides the usual rule that verification runs against `paperless-ci` on p
 instance only exists where Docker does. Tests still create and delete their own users, so they are
 as safe against the dev instance as against the CI one — but its data is real, so the "never mutate
 global server state" rule above matters more here, not less.
+
+## `gh` and `git push` authenticate through fnox
+
+There is no `gh auth login` credential store on this machine and no git credential helper. Both
+tools authenticate with `GH_TOKEN`, a fine-grained PAT kept in the **global** fnox config at
+`~/.config/fnox/config.toml` — not in this repo's `fnox.toml`. The token is scoped to
+`plu/less-paper` alone (contents, issues and pull requests read-write; actions and checks read), so
+anything outside this repository — or an edit to a workflow file — comes back `403`.
+
+`~/.zshrc` runs `eval "$(fnox activate zsh)"`, which is why `gh` just works in a terminal. **An
+agent's shell is not interactive, so that line never runs and `GH_TOKEN` is unset.** Wrap the call:
+
+```bash
+mise exec -- fnox exec -- gh pr create …
+```
+
+`fnox` itself is not on `PATH` without `mise exec --`.
+
+`git push` needs more than the variable — git does not read `GH_TOKEN`, so it prompts for a
+username and hangs until it times out into GitHub's device flow. Hand it a credential helper for
+the single command:
+
+```bash
+GIT_TERMINAL_PROMPT=0 mise exec -- fnox exec -- git \
+  -c 'credential.helper=!f(){ echo username=x-access-token; echo "password=$GH_TOKEN"; };f' \
+  push -u origin <branch>
+```
+
+`GIT_TERMINAL_PROMPT=0` turns a credential failure into an immediate error instead of a hang.
+
+When every call starts returning `403`, the PAT has expired. Re-mint it at
+<https://github.com/settings/personal-access-tokens> and store it with
+`cd ~ && fnox set --global GH_TOKEN`.
