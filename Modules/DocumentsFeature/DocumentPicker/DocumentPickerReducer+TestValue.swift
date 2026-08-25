@@ -1,7 +1,7 @@
 import ApiInterface
 import IdentifiedCollections
 
-extension CustomFieldQueryDocumentPickerReducer.State {
+extension DocumentPickerReducer.State {
     static func testValue(
         documents: IdentifiedArrayOf<Document> = [],
         isLoading: Bool = false,

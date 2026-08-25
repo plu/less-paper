@@ -3,8 +3,8 @@ import Components
 import ComposableArchitecture
 import SwiftUI
 
-@ViewAction(for: CustomFieldQueryDocumentPickerReducer.self)
-struct CustomFieldQueryDocumentPickerView: View {
+@ViewAction(for: DocumentPickerReducer.self)
+struct DocumentPickerView: View {
     var body: some View {
         Sheet(isScrollingEnabled: false, padding: .x0) {
             SheetHeader(title: .documents, left: closeButton)
@@ -17,7 +17,7 @@ struct CustomFieldQueryDocumentPickerView: View {
     }
 
     @Bindable
-    var store: StoreOf<CustomFieldQueryDocumentPickerReducer>
+    var store: StoreOf<DocumentPickerReducer>
 
     @ViewBuilder
     private func closeButton() -> some View {

@@ -26,7 +26,7 @@ struct CustomFieldQueryAtomEditorView: View {
         .sheet(
             item: $store.scope(state: \.documentPicker, action: \.documentPicker)
         ) { store in
-            CustomFieldQueryDocumentPickerView(store: store)
+            DocumentPickerView(store: store)
                 .presentationDetents([.sheet])
         }
         .sheet(isPresented: isSelectingOptions) {

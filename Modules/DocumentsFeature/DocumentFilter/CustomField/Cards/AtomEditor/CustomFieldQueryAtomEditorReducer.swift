@@ -9,7 +9,7 @@ public struct CustomFieldQueryAtomEditorReducer: Sendable {
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
         case delegate(Delegate)
-        case documentPicker(PresentationAction<CustomFieldQueryDocumentPickerReducer.Action>)
+        case documentPicker(PresentationAction<DocumentPickerReducer.Action>)
         case error(Error)
         case linkedDocumentsLoaded(IdentifiedArrayOf<Document>)
         case view(View)
@@ -37,7 +37,7 @@ public struct CustomFieldQueryAtomEditorReducer: Sendable {
         var atom: CustomFieldQuery.Atom
 
         @Presents
-        var documentPicker: CustomFieldQueryDocumentPickerReducer.State?
+        var documentPicker: DocumentPickerReducer.State?
 
         var isSelectingOptions = false
 
@@ -135,7 +135,7 @@ public struct CustomFieldQueryAtomEditorReducer: Sendable {
             }
         }
         .ifLet(\.$documentPicker, action: \.documentPicker) {
-            CustomFieldQueryDocumentPickerReducer()
+            DocumentPickerReducer()
         }
     }
 

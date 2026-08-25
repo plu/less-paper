@@ -12,7 +12,7 @@ import TestSupport
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
-struct CustomFieldQueryDocumentPickerViewTests {
+struct DocumentPickerViewTests {
 
     @Test(
         arguments: [
@@ -31,14 +31,14 @@ struct CustomFieldQueryDocumentPickerViewTests {
         selection: [Document],
         searchText: String
     ) async throws {
-        let state = CustomFieldQueryDocumentPickerReducer.State.testValue(
+        let state = DocumentPickerReducer.State.testValue(
             documents: IdentifiedArray(uniqueElements: documents),
             searchText: searchText,
             selection: IdentifiedArray(uniqueElements: selection)
         )
 
         assertSnapshot(
-            of: CustomFieldQueryDocumentPickerView(
+            of: DocumentPickerView(
                 store: Store(initialState: state) {
                     // Empty reducer: `.task { send(.onAppear) }` would otherwise fire a search and
                     // replace the fixture rows mid-snapshot.

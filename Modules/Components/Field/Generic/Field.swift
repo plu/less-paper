@@ -91,6 +91,16 @@ public struct Field<Input: View>: View {
 }
 
 public extension Field {
+
+    // For validation that runs on every keystroke. `state(_:)` cannot serve that case: its modifier
+    // clears the error whenever the value changes, which is right for submit-time validation and
+    // wrong when the error is a function of what is currently typed.
+    func error(_ error: String?) -> Self {
+        var copy = self
+        copy._error = .constant(error)
+        return copy
+    }
+
     func readOnly(_ isReadOnly: Bool = true) -> Self {
         var copy = self
         copy.isReadOnly = isReadOnly

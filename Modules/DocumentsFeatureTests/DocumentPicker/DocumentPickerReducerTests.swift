@@ -12,14 +12,14 @@ import TestSupport
 @Suite(
     .dependencies()
 )
-struct CustomFieldQueryDocumentPickerReducerTests {
+struct DocumentPickerReducerTests {
 
     // A burst of keystrokes must produce one request, not one per character.
     @Test
     func searchIsDebounced() async {
         let clock = TestClock()
         let store = TestStore(initialState: .testValue()) {
-            CustomFieldQueryDocumentPickerReducer()
+            DocumentPickerReducer()
         } withDependencies: {
             $0.continuousClock = clock
             $0.getDocuments.execute = { @Sendable _, _ in .testValue(count: 1, results: [puky]) }
@@ -40,7 +40,7 @@ struct CustomFieldQueryDocumentPickerReducerTests {
         let clock = TestClock()
         let inputs = LockIsolated([GetDocumentsInput]())
         let store = TestStore(initialState: .testValue()) {
-            CustomFieldQueryDocumentPickerReducer()
+            DocumentPickerReducer()
         } withDependencies: {
             $0.continuousClock = clock
             $0.getDocuments.execute = { @Sendable input, _ in
@@ -65,7 +65,7 @@ struct CustomFieldQueryDocumentPickerReducerTests {
         let clock = TestClock()
         let inputs = LockIsolated([GetDocumentsInput]())
         let store = TestStore(initialState: .testValue(searchText: "x")) {
-            CustomFieldQueryDocumentPickerReducer()
+            DocumentPickerReducer()
         } withDependencies: {
             $0.continuousClock = clock
             $0.getDocuments.execute = { @Sendable input, _ in
@@ -85,7 +85,7 @@ struct CustomFieldQueryDocumentPickerReducerTests {
     @Test
     func tappingADocumentSelectsAndDeselectsIt() async {
         let store = TestStore(initialState: .testValue(documents: [puky])) {
-            CustomFieldQueryDocumentPickerReducer()
+            DocumentPickerReducer()
         }
 
         await store.send(.view(.documentTapped(10))) { $0.selection = [puky] }
@@ -99,7 +99,7 @@ struct CustomFieldQueryDocumentPickerReducerTests {
     // disappears from the list as soon as the query stops matching it, and cannot be removed.
     @Test
     func aSelectedDocumentStaysListedWhenTheQueryNoLongerMatchesIt() {
-        let state = CustomFieldQueryDocumentPickerReducer.State.testValue(
+        let state = DocumentPickerReducer.State.testValue(
             documents: [invoice],
             selection: [puky]
         )
@@ -109,7 +109,7 @@ struct CustomFieldQueryDocumentPickerReducerTests {
 
     @Test
     func aSelectedDocumentIsNotListedTwice() {
-        let state = CustomFieldQueryDocumentPickerReducer.State.testValue(
+        let state = DocumentPickerReducer.State.testValue(
             documents: [puky, invoice],
             selection: [puky]
         )
@@ -120,7 +120,7 @@ struct CustomFieldQueryDocumentPickerReducerTests {
     @Test
     func selectionIsEmittedSorted() async {
         let store = TestStore(initialState: .testValue(documents: [invoice], selection: [puky])) {
-            CustomFieldQueryDocumentPickerReducer()
+            DocumentPickerReducer()
         }
 
         await store.send(.view(.documentTapped(11))) { $0.selection = [puky, invoice] }
@@ -133,7 +133,7 @@ struct CustomFieldQueryDocumentPickerReducerTests {
         let clock = TestClock()
         let toasts = LockIsolated<[Toast]>([])
         let store = TestStore(initialState: .testValue(selection: [puky])) {
-            CustomFieldQueryDocumentPickerReducer()
+            DocumentPickerReducer()
         } withDependencies: {
             $0.continuousClock = clock
             $0.getDocuments.execute = { @Sendable _, _ in throw ApiError.testValue() }

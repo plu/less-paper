@@ -14,7 +14,7 @@ struct DocumentFormView: View {
         // The notes list spans the sheet edge to edge and insets its own rows instead, so its
         // scroll indicator sits at the sheet's edge and rows clip there rather than 16pt short.
         Sheet(
-            isScrollingEnabled: store.section == .details,
+            isScrollingEnabled: store.section == .details || store.section == .customFields,
             padding: store.section == .notes ? 0 : .x4
         ) {
             SheetHeader(
@@ -30,6 +30,8 @@ struct DocumentFormView: View {
             )
         } content: {
             switch store.section {
+            case .customFields:
+                DocumentFormCustomFieldsView(store: store)
             case .details:
                 detailsSection()
             case .content:
@@ -42,7 +44,7 @@ struct DocumentFormView: View {
             // The composer takes the slot Reset and Save vacate: nothing in the notes section is
             // staged, so neither button would have anything to act on.
             switch store.section {
-            case .details, .content:
+            case .content, .customFields, .details:
                 buttons()
             case .notes:
                 DocumentNoteComposerView(store: notesStore)
@@ -157,7 +159,7 @@ struct DocumentFormView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.primary(isLoading: $store.isUpdating))
-            .disabled(!store.isModified)
+            .disabled(!store.isModified || store.input.hasInvalidCustomField)
         }
     }
 

@@ -43,11 +43,34 @@ struct DocumentTests {
 
         #expect(document.created == Date(timeIntervalSince1970: 1_701_820_800))
     }
+
+    @Test
+    func decoding_readsCustomFields() throws {
+        let document = try JSONDecoder.apiDecoder.decode(
+            Document.self,
+            from: Data(payload(created: "2023-12-06", createdDate: "2023-12-06", customFields: """
+            "custom_fields": [{"field": 21, "value": "EUR1234.50"}],
+            """).utf8)
+        )
+
+        #expect(document.customFields == [.testValue(field: 21, value: .string("EUR1234.50"))])
+    }
+
+    // Documents cached before custom fields existed have no such key.
+    @Test
+    func decoding_treatsAMissingCustomFieldsKeyAsEmpty() throws {
+        let document = try JSONDecoder.apiDecoder.decode(
+            Document.self,
+            from: Data(payload(created: "2023-12-06", createdDate: "2023-12-06").utf8)
+        )
+
+        #expect(document.customFields.isEmpty)
+    }
 }
 
 private extension DocumentTests {
 
-    func payload(created: String, createdDate: String?) -> String {
+    func payload(created: String, createdDate: String?, customFields: String = "") -> String {
         let createdDateEntry = createdDate.map { "\"created_date\": \"\($0)\"," } ?? ""
         return """
         {
@@ -58,6 +81,7 @@ private extension DocumentTests {
             "correspondent": 1,
             "created": "\(created)",
             \(createdDateEntry)
+            \(customFields)
             "document_type": 1,
             "id": 1,
             "modified": "2023-12-07T09:30:00+01:00",

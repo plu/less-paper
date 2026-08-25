@@ -2,6 +2,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import CorrespondentsFeature
+import CustomFieldsFeature
 import DocumentTypesFeature
 import Foundation
 import StoragePathsFeature
@@ -15,6 +16,7 @@ public struct DocumentFormReducer: Sendable {
         case delegate(Delegate)
         case destination(PresentationAction<Destination.Action>)
         case documentResult(Result<Document, Error>)
+        case linkedCustomFieldDocuments(IdentifiedArrayOf<Document>)
         case nextArchiveSerialNumber(Int)
         case notes(DocumentNotesReducer.Action)
         case updateResult(Result<Document, Error>)
@@ -26,13 +28,17 @@ public struct DocumentFormReducer: Sendable {
         }
 
         public enum View {
+            case addCustomFieldTapped(CustomField.Id)
             case createCorrespondentButtonTapped
+            case createCustomFieldButtonTapped
             case createDocumentTypeButtonTapped
             case createStoragePathButtonTapped
             case createTagButtonTapped
             case closeButtonTapped
+            case documentLinkTapped(CustomField.Id)
             case getNextArchiveSerialNumberButtonTapped
             case onAppear
+            case removeCustomFieldTapped(CustomField.Id)
             case resetButtonTapped
             case retryLoadButtonTapped
             case saveButtonTapped
@@ -42,6 +48,8 @@ public struct DocumentFormReducer: Sendable {
     @Reducer
     public enum Destination {
         case correspondentForm(CorrespondentFormReducer)
+        case customFieldForm(CustomFieldFormReducer)
+        case documentPicker(DocumentPickerReducer)
         case documentTypeForm(DocumentTypeFormReducer)
         case storagePathForm(StoragePathFormReducer)
         case tagForm(TagFormReducer)
@@ -56,6 +64,8 @@ public struct DocumentFormReducer: Sendable {
 
         @Presents
         var destination: Destination.State?
+
+        var documentLinkFieldId: CustomField.Id?
 
         @Shared
         var document: Document
@@ -79,6 +89,10 @@ public struct DocumentFormReducer: Sendable {
 
         var isUpdating = false
 
+        // Resolved titles for every documentlink value on the document, so the capsules can name
+        // what they link to. An id with no entry here renders as its id.
+        var linkedCustomFieldDocuments: IdentifiedArrayOf<Document> = []
+
         var loadError: String?
 
         var notes: DocumentNotesReducer.State
@@ -89,6 +103,9 @@ public struct DocumentFormReducer: Sendable {
 
         @Shared
         var correspondents: IdentifiedArrayOf<Correspondent>
+
+        @Shared
+        var customFields: IdentifiedArrayOf<CustomField>
 
         @Shared
         var documentTypes: IdentifiedArrayOf<DocumentType>
@@ -116,6 +133,7 @@ public struct DocumentFormReducer: Sendable {
             )
             self.server = server
             self._correspondents = Shared(wrappedValue: [], .correspondents(server))
+            self._customFields = Shared(wrappedValue: [], .customFields(server))
             self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
             self._storagePaths = Shared(wrappedValue: [], .storagePaths(server))
             self._tags = Shared(wrappedValue: [], .tags(server))
@@ -132,6 +150,30 @@ public struct DocumentFormReducer: Sendable {
             case let .destination(.presented(.correspondentForm(.delegate(.correspondentSaved(correspondent))))):
                 state.destination = nil
                 state.input.correspondent = correspondent
+                return .none
+            case let .destination(.presented(.customFieldForm(.delegate(.customFieldSaved(field))))):
+                state.destination = nil
+                // Attached straight away: the user opened this form from the add menu, so creating
+                // the definition and putting it on the document is one intent.
+                guard state.input.customFields[id: field.id] == nil else {
+                    return .none
+                }
+                state.input.customFields.append(
+                    DocumentFormCustomField(id: field.id, value: .empty(field: field))
+                )
+                return .none
+            case let .destination(.presented(.documentPicker(.delegate(.selectionChanged(ids))))):
+                guard let fieldId = state.documentLinkFieldId else {
+                    return .none
+                }
+                state.input.customFields[id: fieldId]?.value = .documentLink(ids)
+                for document in state.destination?.documentPicker?.selection ?? []
+                    where state.linkedCustomFieldDocuments[id: document.id] == nil {
+                    state.linkedCustomFieldDocuments.append(document)
+                }
+                return .none
+            case .destination(.dismiss):
+                state.documentLinkFieldId = nil
                 return .none
             case let .destination(.presented(.documentTypeForm(.delegate(.documentTypeSaved(documentType))))):
                 state.destination = nil
@@ -160,6 +202,9 @@ public struct DocumentFormReducer: Sendable {
                     state.$document.withLock { $0 = document }
                     return .none
                 }
+            case let .linkedCustomFieldDocuments(documents):
+                state.linkedCustomFieldDocuments = documents
+                return .none
             case let .nextArchiveSerialNumber(archiveSerialNumber):
                 state.input.archiveSerialNumber = String(archiveSerialNumber)
                 return .none
@@ -173,8 +218,24 @@ public struct DocumentFormReducer: Sendable {
                 }
             case let .view(viewAction):
                 switch viewAction {
+                case let .addCustomFieldTapped(id):
+                    // Resolved through the cache rather than `state.customFields`, matching how
+                    // `DocumentFormInput` reads definitions. The shared array is the view's menu;
+                    // the reducer only ever needs the one field being attached.
+                    guard state.input.customFields[id: id] == nil,
+                          let field = id.get(state.server)
+                    else {
+                        return .none
+                    }
+                    state.input.customFields.append(
+                        DocumentFormCustomField(id: id, value: .empty(field: field))
+                    )
+                    return .none
                 case .createCorrespondentButtonTapped:
                     state.destination = .correspondentForm(CorrespondentFormReducer.State(server: state.server))
+                    return .none
+                case .createCustomFieldButtonTapped:
+                    state.destination = .customFieldForm(CustomFieldFormReducer.State(server: state.server))
                     return .none
                 case .createDocumentTypeButtonTapped:
                     state.destination = .documentTypeForm(DocumentTypeFormReducer.State(server: state.server))
@@ -188,19 +249,39 @@ public struct DocumentFormReducer: Sendable {
                 case .closeButtonTapped:
                     state.destination = nil
                     return .runDismiss()
+                case let .documentLinkTapped(id):
+                    guard case let .documentLink(ids) = state.input.customFields[id: id]?.value else {
+                        return .none
+                    }
+                    state.documentLinkFieldId = id
+                    state.destination = .documentPicker(DocumentPickerReducer.State(
+                        selection: IdentifiedArray(
+                            uniqueElements: ids.compactMap { state.linkedCustomFieldDocuments[id: $0] }
+                        ),
+                        server: state.server
+                    ))
+                    return .none
                 case .getNextArchiveSerialNumberButtonTapped:
                     return .runGetNextArchiveSerialNumber(server: state.server)
                 case .onAppear:
+                    let resolveLinked = Effect.runResolveLinkedCustomFieldDocuments(state)
                     // A failed load is not retried silently on the next appearance; that is what
-                    // the retry button is for.
+                    // the retry button is for. The title lookup still runs: it is keyed off the
+                    // staged values, not off whether the full document has arrived.
                     guard state.content == nil, state.loadError == nil, !state.isLoadingDocument else {
-                        return .none
+                        return resolveLinked
                     }
                     state.isLoadingDocument = true
-                    return .runGetDocument(
-                        id: state.document.id,
-                        server: state.server
+                    return .merge(
+                        resolveLinked,
+                        .runGetDocument(
+                            id: state.document.id,
+                            server: state.server
+                        )
                     )
+                case let .removeCustomFieldTapped(id):
+                    state.input.customFields.remove(id: id)
+                    return .none
                 case .retryLoadButtonTapped:
                     guard !state.isLoadingDocument else {
                         return .none

@@ -1,6 +1,6 @@
 import Foundation
 
-public indirect enum JSONValue: Equatable, Sendable {
+public indirect enum JSONValue: Equatable, Hashable, Sendable {
     case array([JSONValue])
     case bool(Bool)
     case null

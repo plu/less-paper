@@ -50,6 +50,10 @@ public struct DocumentBulkEditTitleReducer: Sendable {
                 content: nil,
                 correspondent: document.correspondent,
                 createdDate: document.created,
+                // Echoed back, not omitted: the server replaces the document's whole custom field
+                // list with whatever this payload carries, so an empty array here would strip every
+                // value off a document that was only being renamed.
+                customFields: document.customFields,
                 documentType: document.documentType,
                 storagePath: document.storagePath,
                 tags: document.tags,

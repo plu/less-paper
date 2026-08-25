@@ -5,7 +5,7 @@ import Foundation
 import IdentifiedCollections
 
 @Reducer
-public struct CustomFieldQueryDocumentPickerReducer: Sendable {
+public struct DocumentPickerReducer: Sendable {
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
         case delegate(Delegate)

@@ -17,6 +17,8 @@ public struct Document: Codable, Equatable, Hashable, Identifiable, Sendable {
 
     public let created: Date
 
+    public let customFields: [DocumentCustomField]
+
     public let documentType: DocumentType.Id?
 
     public let id: Id
@@ -40,6 +42,7 @@ public struct Document: Codable, Equatable, Hashable, Identifiable, Sendable {
         content: String?,
         correspondent: Correspondent.Id?,
         created: Date,
+        customFields: [DocumentCustomField],
         documentType: DocumentType.Id?,
         id: Id,
         modified: Date,
@@ -55,6 +58,7 @@ public struct Document: Codable, Equatable, Hashable, Identifiable, Sendable {
         self.content = content
         self.correspondent = correspondent
         self.created = created
+        self.customFields = customFields
         self.documentType = documentType
         self.id = id
         self.modified = modified
@@ -70,8 +74,8 @@ public extension Document {
 
     private enum CodingKeys: String, CodingKey {
         case added, archiveSerialNumber, archivedFileName, content, correspondent, created
-        case createdDate, documentType, id, modified, originalFileName, owner, storagePath
-        case tags, title
+        case createdDate, customFields, documentType, id, modified, originalFileName, owner
+        case storagePath, tags, title
     }
 
     init(from decoder: Decoder) throws {
@@ -87,6 +91,7 @@ public extension Document {
         // field is deprecated upstream, and `created` is the right fallback once it is dropped.
         created = try container.decodeIfPresent(Date.self, forKey: .createdDate)
             ?? container.decode(Date.self, forKey: .created)
+        customFields = try container.decodeIfPresent([DocumentCustomField].self, forKey: .customFields) ?? []
         documentType = try container.decodeIfPresent(DocumentType.Id.self, forKey: .documentType)
         id = try container.decode(Id.self, forKey: .id)
         modified = try container.decode(Date.self, forKey: .modified)
@@ -105,6 +110,7 @@ public extension Document {
         try container.encode(content, forKey: .content)
         try container.encode(correspondent, forKey: .correspondent)
         try container.encode(created, forKey: .created)
+        try container.encode(customFields, forKey: .customFields)
         try container.encode(documentType, forKey: .documentType)
         try container.encode(id, forKey: .id)
         try container.encode(modified, forKey: .modified)
@@ -131,6 +137,7 @@ public extension Document {
         content: String? = "Some invoice",
         correspondent: Correspondent.Id? = 1,
         created: Date = .testValue(),
+        customFields: [DocumentCustomField] = [],
         documentType: DocumentType.Id? = 1,
         id: Id = 1,
         modified: Date = .testValue(),
@@ -147,6 +154,7 @@ public extension Document {
             content: content,
             correspondent: correspondent,
             created: created,
+            customFields: customFields,
             documentType: documentType,
             id: id,
             modified: modified,

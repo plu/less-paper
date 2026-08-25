@@ -18,6 +18,23 @@
         }
       }
     },
+    "addCustomField" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feld hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add field"
+          }
+        }
+      }
+    },
     "addNote" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1365,6 +1382,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add tag"
+          }
+        }
+      }
+    },
+    "currency" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Währung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Currency"
           }
         }
       }
@@ -2971,6 +3005,23 @@
         }
       }
     },
+    "invalidNumber" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Zahl"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not a number"
+          }
+        }
+      }
+    },
     "language" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3362,6 +3413,23 @@
         }
       }
     },
+    "newCustomField" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neues Feld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New field"
+          }
+        }
+      }
+    },
     "noCorrespondentsFound" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3375,6 +3443,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No correspondents found"
+          }
+        }
+      }
+    },
+    "noCustomFieldsAttached" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Felder an diesem Dokument"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No fields on this document yet"
+          }
+        }
+      }
+    },
+    "noCustomFieldsDefined" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Server hat keine benutzerdefinierten Felder"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This server has no custom fields"
           }
         }
       }
@@ -3954,6 +4056,23 @@
         }
       }
     },
+    "removeCustomField" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feld entfernen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove field"
+          }
+        }
+      }
+    },
     "reset" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4324,6 +4443,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Servers"
+          }
+        }
+      }
+    },
+    "setDate" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datum setzen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set date"
           }
         }
       }

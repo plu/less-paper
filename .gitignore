@@ -74,3 +74,6 @@ node_modules/
 .claude/*
 !.claude/CLAUDE.md
 *.xcresult
+
+# Superpowers brainstorming companion
+.superpowers/

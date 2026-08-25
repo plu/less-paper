@@ -14,6 +14,8 @@ public struct UpdateDocumentInput: Encodable, Equatable, Sendable {
 
     public let createdDate: Date
 
+    public let customFields: [DocumentCustomField]
+
     @NullEncodable
     public var documentType: DocumentType.Id?
 
@@ -29,6 +31,7 @@ public struct UpdateDocumentInput: Encodable, Equatable, Sendable {
         content: String?,
         correspondent: Correspondent.Id?,
         createdDate: Date,
+        customFields: [DocumentCustomField],
         documentType: DocumentType.Id?,
         storagePath: StoragePath.Id?,
         tags: [Tag.Id],
@@ -38,6 +41,7 @@ public struct UpdateDocumentInput: Encodable, Equatable, Sendable {
         self.content = content
         self.correspondent = correspondent
         self.createdDate = createdDate
+        self.customFields = customFields
         self.documentType = documentType
         self.storagePath = storagePath
         self.tags = tags
@@ -52,6 +56,7 @@ public extension UpdateDocumentInput {
         content: String? = nil,
         correspondent: Correspondent.Id? = nil,
         createdDate: Date = .distantPast,
+        customFields: [DocumentCustomField] = [],
         documentType: DocumentType.Id? = nil,
         storagePath: StoragePath.Id? = nil,
         tags: [Tag.Id] = [],
@@ -62,6 +67,7 @@ public extension UpdateDocumentInput {
             content: content,
             correspondent: correspondent,
             createdDate: createdDate,
+            customFields: customFields,
             documentType: documentType,
             storagePath: storagePath,
             tags: tags,

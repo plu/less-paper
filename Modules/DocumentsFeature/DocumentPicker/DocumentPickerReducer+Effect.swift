@@ -4,7 +4,7 @@ import ComposableArchitecture
 import Dependencies
 import IdentifiedCollections
 
-extension Effect where Action == CustomFieldQueryDocumentPickerReducer.Action {
+extension Effect where Action == DocumentPickerReducer.Action {
 
     static func runDismiss() -> Self {
         .run { _ in
@@ -15,7 +15,7 @@ extension Effect where Action == CustomFieldQueryDocumentPickerReducer.Action {
         }
     }
 
-    static func runSearch(_ state: CustomFieldQueryDocumentPickerReducer.State) -> Self {
+    static func runSearch(_ state: DocumentPickerReducer.State) -> Self {
         @Dependency(\.getDocuments)
         var getDocuments
 
