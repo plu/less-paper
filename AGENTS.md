@@ -125,3 +125,62 @@ Tests always launch with a `UITestConfiguration`, even the onboarding journey th
 server. Launching with no configuration at all would let the app read whatever `servers.json` the
 simulator happens to hold, which is how a developer machine and a clean CI runner end up
 disagreeing.
+
+## Claude uses the dev instance at `192.168.64.1:8000`, never Docker
+
+**Never run `mise run docker:start`, `colima`, or any `docker`/`docker-compose` command.** Claude
+works from a machine that cannot run them: it is itself an Apple Virtual Machine
+(`kern.hv_support` is `0`), so colima's VM fails to boot with *"Virtualization is not available on
+this hardware"*. There is no container runtime to reach, and no amount of retrying will produce one.
+
+Use the **dev instance running on the host** instead, at `http://192.168.64.1:8000` —
+`192.168.64.1` is the host as seen from inside the VM, and `localhost` is not. Point the tests at it
+by exporting `TUIST_PAPERLESS_TEST_URL`, which `Module+InfoPlists.swift` bakes into every bundle's
+`PAPERLESS_TEST_URL` key, where `URL.testValue()` reads it. It otherwise defaults to the
+`paperless-ci` instance at `http://localhost:9000`, and every test fails on a connection refused:
+
+```bash
+export TUIST_PAPERLESS_TEST_URL=http://192.168.64.1:8000
+mise exec -- tuist generate --no-open
+```
+
+It is read at **generate** time, not at run time, so a `tuist test` after a generate that did not
+carry the variable still targets port 9000. Export it for both.
+
+This overrides the usual rule that verification runs against `paperless-ci` on port 9000: that
+instance only exists where Docker does. Tests still create and delete their own users, so they are
+as safe against the dev instance as against the CI one — but its data is real, so the "never mutate
+global server state" rule above matters more here, not less.
+
+## `gh` and `git push` authenticate through fnox
+
+There is no `gh auth login` credential store on this machine and no git credential helper. Both
+tools authenticate with `GH_TOKEN`, a fine-grained PAT kept in the **global** fnox config at
+`~/.config/fnox/config.toml` — not in this repo's `fnox.toml`. The token is scoped to
+`plu/less-paper` alone (contents, issues and pull requests read-write; actions and checks read), so
+anything outside this repository — or an edit to a workflow file — comes back `403`.
+
+`~/.zshrc` runs `eval "$(fnox activate zsh)"`, which is why `gh` just works in a terminal. **An
+agent's shell is not interactive, so that line never runs and `GH_TOKEN` is unset.** Wrap the call:
+
+```bash
+mise exec -- fnox exec -- gh pr create …
+```
+
+`fnox` itself is not on `PATH` without `mise exec --`.
+
+`git push` needs more than the variable — git does not read `GH_TOKEN`, so it prompts for a
+username and hangs until it times out into GitHub's device flow. Hand it a credential helper for
+the single command:
+
+```bash
+GIT_TERMINAL_PROMPT=0 mise exec -- fnox exec -- git \
+  -c 'credential.helper=!f(){ echo username=x-access-token; echo "password=$GH_TOKEN"; };f' \
+  push -u origin <branch>
+```
+
+`GIT_TERMINAL_PROMPT=0` turns a credential failure into an immediate error instead of a hang.
+
+When every call starts returning `403`, the PAT has expired. Re-mint it at
+<https://github.com/settings/personal-access-tokens> and store it with
+`cd ~ && fnox set --global GH_TOKEN`.

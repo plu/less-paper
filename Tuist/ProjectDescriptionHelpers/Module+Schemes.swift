@@ -86,15 +86,10 @@ public extension Module {
                     )
                 )
             ]
-        case .correspondentsApp,
-             .customFieldsApp,
-             .documentTypesApp,
+        case .customFieldsApp,
              .documentsApp,
-             .savedViewsApp,
              .serversApp,
-             .settingsApp,
-             .shareApp,
-             .storagePathsApp:
+             .shareApp:
             [
                 .scheme(
                     name: rawValue,
@@ -122,11 +117,9 @@ public extension Module {
              .appUITests,
              .certificatesFeatureTests,
              .componentsTests,
-             .correspondentsAppTests,
              .correspondentsFeatureTests,
              .customFieldsAppTests,
              .customFieldsFeatureTests,
-             .documentTypesAppTests,
              .documentTypesFeatureTests,
              .documentsAppTests,
              .documentsFeatureTests,
@@ -134,15 +127,12 @@ public extension Module {
              .licensesFeatureTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
-             .savedViewsAppTests,
              .savedViewsFeatureTests,
              .serversAppTests,
              .serversFeatureTests,
-             .settingsAppTests,
              .settingsFeatureTests,
              .shareAppTests,
              .shareFeatureTests,
-             .storagePathsAppTests,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
              .testSupport,
@@ -164,24 +154,14 @@ extension Module {
      */
     private var featureAppTestTargets: [TestableTarget] {
         switch self {
-        case .correspondentsApp:
-            [.testableTarget(target: .target(.correspondentsAppTests))]
         case .customFieldsApp:
             [.testableTarget(target: .target(.customFieldsAppTests))]
-        case .documentTypesApp:
-            [.testableTarget(target: .target(.documentTypesAppTests))]
         case .documentsApp:
             [.testableTarget(target: .target(.documentsAppTests))]
-        case .savedViewsApp:
-            [.testableTarget(target: .target(.savedViewsAppTests))]
-        case .settingsApp:
-            [.testableTarget(target: .target(.settingsAppTests))]
         case .serversApp:
             [.testableTarget(target: .target(.serversAppTests))]
         case .shareApp:
             [.testableTarget(target: .target(.shareAppTests))]
-        case .storagePathsApp:
-            [.testableTarget(target: .target(.storagePathsAppTests))]
         default:
             []
         }

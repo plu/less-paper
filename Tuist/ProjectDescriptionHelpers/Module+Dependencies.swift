@@ -147,23 +147,6 @@ extension Module {
                 .target(.components),
                 .target(.testSupport),
             ]
-        case .correspondentsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.correspondentsFeature)
-            ]
-        case .correspondentsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.correspondentsApp),
-                .target(.correspondentsFeature),
-                .target(.uiTestSupport),
-            ]
         case .correspondentsFeature:
             [
                 .external(.composableArchitecture),
@@ -219,23 +202,6 @@ extension Module {
                 .target(.components),
                 .target(.customFieldsFeature),
                 .target(.testSupport),
-            ]
-        case .documentTypesApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.documentTypesFeature)
-            ]
-        case .documentTypesAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.documentTypesApp),
-                .target(.documentTypesFeature),
-                .target(.uiTestSupport),
             ]
         case .documentTypesFeature:
             [
@@ -374,23 +340,6 @@ extension Module {
                 .target(.permissionsFeature),
                 .target(.testSupport),
             ]
-        case .savedViewsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.savedViewsFeature)
-            ]
-        case .savedViewsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.savedViewsApp),
-                .target(.savedViewsFeature),
-                .target(.uiTestSupport),
-            ]
         case .savedViewsFeature:
             [
                 .external(.composableArchitecture),
@@ -446,23 +395,6 @@ extension Module {
                 .target(.components),
                 .target(.serversFeature),
                 .target(.testSupport),
-            ]
-        case .settingsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .external(.sharing),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.settingsFeature),
-            ]
-        case .settingsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.settingsApp),
-                .target(.settingsFeature),
             ]
         case .settingsFeature:
             [
@@ -547,23 +479,6 @@ extension Module {
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
                 .target(.testSupport),
-            ]
-        case .storagePathsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.storagePathsFeature)
-            ]
-        case .storagePathsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.storagePathsApp),
-                .target(.storagePathsFeature),
-                .target(.uiTestSupport),
             ]
         case .storagePathsFeature:
             [

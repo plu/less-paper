@@ -40,6 +40,29 @@ public enum Fixtures {
         }
     }
 
+    // Deletes as admin: a superuser can remove an object the per-test user owns, and the test knows
+    // the tag only by the name it typed into the form.
+    public static func deleteTag(named name: String) async throws {
+        try await withAdminDependencies {
+            @Dependency(\.tagsRepository)
+            var tagsRepository
+
+            let tags = try await tagsRepository.getTags(
+                input: GetTagsInput(),
+                server: .testValue()
+            ).results
+
+            guard let tag = tags.first(where: { $0.name == name }) else {
+                return
+            }
+
+            _ = try await tagsRepository.deleteTag(
+                id: tag.id,
+                server: .testValue()
+            )
+        }
+    }
+
     // A crashed run leaves its namespaced fields behind, and unlike users they are visible to every
     // later test's field list.
     public static func sweepOrphanedCustomFields() async throws {

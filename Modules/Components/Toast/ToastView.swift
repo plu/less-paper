@@ -19,6 +19,10 @@ public struct ToastView: View {
         .foregroundStyle(toast.foregroundColor)
         .padding(.x4)
         .frame(maxWidth: 600)
+        // children: .contain keeps the message queryable as a descendant rather than flattening it
+        // into one label, so a journey can still assert on toast copy.
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("Toast")
     }
 
     public init(

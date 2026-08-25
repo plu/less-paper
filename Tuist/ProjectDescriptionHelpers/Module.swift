@@ -33,16 +33,12 @@ public enum Module: String, CaseIterable {
     case certificatesFeatureTests = "CertificatesFeatureTests"
     case components = "Components"
     case componentsTests = "ComponentsTests"
-    case correspondentsApp = "CorrespondentsApp"
-    case correspondentsAppTests = "CorrespondentsAppTests"
     case correspondentsFeature = "CorrespondentsFeature"
     case correspondentsFeatureTests = "CorrespondentsFeatureTests"
     case customFieldsApp = "CustomFieldsApp"
     case customFieldsAppTests = "CustomFieldsAppTests"
     case customFieldsFeature = "CustomFieldsFeature"
     case customFieldsFeatureTests = "CustomFieldsFeatureTests"
-    case documentTypesApp = "DocumentTypesApp"
-    case documentTypesAppTests = "DocumentTypesAppTests"
     case documentTypesFeature = "DocumentTypesFeature"
     case documentTypesFeatureTests = "DocumentTypesFeatureTests"
     case documentsApp = "DocumentsApp"
@@ -57,16 +53,12 @@ public enum Module: String, CaseIterable {
     case pdfPasswordsFeatureTests = "PdfPasswordsFeatureTests"
     case permissionsFeature = "PermissionsFeature"
     case permissionsFeatureTests = "PermissionsFeatureTests"
-    case savedViewsApp = "SavedViewsApp"
-    case savedViewsAppTests = "SavedViewsAppTests"
     case savedViewsFeature = "SavedViewsFeature"
     case savedViewsFeatureTests = "SavedViewsFeatureTests"
     case serversApp = "ServersApp"
     case serversAppTests = "ServersAppTests"
     case serversFeature = "ServersFeature"
     case serversFeatureTests = "ServersFeatureTests"
-    case settingsApp = "SettingsApp"
-    case settingsAppTests = "SettingsAppTests"
     case settingsFeature = "SettingsFeature"
     case settingsFeatureTests = "SettingsFeatureTests"
     case shareApp = "ShareApp"
@@ -74,8 +66,6 @@ public enum Module: String, CaseIterable {
     case shareExtension = "ShareExtension"
     case shareFeature = "ShareFeature"
     case shareFeatureTests = "ShareFeatureTests"
-    case storagePathsApp = "StoragePathsApp"
-    case storagePathsAppTests = "StoragePathsAppTests"
     case storagePathsFeature = "StoragePathsFeature"
     case storagePathsFeatureTests = "StoragePathsFeatureTests"
     case tagsFeature = "TagsFeature"
@@ -157,14 +147,10 @@ extension Module {
              .appUITests,
              .certificatesFeatureTests,
              .componentsTests,
-             .correspondentsApp,
-             .correspondentsAppTests,
              .correspondentsFeatureTests,
              .customFieldsApp,
              .customFieldsAppTests,
              .customFieldsFeatureTests,
-             .documentTypesApp,
-             .documentTypesAppTests,
              .documentTypesFeatureTests,
              .documentsApp,
              .documentsAppTests,
@@ -173,21 +159,15 @@ extension Module {
              .licensesFeatureTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
-             .savedViewsApp,
-             .savedViewsAppTests,
              .savedViewsFeatureTests,
              .serversApp,
              .serversAppTests,
              .serversFeatureTests,
-             .settingsApp,
-             .settingsAppTests,
              .settingsFeatureTests,
              .shareApp,
              .shareAppTests,
              .shareExtension,
              .shareFeatureTests,
-             .storagePathsApp,
-             .storagePathsAppTests,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
              .testSupport,
@@ -209,7 +189,6 @@ extension Module {
         switch self {
         case .app,
              .serversApp,
-             .settingsApp,
              .shareApp,
              .shareExtension:
             .dictionary([
@@ -235,15 +214,10 @@ extension Module {
     var product: Product {
         switch self {
         case .app,
-             .correspondentsApp,
              .customFieldsApp,
-             .documentTypesApp,
              .documentsApp,
-             .savedViewsApp,
              .serversApp,
-             .settingsApp,
-             .shareApp,
-             .storagePathsApp:
+             .shareApp:
             .app
         case .apiImplementation,
              .apiInterface,
@@ -289,15 +263,10 @@ extension Module {
              .tagsFeatureTests:
             .unitTests
         case .appUITests,
-             .correspondentsAppTests,
              .customFieldsAppTests,
-             .documentTypesAppTests,
              .documentsAppTests,
-             .savedViewsAppTests,
              .serversAppTests,
-             .settingsAppTests,
-             .shareAppTests,
-             .storagePathsAppTests:
+             .shareAppTests:
             .uiTests
         case .shareExtension:
             .appExtension
