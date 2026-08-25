@@ -3,8 +3,8 @@
 set -euo pipefail
 tuist install
 
-# The nine *AppTests targets are XCUITests that boot a simulator and drive the app
-# against the docker container. They are ~4% of the tests but ~70% of the test
+# AppUITests and ShareAppTests are XCUITests that boot a simulator and drive the app
+# against the docker container. They are ~1% of the tests but the bulk of the test
 # execution time, so they are skipped by default and run where it matters: on main,
 # and on any PR shipping a build or explicitly labelled for them.
 #
