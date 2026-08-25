@@ -497,23 +497,6 @@ extension Module {
                 .target(.tagsFeature),
                 .target(.testSupport),
             ]
-        case .storagePathsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.storagePathsFeature)
-            ]
-        case .storagePathsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.storagePathsApp),
-                .target(.storagePathsFeature),
-                .target(.uiTestSupport),
-            ]
         case .storagePathsFeature:
             [
                 .external(.composableArchitecture),

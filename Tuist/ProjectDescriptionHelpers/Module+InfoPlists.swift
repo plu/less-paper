@@ -74,8 +74,7 @@ extension Module {
              .documentsApp,
              .savedViewsApp,
              .serversApp,
-             .shareApp,
-             .storagePathsApp:
+             .shareApp:
             .extendingDefault(with: [
                 "CFBundleDisplayName": .string(rawValue.replacingOccurrences(of: "App", with: "")),
                 "CFBundleLocalizations": [

@@ -90,8 +90,7 @@ public extension Module {
              .documentsApp,
              .savedViewsApp,
              .serversApp,
-             .shareApp,
-             .storagePathsApp:
+             .shareApp:
             [
                 .scheme(
                     name: rawValue,
@@ -136,7 +135,6 @@ public extension Module {
              .settingsFeatureTests,
              .shareAppTests,
              .shareFeatureTests,
-             .storagePathsAppTests,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
              .testSupport,
@@ -168,8 +166,6 @@ extension Module {
             [.testableTarget(target: .target(.serversAppTests))]
         case .shareApp:
             [.testableTarget(target: .target(.shareAppTests))]
-        case .storagePathsApp:
-            [.testableTarget(target: .target(.storagePathsAppTests))]
         default:
             []
         }

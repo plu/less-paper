@@ -68,8 +68,6 @@ public enum Module: String, CaseIterable {
     case shareExtension = "ShareExtension"
     case shareFeature = "ShareFeature"
     case shareFeatureTests = "ShareFeatureTests"
-    case storagePathsApp = "StoragePathsApp"
-    case storagePathsAppTests = "StoragePathsAppTests"
     case storagePathsFeature = "StoragePathsFeature"
     case storagePathsFeatureTests = "StoragePathsFeatureTests"
     case tagsFeature = "TagsFeature"
@@ -174,8 +172,6 @@ extension Module {
              .shareAppTests,
              .shareExtension,
              .shareFeatureTests,
-             .storagePathsApp,
-             .storagePathsAppTests,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
              .testSupport,
@@ -226,8 +222,7 @@ extension Module {
              .documentsApp,
              .savedViewsApp,
              .serversApp,
-             .shareApp,
-             .storagePathsApp:
+             .shareApp:
             .app
         case .apiImplementation,
              .apiInterface,
@@ -277,8 +272,7 @@ extension Module {
              .documentsAppTests,
              .savedViewsAppTests,
              .serversAppTests,
-             .shareAppTests,
-             .storagePathsAppTests:
+             .shareAppTests:
             .uiTests
         case .shareExtension:
             .appExtension
