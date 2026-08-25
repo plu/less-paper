@@ -14,7 +14,11 @@ struct DocumentFormView: View {
         // The notes list spans the sheet edge to edge and insets its own rows instead, so its
         // scroll indicator sits at the sheet's edge and rows clip there rather than 16pt short.
         Sheet(
-            isScrollingEnabled: store.section == .details || store.section == .customFields,
+            // Custom fields scroll only once there are rows to scroll. Leaving it on for the empty
+            // states would size them to their content and pin them to the top, where the sibling
+            // sections centre theirs.
+            isScrollingEnabled: store.section == .details
+                || (store.section == .customFields && !store.input.customFields.isEmpty),
             padding: store.section == .notes ? 0 : .x4
         ) {
             SheetHeader(
