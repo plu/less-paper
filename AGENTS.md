@@ -106,10 +106,13 @@ Reach for that first. Write a presenter of your own only when the popup needs cu
 
 ## UI tests never mutate global server state
 
-UI tests live in `AppUITests` and drive the real app against the paperless-ngx container in
-`docker/`. Each test creates its own Paperless user, so every tag, correspondent, document type,
-storage path and saved view it creates is owned by that user and invisible to every other test. The
-list a test opens starts empty.
+UI tests live in `AppUITests` and drive the real app against paperless-ngx. Each test creates its own
+Paperless user, so every tag, correspondent, document type, storage path and saved view it creates is
+owned by that user and invisible to every other test. The list a test opens starts empty.
+
+`ShareApp` is the only harness app left, and it is permanent — it stands in for the share extension,
+which XCUITest can otherwise reach only through another app's share sheet. **Do not add another
+harness app.** A new feature gets a journey here instead.
 
 **Never write a helper that deletes all of something.** `deleteAllTags()` and its kind are why the
 old per-feature harness suites could not run in parallel, and they are gone.
@@ -119,7 +122,14 @@ Two exceptions, both probed against paperless-ngx 3.0.5:
 - **Custom fields have no owner** and are global — every user sees every custom field. Namespace
   them by name (`uit-<id>-<label>`) and never assert on the total count of the custom field list.
 - **Documents consumed from `docker/consume/` have no owner** and form a shared read-only corpus.
-  Read from it freely; a test that needs to *modify* a document must upload its own first.
+  Read from it freely; a test that needs to *modify* a document must upload its own first, with
+  `Fixtures.uploadDocument(titled:token:)`. Pass the **test user's** token, never admin's: paperless
+  owns a document to whoever created it, so an admin-owned document is invisible to the user the
+  journey runs as. Delete it in `tearDown` — deleting the user does not cascade to its objects.
+
+One trap that is not about ownership: **never delete the seeded server in a journey.** It is the
+server the app is running on, so removing it logs the app out mid-test. A journey that needs to
+exercise deletion adds a second server and deletes that one.
 
 Tests always launch with a `UITestConfiguration`, even the onboarding journey that starts without a
 server. Launching with no configuration at all would let the app read whatever `servers.json` the
