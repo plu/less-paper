@@ -44,6 +44,19 @@ public struct ServerFormScreen {
         return app.buttons["Save"].waitForNonExistence(timeout: timeout)
     }
 
+    @discardableResult
+    public func editAlias(appending suffix: String) -> Bool {
+        let alias = app.textFields["Alias"]
+        guard alias.waitForExistence(timeout: timeout) else {
+            return false
+        }
+        alias.tapAfterExistingText()
+        app.typeText(suffix)
+
+        app.buttons["Save"].tap()
+        return app.buttons["Save"].waitForNonExistence(timeout: timeout)
+    }
+
     private func type(
         _ text: String,
         into element: XCUIElement
