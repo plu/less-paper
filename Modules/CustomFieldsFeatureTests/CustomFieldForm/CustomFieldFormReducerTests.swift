@@ -42,6 +42,43 @@ struct CustomFieldFormReducerTests {
         #expect(state.input.selectOptions.map(\.serverId) == ["a", "b"])
     }
 
+    // Cancelling with a blank option used to send optionLabelChanged from the field's teardown,
+    // after the parent had already cleared the destination. The reducer now ignores a label change
+    // for an option that is gone - test_view_optionLabelChanged_forRemovedOption_isIgnored - and
+    // this covers the dismissal itself, which nothing sent before.
+    @Test
+    func test_view_cancelButtonTapped_withABlankOption_dismisses() async throws {
+        var isDismissed = false
+        var state = CustomFieldFormReducer.State(server: .testValue())
+        state.input.selectOptions = [
+            CustomFieldSelectOptionInput(id: UUID(1), label: "Open", serverId: "a"),
+            CustomFieldSelectOptionInput(id: UUID(2), label: "", serverId: nil)
+        ]
+
+        let store = TestStore(initialState: state) {
+            CustomFieldFormReducer()
+        } withDependencies: {
+            $0.dismiss = .init { isDismissed = true }
+        }
+
+        await store.send(.view(.cancelButtonTapped))
+        #expect(isDismissed == true)
+    }
+
+    @Test
+    func test_view_closeButtonTapped_dismisses() async throws {
+        var isDismissed = false
+
+        let store = TestStore(initialState: CustomFieldFormReducer.State(server: .testValue())) {
+            CustomFieldFormReducer()
+        } withDependencies: {
+            $0.dismiss = .init { isDismissed = true }
+        }
+
+        await store.send(.view(.closeButtonTapped))
+        #expect(isDismissed == true)
+    }
+
     @Test
     func test_view_addOptionButtonTapped() async throws {
         let store = TestStore(initialState: CustomFieldFormReducer.State(server: .testValue())) {
