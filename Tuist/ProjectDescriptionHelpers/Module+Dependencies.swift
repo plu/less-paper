@@ -147,23 +147,6 @@ extension Module {
                 .target(.components),
                 .target(.testSupport),
             ]
-        case .correspondentsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.correspondentsFeature)
-            ]
-        case .correspondentsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.correspondentsApp),
-                .target(.correspondentsFeature),
-                .target(.uiTestSupport),
-            ]
         case .correspondentsFeature:
             [
                 .external(.composableArchitecture),

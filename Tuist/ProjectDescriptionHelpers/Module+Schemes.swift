@@ -86,8 +86,7 @@ public extension Module {
                     )
                 )
             ]
-        case .correspondentsApp,
-             .customFieldsApp,
+        case .customFieldsApp,
              .documentTypesApp,
              .documentsApp,
              .savedViewsApp,
@@ -121,7 +120,6 @@ public extension Module {
              .appUITests,
              .certificatesFeatureTests,
              .componentsTests,
-             .correspondentsAppTests,
              .correspondentsFeatureTests,
              .customFieldsAppTests,
              .customFieldsFeatureTests,
@@ -162,8 +160,6 @@ extension Module {
      */
     private var featureAppTestTargets: [TestableTarget] {
         switch self {
-        case .correspondentsApp:
-            [.testableTarget(target: .target(.correspondentsAppTests))]
         case .customFieldsApp:
             [.testableTarget(target: .target(.customFieldsAppTests))]
         case .documentTypesApp:

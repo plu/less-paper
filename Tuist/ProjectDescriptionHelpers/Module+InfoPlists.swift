@@ -70,8 +70,7 @@ extension Module {
                     "NSExtensionPrincipalClass": "$(PRODUCT_MODULE_NAME).ShareViewController",
                 ],
             ])
-        case .correspondentsApp,
-             .customFieldsApp,
+        case .customFieldsApp,
              .documentTypesApp,
              .documentsApp,
              .savedViewsApp,
