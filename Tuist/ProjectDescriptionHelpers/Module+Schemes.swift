@@ -86,8 +86,7 @@ public extension Module {
                     )
                 )
             ]
-        case .customFieldsApp,
-             .documentsApp,
+        case .documentsApp,
              .shareApp:
             [
                 .scheme(
@@ -117,7 +116,6 @@ public extension Module {
              .certificatesFeatureTests,
              .componentsTests,
              .correspondentsFeatureTests,
-             .customFieldsAppTests,
              .customFieldsFeatureTests,
              .documentTypesFeatureTests,
              .documentsAppTests,
@@ -152,8 +150,6 @@ extension Module {
      */
     private var featureAppTestTargets: [TestableTarget] {
         switch self {
-        case .customFieldsApp:
-            [.testableTarget(target: .target(.customFieldsAppTests))]
         case .documentsApp:
             [.testableTarget(target: .target(.documentsAppTests))]
         case .shareApp:

@@ -167,23 +167,6 @@ extension Module {
                 .target(.correspondentsFeature),
                 .target(.testSupport),
             ]
-        case .customFieldsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.customFieldsFeature)
-            ]
-        case .customFieldsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.customFieldsApp),
-                .target(.customFieldsFeature),
-                .target(.uiTestSupport),
-            ]
         case .customFieldsFeature:
             [
                 .external(.composableArchitecture),
