@@ -12,6 +12,12 @@ public struct EntityListScreen {
             edit: "Edit correspondent"
         )
 
+        public static let customField = Self(
+            add: "Add custom field",
+            delete: "Delete custom field",
+            edit: "Edit custom field"
+        )
+
         public static let documentType = Self(
             add: "Add document type",
             delete: "Delete document type",
