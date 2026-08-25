@@ -71,7 +71,6 @@ extension Module {
                 ],
             ])
         case .customFieldsApp,
-             .documentTypesApp,
              .documentsApp,
              .savedViewsApp,
              .serversApp,

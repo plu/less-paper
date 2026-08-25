@@ -203,23 +203,6 @@ extension Module {
                 .target(.customFieldsFeature),
                 .target(.testSupport),
             ]
-        case .documentTypesApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.documentTypesFeature)
-            ]
-        case .documentTypesAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.documentTypesApp),
-                .target(.documentTypesFeature),
-                .target(.uiTestSupport),
-            ]
         case .documentTypesFeature:
             [
                 .external(.composableArchitecture),
