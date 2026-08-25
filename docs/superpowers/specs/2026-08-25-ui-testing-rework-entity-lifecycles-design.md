@@ -21,12 +21,13 @@ Plan 1 deliberately deferred journeys 2 and 5–12 and the remaining eight harne
 | Harness tests remaining | 31, of which `ShareAppTests.testImport` is permanent |
 | Journeys unwritten | 2, 5, 6, 7, 8, 9, 10, 11, 12 |
 
-**The risk that justified the split is measured and gone.** Plan 1's execution notes record that
-across all three journeys not one accessibility identifier had to be added; every element matched on
-an existing label. The screens still ahead — the custom-field matrix and document browsing — remain
-the ones most likely to be ambiguous in an assembled navigation stack, so the risk is reduced rather
-than retired. It does not apply to the four entity lists in this slice, which are shaped exactly
-like the tag list that already passes.
+**The risk that justified the split is measured and near-gone.** Plan 1's execution notes record
+that across all three journeys not one accessibility identifier had to be added; every element
+matched on an existing label. That holds for the four entity lists in this slice, which are shaped
+exactly like the tag list that already passes. Journey 10 needs exactly one, on `ToastView` — see
+below. The screens still ahead — the custom-field matrix and document browsing — remain the ones
+most likely to be ambiguous in an assembled navigation stack, so the risk is reduced rather than
+retired.
 
 ## Scope
 
@@ -71,7 +72,7 @@ public struct EntityListScreen {
         public static let tag: Self
     }
 
-    public func create(named name: String, extras: () -> Void = {}) -> Bool
+    public func create(named name: String, extras: (Self) -> Void = { _ in }) -> Bool
     public func delete(named name: String) -> Bool
     public func edit(named name: String, appending suffix: String) -> Bool
 }
@@ -83,11 +84,12 @@ point, and leaving the tag driver behind would mean a changed `Save` label needs
 **Per-entity extras ride a trailing closure** rather than widening the signature. Two entities need
 one: storage paths type a `Path`, saved views tap `Show in sidebar` and `Show on dashboard`. A
 closure keeps `create` honest for the three entities that need nothing, and the two that do read as
-what they are. `TagListScreen`'s private `type(_:into:)` becomes public and takes a field label, so
-a closure can reach it without re-deriving the wait-then-tap-then-type dance:
+what they are. The closure receives the screen, and `TagListScreen`'s private `type(_:into:)`
+becomes public and takes a field label, so a closure can reach it without re-deriving the
+wait-then-tap-then-type dance:
 
 ```swift
-list.create(named: name) {
+list.create(named: name) { list in
     list.type("/home/paperless/\(name)", into: "Path")
 }
 ```
@@ -136,17 +138,32 @@ and the empty-state string.
 retired `TagsApp` without replacing it, naming journey 10 as the replacement. Running journey 10 on
 tags closes an open gap rather than picking arbitrarily among four that are about to close.
 
-The per-test user improves on the harness version. The old test called `deleteAllTags()` and
-asserted the empty state, which passed for two reasons at once — the delete failed *and* the list
-had been emptied out from under it. Here the test creates exactly one tag through the UI, so when
-the list ends up empty it is because the row the user tried to delete was already gone:
+**The harness tests assert the wrong thing, and have since before this rework started.** All five
+expect an empty-state string — `No StoragePath matches the given query.` and its siblings — that the
+app no longer renders. The list empty states are now `EmptyListView(title: .noTagsFound)`, rendering
+`No tags found`. That the harness tests still claim to pass is a property of the `CI_UI_TESTS` gate,
+not of the app.
+
+Reading the reducer instead of the old test: `runDeleteTag`'s `catch` sends `.error(error)` →
+`.toast(error)` and then `.isUpdating(id:isUpdating: false)`. It never sends `.tagDeleted(id)`. So
+the row **stays in the list** and an error toast appears. Nothing empties the list, and no refresh
+is triggered. The journey asserts what actually happens:
 
 1. Create a tag through the UI, named `<namespace>-tag`.
 2. `Fixtures.deleteTag(named:)` removes it server-side as admin.
 3. Swipe-delete the row in the UI and confirm.
-4. Expect `No Tag matches the given query.`
+4. Expect the error toast, and expect the row to still be there.
 
-That is one new fixture helper, not five. `Fixtures` already holds the admin-scoped pattern for
+That the row survives is the assertion worth having — it is the app declining to lie about a delete
+that failed. The toast's text is `error.localizedDescription` from a paperless 404 and is too
+brittle to match on, so the toast is found by identifier.
+
+**This is the first accessibility identifier the rework has needed.** `ToastView` carries none, and
+its `Text(toast.message)` is not distinguishable from any other label on screen. It gets
+`.accessibilityElement(children: .contain)` and `.accessibilityIdentifier("Toast")` — a change to
+the view, as the parent spec directs, rather than a brittle query in the test.
+
+The fixture side is one new helper, not five. `Fixtures` already holds the admin-scoped pattern for
 custom fields and `withAdminDependencies` is already public; admin is a superuser and can delete an
 object the test user owns.
 
@@ -188,8 +205,9 @@ generate --no-open`.
 **Journey 10 pins one entity.** If the conflict surface turns out to be entity-specific, four
 entities lose coverage they have today. The parent spec accepted this explicitly — "If it turns out
 to be entity-specific, that is a reducer concern" — and it is the one real coverage risk in the
-slice. Accepted, and recorded here so the next failure of that shape is recognised rather than
-re-diagnosed.
+slice. It is smaller than it looks: the four tests being retired assert an empty-state string the
+app stopped rendering, so what they cover today is less than their names suggest. Accepted, and
+recorded here so the next failure of that shape is recognised rather than re-diagnosed.
 
 **Folding five journeys into one file makes a shared-helper regression a five-test failure.** That
 is the intended trade: the alternative is five files that drift. Step 2 lands the refactor with the
