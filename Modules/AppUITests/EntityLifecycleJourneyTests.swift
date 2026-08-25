@@ -12,6 +12,14 @@ final class EntityLifecycleJourneyTests: UITestCase {
         runLifecycle(for: .documentType, section: "Document types")
     }
 
+    func testStoragePathLifecycle() async throws {
+        runLifecycle(for: .storagePath, section: "Storage paths") { list in
+            // Paperless rejects a storage path with no path, so this one is required rather than
+            // decorative - create() returns false without it.
+            list.type("/home/paperless/\(user.namespace)", into: "Path")
+        }
+    }
+
     func testTagLifecycle() async throws {
         runLifecycle(for: .tag, section: "Tags")
     }
