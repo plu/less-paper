@@ -86,8 +86,7 @@ public extension Module {
                     )
                 )
             ]
-        case .documentsApp,
-             .shareApp:
+        case .shareApp:
             [
                 .scheme(
                     name: rawValue,
@@ -118,7 +117,6 @@ public extension Module {
              .correspondentsFeatureTests,
              .customFieldsFeatureTests,
              .documentTypesFeatureTests,
-             .documentsAppTests,
              .documentsFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
@@ -150,8 +148,6 @@ extension Module {
      */
     private var featureAppTestTargets: [TestableTarget] {
         switch self {
-        case .documentsApp:
-            [.testableTarget(target: .target(.documentsAppTests))]
         case .shareApp:
             [.testableTarget(target: .target(.shareAppTests))]
         default:

@@ -39,8 +39,6 @@ public enum Module: String, CaseIterable {
     case customFieldsFeatureTests = "CustomFieldsFeatureTests"
     case documentTypesFeature = "DocumentTypesFeature"
     case documentTypesFeatureTests = "DocumentTypesFeatureTests"
-    case documentsApp = "DocumentsApp"
-    case documentsAppTests = "DocumentsAppTests"
     case documentsFeature = "DocumentsFeature"
     case documentsFeatureTests = "DocumentsFeatureTests"
     case imageFeature = "ImageFeature"
@@ -146,8 +144,6 @@ extension Module {
              .correspondentsFeatureTests,
              .customFieldsFeatureTests,
              .documentTypesFeatureTests,
-             .documentsApp,
-             .documentsAppTests,
              .documentsFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
@@ -205,7 +201,6 @@ extension Module {
     var product: Product {
         switch self {
         case .app,
-             .documentsApp,
              .shareApp:
             .app
         case .apiImplementation,
@@ -252,7 +247,6 @@ extension Module {
              .tagsFeatureTests:
             .unitTests
         case .appUITests,
-             .documentsAppTests,
              .shareAppTests:
             .uiTests
         case .shareExtension:

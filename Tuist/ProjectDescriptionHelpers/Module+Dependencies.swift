@@ -206,22 +206,6 @@ extension Module {
                 .target(.documentTypesFeature),
                 .target(.testSupport),
             ]
-        case .documentsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.documentsFeature)
-            ]
-        case .documentsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.documentsApp),
-                .target(.documentsFeature),
-            ]
         case .documentsFeature:
             [
                 .external(.composableArchitecture),
