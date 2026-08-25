@@ -107,6 +107,16 @@ public struct SettingListView: View {
                 }
 
                 Section {
+                    Link(destination: Self.repositoryUrl) {
+                        Label {
+                            Text(.github)
+                                .foregroundStyle(Color.m3OnSurface)
+                        } icon: {
+                            Image(systemName: "chevron.left.forwardslash.chevron.right")
+                        }
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
                     NavigationLink(
                         state: SettingListReducer.Path.State.licenseList(LicenseListReducer.State())
                     ) {
@@ -162,6 +172,8 @@ public struct SettingListView: View {
 
     @Bindable
     public var store: StoreOf<SettingListReducer>
+
+    private static let repositoryUrl = URL(string: "https://github.com/plu/less-paper")!
 }
 
 #Preview {
