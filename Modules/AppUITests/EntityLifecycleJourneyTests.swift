@@ -8,6 +8,10 @@ final class EntityLifecycleJourneyTests: UITestCase {
         runLifecycle(for: .correspondent, section: "Correspondents")
     }
 
+    func testDocumentTypeLifecycle() async throws {
+        runLifecycle(for: .documentType, section: "Document types")
+    }
+
     func testTagLifecycle() async throws {
         runLifecycle(for: .tag, section: "Tags")
     }
