@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Run UI tests"
+set -euo pipefail
+tuist install
+
+# AppUITests and ShareAppTests only. These boot a simulator and drive the real app against the
+# paperless-ngx container, so they are the bulk of the execution time and the only part that needs
+# the container running. Which branches and pull requests run them is decided in ci.yml, not here.
+"$MISE_PROJECT_ROOT/mise/scripts/run_tests.sh" test-ui.xcresult --skip-unit-tests
