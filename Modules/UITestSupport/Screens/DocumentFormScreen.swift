@@ -43,6 +43,24 @@ public struct DocumentFormScreen {
         return app.staticTexts["Edit document"].waitForExistence(timeout: timeout)
     }
 
+    // The titled variant, for a journey that uploaded its own document and must not edit whichever
+    // corpus document happens to sort first.
+    @discardableResult
+    public func open(documentTitled title: String) -> Bool {
+        let list = DocumentListScreen(app: app, timeout: timeout)
+        guard list.open(), list.open(documentTitled: title) else {
+            return false
+        }
+
+        let edit = app.navigationBars.buttons["Edit"].firstMatch
+        guard edit.waitUntilHittable(timeout: timeout) else {
+            return false
+        }
+        edit.tap()
+
+        return app.staticTexts["Edit document"].waitForExistence(timeout: timeout)
+    }
+
     // "More options" is the sheet's section menu. "More actions" is the document list's toolbar
     // button, which sits behind the sheet in the same corner — matching that one taps through to
     // roughly the right place and passes by luck, until a different screen geometry moves it.

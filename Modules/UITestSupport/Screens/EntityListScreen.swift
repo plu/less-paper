@@ -12,6 +12,12 @@ public struct EntityListScreen {
             edit: "Edit correspondent"
         )
 
+        public static let customField = Self(
+            add: "Add custom field",
+            delete: "Delete custom field",
+            edit: "Edit custom field"
+        )
+
         public static let documentType = Self(
             add: "Add document type",
             delete: "Delete document type",
@@ -131,12 +137,7 @@ public struct EntityListScreen {
         guard element.waitForExistence(timeout: timeout) else {
             return false
         }
-        // Tapping the centre of a field that already holds text drops the caret between whichever
-        // two characters sit under the midpoint, so an appended suffix lands inside the value:
-        // editing uit-6dda3227-document-types produced uit-6dda3227-document Updated-types. The
-        // trailing edge is past the last glyph, which is where an append has to start. An empty
-        // field focuses at position 0 either way.
-        element.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        element.tapAfterExistingText()
         app.typeText(text)
         return true
     }

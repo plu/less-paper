@@ -167,23 +167,6 @@ extension Module {
                 .target(.correspondentsFeature),
                 .target(.testSupport),
             ]
-        case .customFieldsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.customFieldsFeature)
-            ]
-        case .customFieldsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.customFieldsApp),
-                .target(.customFieldsFeature),
-                .target(.uiTestSupport),
-            ]
         case .customFieldsFeature:
             [
                 .external(.composableArchitecture),
@@ -222,22 +205,6 @@ extension Module {
                 .target(.components),
                 .target(.documentTypesFeature),
                 .target(.testSupport),
-            ]
-        case .documentsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.documentsFeature)
-            ]
-        case .documentsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.documentsApp),
-                .target(.documentsFeature),
             ]
         case .documentsFeature:
             [
@@ -359,23 +326,6 @@ extension Module {
                 .target(.components),
                 .target(.savedViewsFeature),
                 .target(.testSupport),
-            ]
-        case .serversApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.serversFeature),
-            ]
-        case .serversAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.serversApp),
-                .target(.serversFeature),
-                .target(.uiTestSupport),
             ]
         case .serversFeature:
             [

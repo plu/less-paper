@@ -70,10 +70,7 @@ extension Module {
                     "NSExtensionPrincipalClass": "$(PRODUCT_MODULE_NAME).ShareViewController",
                 ],
             ])
-        case .customFieldsApp,
-             .documentsApp,
-             .serversApp,
-             .shareApp:
+        case .shareApp:
             .extendingDefault(with: [
                 "CFBundleDisplayName": .string(rawValue.replacingOccurrences(of: "App", with: "")),
                 "CFBundleLocalizations": [

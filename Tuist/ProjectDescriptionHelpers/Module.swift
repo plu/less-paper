@@ -35,14 +35,10 @@ public enum Module: String, CaseIterable {
     case componentsTests = "ComponentsTests"
     case correspondentsFeature = "CorrespondentsFeature"
     case correspondentsFeatureTests = "CorrespondentsFeatureTests"
-    case customFieldsApp = "CustomFieldsApp"
-    case customFieldsAppTests = "CustomFieldsAppTests"
     case customFieldsFeature = "CustomFieldsFeature"
     case customFieldsFeatureTests = "CustomFieldsFeatureTests"
     case documentTypesFeature = "DocumentTypesFeature"
     case documentTypesFeatureTests = "DocumentTypesFeatureTests"
-    case documentsApp = "DocumentsApp"
-    case documentsAppTests = "DocumentsAppTests"
     case documentsFeature = "DocumentsFeature"
     case documentsFeatureTests = "DocumentsFeatureTests"
     case imageFeature = "ImageFeature"
@@ -55,8 +51,6 @@ public enum Module: String, CaseIterable {
     case permissionsFeatureTests = "PermissionsFeatureTests"
     case savedViewsFeature = "SavedViewsFeature"
     case savedViewsFeatureTests = "SavedViewsFeatureTests"
-    case serversApp = "ServersApp"
-    case serversAppTests = "ServersAppTests"
     case serversFeature = "ServersFeature"
     case serversFeatureTests = "ServersFeatureTests"
     case settingsFeature = "SettingsFeature"
@@ -148,20 +142,14 @@ extension Module {
              .certificatesFeatureTests,
              .componentsTests,
              .correspondentsFeatureTests,
-             .customFieldsApp,
-             .customFieldsAppTests,
              .customFieldsFeatureTests,
              .documentTypesFeatureTests,
-             .documentsApp,
-             .documentsAppTests,
              .documentsFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
              .savedViewsFeatureTests,
-             .serversApp,
-             .serversAppTests,
              .serversFeatureTests,
              .settingsFeatureTests,
              .shareApp,
@@ -188,7 +176,6 @@ extension Module {
     var entitlements: ProjectDescription.Entitlements? {
         switch self {
         case .app,
-             .serversApp,
              .shareApp,
              .shareExtension:
             .dictionary([
@@ -214,9 +201,6 @@ extension Module {
     var product: Product {
         switch self {
         case .app,
-             .customFieldsApp,
-             .documentsApp,
-             .serversApp,
              .shareApp:
             .app
         case .apiImplementation,
@@ -263,9 +247,6 @@ extension Module {
              .tagsFeatureTests:
             .unitTests
         case .appUITests,
-             .customFieldsAppTests,
-             .documentsAppTests,
-             .serversAppTests,
              .shareAppTests:
             .uiTests
         case .shareExtension:

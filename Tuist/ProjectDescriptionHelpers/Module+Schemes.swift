@@ -86,10 +86,7 @@ public extension Module {
                     )
                 )
             ]
-        case .customFieldsApp,
-             .documentsApp,
-             .serversApp,
-             .shareApp:
+        case .shareApp:
             [
                 .scheme(
                     name: rawValue,
@@ -118,17 +115,14 @@ public extension Module {
              .certificatesFeatureTests,
              .componentsTests,
              .correspondentsFeatureTests,
-             .customFieldsAppTests,
              .customFieldsFeatureTests,
              .documentTypesFeatureTests,
-             .documentsAppTests,
              .documentsFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
              .savedViewsFeatureTests,
-             .serversAppTests,
              .serversFeatureTests,
              .settingsFeatureTests,
              .shareAppTests,
@@ -154,12 +148,6 @@ extension Module {
      */
     private var featureAppTestTargets: [TestableTarget] {
         switch self {
-        case .customFieldsApp:
-            [.testableTarget(target: .target(.customFieldsAppTests))]
-        case .documentsApp:
-            [.testableTarget(target: .target(.documentsAppTests))]
-        case .serversApp:
-            [.testableTarget(target: .target(.serversAppTests))]
         case .shareApp:
             [.testableTarget(target: .target(.shareAppTests))]
         default:

@@ -5,6 +5,7 @@ public struct PDFKitView: UIViewRepresentable {
 
     public func makeUIView(context _: Context) -> PDFView {
         let view = PDFView(data: data)
+        view.accessibilityIdentifier = "PDF"
         view.backgroundColor = backgroundColor
         view.displayDirection = displayDirection
         return view
