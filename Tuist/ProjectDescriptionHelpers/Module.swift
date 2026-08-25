@@ -53,8 +53,6 @@ public enum Module: String, CaseIterable {
     case pdfPasswordsFeatureTests = "PdfPasswordsFeatureTests"
     case permissionsFeature = "PermissionsFeature"
     case permissionsFeatureTests = "PermissionsFeatureTests"
-    case savedViewsApp = "SavedViewsApp"
-    case savedViewsAppTests = "SavedViewsAppTests"
     case savedViewsFeature = "SavedViewsFeature"
     case savedViewsFeatureTests = "SavedViewsFeatureTests"
     case serversApp = "ServersApp"
@@ -161,8 +159,6 @@ extension Module {
              .licensesFeatureTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
-             .savedViewsApp,
-             .savedViewsAppTests,
              .savedViewsFeatureTests,
              .serversApp,
              .serversAppTests,
@@ -220,7 +216,6 @@ extension Module {
         case .app,
              .customFieldsApp,
              .documentsApp,
-             .savedViewsApp,
              .serversApp,
              .shareApp:
             .app
@@ -270,7 +265,6 @@ extension Module {
         case .appUITests,
              .customFieldsAppTests,
              .documentsAppTests,
-             .savedViewsAppTests,
              .serversAppTests,
              .shareAppTests:
             .uiTests

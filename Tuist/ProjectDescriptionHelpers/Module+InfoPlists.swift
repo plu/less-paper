@@ -72,7 +72,6 @@ extension Module {
             ])
         case .customFieldsApp,
              .documentsApp,
-             .savedViewsApp,
              .serversApp,
              .shareApp:
             .extendingDefault(with: [

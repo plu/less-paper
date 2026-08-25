@@ -88,7 +88,6 @@ public extension Module {
             ]
         case .customFieldsApp,
              .documentsApp,
-             .savedViewsApp,
              .serversApp,
              .shareApp:
             [
@@ -128,7 +127,6 @@ public extension Module {
              .licensesFeatureTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
-             .savedViewsAppTests,
              .savedViewsFeatureTests,
              .serversAppTests,
              .serversFeatureTests,
@@ -160,8 +158,6 @@ extension Module {
             [.testableTarget(target: .target(.customFieldsAppTests))]
         case .documentsApp:
             [.testableTarget(target: .target(.documentsAppTests))]
-        case .savedViewsApp:
-            [.testableTarget(target: .target(.savedViewsAppTests))]
         case .serversApp:
             [.testableTarget(target: .target(.serversAppTests))]
         case .shareApp:

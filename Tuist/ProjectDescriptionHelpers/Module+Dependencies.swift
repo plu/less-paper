@@ -340,23 +340,6 @@ extension Module {
                 .target(.permissionsFeature),
                 .target(.testSupport),
             ]
-        case .savedViewsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.savedViewsFeature)
-            ]
-        case .savedViewsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.savedViewsApp),
-                .target(.savedViewsFeature),
-                .target(.uiTestSupport),
-            ]
         case .savedViewsFeature:
             [
                 .external(.composableArchitecture),
