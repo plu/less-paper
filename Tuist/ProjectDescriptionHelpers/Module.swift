@@ -28,6 +28,7 @@ public enum Module: String, CaseIterable {
     case app = "App"
     case appFeature = "AppFeature"
     case appFeatureTests = "AppFeatureTests"
+    case appUITests = "AppUITests"
     case certificatesFeature = "CertificatesFeature"
     case certificatesFeatureTests = "CertificatesFeatureTests"
     case components = "Components"
@@ -77,8 +78,6 @@ public enum Module: String, CaseIterable {
     case storagePathsAppTests = "StoragePathsAppTests"
     case storagePathsFeature = "StoragePathsFeature"
     case storagePathsFeatureTests = "StoragePathsFeatureTests"
-    case tagsApp = "TagsApp"
-    case tagsAppTests = "TagsAppTests"
     case tagsFeature = "TagsFeature"
     case tagsFeatureTests = "TagsFeatureTests"
     case testSupport = "TestSupport"
@@ -155,6 +154,7 @@ extension Module {
              .apiTestSupport,
              .app,
              .appFeatureTests,
+             .appUITests,
              .certificatesFeatureTests,
              .componentsTests,
              .correspondentsApp,
@@ -189,8 +189,6 @@ extension Module {
              .storagePathsApp,
              .storagePathsAppTests,
              .storagePathsFeatureTests,
-             .tagsApp,
-             .tagsAppTests,
              .tagsFeatureTests,
              .testSupport,
              .uiTestSupport:
@@ -245,8 +243,7 @@ extension Module {
              .serversApp,
              .settingsApp,
              .shareApp,
-             .storagePathsApp,
-             .tagsApp:
+             .storagePathsApp:
             .app
         case .apiImplementation,
              .apiInterface,
@@ -291,7 +288,8 @@ extension Module {
              .storagePathsFeatureTests,
              .tagsFeatureTests:
             .unitTests
-        case .correspondentsAppTests,
+        case .appUITests,
+             .correspondentsAppTests,
              .customFieldsAppTests,
              .documentTypesAppTests,
              .documentsAppTests,
@@ -299,8 +297,7 @@ extension Module {
              .serversAppTests,
              .settingsAppTests,
              .shareAppTests,
-             .storagePathsAppTests,
-             .tagsAppTests:
+             .storagePathsAppTests:
             .uiTests
         case .shareExtension:
             .appExtension

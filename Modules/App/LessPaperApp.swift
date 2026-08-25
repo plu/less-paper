@@ -1,3 +1,4 @@
+import ApiImplementation
 import ApiInterface
 import AppFeature
 import ComposableArchitecture
@@ -14,6 +15,11 @@ struct LessPaperApp: App {
     }
 
     init() {
+        #if DEBUG
+        if let configuration = UITestConfiguration.fromEnvironment() {
+            prepareUITestDependencies(configuration)
+        }
+        #endif
         Self.store.send(.bootstrap)
     }
 

@@ -49,6 +49,14 @@ extension Module {
                 .target(.settingsFeature),
                 .target(.testSupport),
             ]
+        case .appUITests:
+            [
+                .external(.dependencies),
+                .target(.apiImplementation),
+                .target(.apiInterface),
+                .target(.app),
+                .target(.uiTestSupport),
+            ]
         case .apiImplementation:
             [
                 .external(.asyncAlgorithms),
@@ -577,23 +585,6 @@ extension Module {
                 .target(.storagePathsFeature),
                 .target(.testSupport),
             ]
-        case .tagsApp:
-            [
-                .external(.composableArchitecture),
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.tagsFeature)
-            ]
-        case .tagsAppTests:
-            [
-                .external(.dependencies),
-                .target(.apiImplementation),
-                .target(.apiInterface),
-                .target(.tagsApp),
-                .target(.tagsFeature),
-                .target(.uiTestSupport),
-            ]
         case .tagsFeature:
             [
                 .external(.composableArchitecture),
@@ -620,7 +611,11 @@ extension Module {
                 .external(.snapshotTesting),
             ]
         case .uiTestSupport:
-            []
+            [
+                .external(.dependencies),
+                .target(.apiImplementation),
+                .target(.apiInterface),
+            ]
         }
     }
 }

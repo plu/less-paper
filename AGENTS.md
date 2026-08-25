@@ -103,3 +103,25 @@ guard await presentConfirmation(.deleteTag, name) else {
 
 Reach for that first. Write a presenter of your own only when the popup needs custom content, as
 `DocumentBulkEditConfirmationPresenter` does.
+
+## UI tests never mutate global server state
+
+UI tests live in `AppUITests` and drive the real app against the paperless-ngx container in
+`docker/`. Each test creates its own Paperless user, so every tag, correspondent, document type,
+storage path and saved view it creates is owned by that user and invisible to every other test. The
+list a test opens starts empty.
+
+**Never write a helper that deletes all of something.** `deleteAllTags()` and its kind are why the
+old per-feature harness suites could not run in parallel, and they are gone.
+
+Two exceptions, both probed against paperless-ngx 3.0.5:
+
+- **Custom fields have no owner** and are global — every user sees every custom field. Namespace
+  them by name (`uit-<id>-<label>`) and never assert on the total count of the custom field list.
+- **Documents consumed from `docker/consume/` have no owner** and form a shared read-only corpus.
+  Read from it freely; a test that needs to *modify* a document must upload its own first.
+
+Tests always launch with a `UITestConfiguration`, even the onboarding journey that starts without a
+server. Launching with no configuration at all would let the app read whatever `servers.json` the
+simulator happens to hold, which is how a developer machine and a clean CI runner end up
+disagreeing.

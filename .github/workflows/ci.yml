@@ -53,6 +53,18 @@ jobs:
           # for anything about to ship to TestFlight, and for PRs that ask for them.
           CI_UI_TESTS: ${{ github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'TestFlight') || contains(github.event.pull_request.labels.*.name, 'UITests') }}
 
+      # A failing XCUITest records the app's accessibility hierarchy and a video at the moment it
+      # gave up. Without the bundle a UI failure reports only which assertion failed, which is
+      # rarely enough to tell a wrong query from a real regression.
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test.xcresult
+          retention-days: 7
+          if-no-files-found: ignore
+
       - run: mise ci:cache
         if: github.ref == 'refs/heads/main'
 

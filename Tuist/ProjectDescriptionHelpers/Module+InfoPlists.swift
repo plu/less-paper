@@ -78,8 +78,7 @@ extension Module {
              .serversApp,
              .settingsApp,
              .shareApp,
-             .storagePathsApp,
-             .tagsApp:
+             .storagePathsApp:
             .extendingDefault(with: [
                 "CFBundleDisplayName": .string(rawValue.replacingOccurrences(of: "App", with: "")),
                 "CFBundleLocalizations": [

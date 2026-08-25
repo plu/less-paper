@@ -20,7 +20,11 @@ test_exit_code=$?
 set -e
 
 if [ -d test.xcresult ]; then
-  summary=$(xcresultparser --output-format github --failed-tests-only test.xcresult)
+  # xcresultparser's github format wraps every line in $\textcolor{…}{\text{…}}$ and then forgets
+  # to close the wrapper on failure-message lines, so GitHub tries to render the one line that
+  # matters as maths and prints it raw. Stripping the wrapper leaves plain, readable markdown.
+  summary=$(xcresultparser --output-format github --failed-tests-only test.xcresult \
+    | sed -E 's/\$\\textcolor\{[a-z]+\}\{\\text\{//g; s/\}\}\$//g')
   echo "$summary"
   if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
     echo "$summary" >> "$GITHUB_STEP_SUMMARY"

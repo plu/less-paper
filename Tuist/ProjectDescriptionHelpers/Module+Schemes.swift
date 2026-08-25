@@ -25,7 +25,9 @@ public extension Module {
                         targets: [.target(self)]
                     ),
                     testAction: .targets(
-                        Module.allTestableTargets,
+                        Module.allTestableTargets + [
+                            .testableTarget(target: .target(.appUITests))
+                        ],
                         arguments: .arguments(environmentVariables: .default),
                         options: .options(
                             language: .init(identifier: "en"),
@@ -92,8 +94,7 @@ public extension Module {
              .serversApp,
              .settingsApp,
              .shareApp,
-             .storagePathsApp,
-             .tagsApp:
+             .storagePathsApp:
             [
                 .scheme(
                     name: rawValue,
@@ -118,6 +119,7 @@ public extension Module {
              .apiInterfaceTests,
              .apiTestSupport,
              .appFeatureTests,
+             .appUITests,
              .certificatesFeatureTests,
              .componentsTests,
              .correspondentsAppTests,
@@ -142,7 +144,6 @@ public extension Module {
              .shareFeatureTests,
              .storagePathsAppTests,
              .storagePathsFeatureTests,
-             .tagsAppTests,
              .tagsFeatureTests,
              .testSupport,
              .uiTestSupport:
@@ -181,8 +182,6 @@ extension Module {
             [.testableTarget(target: .target(.shareAppTests))]
         case .storagePathsApp:
             [.testableTarget(target: .target(.storagePathsAppTests))]
-        case .tagsApp:
-            [.testableTarget(target: .target(.tagsAppTests))]
         default:
             []
         }
