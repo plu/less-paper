@@ -6,8 +6,11 @@ import enum ProjectDescription.Environment
 import struct ProjectDescription.PackageSettings
 import enum ProjectDescriptionHelpers.Dependency
 
+// CasePathsMacrosSupport arrived in swift-case-paths 1.9.0 as a plain library target that the
+// CasePaths and SwiftNavigation macros link against. Tuist refuses a Swift Macro target that
+// depends on a dynamic framework, so this one has to stay static.
 let packageSettings = PackageSettings(
-    productTypes: Dependency.productTypes,
+    productTypes: Dependency.productTypes.merging(["CasePathsMacrosSupport": .staticFramework]) { $1 },
     targetSettings: [
         "ComposableArchitecture": .settings(base: [
             "OTHER_SWIFT_FLAGS": ["-module-alias", "Sharing=SwiftSharing"]
