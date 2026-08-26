@@ -278,6 +278,18 @@ extension Module {
                 .target(.licensesFeature),
                 .target(.testSupport),
             ]
+        case .marketingKit:
+            [
+                .target(.components),
+            ]
+        case .marketingKitTests:
+            [
+                .external(.dependenciesTestSupport),
+                .external(.snapshotTesting),
+                .target(.apiInterface),
+                .target(.marketingKit),
+                .target(.testSupport),
+            ]
         case .pdfPasswordsFeature:
             [
                 .external(.composableArchitecture),
