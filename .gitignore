@@ -89,3 +89,4 @@ fastlane/screenshots/**/*.png
 fastlane/screenshots/**/*.jpg
 fastlane/screenshots/fonts/
 fastlane/screenshots/background.png
+fastlane/screenshots/screenshots.html
