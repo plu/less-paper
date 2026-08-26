@@ -78,9 +78,7 @@ final class SnapshotTests: XCTestCase {
 
     func testSettings() {
         let app = launch()
-        let settings = app.tabBars.buttons[labels.settings]
-        XCTAssertTrue(settings.waitUntilHittable(timeout: timeout), "Could not open the Settings tab")
-        settings.tap()
+        XCTAssertTrue(tapTab(labels.settings, in: app), "Could not open the Settings tab")
         XCTAssertTrue(
             app.staticTexts[labels.servers].waitForExistence(timeout: timeout),
             "Settings never listed its sections"
@@ -116,12 +114,21 @@ final class SnapshotTests: XCTestCase {
     }
 
     private func openDocuments(in app: XCUIApplication) -> Bool {
-        let tab = app.tabBars.buttons[labels.documents]
+        guard tapTab(labels.documents, in: app) else {
+            return false
+        }
+        return app.cells.firstMatch.waitForExistence(timeout: timeout)
+    }
+
+    // Not app.tabBars: iPadOS renders the tabs as a segmented bar along the top, which is not a tab
+    // bar element, so a tab bar lookup finds nothing there. A plain button matches on both.
+    private func tapTab(_ label: String, in app: XCUIApplication) -> Bool {
+        let tab = app.buttons[label].firstMatch
         guard tab.waitUntilHittable(timeout: timeout) else {
             return false
         }
         tab.tap()
-        return app.cells.firstMatch.waitForExistence(timeout: timeout)
+        return true
     }
 
     private func openFilter(in app: XCUIApplication) -> Bool {
