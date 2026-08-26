@@ -39,9 +39,7 @@ struct SnapshotLabels {
         servers: "Server",
         settings: "Einstellungen",
         tag: "Tag",
-        // Reads "Title & Inhalt" in the catalog - half translated, and copied here as it is so the
-        // capture matches what the app renders rather than what it should say.
-        titleAndContent: "Title & Inhalt"
+        titleAndContent: "Titel & Inhalt"
     )
 
     let documents: String
