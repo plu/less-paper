@@ -8,6 +8,12 @@ set -euo pipefail
 bundle="$1"
 shift
 
+# xcodebuild refuses to write over an existing result bundle — "Existing file at
+# -resultBundlePath" — and errors out before running a single test. In CI `ci:clean` has already
+# removed the last one, but locally the second run of a task would otherwise fail while still
+# leaving the previous bundle behind for anyone inspecting it afterwards.
+rm -rf "$bundle"
+
 set +e
 tuist test -d "iPhone 17 Pro" --clean "$@" -T "$bundle" -- -testLanguage en -testRegion DE
 test_exit_code=$?
