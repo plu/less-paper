@@ -47,6 +47,22 @@ platform :ios do
     screenshots
     frame
   end
+
+  # Metadata only. The build still ships through altool in mise/tasks/ci/upload, so this cannot
+  # replace or race a release.
+  desc "Upload the framed screenshots to App Store Connect"
+  lane :upload_screenshots do
+    deliver(
+      app_identifier: "com.aptumtek.app.Paperless",
+      overwrite_screenshots: true,
+      screenshots_path: SCREENSHOTS,
+      skip_app_version_update: true,
+      skip_binary_upload: true,
+      skip_metadata: false,
+      skip_screenshots: false,
+      sync_screenshots: true
+    )
+  end
 end
 
 # Impact and Arial ship with macOS. frameit resolves a font path relative to the Framefile, so they

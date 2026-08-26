@@ -194,3 +194,34 @@ GIT_TERMINAL_PROMPT=0 mise exec -- fnox exec -- git \
 When every call starts returning `403`, the PAT has expired. Re-mint it at
 <https://github.com/settings/personal-access-tokens> and store it with
 `cd ~ && fnox set --global GH_TOKEN`.
+
+## App Store screenshots run on fixtures, never a server
+
+`mise run screenshots:capture` drives the real app through the seven App Store screens on every
+device and language Apple requires, then frames them. It needs no paperless instance: the app is
+launched with `SNAPSHOT_MODE=true`, which swaps the API use cases for the payloads in
+`Screenshots/Fixtures` and the thumbnails in `Screenshots/Thumbnails`.
+
+Those fixtures are the raw API responses, downloaded once from a seeded instance by
+`mise run screenshots:fixtures -- --url <instance>`. **Re-fetch them rather than editing them** —
+they are the seed's output, and hand-edits are lost on the next fetch. Something the fixtures should
+show but the seed does not is a change to `docker/seed/seed.json`, followed by a re-seed and a
+re-fetch.
+
+Both are read from the repository, not bundled, so nothing screenshot-shaped ships in a release
+build. That limits screenshot mode to a simulator, which is where it runs.
+
+What each language shows is curated in `SnapshotCorpus`: the German screenshots show German
+paperwork — utility bills, a bank statement, a tax office — rather than the English documents behind
+translated chrome. `SnapshotNames` renames tags, document types and storage paths to match.
+
+Three things about frameit that are easy to lose an afternoon to, all handled in `fastlane/Fastfile`:
+
+- **The output canvas takes its aspect ratio from the background image.** A background of the wrong
+  shape silently produces an image App Store Connect rejects, and the image looks fine until it is
+  refused. One background is generated per device size on every run.
+- **Font paths in `Framefile.json` resolve relative to the Framefile**, so an absolute `/System`
+  path is read as a path inside the screenshots directory and every caption is dropped without an
+  error that says so.
+- **The frame library lags the simulators.** Captures are renamed to the nearest frame with the same
+  screen size before framing.
