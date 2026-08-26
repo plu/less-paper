@@ -1,6 +1,6 @@
 {
   "default": {
-    "background": "./background.png",
+    "background": "./background-iphone.png",
     "keyword": {
       "color": "#BA1A1A",
       "font": "./fonts/Impact.ttf",
@@ -16,5 +16,14 @@
     "stack_title": true,
     "title_min_height": "12%"
   },
-  "data": []
+  "data": [
+    {
+      "filter": "iPhone",
+      "background": "./background-iphone.png"
+    },
+    {
+      "filter": "iPad",
+      "background": "./background-ipad.png"
+    }
+  ]
 }
