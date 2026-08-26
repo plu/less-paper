@@ -1,5 +1,18 @@
 default_platform(:ios)
 
+# Anchored to this file: fastlane runs `sh` from the directory holding the Fastfile, so a path
+# relative to the repository root would resolve one level too deep.
+SCREENSHOTS = File.expand_path("screenshots", __dir__)
+
+# The simulators available here are newer than frameit's frame library, which stops at iPhone 16
+# and iPad Pro 12.9". Each capture device is mapped to a frame whose screen is the same size, so
+# the frame fits exactly and the output stays a size the App Store accepts.
+FRAMES = {
+  "iPhone 17 Pro Max" => { frame: "iPhone 16 Pro Max", size: "1320x2868" }
+}
+
+BACKGROUND = "#E9EFED".freeze
+
 platform :ios do
   desc "Capture the App Store screenshots on every required device and language"
   lane :screenshots do
@@ -8,15 +21,48 @@ platform :ios do
 
   desc "Add the device frame and captions to the captured screenshots"
   lane :frame do
-    frameit(
-      silver: true,
-      path: "./fastlane/screenshots"
-    )
+    link_fonts
+    rename_to_framed_devices
+    write_background
+    frameit(silver: true, path: SCREENSHOTS)
   end
 
   desc "Capture and frame in one go"
   lane :screenshots_framed do
     screenshots
     frame
+  end
+end
+
+# Impact and Arial ship with macOS. frameit resolves a font path relative to the Framefile, so they
+# are linked in rather than referenced absolutely - and linked rather than copied, because neither
+# is ours to redistribute.
+def link_fonts
+  fonts = File.join(SCREENSHOTS, "fonts")
+  FileUtils.mkdir_p(fonts)
+  {
+    "Impact.ttf" => "/System/Library/Fonts/Supplemental/Impact.ttf",
+    "ArialBold.ttf" => "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
+  }.each do |name, source|
+    destination = File.join(fonts, name)
+    FileUtils.ln_sf(source, destination) unless File.symlink?(destination)
+  end
+end
+
+def rename_to_framed_devices
+  FRAMES.each do |captured, target|
+    Dir.glob(File.join(SCREENSHOTS, "*", "#{captured}-*.png")).each do |path|
+      renamed = path.sub("#{captured}-", "#{target[:frame]}-")
+      File.rename(path, renamed)
+    end
+  end
+end
+
+# frameit takes the output canvas from the background's aspect ratio, so a background of the wrong
+# shape silently produces an image the App Store rejects. One background per device size, written
+# fresh each run.
+def write_background
+  FRAMES.each_value do |target|
+    sh("magick -size #{target[:size]} xc:'#{BACKGROUND}' #{File.join(SCREENSHOTS, 'background.png')}")
   end
 end

@@ -3,12 +3,12 @@
     "background": "./background.png",
     "keyword": {
       "color": "#BA1A1A",
-      "font": "/System/Library/Fonts/Supplemental/Impact.ttf",
+      "font": "./fonts/Impact.ttf",
       "font_size": 0
     },
     "title": {
       "color": "#006A65",
-      "font": "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+      "font": "./fonts/ArialBold.ttf",
       "font_size": 0
     },
     "padding": 60,
