@@ -58,6 +58,10 @@ platform :ios do
   # on the listing.
   desc "Upload the framed screenshots to App Store Connect"
   lane :upload_screenshots do
+    # sync_screenshots below is a beta deliver feature and refuses to run without this
+    # acknowledgement. Set here rather than in the task so the lane works from any entry point.
+    ENV["FASTLANE_ENABLE_BETA_DELIVER_SYNC_SCREENSHOTS"] = "1"
+
     app_store_connect_api_key(
       key_id: ENV.fetch("ASC_KEY_ID"),
       issuer_id: ENV.fetch("ASC_ISSUER_ID"),
@@ -75,11 +79,8 @@ platform :ios do
       skip_app_version_update: true,
       skip_binary_upload: true,
       skip_metadata: true,
-      skip_screenshots: false
-      # Not sync_screenshots: it is a beta deliver feature, gated behind
-      # FASTLANE_ENABLE_BETA_DELIVER_SYNC_SCREENSHOTS, and it refuses to run without that
-      # acknowledgement. overwrite_screenshots clears what is there and uploads these instead,
-      # which is the same end state by a path that is not in beta.
+      skip_screenshots: false,
+      sync_screenshots: true
     )
   end
 end
