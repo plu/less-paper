@@ -211,9 +211,13 @@ re-fetch.
 Both are read from the repository, not bundled, so nothing screenshot-shaped ships in a release
 build. That limits screenshot mode to a simulator, which is where it runs.
 
-What each language shows is curated in `SnapshotCorpus`: the German screenshots show German
-paperwork — utility bills, a bank statement, a tax office — rather than the English documents behind
-translated chrome. `SnapshotNames` renames tags, document types and storage paths to match.
+Both languages show the same documents, curated in `SnapshotCorpus` — the eight with a real PDF in
+`docker/data`. The seed's German paperwork is generated filler, whose thumbnails photograph as a
+blank sheet. `SnapshotNames` translates the tags, document types and storage paths instead, so the
+German screenshots read Möbel and Aufbauanleitung over the same manuals.
+
+`SnapshotCorpus` also decides which thumbnails are worth keeping: `fetch_fixtures.py` downloads only
+the documents it names, and clears the directory first.
 
 Uploading is a **manual GitHub Action**, `Screenshots`, with an `upload` input that defaults to
 false: a run takes the better part of an hour, and uploading rewrites what the App Store shows, so
