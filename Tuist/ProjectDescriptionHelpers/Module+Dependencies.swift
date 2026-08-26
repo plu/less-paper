@@ -23,6 +23,7 @@ extension Module {
                 .target(.appFeature),
                 .target(.serversFeature),
                 .target(.shareExtension),
+                .target(.snapshotSupport),
             ]
         case .appFeature:
             [
@@ -429,6 +430,15 @@ extension Module {
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
                 .target(.testSupport),
+            ]
+        case .snapshotSupport:
+            [
+                .external(.dependencies),
+                .external(.identifiedCollections),
+                .external(.issueReporting),
+                .external(.sharing),
+                .target(.apiInterface),
+                .target(.imageFeature),
             ]
         case .storagePathsFeature:
             [

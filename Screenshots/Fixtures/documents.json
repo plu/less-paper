@@ -1,0 +1,931 @@
+[
+  {
+    "added": "2026-08-26T12:00:26.651153+02:00",
+    "archive_serial_number": 21,
+    "archived_file_name": null,
+    "content": "Kontoauszug Q2 2026\nLess Paper dev fixture - Kontoauszug Q2 2026 - dd244b3fe5cb",
+    "correspondent": 6,
+    "created": "2026-06-30",
+    "created_date": "2026-06-30",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 2,
+    "duplicate_documents": [],
+    "id": 23,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:50.468518+02:00",
+    "notes": [],
+    "original_file_name": "Kontoauszug Q2 2026.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [],
+    "title": "Kontoauszug Q2 2026",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:26.651153Z",
+        "checksum": "99cd413a4bb2f27c6b715950d6f41789e9385c361acea25cb5a4123270d5e775",
+        "id": 23,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T12:00:27.340721+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Unsortiertes Dokument #2\nLess Paper dev fixture - Unsortiertes Dokument #2 - 1073808bf80a",
+    "correspondent": null,
+    "created": "2026-05-02",
+    "created_date": "2026-05-02",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": null,
+    "duplicate_documents": [],
+    "id": 24,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:51.047681+02:00",
+    "notes": [],
+    "original_file_name": "Unsortiertes Dokument #2.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": null,
+    "tags": [],
+    "title": "Unsortiertes Dokument #2",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:27.340721Z",
+        "checksum": "36c2f9894290b781275a699b3bf9fe6d59052de67fdf804f6d7b39fb6d60242f",
+        "id": 24,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T12:00:25.955363+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Telekom Rechnung 2026-04\nLess Paper dev fixture - Telekom Rechnung 2026-04 - 80d5e52081b9",
+    "correspondent": 1,
+    "created": "2026-04-08",
+    "created_date": "2026-04-08",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 3,
+    "duplicate_documents": [],
+    "id": 22,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:49.824043+02:00",
+    "notes": [],
+    "original_file_name": "Telekom Rechnung 2026-04.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [
+      8
+    ],
+    "title": "Telekom Rechnung 2026-04",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:25.955363Z",
+        "checksum": "1e57a0890c3aa5c25d5f8f759cbfda3daf45e3094e7858397b98a24046e228c8",
+        "id": 22,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T12:00:15.122009+02:00",
+    "archive_serial_number": 20,
+    "archived_file_name": null,
+    "content": "Kontoauszug Q1 2026\nLess Paper dev fixture - Kontoauszug Q1 2026 - 86791a749931",
+    "correspondent": 6,
+    "created": "2026-03-31",
+    "created_date": "2026-03-31",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 2,
+    "duplicate_documents": [],
+    "id": 17,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:50.177346+02:00",
+    "notes": [],
+    "original_file_name": "Kontoauszug Q1 2026.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [
+      3
+    ],
+    "title": "Kontoauszug Q1 2026",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:15.122009Z",
+        "checksum": "e841e71199c0c7f04db434887ed955130d164c452bac4dad9047fd7f32bd24f2",
+        "id": 17,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T12:00:20.860706+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Telekom Rechnung 2026-03\nLess Paper dev fixture - Telekom Rechnung 2026-03 - 7be46b189a7a",
+    "correspondent": 1,
+    "created": "2026-03-09",
+    "created_date": "2026-03-09",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 3,
+    "duplicate_documents": [],
+    "id": 19,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:49.497937+02:00",
+    "notes": [],
+    "original_file_name": "Telekom Rechnung 2026-03.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [],
+    "title": "Telekom Rechnung 2026-03",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:20.860706Z",
+        "checksum": "46f4af16733de3f487590f9c701c4b1ef7f3b18a55492f53d65c1b59929b3382",
+        "id": 19,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T12:00:25.243373+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Wasserabrechnung 2026\nLess Paper dev fixture - Wasserabrechnung 2026 - 8e019f27f88e",
+    "correspondent": 9,
+    "created": "2026-02-18",
+    "created_date": "2026-02-18",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 3,
+    "duplicate_documents": [],
+    "id": 21,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:48.617468+02:00",
+    "notes": [],
+    "original_file_name": "Wasserabrechnung 2026.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [
+      3
+    ],
+    "title": "Wasserabrechnung 2026",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:25.243373Z",
+        "checksum": "bcc1a855533b4d5209a3951ba35ed312a24326c11376c4d01d1683b17e3cb70e",
+        "id": 21,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T12:00:20.145276+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Telekom Rechnung 2026-02\nLess Paper dev fixture - Telekom Rechnung 2026-02 - f5802f7c22a6",
+    "correspondent": 1,
+    "created": "2026-02-08",
+    "created_date": "2026-02-08",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 3,
+    "duplicate_documents": [],
+    "id": 18,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:49.208618+02:00",
+    "notes": [],
+    "original_file_name": "Telekom Rechnung 2026-02.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [],
+    "title": "Telekom Rechnung 2026-02",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:20.145276Z",
+        "checksum": "d75f8dc2449d3137184cb8bd304623d01e39087543b53d94c84b9e5ac35e63ba",
+        "id": 18,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T12:00:21.554384+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Telekom Rechnung 2026-01\nLess Paper dev fixture - Telekom Rechnung 2026-01 - e96fd644d2f1",
+    "correspondent": 1,
+    "created": "2026-01-08",
+    "created_date": "2026-01-08",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 3,
+    "duplicate_documents": [],
+    "id": 20,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:48.909802+02:00",
+    "notes": [],
+    "original_file_name": "Telekom Rechnung 2026-01.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [
+      4
+    ],
+    "title": "Telekom Rechnung 2026-01",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:21.554384Z",
+        "checksum": "451278811bd36e4a6345ff7c957ba456fea5b58ac712a1a3598a781ca683f894",
+        "id": 20,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T12:00:30.308583+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Unsortiertes Dokument #1\nLess Paper dev fixture - Unsortiertes Dokument #1 - f917251340a8",
+    "correspondent": null,
+    "created": "2025-07-21",
+    "created_date": "2025-07-21",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": null,
+    "duplicate_documents": [],
+    "id": 25,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:50.759726+02:00",
+    "notes": [],
+    "original_file_name": "Unsortiertes Dokument #1.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": null,
+    "tags": [],
+    "title": "Unsortiertes Dokument #1",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:30.308583Z",
+        "checksum": "593cf52a2a2682ef9d4e44be391d4ef1ad99fb802035e45b7cb872e3c561ffd3",
+        "id": 25,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T12:00:14.440960+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Gasabrechnung 2025\nLess Paper dev fixture - Gasabrechnung 2025 - af58f92cb055",
+    "correspondent": 9,
+    "created": "2025-04-10",
+    "created_date": "2025-04-10",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 3,
+    "duplicate_documents": [],
+    "id": 16,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:48.317805+02:00",
+    "notes": [],
+    "original_file_name": "Gasabrechnung 2025.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [],
+    "title": "Gasabrechnung 2025",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T10:00:14.440960Z",
+        "checksum": "a98dc56681876bc153c7108f476d6cf3e274592598db2265cccfb5b00516bf69",
+        "id": 16,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:55:08.000624+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Stromabrechnung 2025\nLess Paper dev fixture - Stromabrechnung 2025 - 4914642744ac",
+    "correspondent": 9,
+    "created": "2025-03-04",
+    "created_date": "2025-03-04",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 3,
+    "duplicate_documents": [],
+    "id": 14,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:48.027498+02:00",
+    "notes": [],
+    "original_file_name": "Stromabrechnung 2025.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [
+      4,
+      8
+    ],
+    "title": "Stromabrechnung 2025",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:55:08.000624Z",
+        "checksum": "bb3517bb37e33d39a83a023cef29694b0ea875676737e2344b41224c922d208c",
+        "id": 14,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:03.275192+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": "2024-12-24 LEGO Lego Friends.pdf",
+    "content": "",
+    "correspondent": 5,
+    "created": "2024-12-24",
+    "created_date": "2024-12-24",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 1,
+    "duplicate_documents": [],
+    "id": 4,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:46.839040+02:00",
+    "notes": [],
+    "original_file_name": "Lego Friends.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": null,
+    "tags": [
+      5,
+      10
+    ],
+    "title": "Lego Friends",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:03.275192Z",
+        "checksum": "4cf8cf88fec39abe868bf6ac83d315aa2da3c14e6bfe7d3891f2fcbf0a43ac35",
+        "id": 4,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:55:08.720605+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "Stromabrechnung 2024\nLess Paper dev fixture - Stromabrechnung 2024 - 03b1e1b8c6b7",
+    "correspondent": 9,
+    "created": "2024-03-05",
+    "created_date": "2024-03-05",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 3,
+    "duplicate_documents": [],
+    "id": 15,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:47.734282+02:00",
+    "notes": [],
+    "original_file_name": "Stromabrechnung 2024.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 1,
+    "tags": [
+      4
+    ],
+    "title": "Stromabrechnung 2024",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:55:08.720605Z",
+        "checksum": "46dcf2ae2f3f8244b2ccae1138f2f17c0b9f481409a505ebc461dec9875b5c73",
+        "id": 15,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:25.189008+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": null,
+    "content": "",
+    "correspondent": 7,
+    "created": "2024-01-15",
+    "created_date": "2024-01-15",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 4,
+    "duplicate_documents": [],
+    "id": 10,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:45.907646+02:00",
+    "notes": [],
+    "original_file_name": "Puky-Locked.pdf",
+    "owner": null,
+    "page_count": null,
+    "root_document": null,
+    "storage_path": 3,
+    "tags": [
+      6,
+      8
+    ],
+    "title": "Puky-Locked",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:25.189008Z",
+        "checksum": "2b1dc888c17e4bddb70d8c61027e65127e8182af3ea991af86a96f8c9f37ab81",
+        "id": 10,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:13.160889+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": "2023-12-24 tonies TonieBox.pdf",
+    "content": "tf tonies\nWelcometo tonies!\n\nSetup Guide\n\nThere are two ways to set up your Toniebox, either using my.tonies.com/setup or the mytonies\napp. To set up your Toniebox, you will need:\n\nToniebox and 2.4 GHz WiFi Internet Access\ncharger Network\n\nFor step-by-step instructions walking through the initial Toniebox setup process, check out our\nsupport article here: How do I setup my Toniebox?\n\nTroubleshooting\n\nIf you run into an error message during the Toniebox setup process, you can find more information\non the specific error message you ran into here: The Toniebox flashes red and reports an error\n\nIf you continue to experience any trouble getting your Toniebox up and running, you can try to\nwalkthrough an alternative connection process outlined here: How do | set up a Wi-Fi connection\nwithout the setup assistant?\n\nIf you do not have access to a 2.4 GHz WiFi network, a mobile hotspot can be used instead to get\nthe Toniebox connected and ready to go. For more information on how to ensure a mobile hotspot\nis set up correctly, check out our support article here: How do I activate a mobile hotspot?\n\nTJowes\n\nOur content Tonies come preloaded with stories, songs, or a mix of both! When first placed on the\nToniebox, the Tonie will begin downloading its content and the Toniebox LED will begin flashing\nblue. This process typically takes just a few minutes. Once the download is complete, the Toniebox\nLED will turn solid green. This means that the Tonie no longer needs a WiFi connection to be used\n\nwith that Toniebox and it can be used on the go! OQ",
+    "correspondent": 10,
+    "created": "2023-12-24",
+    "created_date": "2023-12-24",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 4,
+    "duplicate_documents": [],
+    "id": 5,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:46.215295+02:00",
+    "notes": [],
+    "original_file_name": "TonieBox.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 3,
+    "tags": [
+      5,
+      7,
+      10
+    ],
+    "title": "TonieBox",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:13.160889Z",
+        "checksum": "65990b5f69b2fcc4e24bf93340721ea8cfef2f36a0f2b87deb5b80344caa861f",
+        "id": 5,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:52:58.218201+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": "2023-12-24 LEGO Lego Duplo.pdf",
+    "content": "",
+    "correspondent": 5,
+    "created": "2023-12-24",
+    "created_date": "2023-12-24",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 1,
+    "duplicate_documents": [],
+    "id": 2,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:46.509904+02:00",
+    "notes": [],
+    "original_file_name": "Lego Duplo.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": null,
+    "tags": [
+      5,
+      10
+    ],
+    "title": "Lego Duplo",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:52:58.218201Z",
+        "checksum": "a39c4e79091421276f7df30a4a52925a77bf66210ce9da2fb85d00b6519f7eab",
+        "id": 2,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:38.024216+02:00",
+    "archive_serial_number": 3,
+    "archived_file_name": null,
+    "content": "Era 300",
+    "correspondent": 8,
+    "created": "2023-06-18",
+    "created_date": "2023-06-18",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 4,
+    "duplicate_documents": [],
+    "id": 13,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:44.317902+02:00",
+    "notes": [],
+    "original_file_name": "Sonos Era 300.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 3,
+    "tags": [
+      1,
+      7,
+      11
+    ],
+    "title": "Sonos Era 300",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:38.024216Z",
+        "checksum": "ac61945e6960536214896da1f12503d50bea8b02ac43cb4d5a662d26dc222c67",
+        "id": 13,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:14.031101+02:00",
+    "archive_serial_number": 10,
+    "archived_file_name": null,
+    "content": "2022\nHauptvordruck ESt 1 A Eingangsstempel\n\nFestsetzung der\n1 Einkommensteuererklärung Arbeitnehmer-Sparzulage\nErklärung zur Festsetzung der Erklärung zur Feststellung des\n2\nKirchensteuer auf Kapitalerträge verbleibenden Verlustvortrags\n3 Festsetzung der Mobilitätsprämie\n202200301201\n\n\n\n\n4 Steuernummer\n\nAn das Finanzamt Daten für die mit gekennzeichneten\nZeilen liegen im Regelfall vor und müssen\n5 nicht eingetragen werden.\nBei Wohnsitzwechsel: bisheriges Finanzamt – Bitte Infoblatt eDaten / Anleitung beachten –\n\n6\n\nAllgemeine Angaben Telefonische Rückfragen tagsüber unter Nr.\n\n7\nSteuerpflichtige Person (stpfl. Person)\nNur bei Zusammenveranlagung: Ehemann oder Person A *) (Ehepartner/-in A / Lebenspartner/-in A nach dem LPartG) *) Bitte Anleitung beachten.\nIdentifikationsnummer (IdNr.) Geburtsdatum\n\n8\nName\nReligionsschlüssel:\n9 Evangelisch = EV\nVorname Römisch-Katholisch = RK\nnicht kirchensteuerpflichtig = VD\n10 Weitere siehe Anleitung\nTitel, akademischer Grad\nReligion\n11\nStraße (derzeitige Adresse)\n\n12\nHausnummer Hausnummerzusatz Adressergänzung\n\n13\nPostleitzahl (Inland) Postleitzahl (Ausland)\n\n14\nWohnort\n\n15\nStaat (falls Anschrift im Ausland)\n\n16\nAusgeübter Beruf\n\n17\nVerheiratet / Lebenspartnerschaft Geschieden / Lebenspartnerschaft\nbegründet seit dem Verwitwet seit dem aufgehoben seit dem Dauernd getrennt lebend seit dem\n\n18\n\nNur bei Zusammenveranlagung: Ehefrau oder Person B (Ehepartner/-in B / Lebenspartner/-in B nach dem LPartG)\nIdNr. Geburtsdatum\n\n19\nName\nReligionsschlüssel:\n20 Evangelisch = EV\nVorname Römisch-Katholisch = RK\nnicht kirchensteuerpflichtig = VD\n21 Weitere siehe Anleitung\nTitel, akademischer Grad\nReligion\n22\nBitte füllen Sie die Zeilen 23 bis 27 nur aus, wenn die Adressangaben von den Zeilen 12 bis 16 abweichen.\nStraße\n\n23\nHausnummer Hausnummerzusatz Adressergänzung\n\n24\nPostleitzahl (Inland) Postleitzahl (Ausland)\n25\nWohnort\n\n26\nStaat (falls Anschrift im Ausland)\n\n27\nAusgeübter Beruf\n\n28\nNur von Ehegatten / Lebenspartnern auszufüllen\nEinzelveranlagung von Ehegatten /\n29 Zusammenveranlagung Lebenspartnern Wir haben Gütergemeinschaft vereinbart\n\n2022ESt1A011NET –Juli2022– 2022ESt1A011NET",
+    "correspondent": 2,
+    "created": "2023-05-14",
+    "created_date": "2023-05-14",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 6,
+    "duplicate_documents": [],
+    "id": 6,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:47.142851+02:00",
+    "notes": [],
+    "original_file_name": "ESt1A.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 4,
+    "tags": [
+      3,
+      9
+    ],
+    "title": "ESt1A",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:14.031101Z",
+        "checksum": "5086165188b00ce5f1e5a5f853a5319754d45407b502f9a255ceeaaa310b61f3",
+        "id": 6,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:20.004898+02:00",
+    "archive_serial_number": 5,
+    "archived_file_name": null,
+    "content": "KINDERFAHRRAD\nMADE IN GERMANY\n\n\n\n\nDE GEBRAUCHSANLEITUNG . . . . . . . . . . . . 2 I ISTRUZIONI PER L’USO . . . . . . . . . . . . 52\nGB USER MANUAL . . . . . . . . . . . . . . . . 12 PL INSTRUKCJA OBSŁUGI . . . . . . . . . . . . 62\nNL GEBRUIKSAANWIJZING . . . . . . . . . . . 22 CZ NÁVOD K OBSLUZE . . . . . . . . . . . . . . 72\nFR MODE D’EMPLOI . . . . . . . . . . . . . . . 32 ES MANUAL DE INSTRUCCIONES . . . . . . . . 82\nDK BETJENINGSVEJLEDNING . . . . . . . . . . 42 RUS РУКОВОДСТВО ПО ЭКСПЛУАТАЦИИ . . . . 92",
+    "correspondent": 7,
+    "created": "2022-04-23",
+    "created_date": "2022-04-23",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 4,
+    "duplicate_documents": [],
+    "id": 8,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:45.607951+02:00",
+    "notes": [],
+    "original_file_name": "Puky.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 3,
+    "tags": [
+      5,
+      7
+    ],
+    "title": "Puky",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:20.004898Z",
+        "checksum": "16071020bb34c79a971d4fc6c88137a70ea58e8beaf8c002cb3935fe5391926f",
+        "id": 8,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:37.156589+02:00",
+    "archive_serial_number": 4,
+    "archived_file_name": "2022-02-19 IKEA Ikea Vimle #1.pdf",
+    "content": "",
+    "correspondent": 3,
+    "created": "2022-02-19",
+    "created_date": "2022-02-19",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 1,
+    "duplicate_documents": [],
+    "id": 12,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:45.013154+02:00",
+    "notes": [],
+    "original_file_name": "Ikea Vimle #1.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 2,
+    "tags": [
+      2,
+      3,
+      4,
+      7,
+      11
+    ],
+    "title": "Ikea Vimle #1",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:37.156589Z",
+        "checksum": "9bb9683e5e5445e884b6cfd59bd0f3df8eb5480cbffc78b9f4937a532b4ff7bb",
+        "id": 12,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:30.645559+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": "2022-02-19 IKEA Ikea Vimle #2.pdf",
+    "content": "Design and Quality",
+    "correspondent": 3,
+    "created": "2022-02-19",
+    "created_date": "2022-02-19",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 1,
+    "duplicate_documents": [],
+    "id": 11,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:45.310171+02:00",
+    "notes": [],
+    "original_file_name": "Ikea Vimle #2.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 2,
+    "tags": [
+      2
+    ],
+    "title": "Ikea Vimle #2",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:30.645559Z",
+        "checksum": "f103b5820e34bcc3e52799c6fbd06798b643caea61cb9606525f4c4e09861795",
+        "id": 11,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:52:59.618753+02:00",
+    "archive_serial_number": 11,
+    "archived_file_name": null,
+    "content": "Form W-8BEN Certificate of Foreign Status of Beneficial Owner for United\nStates Tax Withholding and Reporting (Individuals)\n(Rev. October 2021) ▶ For use by individuals. Entities must use Form W-8BEN-E. OMB No. 1545-1621\n\nDepartment of the Treasury Go to www.irs.gov/FormW8BEN for instructions and the latest information.\n▶\n\nInternal Revenue Service ▶ Give this form to the withholding agent or payer. Do not send to the IRS.\n\nDo NOT use this form if: Instead, use Form:\n• You are NOT an individual . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . W-8BEN-E\n• You are a U.S. citizen or other U.S. person, including a resident alien individual . . . . . . . . . . . . . . . . . . . W-9\n• You are a beneficial owner claiming that income is effectively connected with the conduct of trade or business within the United States\n(other than personal services) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . W-8ECI\n• You are a beneficial owner who is receiving compensation for personal services performed in the United States . . . . . . . 8233 or W-4\n• You are a person acting as an intermediary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . W-8IMY\nNote: If you are resident in a FATCA partner jurisdiction (that is, a Model 1 IGA jurisdiction with reciprocity), certain tax account information may be\nprovided to your jurisdiction of residence.\nPart I Identification of Beneficial Owner (see instructions)\n1 Name of individual who is the beneficial owner 2 Country of citizenship\n\n\n3 Permanent residence address (street, apt. or suite no., or rural route). Do not use a P.O. box or in-care-of address.\n\n\nCity or town, state or province. Include postal code where appropriate. Country\n\n4 Mailing address (if different from above)\n\n\nCity or town, state or province. Include postal code where appropriate. Country\n\n\n5 U.S. taxpayer identification number (SSN or ITIN), if required (see instructions)\n\n\n6a Foreign tax identifying number (see instructions) 6b Check if FTIN not legally required . . . . . . . . . . .\n\n\n7 Reference number(s) (see instructions) 8 Date of birth (MM-DD-YYYY) (see instructions)\n\nPart II Claim of Tax Treaty Benefits (for chapter 3 purposes only) (see instructions)\n9 I certify that the beneficial owner is a resident of within the meaning of the income tax\ntreaty between the United States and that country.\n10 Special rates and conditions (if applicable—see instructions): The beneficial owner is claiming the provisions of Article and paragraph\nof the treaty identified on line 9 above to claim a % rate of withholding on (specify type of income):\n.\nExplain the additional conditions in the Article and paragraph the beneficial owner meets to be eligible for the rate of withholding:\n\n\nPart III Certification\nUnder penalties of perjury, I declare that I have examined the information on this form and to the best of my knowledge and belief it is true, correct, and complete. I further certify under penalties of perjury that:\n• I am the individual that is the beneficial owner (or am authorized to sign for the individual that is the beneficial owner) of all the income or proceeds to which this form\nrelates or am using this form to document myself for chapter 4 purposes;\n• The person named on line 1 of this form is not a U.S. person;\n• This form relates to:\n(a) income not effectively connected with the conduct of a trade or business in the United States;\n(b) income effectively connected with the conduct of a trade or business in the United States but is not subject to tax under an applicable income tax treaty;\n(c) the partner’s share of a partnership’s effectively connected taxable income; or\n(d) the partner’s amount realized from the transfer of a partnership interest subject to withholding under section 1446(f);\n• The person named on line 1 of this form is a resident of the treaty country listed on line 9 of the form (if any) within the meaning of the income tax treaty between the United States and that country; and\n• For broker transactions or barter exchanges, the beneficial owner is an exempt foreign person as defined in the instructions.\nFurthermore, I authorize this form to be provided to any withholding agent that has control, receipt, or custody of the income of which I am the beneficial owner or any withholding agent that can\ndisburse or make payments of the income of which I am the beneficial owner. I agree that I will submit a new form within 30 days if any certification made on this form becomes incorrect.\n\nI certify that I have the capacity to sign for the person identified on line 1 of this form.\n▲\n\n\n\n\nSign Here\n\nSignature of beneficial owner (or individual authorized to sign for beneficial owner) Date (MM-DD-YYYY)\n\n\nPrint name of signer\n\nFor Paperwork Reduction Act Notice, see separate instructions. Cat. No. 25047Z Form W-8BEN (Rev. 10-2021)",
+    "correspondent": 4,
+    "created": "2021-11-02",
+    "created_date": "2021-11-02",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 5,
+    "duplicate_documents": [],
+    "id": 3,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:47.440589+02:00",
+    "notes": [],
+    "original_file_name": "W-8BEN.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 4,
+    "tags": [
+      9
+    ],
+    "title": "W-8BEN",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:52:59.618753Z",
+        "checksum": "b821dc1172c91b348a65675529cc792782f11fc1ae8579df92d627113203f918",
+        "id": 3,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:19.456005+02:00",
+    "archive_serial_number": null,
+    "archived_file_name": "2021-08-07 IKEA Ikea Danderyd.pdf",
+    "content": "DANDERYD\n\nsign and Quality\nIKEA of Sweden",
+    "correspondent": 3,
+    "created": "2021-08-07",
+    "created_date": "2021-08-07",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 1,
+    "duplicate_documents": [],
+    "id": 7,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:44.681828+02:00",
+    "notes": [],
+    "original_file_name": "Ikea Danderyd.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 2,
+    "tags": [
+      2
+    ],
+    "title": "Ikea Danderyd",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:19.456005Z",
+        "checksum": "6d544ce872f302c7c7dbe9bdc90a0127cb26ca5472084f311ef7de5f13e9a05a",
+        "id": 7,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:52:54.407485+02:00",
+    "archive_serial_number": 2,
+    "archived_file_name": null,
+    "content": "Sub",
+    "correspondent": 8,
+    "created": "2020-09-27",
+    "created_date": "2020-09-27",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 4,
+    "duplicate_documents": [],
+    "id": 1,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:44.014822+02:00",
+    "notes": [],
+    "original_file_name": "Sonos Sub.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 3,
+    "tags": [
+      1,
+      7
+    ],
+    "title": "Sonos Sub",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:52:54.407485Z",
+        "checksum": "c86bc88b2c692381dab89e7f9ff2db3f0efc33b8c56ab5108c40d1f6fa880f36",
+        "id": 1,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  },
+  {
+    "added": "2026-08-26T11:53:24.774298+02:00",
+    "archive_serial_number": 1,
+    "archived_file_name": null,
+    "content": "One",
+    "correspondent": 8,
+    "created": "2019-03-11",
+    "created_date": "2019-03-11",
+    "custom_fields": [],
+    "deleted_at": null,
+    "document_type": 4,
+    "duplicate_documents": [],
+    "id": 9,
+    "is_shared_by_requester": false,
+    "mime_type": "application/pdf",
+    "modified": "2026-08-26T12:00:43.715895+02:00",
+    "notes": [],
+    "original_file_name": "Sonos One.pdf",
+    "owner": null,
+    "page_count": 1,
+    "root_document": null,
+    "storage_path": 3,
+    "tags": [
+      1,
+      7
+    ],
+    "title": "Sonos One",
+    "user_can_change": true,
+    "versions": [
+      {
+        "added": "2026-08-26T09:53:24.774298Z",
+        "checksum": "ea92c31eb2eb66d04ad77364ac1ad2649aa127b06624ae27b983e23f561ba58a",
+        "id": 9,
+        "is_root": true,
+        "version_label": null
+      }
+    ]
+  }
+]

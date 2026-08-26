@@ -1,0 +1,68 @@
+[
+  {
+    "document_count": 5,
+    "id": 1,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Assembly Instructions",
+    "owner": 2,
+    "slug": "assembly-instructions",
+    "user_can_change": true
+  },
+  {
+    "document_count": 2,
+    "id": 2,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Bank Statement",
+    "owner": 2,
+    "slug": "bank-statement",
+    "user_can_change": true
+  },
+  {
+    "document_count": 8,
+    "id": 3,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Invoice",
+    "owner": 2,
+    "slug": "invoice",
+    "user_can_change": true
+  },
+  {
+    "document_count": 6,
+    "id": 4,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Manual",
+    "owner": 2,
+    "slug": "manual",
+    "user_can_change": true
+  },
+  {
+    "document_count": 1,
+    "id": 5,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Tax Form",
+    "owner": 2,
+    "slug": "tax-form",
+    "user_can_change": true
+  },
+  {
+    "document_count": 1,
+    "id": 6,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Tax Return",
+    "owner": 2,
+    "slug": "tax-return",
+    "user_can_change": true
+  }
+]

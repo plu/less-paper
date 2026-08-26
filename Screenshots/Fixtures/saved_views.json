@@ -1,0 +1,74 @@
+[
+  {
+    "display_fields": null,
+    "display_mode": null,
+    "filter_rules": [
+      {
+        "rule_type": 22,
+        "value": "4"
+      }
+    ],
+    "id": 1,
+    "name": "Inbox",
+    "owner": 2,
+    "page_size": null,
+    "sort_field": "created",
+    "sort_reverse": true,
+    "user_can_change": true
+  },
+  {
+    "display_fields": null,
+    "display_mode": null,
+    "filter_rules": [
+      {
+        "rule_type": 28,
+        "value": "3"
+      },
+      {
+        "rule_type": 9,
+        "value": "2026-01-01"
+      }
+    ],
+    "id": 4,
+    "name": "Invoices 2026",
+    "owner": 2,
+    "page_size": null,
+    "sort_field": "created",
+    "sort_reverse": false,
+    "user_can_change": true
+  },
+  {
+    "display_fields": null,
+    "display_mode": null,
+    "filter_rules": [
+      {
+        "rule_type": 28,
+        "value": "4"
+      }
+    ],
+    "id": 2,
+    "name": "Manuals",
+    "owner": 2,
+    "page_size": null,
+    "sort_field": "title",
+    "sort_reverse": false,
+    "user_can_change": true
+  },
+  {
+    "display_fields": null,
+    "display_mode": null,
+    "filter_rules": [
+      {
+        "rule_type": 22,
+        "value": "9"
+      }
+    ],
+    "id": 3,
+    "name": "Taxes",
+    "owner": 2,
+    "page_size": null,
+    "sort_field": "created",
+    "sort_reverse": true,
+    "user_can_change": true
+  }
+]

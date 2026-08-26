@@ -127,6 +127,7 @@ public extension Module {
              .settingsFeatureTests,
              .shareAppTests,
              .shareFeatureTests,
+             .snapshotSupport,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
              .testSupport,

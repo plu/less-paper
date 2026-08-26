@@ -1,0 +1,112 @@
+[
+  {
+    "document_count": 4,
+    "id": 1,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Deutsche Telekom",
+    "owner": 2,
+    "slug": "deutsche-telekom",
+    "user_can_change": true
+  },
+  {
+    "document_count": 1,
+    "id": 2,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Finanzamt München",
+    "owner": 2,
+    "slug": "finanzamt-munchen",
+    "user_can_change": true
+  },
+  {
+    "document_count": 3,
+    "id": 3,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "IKEA",
+    "owner": 2,
+    "slug": "ikea",
+    "user_can_change": true
+  },
+  {
+    "document_count": 1,
+    "id": 4,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Internal Revenue Service",
+    "owner": 2,
+    "slug": "internal-revenue-service",
+    "user_can_change": true
+  },
+  {
+    "document_count": 2,
+    "id": 5,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "LEGO",
+    "owner": 2,
+    "slug": "lego",
+    "user_can_change": true
+  },
+  {
+    "document_count": 2,
+    "id": 6,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "N26",
+    "owner": 2,
+    "slug": "n26",
+    "user_can_change": true
+  },
+  {
+    "document_count": 2,
+    "id": 7,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "PUKY",
+    "owner": 2,
+    "slug": "puky",
+    "user_can_change": true
+  },
+  {
+    "document_count": 3,
+    "id": 8,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Sonos",
+    "owner": 2,
+    "slug": "sonos",
+    "user_can_change": true
+  },
+  {
+    "document_count": 4,
+    "id": 9,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Stadtwerke München",
+    "owner": 2,
+    "slug": "stadtwerke-munchen",
+    "user_can_change": true
+  },
+  {
+    "document_count": 1,
+    "id": 10,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "tonies",
+    "owner": 2,
+    "slug": "tonies",
+    "user_can_change": true
+  }
+]

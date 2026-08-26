@@ -3,6 +3,7 @@ import ApiInterface
 import AppFeature
 import ComposableArchitecture
 import ServersFeature
+import SnapshotSupport
 import SwiftUI
 
 @main
@@ -18,6 +19,9 @@ struct LessPaperApp: App {
         #if DEBUG
         if let configuration = UITestConfiguration.fromEnvironment() {
             prepareUITestDependencies(configuration)
+        }
+        if let configuration = SnapshotConfiguration.fromEnvironment() {
+            prepareSnapshotDependencies(configuration)
         }
         #endif
         Self.store.send(.bootstrap)

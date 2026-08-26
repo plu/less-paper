@@ -17,6 +17,7 @@ git-lfs = "3.7.1"
 "github:nicklockwood/swiftformat" = "0.62.1"
 "github:realm/swiftlint" = "0.65.1"
 node = "26.7.0"
+ruby = "3.4.10"
 "spm:mono0926/LicensePlist" = "3.28.0"
 swiftlint = "0.65.1"
 

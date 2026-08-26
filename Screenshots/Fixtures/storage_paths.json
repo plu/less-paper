@@ -1,0 +1,50 @@
+[
+  {
+    "document_count": 10,
+    "id": 1,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Archive",
+    "owner": 2,
+    "path": "Archive/{{ created_year }}/{{ title }}",
+    "slug": "archive",
+    "user_can_change": true
+  },
+  {
+    "document_count": 3,
+    "id": 2,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Furniture",
+    "owner": 2,
+    "path": "Home/Furniture/{{ correspondent }}/{{ title }}",
+    "slug": "furniture",
+    "user_can_change": true
+  },
+  {
+    "document_count": 6,
+    "id": 3,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Manuals",
+    "owner": 2,
+    "path": "Manuals/{{ correspondent }}/{{ title }}",
+    "slug": "manuals",
+    "user_can_change": true
+  },
+  {
+    "document_count": 2,
+    "id": 4,
+    "is_insensitive": true,
+    "match": "",
+    "matching_algorithm": 1,
+    "name": "Taxes",
+    "owner": 2,
+    "path": "Taxes/{{ created_year }}/{{ correspondent }}/{{ title }}",
+    "slug": "taxes",
+    "user_can_change": true
+  }
+]
