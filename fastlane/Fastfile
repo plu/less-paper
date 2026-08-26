@@ -75,8 +75,11 @@ platform :ios do
       skip_app_version_update: true,
       skip_binary_upload: true,
       skip_metadata: true,
-      skip_screenshots: false,
-      sync_screenshots: true
+      skip_screenshots: false
+      # Not sync_screenshots: it is a beta deliver feature, gated behind
+      # FASTLANE_ENABLE_BETA_DELIVER_SYNC_SCREENSHOTS, and it refuses to run without that
+      # acknowledgement. overwrite_screenshots clears what is there and uploads these instead,
+      # which is the same end state by a path that is not in beta.
     )
   end
 end
