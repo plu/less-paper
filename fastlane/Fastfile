@@ -31,6 +31,7 @@ BACKGROUND = "#E9EFED".freeze
 platform :ios do
   desc "Capture the App Store screenshots on every required device and language"
   lane :screenshots do
+    clear_captures
     capture_screenshots(xcodebuild_formatter: "xcbeautify")
   end
 
@@ -68,6 +69,11 @@ end
 # Impact and Arial ship with macOS. frameit resolves a font path relative to the Framefile, so they
 # are linked in rather than referenced absolutely - and linked rather than copied, because neither
 # is ours to redistribute.
+# The full matrix is about to be recaptured, so anything already there is stale.
+def clear_captures
+  FileUtils.rm_f(Dir.glob(File.join(SCREENSHOTS, "*", "*.png")))
+end
+
 def link_fonts
   fonts = File.join(SCREENSHOTS, "fonts")
   FileUtils.mkdir_p(fonts)

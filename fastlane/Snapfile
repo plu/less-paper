@@ -14,8 +14,10 @@ scheme("Snapshots")
 
 output_directory("./fastlane/screenshots")
 
-# The fixtures are the same on every run, so a stale image is always wrong rather than merely old.
-clear_previous_screenshots(true)
+# Cleared by the screenshots lane instead, so a subset - one language, one device - can be
+# recaptured without deleting the rest. A stale image is still always wrong: the lane clears
+# everything when it runs the full matrix.
+clear_previous_screenshots(false)
 
 # 9:41, full bars, full battery, instead of whatever the simulator clock happens to read.
 override_status_bar(true)
