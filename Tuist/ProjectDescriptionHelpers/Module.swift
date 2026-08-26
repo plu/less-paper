@@ -28,6 +28,7 @@ public enum Module: String, CaseIterable {
     case app = "App"
     case appFeature = "AppFeature"
     case appFeatureTests = "AppFeatureTests"
+    case appSnapshots = "AppSnapshots"
     case appUITests = "AppUITests"
     case certificatesFeature = "CertificatesFeature"
     case certificatesFeatureTests = "CertificatesFeatureTests"
@@ -139,6 +140,7 @@ extension Module {
              .apiTestSupport,
              .app,
              .appFeatureTests,
+             .appSnapshots,
              .appUITests,
              .certificatesFeatureTests,
              .componentsTests,
@@ -249,7 +251,8 @@ extension Module {
              .storagePathsFeatureTests,
              .tagsFeatureTests:
             .unitTests
-        case .appUITests,
+        case .appSnapshots,
+             .appUITests,
              .shareAppTests:
             .uiTests
         case .shareExtension:

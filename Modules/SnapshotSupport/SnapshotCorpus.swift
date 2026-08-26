@@ -10,14 +10,18 @@ import Foundation
 // instance, so neither is invented.
 extension SnapshotConfiguration.Corpus {
 
-    // Ordered newest-first, the way the document list sorts by default, so the fixture order and
-    // the rendered order agree.
+    // The order shown, because the stub returns these as they are. The first is the document the
+    // view and edit screenshots open, so it leads: the capture taps the first row rather than
+    // naming a document, which would mean knowing each language's corpus.
+    //
+    // Both leading documents have a real PDF in docker/data. The utility bills are generated
+    // filler pages and would photograph as a blank sheet.
     var documentIds: [Document.Id] {
         switch self {
         case .english:
-            [13, 12, 8, 5, 4, 2, 1, 6, 3]
+            [8, 13, 12, 5, 4, 2, 1, 6, 3]
         case .german:
-            [21, 22, 23, 6, 16, 14, 17, 20]
+            [6, 21, 22, 23, 16, 14, 17, 20]
         }
     }
 
@@ -26,21 +30,9 @@ extension SnapshotConfiguration.Corpus {
     var inboxDocumentIds: [Document.Id] {
         switch self {
         case .english:
-            [12]
+            [12, 5, 4]
         case .german:
             [14, 15, 20]
-        }
-    }
-
-    // The document opened by the view and edit screenshots. Both have a real PDF in docker/data,
-    // which is why they are these two: the utility bills are generated filler pages and would
-    // photograph as a blank sheet.
-    var featuredDocumentId: Document.Id {
-        switch self {
-        case .english:
-            8
-        case .german:
-            6
         }
     }
 }

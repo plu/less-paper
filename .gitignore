@@ -87,3 +87,5 @@ fastlane/Preview.html
 # the per-locale caption strings beside them are not, so only the images are ignored.
 fastlane/screenshots/**/*.png
 fastlane/screenshots/**/*.jpg
+# The frame background is part of the layout, not something a run produces.
+!fastlane/screenshots/background.png

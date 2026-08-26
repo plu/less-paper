@@ -1,0 +1,23 @@
+# Apple requires one 6.9" iPhone set, and a 13" iPad set for an app that runs on iPad. Everything
+# smaller is scaled from these by App Store Connect, so these two are the whole matrix.
+devices([
+  "iPhone 17 Pro Max",
+  "iPad Pro 13-inch (M5)"
+])
+
+languages([
+  "en-US",
+  "de-DE"
+])
+
+scheme("Snapshots")
+
+output_directory("./fastlane/screenshots")
+
+# The fixtures are the same on every run, so a stale image is always wrong rather than merely old.
+clear_previous_screenshots(true)
+
+# 9:41, full bars, full battery, instead of whatever the simulator clock happens to read.
+override_status_bar(true)
+
+concurrent_simulators(false)

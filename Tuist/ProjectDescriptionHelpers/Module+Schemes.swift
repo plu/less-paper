@@ -1,5 +1,14 @@
 import ProjectDescription
 
+private extension [String: EnvironmentVariable] {
+
+    // Matches SnapshotConfiguration.environmentKey. Tuist cannot see the app's modules, so the two
+    // are kept in step by name.
+    static let snapshotMode: Self = [
+        "SNAPSHOT_MODE": .environmentVariable(value: "true", isEnabled: true)
+    ]
+}
+
 public extension Module {
     /**
      * Xcode schemes configuration for each module.
@@ -37,6 +46,25 @@ public extension Module {
                         )
                     ),
                     runAction: .runAction()
+                )
+            ]
+        case .appSnapshots:
+            [
+                .scheme(
+                    name: "Snapshots",
+                    buildAction: .buildAction(
+                        targets: [.target(.app)]
+                    ),
+                    testAction: .targets(
+                        [.testableTarget(target: .target(self))],
+                        arguments: .arguments(environmentVariables: .snapshotMode)
+                    ),
+                    // Running this scheme launches the app on the fixtures, which is the quickest
+                    // way to look at a screen without capturing anything.
+                    runAction: .runAction(
+                        executable: .target(.app),
+                        arguments: .arguments(environmentVariables: .snapshotMode)
+                    )
                 )
             ]
         case .shareExtension:

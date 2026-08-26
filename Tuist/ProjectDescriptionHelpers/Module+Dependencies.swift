@@ -50,6 +50,11 @@ extension Module {
                 .target(.settingsFeature),
                 .target(.testSupport),
             ]
+        case .appSnapshots:
+            [
+                .target(.app),
+                .target(.uiTestSupport),
+            ]
         case .appUITests:
             [
                 .external(.dependencies),

@@ -1,0 +1,22 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Capture the App Store screenshots on every required device and language"
+  lane :screenshots do
+    capture_screenshots(xcodebuild_formatter: "xcbeautify")
+  end
+
+  desc "Add the device frame and captions to the captured screenshots"
+  lane :frame do
+    frameit(
+      silver: true,
+      path: "./fastlane/screenshots"
+    )
+  end
+
+  desc "Capture and frame in one go"
+  lane :screenshots_framed do
+    screenshots
+    frame
+  end
+end
