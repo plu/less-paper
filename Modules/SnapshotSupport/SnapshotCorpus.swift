@@ -19,7 +19,7 @@ extension SnapshotConfiguration.Corpus {
     var documentIds: [Document.Id] {
         switch self {
         case .english:
-            [8, 13, 12, 5, 4, 2, 1, 6, 3]
+            [8, 13, 12, 5, 4, 2, 1, 3]
         case .german:
             [6, 21, 22, 23, 16, 14, 17, 20]
         }
