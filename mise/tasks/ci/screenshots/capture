@@ -4,4 +4,10 @@ set -euo pipefail
 
 # Same work as screenshots:capture. It exists under ci: so a workflow has one obvious entry point,
 # and so the two can diverge later without the local task growing CI-only concerns.
+
+# ci:clean wipes untracked files, vendor/bundle included, so the gems are installed per run rather
+# than assumed. bundle check keeps that to a no-op when they are already there.
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
 bundle exec fastlane screenshots_framed

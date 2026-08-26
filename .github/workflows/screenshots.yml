@@ -3,6 +3,13 @@ name: Screenshots
 # Manual only. A run takes the better part of an hour across both devices and both languages, and
 # uploading rewrites what the App Store shows, so neither should happen because someone pushed.
 on:
+  # TEMPORARY: lets this workflow be exercised from the feature branch, because a
+  # workflow_dispatch is only offered for workflows on the default branch. Remove before merging -
+  # a push must not spend an hour of runner time.
+  push:
+    branches:
+      - feat/app-store-screenshots
+
   workflow_dispatch:
     inputs:
       upload:
