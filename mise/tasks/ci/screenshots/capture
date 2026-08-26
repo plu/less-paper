@@ -10,4 +10,9 @@ set -euo pipefail
 bundle config set --local path vendor/bundle
 bundle check >/dev/null 2>&1 || bundle install
 
+# ci:clean removes the generated workspace along with every other untracked file, and
+# capture_screenshots drives xcodebuild rather than tuist, so nothing else would recreate it.
+tuist install
+tuist generate --no-open
+
 bundle exec fastlane screenshots_framed
