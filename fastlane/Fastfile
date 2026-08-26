@@ -9,10 +9,13 @@ SCREENSHOTS = File.expand_path("screenshots", __dir__)
 # The simulators available here are newer than frameit's frame library, which stops at iPhone 16
 # and iPad Pro 12.9". Each capture device is mapped to a frame whose screen is the same size, so
 # the frame fits exactly and the output stays a size the App Store accepts.
-# The iPad frame is a 12.9" one against a 13" capture - 2048x2732 against 2064x2752. frameit
-# scales a screenshot into the frame's screen area regardless, so the difference is a 0.8% scale
-# and invisible. Installing a 12.9" simulator would avoid it, but no such device type exists in the
-# only runtime available here.
+# frameit identifies a device by the image's dimensions rather than its name, and does not know the
+# 13" iPad - it rejects 2064x2752 as an unsupported screen size. The captures are resized to
+# 2048x2732, which it does know and which App Store Connect also accepts for the 13" tier. That is
+# a 0.8% downscale, and the aspect ratios differ by 0.05%.
+#
+# Capturing at 2048x2732 directly would avoid the step, but no 12.9" device type exists in the only
+# runtime installed here.
 FRAMES = {
   "iPhone 17 Pro Max" => {
     frame: "iPhone 16 Pro Max",
@@ -22,7 +25,8 @@ FRAMES = {
   "iPad Pro 13-inch (M5)" => {
     frame: "iPad Pro (12.9-inch) (4th generation)",
     background: "background-ipad.png",
-    size: "2064x2752"
+    size: "2048x2732",
+    resize: "2048x2732"
   }
 }
 
@@ -91,6 +95,7 @@ def rename_to_framed_devices
     Dir.glob(File.join(SCREENSHOTS, "*", "#{captured}-*.png")).each do |path|
       renamed = path.sub("#{captured}-", "#{target[:frame]}-")
       File.rename(path, renamed)
+      sh("magick #{renamed.shellescape} -resize #{target[:resize]}! #{renamed.shellescape}") if target[:resize]
     end
   end
 end
