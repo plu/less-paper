@@ -327,20 +327,26 @@ struct DocumentsRepositoryTests {
             server: .testValue()
         ).results
 
-        var metadata: [DocumentMetadata] = []
-        for document in listed.prefix(10) {
-            let value = try await repository.getDocumentMetadata(
-                id: document.id,
-                server: .testValue()
-            )
-            metadata.append(value)
-        }
+        // Chosen by whether the listing says they are archived rather than by taking the first ten
+        // documents and hoping. The list sorts by created descending, and the seed's newest ten are
+        // all generated filler PDFs with no archive version, so the sample only happened to contain
+        // an archived document while the instance had no created dates set.
+        let archivedDocument = try #require(listed.first { $0.archivedFileName != nil })
+        let plainDocument = try #require(listed.first { $0.archivedFileName == nil })
 
         // The fixtures hold both kinds, and the archived one is the only place the archive fields
         // decode as anything but nil. Requiring one of each keeps a fixture change from quietly
         // reducing this to a single-path test.
-        let archived = try #require(metadata.first(where: { $0.hasArchiveVersion }))
-        let notArchived = try #require(metadata.first(where: { !$0.hasArchiveVersion }))
+        let archived = try await repository.getDocumentMetadata(
+            id: archivedDocument.id,
+            server: .testValue()
+        )
+        let notArchived = try await repository.getDocumentMetadata(
+            id: plainDocument.id,
+            server: .testValue()
+        )
+        #expect(archived.hasArchiveVersion)
+        #expect(!notArchived.hasArchiveVersion)
 
         #expect(archived.archiveChecksum?.isEmpty == false)
         #expect(archived.archiveMediaFilename?.isEmpty == false)
@@ -350,7 +356,7 @@ struct DocumentsRepositoryTests {
         #expect(notArchived.archiveMediaFilename == nil)
         #expect(notArchived.archiveSize == nil)
 
-        for value in metadata {
+        for value in [archived, notArchived] {
             #expect(value.originalMimeType == "application/pdf")
             #expect(value.originalFilename?.hasSuffix(".pdf") == true)
             #expect((value.originalSize ?? 0) > 0)
