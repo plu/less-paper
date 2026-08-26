@@ -215,6 +215,13 @@ What each language shows is curated in `SnapshotCorpus`: the German screenshots 
 paperwork — utility bills, a bank statement, a tax office — rather than the English documents behind
 translated chrome. `SnapshotNames` renames tags, document types and storage paths to match.
 
+Uploading is a **manual GitHub Action**, `Screenshots`, with an `upload` input that defaults to
+false: a run takes the better part of an hour, and uploading rewrites what the App Store shows, so
+neither should happen because someone pushed. It captures, attaches the framed images as an artifact
+whatever happens, and only uploads when asked. `mise run ci:screenshots:upload` does the same thing
+locally. It sends **screenshots and nothing else** — the binary still ships through `altool` in
+`mise/tasks/ci/upload`, so the two cannot race.
+
 Three things about frameit that are easy to lose an afternoon to, all handled in `fastlane/Fastfile`:
 
 - **The output canvas takes its aspect ratio from the background image.** A background of the wrong

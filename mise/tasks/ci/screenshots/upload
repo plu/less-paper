@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="Upload the framed screenshots to App Store Connect"
+set -euo pipefail
+
+# The same App Store Connect key mise/tasks/ci/upload uses for altool. deliver is told to skip the
+# binary and the metadata, so this touches nothing but the screenshots.
+ASC_KEY_ID="$(fnox get ALTOOL_KEY_ID)" \
+ASC_ISSUER_ID="$(fnox get ALTOOL_ISSUER_ID)" \
+ASC_AUTH_KEY="$(fnox get ALTOOL_AUTH_KEY)" \
+  bundle exec fastlane upload_screenshots

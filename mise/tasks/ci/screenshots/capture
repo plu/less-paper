@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Capture and frame the App Store screenshots for CI"
+set -euo pipefail
+
+# Same work as screenshots:capture. It exists under ci: so a workflow has one obvious entry point,
+# and so the two can diverge later without the local task growing CI-only concerns.
+bundle exec fastlane screenshots_framed
