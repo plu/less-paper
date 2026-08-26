@@ -77,19 +77,26 @@ struct DocumentFilterDateView: View {
             Spacer()
 
             if let value = date.wrappedValue {
-                ZStack {
-                    Text(DateFormatter.filterRule.string(from: value)).capsule()
-                    DatePicker(
-                        "",
-                        selection: Binding(
-                            get: { value },
-                            set: { date.wrappedValue = $0 }
-                        ),
-                        displayedComponents: .date
-                    )
-                    .labelsHidden()
-                    .blendMode(.destinationOver)
-                }
+                // An overlay rather than a ZStack sibling: a ZStack takes the width of its widest
+                // child, so the invisible picker decided how wide the visible capsule was - and a
+                // compact DatePicker's intrinsic width is not stable from one day to the next, so
+                // the capsule silently changed width as the date rolled over. As an overlay it is
+                // laid out inside the capsule, which leaves the visible text deciding the size and
+                // the tap target exactly the capsule.
+                Text(DateFormatter.filterRule.string(from: value))
+                    .capsule()
+                    .overlay {
+                        DatePicker(
+                            "",
+                            selection: Binding(
+                                get: { value },
+                                set: { date.wrappedValue = $0 }
+                            ),
+                            displayedComponents: .date
+                        )
+                        .labelsHidden()
+                        .blendMode(.destinationOver)
+                    }
 
                 Button(action: onReset) {
                     Image(systemName: "xmark.circle.fill")
