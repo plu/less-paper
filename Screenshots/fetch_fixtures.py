@@ -23,6 +23,11 @@ ROOT = Path(__file__).resolve().parent
 FIXTURES = ROOT / "Fixtures"
 THUMBNAILS = ROOT / "Thumbnails"
 
+# The documents the screenshots actually render, from SnapshotCorpus.swift - the corpus in display
+# order, plus the inbox subset. Only their thumbnails are downloaded: the instance holds 25
+# documents and the other 17 would never be looked at.
+THUMBNAIL_IDS = [8, 13, 12, 5, 4, 2, 1, 3]
+
 # Endpoints whose full payload the app caches at launch through UpdateCacheUseCase.
 COLLECTIONS = {
     "correspondents": "/api/correspondents/",
@@ -82,10 +87,20 @@ def main():
 
     # Served as WebP at roughly 500x700 and a few kilobytes each. Kept exactly as served: it is what
     # the app would have received, and ImageIO decodes it without help.
-    for document in documents:
-        data = fetch_thumbnail(base_url, document["id"])
-        (THUMBNAILS / f"{document['id']}.webp").write_bytes(data)
-    print(f"  thumbnails: {len(documents)}")
+    known = {document["id"] for document in documents}
+    missing = [id for id in THUMBNAIL_IDS if id not in known]
+    if missing:
+        raise SystemExit(f"error: no such document(s) on {base_url}: {missing}")
+
+    # Cleared first, so a corpus that drops a document drops its thumbnail rather than leaving one
+    # behind for nobody.
+    for stale in THUMBNAILS.glob("*.webp"):
+        stale.unlink()
+
+    for document_id in THUMBNAIL_IDS:
+        data = fetch_thumbnail(base_url, document_id)
+        (THUMBNAILS / f"{document_id}.webp").write_bytes(data)
+    print(f"  thumbnails: {len(THUMBNAIL_IDS)}")
 
 
 if __name__ == "__main__":
