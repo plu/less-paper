@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Run unit tests"
+set -euo pipefail
+tuist install
+
+# Everything except the two XCUITest targets. Runs on every push and pull request: it needs no
+# container, no simulator app install, and finishes in a couple of minutes.
+"$MISE_PROJECT_ROOT/mise/scripts/run_tests.sh" test-unit.xcresult --skip-ui-tests

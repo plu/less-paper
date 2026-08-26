@@ -23,8 +23,8 @@ env:
   TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
 
 jobs:
-  test:
-    name: Test
+  test_unit:
+    name: Unit Tests
     runs-on: [self-hosted, macOS]
     timeout-minutes: 60
 
@@ -47,11 +47,47 @@ jobs:
 
       - run: mise simulators:prepare
 
-      - run: mise ci:test
-        env:
-          # The XCUITest targets dominate the run, so they are reserved for main,
-          # for anything about to ship to TestFlight, and for PRs that ask for them.
-          CI_UI_TESTS: ${{ github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'TestFlight') || contains(github.event.pull_request.labels.*.name, 'UITests') }}
+      - run: mise ci:test:unit
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-unit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-unit.xcresult
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - run: mise ci:cache
+        if: github.ref == 'refs/heads/main'
+
+  test_ui:
+    # The XCUITest targets dominate the run, so they are reserved for main, for anything about to
+    # ship to TestFlight, and for PRs that ask for them.
+    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'TestFlight') || contains(github.event.pull_request.labels.*.name, 'UITests')
+    name: UI Tests
+    needs: [test_unit]
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          lfs: true
+
+      - name: mise
+        uses: jdx/mise-action@v3
+        with:
+          cache: false
+          cache_save: false
+
+      - run: mise ci:clean
+
+      - run: mise simulators:prepare
+
+      - run: mise ci:test:ui
 
       # A failing XCUITest records the app's accessibility hierarchy and a video at the moment it
       # gave up. Without the bundle a UI failure reports only which assertion failed, which is
@@ -60,18 +96,15 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ github.run_id }}-${{ github.run_attempt }}
-          path: test.xcresult
+          name: test-results-ui-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-ui.xcresult
           retention-days: 7
           if-no-files-found: ignore
-
-      - run: mise ci:cache
-        if: github.ref == 'refs/heads/main'
 
   upload:
     if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'TestFlight')
     name: Upload
-    needs: [test]
+    needs: [test_unit, test_ui]
     runs-on: [self-hosted, macOS]
     timeout-minutes: 60
 
