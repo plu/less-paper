@@ -271,6 +271,19 @@ def verify(api, config):
     if missing_documents:
         problems.append(f"documents: missing {missing_documents}")
 
+    # The corpus has to stay unowned, and that is load-bearing rather than incidental. UI test
+    # journeys read these documents as a shared fixture, which works only because a document
+    # consumed from consume/ has no owner and is therefore visible to every per-test user. One that
+    # acquired an owner would be invisible to them, and the breakage would surface as an unrelated
+    # journey timing out rather than as anything pointing here.
+    owned = sorted(
+        title
+        for title, document in actual.items()
+        if title in titles and document.get("owner") is not None
+    )
+    if owned:
+        problems.append(f"documents: must stay unowned for the UI tests, but these have an owner: {owned}")
+
     names = {
         kind: {item["id"]: item["name"] for item in api.list_all(path)}
         for kind, path in ENTITY_PATHS.items()
