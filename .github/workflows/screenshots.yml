@@ -1,0 +1,62 @@
+name: Screenshots
+
+# Manual only. A run takes the better part of an hour across both devices and both languages, and
+# uploading rewrites what the App Store shows, so neither should happen because someone pushed.
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload to App Store Connect when the capture succeeds
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile --norc -euo pipefail {0}
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  screenshots:
+    name: Screenshots
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          lfs: true
+
+      - name: mise
+        uses: jdx/mise-action@v3
+        with:
+          cache: false
+          cache_save: false
+
+      - run: mise ci:clean
+
+      - run: mise simulators:prepare
+
+      - run: mise ci:screenshots:capture
+
+      # Kept whatever happens next: these are what would be uploaded, and they are the only way to
+      # look at a run's output without rerunning the hour.
+      - name: Upload screenshots artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ github.run_id }}-${{ github.run_attempt }}
+          path: fastlane/screenshots/*/*_framed.png
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Upload to App Store Connect
+        if: inputs.upload
+        run: mise ci:screenshots:upload
