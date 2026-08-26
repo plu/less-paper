@@ -15,24 +15,27 @@ public enum SnapshotFixtures {
         load("correspondents")
     }
 
+    // The catalogues the German screenshots rename. Correspondents are not among them: those are
+    // names rather than words.
+
     public static func customFields() -> [CustomField] {
         load("custom_fields")
     }
 
-    public static func documentTypes() -> [DocumentType] {
-        load("document_types")
+    public static func documentTypes(in corpus: SnapshotConfiguration.Corpus) -> [DocumentType] {
+        load("document_types", renaming: corpus.localized)
     }
 
     public static func savedViews() -> [SavedView] {
         load("saved_views")
     }
 
-    public static func storagePaths() -> [StoragePath] {
-        load("storage_paths")
+    public static func storagePaths(in corpus: SnapshotConfiguration.Corpus) -> [StoragePath] {
+        load("storage_paths", renaming: corpus.localized)
     }
 
-    public static func tags() -> [Tag] {
-        load("tags")
+    public static func tags(in corpus: SnapshotConfiguration.Corpus) -> [Tag] {
+        load("tags", renaming: corpus.localized)
     }
 
     // Every document the instance holds. A corpus narrows this down; the catalogues above stay
@@ -56,11 +59,20 @@ public enum SnapshotFixtures {
         URL.projectRoot.appending(path: "Screenshots/Thumbnails")
     }
 
-    private static func load<Value: Decodable>(_ name: String) -> [Value] {
+    private static func load<Value: Decodable>(
+        _ name: String,
+        renaming: ((String) -> String)? = nil
+    ) -> [Value] {
         let url = fixturesDirectory.appending(path: "\(name).json")
-        guard let data = try? Data(contentsOf: url) else {
+        guard var data = try? Data(contentsOf: url) else {
             reportIssue("Missing screenshot fixture \(name).json. Run Screenshots/fetch_fixtures.py.")
             return []
+        }
+
+        // Renaming the payload rather than the decoded value: name is a let on every one of these
+        // models, and rebuilding them would mean repeating an initialiser per type.
+        if let renaming {
+            data = renamed(data, by: renaming) ?? data
         }
 
         do {
@@ -69,6 +81,26 @@ public enum SnapshotFixtures {
             reportIssue("Could not decode screenshot fixture \(name).json: \(error)")
             return []
         }
+    }
+
+    private static func renamed(
+        _ data: Data,
+        by renaming: (String) -> String
+    ) -> Data? {
+        guard let objects = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            return nil
+        }
+
+        let renamedObjects = objects.map { object -> [String: Any] in
+            guard let name = object["name"] as? String else {
+                return object
+            }
+            var object = object
+            object["name"] = renaming(name)
+            return object
+        }
+
+        return try? JSONSerialization.data(withJSONObject: renamedObjects)
     }
 }
 #endif

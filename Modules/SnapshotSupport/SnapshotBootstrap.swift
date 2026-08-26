@@ -39,7 +39,7 @@ public extension DependencyValues {
 
         // The inbox is not a flag on the request - DocumentFilter.inbox turns it into a tag rule -
         // so the inbox list is recognised by the tag it filters on.
-        let inboxTag = SnapshotFixtures.tags().first(where: \.isInboxTag)?.id
+        let inboxTag = SnapshotFixtures.tags(in: corpus).first(where: \.isInboxTag)?.id
         getDocuments.execute = { input, _ in
             let isInbox = input.filterRules.contains { rule in
                 guard let inboxTag,
@@ -50,7 +50,7 @@ public extension DependencyValues {
                 return rule.value?.split(separator: ",").contains("\(inboxTag.rawValue)") == true
             }
             let results = isInbox
-                ? featured.filter { corpus.inboxDocumentIds.contains($0.id) }
+                ? corpus.inboxDocumentIds.compactMap { id in documents.first { $0.id == id } }
                 : featured
             return GetDocumentsOutput(count: results.count, next: nil, results: results)
         }
@@ -92,6 +92,8 @@ public func seedSnapshotSharedState(
     _ configuration: SnapshotConfiguration,
     server: Server = .snapshot
 ) {
+    let corpus = configuration.corpus
+
     @Shared(.servers)
     var servers
 
@@ -124,12 +126,12 @@ public func seedSnapshotSharedState(
     $servers.withLock { $0 = [server] }
     $selectedServer.withLock { $0 = server }
     $correspondents.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.correspondents()) }
-    $documentTypes.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.documentTypes()) }
+    $documentTypes.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.documentTypes(in: corpus)) }
     $savedViews.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.savedViews()) }
-    $storagePaths.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.storagePaths()) }
-    $tags.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.tags()) }
-    $inboxDocumentCount.withLock { $0 = configuration.corpus.inboxDocumentIds.count }
-    $inboxTags.withLock { $0 = SnapshotFixtures.tags().filter(\.isInboxTag).map(\.id) }
+    $storagePaths.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.storagePaths(in: corpus)) }
+    $tags.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.tags(in: corpus)) }
+    $inboxDocumentCount.withLock { $0 = corpus.inboxDocumentIds.count }
+    $inboxTags.withLock { $0 = SnapshotFixtures.tags(in: corpus).filter(\.isInboxTag).map(\.id) }
 }
 
 struct SnapshotFixtureMissing: Error {}
