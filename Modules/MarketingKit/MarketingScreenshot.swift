@@ -70,3 +70,24 @@ private extension Color {
     static let marketingGroundTop = Color(red: 0, green: 0.31, blue: 0.30)
     static let marketingGroundBottom = Color(red: 0, green: 0.19, blue: 0.18)
 }
+
+public extension MarketingScreenshot {
+
+    // scale is 1 because the device's size is already in pixels: these are the exact dimensions App
+    // Store Connect accepts, not points waiting to be multiplied by a device factor.
+    @MainActor
+    static func render(
+        capture: Image,
+        screen: MarketingScreen,
+        device: MarketingDevice
+    ) -> Data? {
+        let renderer = ImageRenderer(
+            content: Self(capture: capture, screen: screen, device: device)
+                .frame(width: device.size.width, height: device.size.height)
+        )
+        renderer.scale = 1
+        renderer.isOpaque = true
+
+        return renderer.uiImage?.pngData()
+    }
+}
