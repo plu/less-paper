@@ -1,6 +1,6 @@
 # Marketing Screenshots Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace frameit with a SwiftUI renderer this repository owns, and split the screenshot pipeline into record, frame and upload so that changing a caption costs seconds rather than an hour.
 
@@ -78,7 +78,7 @@ The layout first, proven by snapshot tests, before anything in the pipeline move
   - `MarketingScreenshot(capture:screen:device:)` — a `View`
   - `MarketingScreenshot.render(capture:screen:device:) -> Data?` — PNG bytes at the device's exact size
 
-- [ ] **Step 1: Add the two modules to Tuist**
+- [x] **Step 1: Add the two modules to Tuist**
 
 In `Tuist/ProjectDescriptionHelpers/Module.swift`, add to the enum, keeping alphabetical order:
 
@@ -109,7 +109,7 @@ In `Tuist/ProjectDescriptionHelpers/Module+Dependencies.swift`:
 
 In `Tuist/ProjectDescriptionHelpers/Module+Schemes.swift`, add `.marketingKit,` and `.marketingKitTests,` to the trailing branch that returns `[]`.
 
-- [ ] **Step 2: Write the device and screen types**
+- [x] **Step 2: Write the device and screen types**
 
 Create `Modules/MarketingKit/MarketingDevice.swift`:
 
@@ -200,7 +200,7 @@ public enum MarketingScreen: String, CaseIterable, Sendable {
 }
 ```
 
-- [ ] **Step 3: Write the caption catalog**
+- [x] **Step 3: Write the caption catalog**
 
 Create `Modules/MarketingKit/Resources/Marketing.xcstrings` with these exact strings. The format matches `Shared/Framework/Resources/Localizable.xcstrings`; copy its shape, with `"sourceLanguage" : "en"` and each key carrying `en` and `de` localizations.
 
@@ -214,7 +214,7 @@ Create `Modules/MarketingKit/Resources/Marketing.xcstrings` with these exact str
 | `marketing.edit` | Fix a title or tag on the spot | Korrigiere Titel und Tags direkt |
 | `marketing.settings` | Your setup, under control | Deine Einstellungen, alles im Griff |
 
-- [ ] **Step 4: Write the failing snapshot test**
+- [x] **Step 4: Write the failing snapshot test**
 
 Create `Modules/MarketingKitTests/MarketingScreenshotTests.swift`:
 
@@ -262,7 +262,7 @@ struct MarketingScreenshotTests {
 }
 ```
 
-- [ ] **Step 5: Run it to verify it fails**
+- [x] **Step 5: Run it to verify it fails**
 
 ```bash
 export TUIST_PAPERLESS_TEST_URL=http://192.168.64.1:8000
@@ -272,7 +272,7 @@ mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing
 
 Expected: FAIL to build, `cannot find 'MarketingScreenshot' in scope`.
 
-- [ ] **Step 6: Write the layout**
+- [x] **Step 6: Write the layout**
 
 Create `Modules/MarketingKit/MarketingScreenshot.swift`:
 
@@ -339,7 +339,7 @@ public struct MarketingScreenshot: View {
 }
 ```
 
-- [ ] **Step 7: Record the references and confirm they pass**
+- [x] **Step 7: Record the references and confirm they pass**
 
 Recording writes the references; it always reports a failure while doing so, which is expected.
 
@@ -355,7 +355,7 @@ mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing
 
 Expected: PASS, 14 tests. Look at the recorded references in `Snapshots/MarketingKitTests/` before continuing — they are the design, and this is the moment to catch a caption that wraps badly.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add Modules/MarketingKit Modules/MarketingKitTests Snapshots/MarketingKitTests Tuist
@@ -376,7 +376,7 @@ The layout exists; this turns it into PNG bytes of exactly the size App Store Co
 - Consumes: `MarketingScreenshot(capture:screen:device:)`, `MarketingDevice.size` (Task 1).
 - Produces: `MarketingScreenshot.render(capture:screen:device:) -> Data?`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `Modules/MarketingKitTests/MarketingRenderTests.swift`:
 
@@ -411,7 +411,7 @@ struct MarketingRenderTests {
 }
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 ```bash
 mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing
@@ -419,7 +419,7 @@ mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing
 
 Expected: FAIL to build, `type 'MarketingScreenshot' has no member 'render'`.
 
-- [ ] **Step 3: Add the renderer**
+- [x] **Step 3: Add the renderer**
 
 Append to `Modules/MarketingKit/MarketingScreenshot.swift`:
 
@@ -446,7 +446,7 @@ public extension MarketingScreenshot {
 }
 ```
 
-- [ ] **Step 4: Run it to verify it passes**
+- [x] **Step 4: Run it to verify it passes**
 
 ```bash
 mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing
@@ -454,7 +454,7 @@ mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing
 
 Expected: PASS, 16 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add Modules/MarketingKit Modules/MarketingKitTests
@@ -474,7 +474,7 @@ The capture stage stops feeding fastlane and starts writing a committed input. T
 - Consumes: nothing new.
 - Produces: `Screenshots/Captures/<locale>/<device capturePrefix>-<screen fileStem>.png`
 
-- [ ] **Step 1: Point the Snapfile at the new directory**
+- [x] **Step 1: Point the Snapfile at the new directory**
 
 In `fastlane/Snapfile`, change the output directory:
 
@@ -482,7 +482,7 @@ In `fastlane/Snapfile`, change the output directory:
 output_directory("./Screenshots/Captures")
 ```
 
-- [ ] **Step 2: Stop ignoring captures, keep ignoring rendered output**
+- [x] **Step 2: Stop ignoring captures, keep ignoring rendered output**
 
 In `.gitignore`, replace the two fastlane screenshot lines with:
 
@@ -494,7 +494,7 @@ fastlane/screenshots/
 
 Confirm `.gitattributes` already routes `*.png` through LFS — it does, and the captures rely on it.
 
-- [ ] **Step 3: Capture into the new location**
+- [x] **Step 3: Capture into the new location**
 
 ```bash
 mise run screenshots:fixtures -- --url http://192.168.64.1:8000   # only if the fixtures are stale
@@ -503,7 +503,7 @@ mise exec -- bundle exec fastlane screenshots
 
 Expected: 28 files under `Screenshots/Captures/en-US/` and `Screenshots/Captures/de-DE/`, 14 each.
 
-- [ ] **Step 4: Verify the sizes before committing 20 MB**
+- [x] **Step 4: Verify the sizes before committing 20 MB**
 
 ```bash
 magick identify Screenshots/Captures/*/*.png | grep -oE " [0-9]+x[0-9]+ " | sort | uniq -c
@@ -511,7 +511,7 @@ magick identify Screenshots/Captures/*/*.png | grep -oE " [0-9]+x[0-9]+ " | sort
 
 Expected: 14 at `1320x2868`, 14 at `2048x2732`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .gitignore fastlane/Snapfile Screenshots/Captures
@@ -530,7 +530,7 @@ git commit -m "feat: commit the screenshot captures"
 - Consumes: `MarketingScreenshot.render(capture:screen:device:)` (Task 2); the captures (Task 3).
 - Produces: `fastlane/screenshots/<locale>/<device capturePrefix>-<screen fileStem>_framed.png`
 
-- [ ] **Step 1: Write the render entry point**
+- [x] **Step 1: Write the render entry point**
 
 Append to `Modules/MarketingKitTests/MarketingRenderTests.swift`:
 
@@ -583,7 +583,7 @@ struct MarketingRenderAllTests {
 
 Add `import ApiInterface` at the top of the file for `URL.projectRoot`, and add `.target(.apiInterface)` to `marketingKitTests` in `Module+Dependencies.swift`.
 
-- [ ] **Step 2: Write the mise task**
+- [x] **Step 2: Write the mise task**
 
 Create `mise/tasks/screenshots/frame`:
 
@@ -599,7 +599,7 @@ tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing -- TEST_RUNNER
 
 Make it executable: `chmod +x mise/tasks/screenshots/frame`.
 
-- [ ] **Step 3: Run it**
+- [x] **Step 3: Run it**
 
 ```bash
 mise run screenshots:frame
@@ -608,7 +608,7 @@ magick identify fastlane/screenshots/*/*_framed.png | grep -oE " [0-9]+x[0-9]+ "
 
 Expected: 14 at `1320x2868`, 14 at `2048x2732`. Look at several before continuing.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Modules/MarketingKitTests mise/tasks/screenshots/frame Tuist
@@ -625,7 +625,7 @@ Only once its replacement is producing correct images.
 - Modify: `fastlane/Fastfile`, `mise/tasks/ci/screenshots/capture`
 - Delete: `fastlane/screenshots/Framefile.json`, the four `.strings` files
 
-- [ ] **Step 1: Delete the frameit configuration**
+- [x] **Step 1: Delete the frameit configuration**
 
 ```bash
 git rm fastlane/screenshots/Framefile.json \
@@ -633,7 +633,7 @@ git rm fastlane/screenshots/Framefile.json \
   fastlane/screenshots/de-DE/keyword.strings fastlane/screenshots/de-DE/title.strings
 ```
 
-- [ ] **Step 2: Strip the frame lane and its helpers from the Fastfile**
+- [x] **Step 2: Strip the frame lane and its helpers from the Fastfile**
 
 Remove the `frame` and `screenshots_framed` lanes, the `FRAMES` and `BACKGROUND` constants, and the `link_fonts`, `rename_to_framed_devices` and `write_background` methods. Keep `screenshots`, `upload_screenshots`, `clear_captures` and `SCREENSHOTS`.
 
@@ -649,11 +649,11 @@ and change `upload_screenshots` to deliver the rendered images instead:
       screenshots_path: File.expand_path("screenshots", __dir__),
 ```
 
-- [ ] **Step 3: Update the CI capture task**
+- [x] **Step 3: Update the CI capture task**
 
 In `mise/tasks/ci/screenshots/capture`, replace `bundle exec fastlane screenshots_framed` with `bundle exec fastlane screenshots`.
 
-- [ ] **Step 4: Verify nothing references frameit**
+- [x] **Step 4: Verify nothing references frameit**
 
 ```bash
 grep -rn "frameit\|Framefile\|keyword.strings" --exclude-dir=.git --exclude-dir=vendor . | grep -v docs/superpowers
@@ -661,7 +661,7 @@ grep -rn "frameit\|Framefile\|keyword.strings" --exclude-dir=.git --exclude-dir=
 
 Expected: no output.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A fastlane mise
@@ -680,7 +680,7 @@ Every workflow shows its images in the step summary. The sheet is one image so t
 **Interfaces:**
 - Produces: a single PNG tiling the given images, plus a Markdown table on stdout.
 
-- [ ] **Step 1: Write the script**
+- [x] **Step 1: Write the script**
 
 Create `Screenshots/contact_sheet.py`:
 
@@ -731,7 +731,7 @@ if __name__ == "__main__":
     sys.exit(main())
 ```
 
-- [ ] **Step 2: Run it**
+- [x] **Step 2: Run it**
 
 ```bash
 python3 Screenshots/contact_sheet.py --input fastlane/screenshots --output /tmp/sheet.png
@@ -740,7 +740,7 @@ magick identify /tmp/sheet.png
 
 Expected: a table on stdout, and a single PNG under about 2 MB.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add Screenshots/contact_sheet.py
@@ -756,7 +756,7 @@ git commit -m "feat: add a contact sheet for the step summary"
 - Create: `mise/tasks/ci/screenshots/frame`
 - Delete: `.github/workflows/screenshots.yml`
 
-- [ ] **Step 1: Settle whether images render in a step summary**
+- [x] **Step 1: Settle whether images render in a step summary**
 
 This decides the shape of all three summaries, so it goes first and cheaply. Add a temporary step to `screenshots-frame.yml` that writes a small `data:` URI image into `$GITHUB_STEP_SUMMARY`, dispatch it, and look at the result.
 
@@ -767,7 +767,7 @@ printf '### data URI probe\n<img src="data:image/png;base64,%s" width="120">\n' 
 
 If the image renders, embed the contact sheet the same way. If it is stripped — which is the likelier outcome, as GitHub sanitises summary Markdown — fall back to the artifact link plus the table, and for **Record** use raw URLs against the branch it just pushed, which do render. Record the answer in a comment in the workflow so nobody probes it twice.
 
-- [ ] **Step 2: Write the CI frame task**
+- [x] **Step 2: Write the CI frame task**
 
 Create `mise/tasks/ci/screenshots/frame`:
 
@@ -785,29 +785,29 @@ tuist generate --no-open
 mise run screenshots:frame
 ```
 
-- [ ] **Step 3: Write the Record workflow**
+- [x] **Step 3: Write the Record workflow**
 
 Create `.github/workflows/screenshots-record.yml`. Manual only. After `mise ci:screenshots:capture`, commit the captures to a branch named `screenshots/record-${{ github.run_id }}` and open a pull request with `gh pr create`. Needs `permissions: contents: write` and `pull-requests: write`. Write the contact sheet into the summary using whatever Step 1 established.
 
-- [ ] **Step 4: Write the Frame workflow**
+- [x] **Step 4: Write the Frame workflow**
 
 Create `.github/workflows/screenshots-frame.yml`. Triggers: `workflow_dispatch`, and `pull_request` filtered by `paths: [Modules/MarketingKit/**, Modules/MarketingKitTests/**, Screenshots/Captures/**]`. Runs `mise ci:screenshots:frame`, uploads the rendered images as an artifact, and writes the contact sheet into the summary.
 
-- [ ] **Step 5: Write the Upload workflow**
+- [x] **Step 5: Write the Upload workflow**
 
 Create `.github/workflows/screenshots-upload.yml`. Manual only, with an `upload` input defaulting to false. Runs `mise ci:screenshots:frame` then `mise ci:screenshots:upload`, and writes the contact sheet of what it sent.
 
-- [ ] **Step 6: Delete the old workflow**
+- [x] **Step 6: Delete the old workflow**
 
 ```bash
 git rm .github/workflows/screenshots.yml
 ```
 
-- [ ] **Step 7: Dispatch Frame and check the summary**
+- [x] **Step 7: Dispatch Frame and check the summary**
 
 Expected: 28 rendered images in the artifact, and a summary showing them.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A .github mise
@@ -821,15 +821,15 @@ git commit -m "feat: split the screenshot workflows into record, frame and uploa
 **Files:**
 - Modify: `AGENTS.md`
 
-- [ ] **Step 1: Replace the frameit section**
+- [x] **Step 1: Replace the frameit section**
 
 Replace the three frameit traps under "App Store screenshots run on fixtures, never a server" with how the three stages work: captures are committed inputs produced by Record, framing is a unit test that runs in seconds, and uploading is manual. Keep the paragraph about fixtures and `SNAPSHOT_MODE`, which is unchanged, and the note that neither ships in a release build.
 
-- [ ] **Step 2: Record the execution notes**
+- [x] **Step 2: Record the execution notes**
 
 Add an "Execution notes" section to this plan in the shape the UI testing plans use: what the render actually costs, anything in this plan that turned out wrong, and the answer to the `data:` URI question from Task 7 Step 1.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add AGENTS.md docs/superpowers/plans/2026-08-26-marketing-screenshots.md
