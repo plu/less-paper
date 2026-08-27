@@ -82,7 +82,7 @@ Dependency injection runs through [swift-dependencies](https://github.com/pointf
 
 ## Testing
 
-239 test suites — 1167 tests — written with [Swift Testing](https://developer.apple.com/documentation/testing), covering unit tests, [snapshot tests](https://github.com/pointfreeco/swift-snapshot-testing) (233 recorded references) and XCUITest journeys that drive the real app.
+234 test suites — 1159 tests — written with [Swift Testing](https://developer.apple.com/documentation/testing), covering unit tests and [snapshot tests](https://github.com/pointfreeco/swift-snapshot-testing) (261 recorded references), plus fourteen XCUITest journeys that drive the real app.
 
 The API layer is tested against a live paperless-ngx container rather than mocks, so the tests catch real API drift.
 
