@@ -89,6 +89,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.apiTestSupport),
                 .target(.testSupport),
+                .target(.logging),
             ]
         case .apiInterface:
             [

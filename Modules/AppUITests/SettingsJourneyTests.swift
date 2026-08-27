@@ -19,10 +19,11 @@ final class SettingsJourneyTests: UITestCase {
             "Saved views",
             "Storage paths",
             "Tags",
+            "Diagnostics",
             "Licenses"
         ] {
             XCTAssertTrue(
-                app.staticTexts[section].exists,
+                settings.hasSection(section),
                 "Missing settings section: \(section)"
             )
         }
