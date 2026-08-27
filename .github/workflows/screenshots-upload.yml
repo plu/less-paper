@@ -10,6 +10,12 @@ on:
         type: boolean
         default: false
 
+# Two uploads at once would race on the same listing. Queued rather than cancelled:
+# a half-finished delivery is worse than a wait.
+concurrency:
+  group: screenshots-upload
+  cancel-in-progress: false
+
 permissions:
   contents: read
 

@@ -6,6 +6,12 @@ name: Screenshots - Record
 on:
   workflow_dispatch:
 
+# Two captures at once would each spend an hour and open a pull request. Queued rather
+# than cancelled, so a run already underway keeps its hour.
+concurrency:
+  group: screenshots-record
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write

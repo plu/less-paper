@@ -8,6 +8,15 @@ on:
     branches:
       - main
 
+# One self-hosted runner, so everything queues. A push while an earlier run is still going makes
+# that run pointless - it is testing a commit that has been replaced.
+#
+# Pull requests only. A run on main is never cancelled: its upload job ships to TestFlight, and
+# killing that halfway is worse than waiting.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: write
   pull-requests: write
