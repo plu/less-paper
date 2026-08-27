@@ -195,6 +195,29 @@ When every call starts returning `403`, the PAT has expired. Re-mint it at
 <https://github.com/settings/personal-access-tokens> and store it with
 `cd ~ && fnox set --global GH_TOKEN`.
 
+## The App Store listing lives in `fastlane/metadata`
+
+Downloaded from App Store Connect, committed, and uploaded by `deliver`, so changing a description
+is a diff someone can review rather than a form with no history.
+
+| Task | Does |
+|---|---|
+| `mise run metadata:lint` | checks every field against Apple's published limits — no API call |
+| `mise run metadata:download` | overwrites the local files with what the store currently shows |
+| `mise run metadata:upload` | rewrites the listing text; screenshots and binary untouched |
+
+Three things that cost time to work out, all of which fail quietly:
+
+- **`download_metadata` needs `--force`.** It calls `UI.confirm` before overwriting local files, and
+  a non-interactive shell never answers — so it exits `0` having written nothing, which looks exactly
+  like an app with no metadata.
+- **`deliver`'s `verify_only` cannot check metadata on its own.** It hashes a binary, so without one
+  it dies with `no implicit conversion of nil into String`. `metadata:lint` exists because of this.
+- **`review_information` is gitignored.** It holds a demo account password, a phone number and an
+  email address, and this repository is public. `deliver` leaves that section of the listing alone
+  when the files are absent, so uploads still work without it. Re-download it locally if it needs
+  changing.
+
 ## Recording a snapshot reference means editing the scheme
 
 References live under `Snapshots/`, and `SNAPSHOT_RECORD` decides whether a run writes them. The

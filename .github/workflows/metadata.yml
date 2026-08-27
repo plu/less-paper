@@ -1,0 +1,105 @@
+name: Metadata
+
+# The App Store listing text. Lint runs on any pull request that touches it; downloading and
+# uploading are manual, because one rewrites the files in git and the other rewrites the store.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: What to do
+        type: choice
+        options:
+          - lint
+          - download
+          - upload
+        default: lint
+  pull_request:
+    paths:
+      - fastlane/metadata/**
+      - fastlane/metadata_lint.py
+
+concurrency:
+  group: metadata
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile --norc -euo pipefail {0}
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  metadata:
+    name: Metadata
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - name: mise
+        uses: jdx/mise-action@v3
+        with:
+          cache: false
+          cache_save: false
+
+      # Always, including before an upload: sending text Apple will reject wastes a round trip.
+      - run: mise run metadata:lint
+
+      - name: Download the current listing
+        if: inputs.action == 'download'
+        run: mise run metadata:download
+
+      # Same shape as Record: a change to what the store shows arrives as a pull request.
+      - name: Open a pull request with the downloaded listing
+        if: inputs.action == 'download'
+        run: |
+          branch="metadata/download-${{ github.run_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add fastlane/metadata
+
+          if git diff --cached --quiet; then
+            echo "The listing in git already matches App Store Connect." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git commit -m "chore: sync the App Store listing from App Store Connect"
+          git push origin "$branch"
+          gh pr create --title "chore: sync the App Store listing from App Store Connect" \
+            --body "Downloaded by [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})." \
+            --head "$branch"
+
+      - name: Upload the listing
+        if: inputs.action == 'upload'
+        run: mise run metadata:upload
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Metadata"
+            echo
+            echo "Action: \`${{ inputs.action || 'lint' }}\`"
+            echo
+            echo "| Locale | Name | Subtitle | Keywords | Description |"
+            echo "|---|--:|--:|--:|--:|"
+            for locale in fastlane/metadata/*/; do
+              name=$(basename "$locale")
+              [ "$name" = "review_information" ] && continue
+              count() { [ -f "$1" ] && tr -d '\n' < "$1" | wc -c | tr -d ' ' || echo 0; }
+              printf '| %s | %s | %s | %s | %s |\n' "$name" \
+                "$(count "$locale/name.txt")" "$(count "$locale/subtitle.txt")" \
+                "$(count "$locale/keywords.txt")" "$(count "$locale/description.txt")"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
