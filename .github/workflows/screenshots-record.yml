@@ -80,6 +80,11 @@ jobs:
             --body "Captured by [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Review the images, then merge." \
             --head "$branch"
 
+          echo "branch=$branch" >> "$GITHUB_ENV"
+
+      # These can be shown inline, unlike the other two workflows': the captures were just committed,
+      # so they have raw URLs, and the repository is public so those need no auth. A data: URI would
+      # not work - GitHub's summary sanitiser strips the src.
       - name: Summary
         if: always()
         run: |
@@ -87,5 +92,23 @@ jobs:
             echo "## Captures"
             cat "$RUNNER_TEMP/table.md"
             echo
-            echo "The contact sheet is in the run's artifact."
+
+            if [ -n "${branch:-}" ]; then
+              # media, not raw: the captures are Git LFS, and raw.githubusercontent.com serves the
+              # pointer file rather than the image.
+              raw="https://media.githubusercontent.com/media/${{ github.repository }}/$branch"
+              for locale in en-US de-DE; do
+                echo "### $locale"
+                echo
+                while IFS= read -r image; do
+                  name=$(basename "$image")
+                  # %20 rather than a raw space: the device names have spaces in them.
+                  printf '<img src="%s/%s" width="150">\n' \
+                    "$raw" "$(printf '%s' "Screenshots/Captures/$locale/$name" | sed 's/ /%20/g')"
+                done < <(find "Screenshots/Captures/$locale" -name '*.png' | sort)
+                echo
+              done
+            else
+              echo "The captures are in this run's artifact."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

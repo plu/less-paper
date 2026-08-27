@@ -195,12 +195,43 @@ When every call starts returning `403`, the PAT has expired. Re-mint it at
 <https://github.com/settings/personal-access-tokens> and store it with
 `cd ~ && fnox set --global GH_TOKEN`.
 
+## Recording a snapshot reference means editing the scheme
+
+References live under `Snapshots/`, and `SNAPSHOT_RECORD` decides whether a run writes them. The
+variable is declared in `Tuist/ProjectDescriptionHelpers/Extensions/Dictionary+Extensions.swift`
+with `isEnabled: false`.
+
+**Passing it on the command line does not work.** Neither `SNAPSHOT_RECORD=all tuist test` nor
+xcodebuild's `TEST_RUNNER_SNAPSHOT_RECORD=all` reaches the test process, and the run then passes
+having recorded nothing — which reads exactly like success. To re-record: flip `isEnabled` to
+`true`, `tuist generate`, run the tests, flip it back, and regenerate. Never leave it enabled.
+
+A test with **no** reference yet is a different case: swift-snapshot-testing writes one on the first
+run and fails, and the second run passes against it. Nothing had to be enabled, so nothing warns
+you — **look at what was recorded before trusting it**. A reference records whatever the code
+produced, bug included; that is how 14 German references were recorded showing English captions.
+
 ## App Store screenshots run on fixtures, never a server
 
-`mise run screenshots:capture` drives the real app through the seven App Store screens on every
-device and language Apple requires, then frames them. It needs no paperless instance: the app is
-launched with `SNAPSHOT_MODE=true`, which swaps the API use cases for the payloads in
-`Screenshots/Fixtures` and the thumbnails in `Screenshots/Thumbnails`.
+The pipeline is three stages, separated because they differ by three orders of magnitude in cost:
+
+| Stage | Command | Cost | Output |
+|---|---|---|---|
+| Record | `mise run screenshots:capture` | ~1 hour | `Screenshots/Captures/` — **committed** |
+| Frame | `mise run screenshots:frame` | ~5 seconds | `fastlane/screenshots/` — generated |
+| Upload | `mise run ci:screenshots:upload` | minutes | App Store Connect |
+
+Each has a manual GitHub Action of its own, and Frame also runs on any pull request touching
+`Modules/MarketingKit`, the captures or the string catalog.
+
+**The captures are committed, so changing a caption costs seconds rather than an hour.** They are
+the expensive artefact and everything downstream of them is cheap. The cost of that choice: each
+re-record stores 28 new LFS blobs, so re-record when the app's UI has moved, not out of habit.
+
+Record drives the real app through the seven App Store screens on every device and language Apple
+requires. It needs no paperless instance: the app is launched with `SNAPSHOT_MODE=true`, which swaps
+the API use cases for the payloads in `Screenshots/Fixtures` and the thumbnails in
+`Screenshots/Thumbnails`.
 
 Those fixtures are the raw API responses, downloaded once from a seeded instance by
 `mise run screenshots:fixtures -- --url <instance>`. **Re-fetch them rather than editing them** —
@@ -219,20 +250,23 @@ German screenshots read Möbel and Aufbauanleitung over the same manuals.
 `SnapshotCorpus` also decides which thumbnails are worth keeping: `fetch_fixtures.py` downloads only
 the documents it names, and clears the directory first.
 
-Uploading is a **manual GitHub Action**, `Screenshots`, with an `upload` input that defaults to
-false: a run takes the better part of an hour, and uploading rewrites what the App Store shows, so
-neither should happen because someone pushed. It captures, attaches the framed images as an artifact
-whatever happens, and only uploads when asked. `mise run ci:screenshots:upload` does the same thing
-locally. It sends **screenshots and nothing else** — the binary still ships through `altool` in
-`mise/tasks/ci/upload`, so the two cannot race.
+Uploading is gated behind an `upload` input that defaults to false, because it rewrites what the App
+Store shows. It sends **screenshots and nothing else** — the binary still ships through `altool` in
+`mise/tasks/ci/upload`, so the two cannot race. Record likewise never pushes to `main`: it opens a
+pull request, so a change to what the store will show gets reviewed like any other.
 
-Three things about frameit that are easy to lose an afternoon to, all handled in `fastlane/Fastfile`:
+Framing is `MarketingKit`, a SwiftUI view rendered with `ImageRenderer` at a stated size. It
+replaced fastlane's frameit, which silently produced plausible images of the wrong size. Two things
+to know about it:
 
-- **The output canvas takes its aspect ratio from the background image.** A background of the wrong
-  shape silently produces an image App Store Connect rejects, and the image looks fine until it is
-  refused. One background is generated per device size on every run.
-- **Font paths in `Framefile.json` resolve relative to the Framefile**, so an absolute `/System`
-  path is read as a path inside the screenshots directory and every caption is dropped without an
-  error that says so.
-- **The frame library lags the simulators.** Captures are renamed to the nearest frame with the same
-  screen size before framing.
+- **The caption is resolved eagerly to a `String` with a locale the caller states.**
+  `Text(LocalizedStringResource)` resolves through the environment's locale, so a resource carrying
+  its own locale is ignored — and one render loop writing both languages then puts English captions
+  on the German screenshots. It shipped that way once.
+- **The render is asked for with a `.marketing-render` marker file, not an environment variable.**
+  `TEST_RUNNER_`-prefixed variables do not reach the test process here, for the same reason
+  re-recording a snapshot means editing the scheme (above). `mise run screenshots:frame` writes the marker and removes it again.
+
+`Screenshots/contact_sheet.py` tiles a directory of screenshots into one image for a workflow's step
+summary. It needs Homebrew's ImageMagick (`brew install imagemagick`), which is not a mise tool
+because the only backends for it build from source.
