@@ -12,7 +12,11 @@ struct DocumentDetailView: View {
             switch store.downloadResult {
             case let .success(data, _):
                 PDFKitView(data: data)
-                    .ignoresSafeArea()
+                    // Edge to edge on iPhone, where the view is the window. In a split view column
+                    // it is not: ignoring the safe area there lets the view extend past the column,
+                    // so the page is fitted to something wider than what is on screen and the
+                    // reader sees a zoomed slice of it.
+                    .ignoresSafeArea(edges: horizontalSizeClass == .compact ? .all : [])
             case let .failure(error):
                 errorView(error: error)
             case .none:
@@ -68,6 +72,9 @@ struct DocumentDetailView: View {
 
     @Bindable
     var store: StoreOf<DocumentDetailReducer>
+
+    @Environment(\.horizontalSizeClass)
+    private var horizontalSizeClass
 
     @ViewBuilder
     private func viewerMenu() -> some View {

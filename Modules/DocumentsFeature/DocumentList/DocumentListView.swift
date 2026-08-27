@@ -6,7 +6,7 @@ import SwiftUI
 @ViewAction(for: DocumentListReducer.self)
 public struct DocumentListView: View {
     public var body: some View {
-        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+        AdaptiveNavigationView(path: $store.scope(state: \.path, action: \.path)) {
             List {
                 // Rows default to `systemBackground`, which is black in dark mode and so paints over
                 // the list's `m3SurfaceContainerLowest`. Invisible in light mode, where both are white.
@@ -58,6 +58,15 @@ public struct DocumentListView: View {
             case let .documentDetail(store):
                 DocumentDetailView(store: store)
             }
+        } placeholder: {
+            DocumentDetailPlaceholderView()
+        }
+        // The reducer decides whether opening a document pushes or replaces, so it has to be told
+        // which layout is on screen. Read here rather than inside the container, because the
+        // container is generic over features that may not care.
+        .onAppear { send(.onLayoutChanged(isSplit: horizontalSizeClass == .regular)) }
+        .onChange(of: horizontalSizeClass) { _, sizeClass in
+            send(.onLayoutChanged(isSplit: sizeClass == .regular))
         }
         .sheet(
             item: $store.scope(
@@ -76,6 +85,9 @@ public struct DocumentListView: View {
 
     @Bindable
     public var store: StoreOf<DocumentListReducer>
+
+    @Environment(\.horizontalSizeClass)
+    private var horizontalSizeClass
 
     @ViewBuilder
     private func documentSelectionLoadingView() -> some View {

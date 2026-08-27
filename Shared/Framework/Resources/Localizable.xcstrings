@@ -3651,6 +3651,40 @@
         }
       }
     },
+    "noDocumentSelected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wähle ein Dokument"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select a document"
+          }
+        }
+      }
+    },
+    "noDocumentSelectedDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippe links auf ein Dokument, um es hier zu lesen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pick something from the list to read it here."
+          }
+        }
+      }
+    },
     "noDocumentsFound" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -42,6 +42,7 @@ public struct DocumentListReducer: Sendable {
             case mergeSelectedButtonTapped
             case onAppear
             case onRefresh
+            case onLayoutChanged(isSplit: Bool)
             case onRowAppear(Document)
             case reloadButtonTapped
             case savedViewButtonTapped(SavedView)
@@ -71,6 +72,10 @@ public struct DocumentListReducer: Sendable {
     public struct State: Equatable {
 
         let server: Server
+
+        /// True while a detail column is on screen, which is what decides whether opening a
+        /// document pushes over the list or replaces whatever the column is showing.
+        var isSplitLayout = false
 
         @Presents
         var destination: Destination.State?
@@ -303,10 +308,17 @@ public struct DocumentListReducer: Sendable {
                 case .deleteDocument:
                     return .runDeleteDocuments(ids: [id], server: state.server)
                 case let .presentDocumentDetail(document):
-                    state.path.append(.documentDetail(DocumentDetailReducer.State(
+                    let detail = Path.State.documentDetail(DocumentDetailReducer.State(
                         document: document,
                         server: state.server
-                    )))
+                    ))
+                    // A detail column shows one document: picking a second replaces the first
+                    // rather than stacking behind it, which is what appending would do and what
+                    // makes three taps leave three screens deep on iPad.
+                    if state.isSplitLayout {
+                        state.path.removeAll()
+                    }
+                    state.path.append(detail)
                     return .none
                 }
             case let .documentsDeleted(ids):
@@ -461,6 +473,14 @@ public struct DocumentListReducer: Sendable {
                         ),
                         .runRefreshStatistics(server: state.server)
                     )
+                case let .onLayoutChanged(isSplit):
+                    state.isSplitLayout = isSplit
+                    // Rotating an iPad into the split layout with a document already pushed would
+                    // otherwise leave that document behind the list rather than in the column.
+                    if isSplit, state.path.count > 1 {
+                        state.path.removeFirst(state.path.count - 1)
+                    }
+                    return .none
                 case let .onRowAppear(document):
                     if let nextPage = state.nextPage, state.documents.last?.id == document.id && !state.isLoadingMore {
                         state.error = nil
