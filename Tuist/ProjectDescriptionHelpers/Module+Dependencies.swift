@@ -460,6 +460,7 @@ extension Module {
                 .target(.documentTypesFeature),
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
+                .target(.logging),
             ]
         case .shareFeatureTests:
             [
