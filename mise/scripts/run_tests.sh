@@ -14,8 +14,12 @@ shift
 # leaving the previous bundle behind for anyone inspecting it afterwards.
 rm -rf "$bundle"
 
+# --no-selective-testing is not optional. Without it Tuist skips any target whose fingerprint has
+# not changed and reports success having run nothing - which is indistinguishable from a pass, and
+# has already produced a green run on main that executed zero tests.
 set +e
-tuist test -d "iPhone 17 Pro" --clean "$@" -T "$bundle" -- -testLanguage en -testRegion DE
+tuist test -d "iPhone 17 Pro" --clean --no-selective-testing "$@" -T "$bundle" \
+  -- -testLanguage en -testRegion DE
 test_exit_code=$?
 set -e
 

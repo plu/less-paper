@@ -50,6 +50,8 @@ platform :ios do
       # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
       force: true,
       overwrite_screenshots: true,
+      # As above: a screenshot upload must not decide how the version rolls out.
+      phased_release: true,
       run_precheck_before_submit: false,
       screenshots_path: SCREENSHOTS,
       skip_app_version_update: true,
@@ -66,6 +68,9 @@ end
 def metadata_options
   {
     app_identifier: APP_IDENTIFIER,
+    # deliver removes phased release when this is not set, and it logs "Removing phased release"
+    # rather than asking. A text-only upload has no business changing how a version rolls out.
+    phased_release: true,
     # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
     force: true,
     metadata_path: METADATA,
