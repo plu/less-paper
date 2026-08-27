@@ -17,15 +17,8 @@ tuist generate --no-open
 
 bundle exec fastlane screenshots
 
-# capture_screenshots does not fail the lane when the build beneath it fails. It clears the previous
-# captures first, reports success, and leaves the directory empty - so a failed run looks exactly
-# like a successful one, and Record would open a pull request deleting all 28 images.
-expected=28
-actual=$(find "$MISE_PROJECT_ROOT/Screenshots/Captures" -name '*.png' | wc -l | tr -d ' ')
-
-if [ "$actual" -ne "$expected" ]; then
-  echo "error: expected $expected captures, found $actual." >&2
-  exit 1
-fi
-
-echo "Captured $actual screenshots."
+# capture_screenshots clears the captures before it runs and does not fail the lane when the
+# build beneath it fails, so an empty directory and a successful run look identical. The
+# verifier also drops any device the Snapfile does not ask for, which one run produced and
+# which would otherwise be framed and uploaded as a size nobody asked for.
+python3 "$MISE_PROJECT_ROOT/Screenshots/verify_captures.py"

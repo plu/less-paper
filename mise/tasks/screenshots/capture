@@ -9,17 +9,8 @@ set -euo pipefail
 # `mise run screenshots:frame` turns them into finished images in seconds.
 bundle exec fastlane screenshots
 
-# capture_screenshots does not fail the lane when the build beneath it fails. It clears the previous
-# captures first, reports success, and leaves the directory empty - so a failed run looks exactly
-# like a successful one until someone opens the folder. Committed captures make that recoverable;
-# this makes it visible.
-expected=28
-actual=$(find "$MISE_PROJECT_ROOT/Screenshots/Captures" -name '*.png' | wc -l | tr -d ' ')
-
-if [ "$actual" -ne "$expected" ]; then
-  echo "error: expected $expected captures, found $actual." >&2
-  echo "Restore the previous ones with: git checkout -- Screenshots/Captures" >&2
-  exit 1
-fi
-
-echo "Captured $actual screenshots."
+# capture_screenshots clears the captures before it runs and does not fail the lane when the
+# build beneath it fails, so an empty directory and a successful run look identical. The
+# verifier also drops any device the Snapfile does not ask for, which one run produced and
+# which would otherwise be framed and uploaded as a size nobody asked for.
+python3 "$MISE_PROJECT_ROOT/Screenshots/verify_captures.py"
