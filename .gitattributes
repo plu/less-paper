@@ -2,3 +2,7 @@
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.pdf filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
+
+# The README strip is small and has to render wherever the README is read, including places that do
+# not resolve LFS pointers. Kept out of LFS for that reason; it is the one committed PNG that is.
+docs/images/*.png -filter -diff -merge -text

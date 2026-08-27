@@ -12,6 +12,8 @@ A native iOS client for [paperless-ngx](https://github.com/paperless-ngx/paperle
 [![License: MIT](https://img.shields.io/badge/license-MIT-3DA639)](LICENSE)
 [![TestFlight beta](https://img.shields.io/badge/TestFlight-public_beta-0D96F6?logo=apple&logoColor=white)](https://testflight.apple.com/join/3CM21m1n)
 
+![Inbox, documents, search and a document open for reading](docs/images/screenshots.png)
+
 ## Status
 
 This is a complete rewrite of Less Paper, and it has not been released yet — what is on the App

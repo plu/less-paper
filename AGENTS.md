@@ -267,6 +267,10 @@ to know about it:
   `TEST_RUNNER_`-prefixed variables do not reach the test process here, for the same reason
   re-recording a snapshot means editing the scheme (above). `mise run screenshots:frame` writes the marker and removes it again.
 
+The README shows `docs/images/screenshots.png`, a strip of four English iPhone screens rebuilt by
+`mise run screenshots:readme` after a re-frame. It is the one committed PNG kept **out** of LFS, so
+that it renders wherever the README is read.
+
 `Screenshots/contact_sheet.py` tiles a directory of screenshots into one image for a workflow's step
 summary. It needs Homebrew's ImageMagick (`brew install imagemagick`), which is not a mise tool
 because the only backends for it build from source.
