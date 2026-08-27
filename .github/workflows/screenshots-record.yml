@@ -82,11 +82,27 @@ jobs:
 
           git commit -m "chore: re-record the App Store captures"
           git push origin "$branch"
-          gh pr create --title "chore: re-record the App Store captures" \
+          echo "branch=$branch" >> "$GITHUB_ENV"
+
+          # The branch is the valuable part - it holds the hour of simulator time. Opening the pull
+          # request is a convenience, and GitHub blocks it unless "Allow GitHub Actions to create
+          # and approve pull requests" is enabled, which no amount of `permissions:` overrides. A
+          # blocked convenience must not discard the work, so this reports and carries on.
+          if gh pr create --title "chore: re-record the App Store captures" \
             --body "Captured by [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Review the images, then merge." \
             --head "$branch"
-
-          echo "branch=$branch" >> "$GITHUB_ENV"
+          then
+            echo "Pull request opened." >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### The captures are on \`$branch\`"
+              echo
+              echo "Opening the pull request was refused. Enable **Settings → Actions → General →"
+              echo "Allow GitHub Actions to create and approve pull requests**, or open it here:"
+              echo
+              echo "${{ github.server_url }}/${{ github.repository }}/compare/$branch?expand=1"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       # These can be shown inline, unlike the other two workflows': the captures were just committed,
       # so they have raw URLs, and the repository is public so those need no auth. A data: URI would

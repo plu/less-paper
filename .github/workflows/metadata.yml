@@ -76,9 +76,18 @@ jobs:
 
           git commit -m "chore: sync the App Store listing from App Store Connect"
           git push origin "$branch"
-          gh pr create --title "chore: sync the App Store listing from App Store Connect" \
+
+          # Same as Record: the branch is the work, the pull request is a convenience GitHub may
+          # refuse. See the note there.
+          if ! gh pr create --title "chore: sync the App Store listing from App Store Connect" \
             --body "Downloaded by [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})." \
             --head "$branch"
+          then
+            echo "The listing is on \`$branch\`; opening the pull request was refused." \
+              >> "$GITHUB_STEP_SUMMARY"
+            echo "${{ github.server_url }}/${{ github.repository }}/compare/$branch?expand=1" \
+              >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       # metadata:upload writes the review information from fnox first; it is never committed.
       - name: Upload the listing
