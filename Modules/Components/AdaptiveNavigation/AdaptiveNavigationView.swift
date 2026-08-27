@@ -31,6 +31,10 @@ public struct AdaptiveNavigationView<
                 NavigationStack {
                     list
                 }
+                // A document row is a thumbnail, a title, a date and a row of tags. At the width
+                // NavigationSplitView picks by default the tags wrap into a column and the titles
+                // truncate mid-word, so the sidebar is given room to show a row as designed.
+                .navigationSplitViewColumnWidth(min: 380, ideal: 420, max: 520)
             } detail: {
                 NavigationStack(path: path) {
                     placeholder
@@ -38,8 +42,6 @@ public struct AdaptiveNavigationView<
                     destination(store)
                 }
             }
-            // Without this the split view narrows the sidebar to a master-detail proportion better
-            // suited to a settings screen than to document rows carrying a thumbnail and tags.
             .navigationSplitViewStyle(.balanced)
         }
     }
