@@ -9,6 +9,7 @@ blow through it long before anyone could look at them.
 
 import argparse
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -36,6 +37,11 @@ def main():
     parser.add_argument("--output", required=True)
     parser.add_argument("--width", type=int, default=180)
     args = parser.parse_args()
+
+    # Homebrew's, on the runner and locally. Not a mise tool: the only backends for it build from
+    # source, which costs more per run than the sheet is worth.
+    if not shutil.which("magick"):
+        raise SystemExit("error: ImageMagick is not installed - `brew install imagemagick`")
 
     images = sorted(Path(args.input).glob("*/*.png"))
     if not images:

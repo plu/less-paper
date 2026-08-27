@@ -1,0 +1,91 @@
+name: Screenshots - Record
+
+# Manual only, and expensive: the better part of an hour across both devices and both languages.
+# It never pushes to main - a re-record changes what the store will show, so it arrives as a pull
+# request and gets looked at like one.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile --norc -euo pipefail {0}
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  record:
+    name: Record
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          lfs: true
+
+      - name: mise
+        uses: jdx/mise-action@v3
+        with:
+          cache: false
+          cache_save: false
+
+      - run: mise ci:clean
+
+      - run: mise simulators:prepare
+
+      - run: mise ci:screenshots:capture
+
+      - name: Contact sheet
+        if: always()
+        run: |
+          python3 Screenshots/contact_sheet.py \
+            --input Screenshots/Captures --output "$RUNNER_TEMP/sheet.png" > "$RUNNER_TEMP/table.md"
+
+      - name: Upload captures artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            Screenshots/Captures/*/*.png
+            ${{ runner.temp }}/sheet.png
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Open a pull request with the new captures
+        run: |
+          branch="screenshots/record-${{ github.run_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add Screenshots/Captures
+
+          if git diff --cached --quiet; then
+            echo "The captures are unchanged; nothing to open a pull request for." \
+              >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git commit -m "chore: re-record the App Store captures"
+          git push origin "$branch"
+          gh pr create --title "chore: re-record the App Store captures" \
+            --body "Captured by [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Review the images, then merge." \
+            --head "$branch"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Captures"
+            cat "$RUNNER_TEMP/table.md"
+            echo
+            echo "The contact sheet is in the run's artifact."
+          } >> "$GITHUB_STEP_SUMMARY"
