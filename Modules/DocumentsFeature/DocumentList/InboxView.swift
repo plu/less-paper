@@ -6,7 +6,7 @@ import SwiftUI
 @ViewAction(for: DocumentListReducer.self)
 public struct InboxView: View {
     public var body: some View {
-        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+        AdaptiveNavigationView(path: $store.scope(state: \.path, action: \.path)) {
             List {
                 // Rows default to `systemBackground`, which is black in dark mode and so paints over
                 // the list's `m3SurfaceContainerLowest`. Invisible in light mode, where both are white.
@@ -58,6 +58,8 @@ public struct InboxView: View {
             case let .documentDetail(store):
                 DocumentDetailView(store: store)
             }
+        } placeholder: {
+            DocumentDetailPlaceholderView()
         }
         .badge(inboxDocumentCount)
     }
