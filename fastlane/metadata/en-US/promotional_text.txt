@@ -1,1 +1,1 @@
-
+Version 3 is a complete rewrite: faster lists, the full filter set from the web interface, bulk editing, and import straight from the share sheet.

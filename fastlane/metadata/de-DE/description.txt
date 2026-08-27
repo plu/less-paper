@@ -1,12 +1,20 @@
-Less Paper ist eine native App um auf paperless-ngx zuzugreifen.
+Less Paper ist ein nativer iOS-Client für paperless-ngx, dein selbst gehostetes Dokumentenarchiv. Die App spricht direkt mit deinem Server – und mit sonst nichts.
 
-Funktionen:
+ALLES WIEDERFINDEN
+Sämtliche Filter der Weboberfläche, inklusive benutzerdefinierter Felder: Titel und Inhalt, Korrespondent, Dokumenttyp, Speicherpfad, Tags, Datum und ASN. Speichere jeden Filter als Ansicht und lege gespeicherte Ansichten direkt in der App an, bearbeite und sortiere sie.
 
-* Kann sich mit mehreren Servern verbinden
-* Unterstützt die gleiche Such-/Filterfunktionalität wie die Web Version
-* Gespeicherte Ansichten erstellen oder editieren
-* Dokumente editieren
-* Korrespondenten, Dokument Typen, gespeicherte Ansichten, Speicherpfade und Tags verwalten
-* Import von Dokumenten
-* Zusätzliche Authentifizierung, z.B. Authelia
-* Import von passwortgeschützten Dokumenten
+BEARBEITEN, WO DU LIEST
+Korrigiere den Titel, weise einen anderen Korrespondenten zu, ergänze Tags, Notizen oder benutzerdefinierte Felder – direkt am Dokument. Markiere mehrere Dokumente und ändere sie gemeinsam, führe sie zusammen oder lösche sie in einem Schritt.
+
+DOKUMENTE HINEINBEKOMMEN
+Schicke alles von deinem Gerät über das Teilen-Menü nach paperless-ngx. Passwortgeschützte PDFs werden beim Import entsperrt, und das Passwort landet im Schlüsselbund – das nächste Dokument derselben Quelle öffnet sich dann ohne Nachfrage.
+
+FÜR ECHTE SETUPS GEBAUT
+Verbinde so viele Server, wie du möchtest, und wechsle zwischen ihnen. Client-Zertifikate, eigene HTTP-Header und Reverse Proxies wie Authelia werden unterstützt.
+
+DAS ARCHIV IN ORDNUNG HALTEN
+Lege Tags, Korrespondenten, Dokumenttypen und Speicherpfade an, benenne sie um oder lösche sie – und setze Besitzer und Berechtigungen für jedes Dokument.
+
+Funktioniert mit paperless-ngx 3.0.0 und älter. Universal: iPhone und iPad.
+
+Less Paper ist Open Source. Fehlerberichte und Wünsche gerne unter https://github.com/plu/less-paper

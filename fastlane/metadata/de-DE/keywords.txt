@@ -1,1 +1,1 @@
-paperless,paperless-ngx,paper,less,ngx,paperless ngx,lesspaper,less paper
+paperless,ngx,dms,dokumente,archiv,scannen,ocr,pdf,selfhosted,homelab,ablage,papierkram
