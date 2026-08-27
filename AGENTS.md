@@ -227,6 +227,29 @@ Three things that cost time to work out, all of which fail quietly:
   and not others is an error rather than a half-filled contact card; setting none is fine, and
   `deliver` then leaves that section of the listing alone.
 
+## Errors go to a local log the user can share
+
+`Logging` holds a `LogClient` dependency over a `LogWriter` actor; `DiagnosticsFeature` is the screen
+in Settings that reads, shares and clears it. Nothing leaves the device unless someone taps share.
+
+| Task | Does |
+|---|---|
+| `log.error(_:category:)` | records, from any feature |
+| Settings → Diagnostics | read, share via `ShareLink`, clear behind a confirmation |
+
+- **`os_log` is not the shareable record, and could not be.** `OSLogStore.local()` is unavailable on
+  iOS — the compiler rejects it — so the only scope an app can open is `.currentProcessIdentifier`,
+  which reads the current process and nothing else. A relaunch leaves an empty log, and a relaunch is
+  what people do after the app misbehaves. Every line still goes to `os_log` for Xcode and Console;
+  the file is what gets shared.
+- **Bodies are never written.** One line per API request — method, redacted path, status, response
+  size — plus errors and warnings. `LogRedaction` strips credential-shaped query values and never
+  writes a header value. Its tests are the ones that matter: a denylist with no test is a rule that
+  silently stops working.
+- **The file is capped at 1 MB with one rotation**, checked on write rather than on a timer, and it
+  lives in caches so the system can reclaim it. Diagnostics must never be why a document cannot be
+  saved.
+
 ## Recording a snapshot reference means editing the scheme
 
 References live under `Snapshots/`, and `SNAPSHOT_RECORD` decides whether a run writes them. The

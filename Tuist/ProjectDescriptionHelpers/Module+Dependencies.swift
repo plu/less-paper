@@ -74,6 +74,7 @@ extension Module {
                 .external(.sharing),
                 .external(.swiftSecurity),
                 .target(.apiInterface),
+                .target(.logging),
             ]
         case .apiImplementationTests:
             [
@@ -262,6 +263,33 @@ extension Module {
                 .target(.imageFeature),
                 .target(.testSupport),
             ]
+        case .logging:
+            [
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+            ]
+        case .loggingTests:
+            [
+                .external(.dependenciesTestSupport),
+                .target(.logging),
+                .target(.testSupport),
+            ]
+        case .diagnosticsFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .target(.components),
+                .target(.logging),
+            ]
+        case .diagnosticsFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .target(.diagnosticsFeature),
+                .target(.logging),
+                .target(.testSupport),
+            ]
         case .licensesFeature:
             [
                 .external(.composableArchitecture),
@@ -371,6 +399,7 @@ extension Module {
                 .external(.dependenciesMacros),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.diagnosticsFeature),
                 .target(.correspondentsFeature),
                 .target(.customFieldsFeature),
                 .target(.documentTypesFeature),
@@ -431,6 +460,7 @@ extension Module {
                 .target(.documentTypesFeature),
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
+                .target(.logging),
             ]
         case .shareFeatureTests:
             [

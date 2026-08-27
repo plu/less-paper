@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import CorrespondentsFeature
 import CustomFieldsFeature
+import DiagnosticsFeature
 import DocumentTypesFeature
 import LicensesFeature
 import PdfPasswordsFeature
@@ -118,6 +119,13 @@ public struct SettingListView: View {
                     .listRowBackground(Color.m3SurfaceContainer)
 
                     NavigationLink(
+                        state: SettingListReducer.Path.State.diagnosticsList(DiagnosticsListReducer.State())
+                    ) {
+                        Label(.diagnostics, systemImage: "stethoscope")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
+                    NavigationLink(
                         state: SettingListReducer.Path.State.licenseList(LicenseListReducer.State())
                     ) {
                         Label(.licenses, systemImage: "rosette")
@@ -143,6 +151,8 @@ public struct SettingListView: View {
                 CorrespondentListView(store: store)
             case let .customFieldList(store):
                 CustomFieldListView(store: store)
+            case let .diagnosticsList(store):
+                DiagnosticsListView(store: store)
             case let .documentTypeList(store):
                 DocumentTypeListView(store: store)
             case let .license(license):

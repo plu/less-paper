@@ -2,6 +2,7 @@ import ApiInterface
 import ComposableArchitecture
 import Dependencies
 import Foundation
+import Logging
 import PDFKit
 
 extension Effect where Action == ShareFormReducer.Action {
@@ -13,7 +14,10 @@ extension Effect where Action == ShareFormReducer.Action {
             await send(.set(\.isLoadingNextArchiveSerialNumber, true))
             try await send(.nextArchiveSerialNumber(getNextArchiveSerialNumber(server)))
             await send(.set(\.isLoadingNextArchiveSerialNumber, false))
-        } catch: { _, send in
+        } catch: { error, send in
+            @Dependency(\.log)
+            var log
+            log.error(error, category: .share)
             await send(.set(\.isLoadingNextArchiveSerialNumber, false))
         }
     }
@@ -48,7 +52,12 @@ extension Effect where Action == ShareFormReducer.Action {
                 await send(.fileUnlocked, animation: .snappy)
                 return
             }
-        } catch: { _, _ in
+        } catch: { error, _ in
+            // Nothing is shown for this one, so without the log an unlock failure leaves no trace
+            // anywhere at all.
+            @Dependency(\.log)
+            var log
+            log.error(error, category: .share)
         }
     }
 
