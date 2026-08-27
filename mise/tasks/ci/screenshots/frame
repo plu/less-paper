@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#MISE description="Render the committed captures, for CI"
+set -euo pipefail
+
+# No simulator and no app launch: this reads the committed captures and writes finished images, so
+# it runs in seconds where ci:screenshots:capture runs for the better part of an hour.
+
+# ci:clean wipes untracked files, so the workspace has to be regenerated before a test can run.
+tuist install
+tuist generate --no-open
+
+mise run screenshots:frame

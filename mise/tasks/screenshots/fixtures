@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Refresh the screenshot fixtures from a seeded paperless instance"
+set -euo pipefail
+
+python3 "$MISE_PROJECT_ROOT/Screenshots/fetch_fixtures.py" "$@"

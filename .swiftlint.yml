@@ -2,6 +2,8 @@ excluded:
   - .claude
   - Tuist/.build
   - Derived
+  # fastlane ships Swift of its own inside the gem, which is neither ours nor lintable.
+  - vendor
 disabled_rules:
   - blanket_disable_command
   - cyclomatic_complexity

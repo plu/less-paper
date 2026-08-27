@@ -23,6 +23,7 @@ extension Module {
                 .target(.appFeature),
                 .target(.serversFeature),
                 .target(.shareExtension),
+                .target(.snapshotSupport),
             ]
         case .appFeature:
             [
@@ -48,6 +49,11 @@ extension Module {
                 .target(.serversFeature),
                 .target(.settingsFeature),
                 .target(.testSupport),
+            ]
+        case .appSnapshots:
+            [
+                .target(.app),
+                .target(.uiTestSupport),
             ]
         case .appUITests:
             [
@@ -272,6 +278,18 @@ extension Module {
                 .target(.licensesFeature),
                 .target(.testSupport),
             ]
+        case .marketingKit:
+            [
+                .target(.components),
+            ]
+        case .marketingKitTests:
+            [
+                .external(.dependenciesTestSupport),
+                .external(.snapshotTesting),
+                .target(.apiInterface),
+                .target(.marketingKit),
+                .target(.testSupport),
+            ]
         case .pdfPasswordsFeature:
             [
                 .external(.composableArchitecture),
@@ -429,6 +447,15 @@ extension Module {
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
                 .target(.testSupport),
+            ]
+        case .snapshotSupport:
+            [
+                .external(.dependencies),
+                .external(.identifiedCollections),
+                .external(.issueReporting),
+                .external(.sharing),
+                .target(.apiInterface),
+                .target(.imageFeature),
             ]
         case .storagePathsFeature:
             [

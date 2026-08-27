@@ -1,0 +1,87 @@
+name: Screenshots - Upload
+
+# Manual, and gated on an input, because it rewrites what the App Store shows. Renders first so
+# what is uploaded is what the committed captures currently produce, never a stale local render.
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Actually upload to App Store Connect
+        type: boolean
+        default: false
+
+# Two uploads at once would race on the same listing. Queued rather than cancelled:
+# a half-finished delivery is worse than a wait.
+concurrency:
+  group: screenshots-upload
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile --norc -euo pipefail {0}
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  upload:
+    name: Upload
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          lfs: true
+
+      - name: mise
+        uses: jdx/mise-action@v3
+        with:
+          cache: false
+          cache_save: false
+
+      - run: mise ci:clean
+
+      - run: mise ci:screenshots:frame
+
+      - name: Contact sheet
+        run: |
+          python3 Screenshots/contact_sheet.py \
+            --input fastlane/screenshots --output "$RUNNER_TEMP/sheet.png" > "$RUNNER_TEMP/table.md"
+
+      - name: Upload screenshots artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            fastlane/screenshots/*/*_framed.png
+            ${{ runner.temp }}/sheet.png
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Upload to App Store Connect
+        if: inputs.upload
+        run: mise ci:screenshots:upload
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Screenshots"
+            cat "$RUNNER_TEMP/table.md"
+            echo
+            if [ "${{ inputs.upload }}" = "true" ]; then
+              echo "Uploaded to App Store Connect."
+            else
+              echo "Rendered only. Re-run with \`upload\` checked to send these to App Store Connect."
+            fi
+            echo
+            echo "The contact sheet is in the run's artifact."
+          } >> "$GITHUB_STEP_SUMMARY"

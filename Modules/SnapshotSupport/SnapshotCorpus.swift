@@ -1,0 +1,31 @@
+#if DEBUG
+import ApiInterface
+import Foundation
+
+// Which documents the screenshots show, and in which order.
+//
+// The same documents in every language. Only the tags, document types and storage paths are
+// translated - see SnapshotNames. The German-language documents in the seed are generated filler
+// pages: their thumbnails are a title on an empty sheet, which photographs as a blank rectangle
+// next to a real manual. A shelf of appliance manuals reads the same in both languages, and these
+// all have a real PDF in docker/data.
+extension SnapshotConfiguration.Corpus {
+
+    // The order shown, because the stub returns these as they are. The first is the document the
+    // view and edit screenshots open, so it leads: the capture taps the first row rather than
+    // naming a document.
+    static let documentIds: [Document.Id] = [8, 13, 12, 5, 4, 2, 1, 3]
+
+    // The subset carrying the Inbox tag. Kept explicit rather than derived, because the inbox
+    // screenshot wants a short, readable list rather than everything that happens to be tagged.
+    static let inboxDocumentIds: [Document.Id] = [12, 5, 4]
+
+    var documentIds: [Document.Id] {
+        Self.documentIds
+    }
+
+    var inboxDocumentIds: [Document.Id] {
+        Self.inboxDocumentIds
+    }
+}
+#endif

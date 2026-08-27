@@ -28,6 +28,7 @@ public enum Module: String, CaseIterable {
     case app = "App"
     case appFeature = "AppFeature"
     case appFeatureTests = "AppFeatureTests"
+    case appSnapshots = "AppSnapshots"
     case appUITests = "AppUITests"
     case certificatesFeature = "CertificatesFeature"
     case certificatesFeatureTests = "CertificatesFeatureTests"
@@ -45,6 +46,8 @@ public enum Module: String, CaseIterable {
     case imageFeatureTests = "ImageFeatureTests"
     case licensesFeature = "LicensesFeature"
     case licensesFeatureTests = "LicensesFeatureTests"
+    case marketingKit = "MarketingKit"
+    case marketingKitTests = "MarketingKitTests"
     case pdfPasswordsFeature = "PdfPasswordsFeature"
     case pdfPasswordsFeatureTests = "PdfPasswordsFeatureTests"
     case permissionsFeature = "PermissionsFeature"
@@ -60,6 +63,7 @@ public enum Module: String, CaseIterable {
     case shareExtension = "ShareExtension"
     case shareFeature = "ShareFeature"
     case shareFeatureTests = "ShareFeatureTests"
+    case snapshotSupport = "SnapshotSupport"
     case storagePathsFeature = "StoragePathsFeature"
     case storagePathsFeatureTests = "StoragePathsFeatureTests"
     case tagsFeature = "TagsFeature"
@@ -124,6 +128,7 @@ extension Module {
              .documentsFeature,
              .imageFeature,
              .licensesFeature,
+             .marketingKit,
              .pdfPasswordsFeature,
              .permissionsFeature,
              .savedViewsFeature,
@@ -138,6 +143,7 @@ extension Module {
              .apiTestSupport,
              .app,
              .appFeatureTests,
+             .appSnapshots,
              .appUITests,
              .certificatesFeatureTests,
              .componentsTests,
@@ -147,6 +153,7 @@ extension Module {
              .documentsFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
+             .marketingKitTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
              .savedViewsFeatureTests,
@@ -156,6 +163,7 @@ extension Module {
              .shareAppTests,
              .shareExtension,
              .shareFeatureTests,
+             .snapshotSupport,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
              .testSupport,
@@ -215,12 +223,14 @@ extension Module {
              .documentsFeature,
              .imageFeature,
              .licensesFeature,
+             .marketingKit,
              .pdfPasswordsFeature,
              .permissionsFeature,
              .savedViewsFeature,
              .serversFeature,
              .settingsFeature,
              .shareFeature,
+             .snapshotSupport,
              .storagePathsFeature,
              .tagsFeature,
              .testSupport,
@@ -237,6 +247,7 @@ extension Module {
              .documentsFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
+             .marketingKitTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
              .savedViewsFeatureTests,
@@ -246,7 +257,8 @@ extension Module {
              .storagePathsFeatureTests,
              .tagsFeatureTests:
             .unitTests
-        case .appUITests,
+        case .appSnapshots,
+             .appUITests,
              .shareAppTests:
             .uiTests
         case .shareExtension:

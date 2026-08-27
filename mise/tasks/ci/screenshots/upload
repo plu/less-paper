@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#MISE description="Upload the framed screenshots to App Store Connect"
+set -euo pipefail
+
+# The same App Store Connect key mise/tasks/ci/upload uses for altool. deliver is told to skip the
+# binary and the metadata, so this touches nothing but the screenshots.
+# ci:clean wipes untracked files, vendor/bundle included, so the gems are installed per run rather
+# than assumed. bundle check keeps that to a no-op when they are already there.
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
+ASC_KEY_ID="$(fnox get ALTOOL_KEY_ID)" \
+ASC_ISSUER_ID="$(fnox get ALTOOL_ISSUER_ID)" \
+ASC_AUTH_KEY="$(fnox get ALTOOL_AUTH_KEY)" \
+  bundle exec fastlane upload_screenshots

@@ -1,0 +1,120 @@
+name: Screenshots - Record
+
+# Manual only, and expensive: the better part of an hour across both devices and both languages.
+# It never pushes to main - a re-record changes what the store will show, so it arrives as a pull
+# request and gets looked at like one.
+on:
+  workflow_dispatch:
+
+# Two captures at once would each spend an hour and open a pull request. Queued rather
+# than cancelled, so a run already underway keeps its hour.
+concurrency:
+  group: screenshots-record
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile --norc -euo pipefail {0}
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  record:
+    name: Record
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          lfs: true
+
+      - name: mise
+        uses: jdx/mise-action@v3
+        with:
+          cache: false
+          cache_save: false
+
+      - run: mise ci:clean
+
+      - run: mise simulators:prepare
+
+      - run: mise ci:screenshots:capture
+
+      - name: Contact sheet
+        if: always()
+        run: |
+          python3 Screenshots/contact_sheet.py \
+            --input Screenshots/Captures --output "$RUNNER_TEMP/sheet.png" > "$RUNNER_TEMP/table.md"
+
+      - name: Upload captures artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: captures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            Screenshots/Captures/*/*.png
+            ${{ runner.temp }}/sheet.png
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Open a pull request with the new captures
+        run: |
+          branch="screenshots/record-${{ github.run_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add Screenshots/Captures
+
+          if git diff --cached --quiet; then
+            echo "The captures are unchanged; nothing to open a pull request for." \
+              >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git commit -m "chore: re-record the App Store captures"
+          git push origin "$branch"
+          gh pr create --title "chore: re-record the App Store captures" \
+            --body "Captured by [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Review the images, then merge." \
+            --head "$branch"
+
+          echo "branch=$branch" >> "$GITHUB_ENV"
+
+      # These can be shown inline, unlike the other two workflows': the captures were just committed,
+      # so they have raw URLs, and the repository is public so those need no auth. A data: URI would
+      # not work - GitHub's summary sanitiser strips the src.
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Captures"
+            cat "$RUNNER_TEMP/table.md"
+            echo
+
+            if [ -n "${branch:-}" ]; then
+              # media, not raw: the captures are Git LFS, and raw.githubusercontent.com serves the
+              # pointer file rather than the image.
+              raw="https://media.githubusercontent.com/media/${{ github.repository }}/$branch"
+              for locale in en-US de-DE; do
+                echo "### $locale"
+                echo
+                while IFS= read -r image; do
+                  name=$(basename "$image")
+                  # %20 rather than a raw space: the device names have spaces in them.
+                  printf '<img src="%s/%s" width="150">\n' \
+                    "$raw" "$(printf '%s' "Screenshots/Captures/$locale/$name" | sed 's/ /%20/g')"
+                done < <(find "Screenshots/Captures/$locale" -name '*.png' | sort)
+                echo
+              done
+            else
+              echo "The captures are in this run's artifact."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

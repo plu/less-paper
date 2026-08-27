@@ -4,6 +4,7 @@
 --symlinks ignore
 --exclude Tuist/.build
 --exclude .claude
+--exclude vendor
 
 --enable anyObjectProtocol
 

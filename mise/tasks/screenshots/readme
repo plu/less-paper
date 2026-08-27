@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#MISE description="Rebuild the strip of screenshots shown in the README"
+set -euo pipefail
+
+# Regenerates docs/images/screenshots.png from the framed output, so run screenshots:frame first.
+# The framed images themselves are not committed - 29 MB of something derived - but the README needs
+# one image that is, and this is it. Kept out of LFS by .gitattributes so it renders anywhere.
+cd "$MISE_PROJECT_ROOT"
+
+framed="fastlane/screenshots/en-US"
+if [ ! -d "$framed" ]; then
+  echo "error: no framed screenshots - run \`mise run screenshots:frame\` first" >&2
+  exit 1
+fi
+
+magick \
+  "$framed/iPhone 17 Pro Max-01-Inbox_framed.png" \
+  "$framed/iPhone 17 Pro Max-02-Documents_framed.png" \
+  "$framed/iPhone 17 Pro Max-03-Search_framed.png" \
+  "$framed/iPhone 17 Pro Max-05-View_framed.png" \
+  -resize 340x -background none +append -depth 8 -strip \
+  docs/images/screenshots.png
+
+echo "docs/images/screenshots.png: $(du -h docs/images/screenshots.png | cut -f1)"

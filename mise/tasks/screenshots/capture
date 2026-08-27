@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="Capture the App Store screenshots into Screenshots/Captures"
+set -euo pipefail
+
+# Runs against the fixtures in Screenshots/, never a server, so no container is needed. Refresh
+# those first with Screenshots/fetch_fixtures.py if the seed has changed.
+#
+# Captures only. The captures are committed, so this is the expensive stage that is rarely run;
+# `mise run screenshots:frame` turns them into finished images in seconds.
+bundle exec fastlane screenshots
