@@ -61,6 +61,13 @@ public struct DocumentListView: View {
         } placeholder: {
             DocumentDetailPlaceholderView()
         }
+        // The reducer decides whether opening a document pushes or replaces, so it has to be told
+        // which layout is on screen. Read here rather than inside the container, because the
+        // container is generic over features that may not care.
+        .onAppear { send(.onLayoutChanged(isSplit: horizontalSizeClass == .regular)) }
+        .onChange(of: horizontalSizeClass) { _, sizeClass in
+            send(.onLayoutChanged(isSplit: sizeClass == .regular))
+        }
         .sheet(
             item: $store.scope(
                 state: \.destination?.documentFilter,
@@ -78,6 +85,9 @@ public struct DocumentListView: View {
 
     @Bindable
     public var store: StoreOf<DocumentListReducer>
+
+    @Environment(\.horizontalSizeClass)
+    private var horizontalSizeClass
 
     @ViewBuilder
     private func documentSelectionLoadingView() -> some View {
