@@ -23,22 +23,6 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Capture the App Store screenshots on every required device and language
 
-### ios frame
-
-```sh
-[bundle exec] fastlane ios frame
-```
-
-Add the device frame and captions to the captured screenshots
-
-### ios screenshots_framed
-
-```sh
-[bundle exec] fastlane ios screenshots_framed
-```
-
-Capture and frame in one go
-
 ### ios upload_screenshots
 
 ```sh

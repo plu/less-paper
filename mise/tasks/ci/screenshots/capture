@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="Capture and frame the App Store screenshots for CI"
+#MISE description="Capture the App Store screenshots for CI"
 set -euo pipefail
 
 # Same work as screenshots:capture. It exists under ci: so a workflow has one obvious entry point,
@@ -15,4 +15,4 @@ bundle check >/dev/null 2>&1 || bundle install
 tuist install
 tuist generate --no-open
 
-bundle exec fastlane screenshots_framed
+bundle exec fastlane screenshots

@@ -1,60 +1,20 @@
-require "shellwords"
-
 default_platform(:ios)
 
 # Anchored to this file: fastlane runs `sh` from the directory holding the Fastfile, so a path
 # relative to the repository root would resolve one level too deep.
+
+# What deliver uploads. Written by `mise run screenshots:frame`, not by fastlane, and not committed.
 SCREENSHOTS = File.expand_path("screenshots", __dir__)
 
-# Where the capture writes. Committed, unlike SCREENSHOTS: an hour of simulator time is worth
-# keeping, and everything rendered from it takes seconds.
+# Where the capture writes, and the only committed half: an hour of simulator time is worth keeping,
+# and everything rendered from it takes seconds.
 CAPTURES = File.expand_path("../Screenshots/Captures", __dir__)
-
-# The simulators available here are newer than frameit's frame library, which stops at iPhone 16
-# and iPad Pro 12.9". Each capture device is mapped to a frame whose screen is the same size, so
-# the frame fits exactly and the output stays a size the App Store accepts.
-# frameit identifies a device by the image's dimensions rather than its name, and does not know the
-# 13" iPad - it rejects 2064x2752 as an unsupported screen size. The captures are resized to
-# 2048x2732, which it does know and which App Store Connect also accepts for the 13" tier. That is
-# a 0.8% downscale, and the aspect ratios differ by 0.05%.
-#
-# Capturing at 2048x2732 directly would avoid the step, but no 12.9" device type exists in the only
-# runtime installed here.
-FRAMES = {
-  "iPhone 17 Pro Max" => {
-    frame: "iPhone 16 Pro Max",
-    background: "background-iphone.png",
-    size: "1320x2868"
-  },
-  "iPad Pro 13-inch (M5)" => {
-    frame: "iPad Pro (12.9-inch) (4th generation)",
-    background: "background-ipad.png",
-    size: "2048x2732",
-    resize: "2048x2732"
-  }
-}
-
-BACKGROUND = "#E9EFED".freeze
 
 platform :ios do
   desc "Capture the App Store screenshots on every required device and language"
   lane :screenshots do
     clear_captures
     capture_screenshots(xcodebuild_formatter: "xcbeautify")
-  end
-
-  desc "Add the device frame and captions to the captured screenshots"
-  lane :frame do
-    link_fonts
-    rename_to_framed_devices
-    write_background
-    frameit(silver: true, path: SCREENSHOTS)
-  end
-
-  desc "Capture and frame in one go"
-  lane :screenshots_framed do
-    screenshots
-    frame
   end
 
   # Screenshots only. The build still ships through altool in mise/tasks/ci/upload, so this can
@@ -89,42 +49,7 @@ platform :ios do
   end
 end
 
-# Impact and Arial ship with macOS. frameit resolves a font path relative to the Framefile, so they
-# are linked in rather than referenced absolutely - and linked rather than copied, because neither
-# is ours to redistribute.
 # The full matrix is about to be recaptured, so anything already there is stale.
 def clear_captures
   FileUtils.rm_f(Dir.glob(File.join(CAPTURES, "*", "*.png")))
-end
-
-def link_fonts
-  fonts = File.join(SCREENSHOTS, "fonts")
-  FileUtils.mkdir_p(fonts)
-  {
-    "Impact.ttf" => "/System/Library/Fonts/Supplemental/Impact.ttf",
-    "ArialBold.ttf" => "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
-  }.each do |name, source|
-    destination = File.join(fonts, name)
-    FileUtils.ln_sf(source, destination) unless File.symlink?(destination)
-  end
-end
-
-def rename_to_framed_devices
-  FRAMES.each do |captured, target|
-    Dir.glob(File.join(SCREENSHOTS, "*", "#{captured}-*.png")).each do |path|
-      renamed = path.sub("#{captured}-", "#{target[:frame]}-")
-      File.rename(path, renamed)
-      sh("magick #{renamed.shellescape} -resize #{target[:resize]}! #{renamed.shellescape}") if target[:resize]
-    end
-  end
-end
-
-# frameit takes the output canvas from the background's aspect ratio, so a background of the wrong
-# shape silently produces an image the App Store rejects. One per device size, written fresh each
-# run and selected per device by the Framefile's filters.
-def write_background
-  FRAMES.each_value do |target|
-    destination = File.join(SCREENSHOTS, target[:background])
-    sh("magick -size #{target[:size]} xc:'#{BACKGROUND}' #{destination.shellescape}")
-  end
 end
