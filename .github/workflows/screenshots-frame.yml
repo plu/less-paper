@@ -11,6 +11,13 @@ on:
       - Screenshots/Captures/**
       - Shared/Framework/Resources/Localizable.xcstrings
 
+# One runner, and a push while a run is queued makes the queued one pointless - it would render an
+# older commit. Frame only: cancelling Record would throw away an hour, and cancelling Upload could
+# leave the listing half-written.
+concurrency:
+  group: screenshots-frame-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
