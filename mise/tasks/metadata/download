@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#MISE description="Download the current App Store listing into fastlane/metadata"
+set -euo pipefail
+
+# Read-only, and the right way to start: the app is live, so the listing already has copy in it.
+# Downloading first means what lands in git is what the store actually shows, rather than something
+# invented here that would overwrite it on the next upload.
+#
+# deliver's download is a CLI sub-command rather than a lane action, and a sub-command cannot see an
+# api key set up inside a lane - so the key is written to a file for the duration of the call.
+cd "$MISE_PROJECT_ROOT"
+
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
+key="$(mktemp -t asc-key)"
+trap 'rm -f "$key"' EXIT
+
+mise exec -- fnox exec -- bash -c 'cat > "$1" <<JSON
+{
+  "key_id": "'"$(mise exec -- fnox get ALTOOL_KEY_ID)"'",
+  "issuer_id": "'"$(mise exec -- fnox get ALTOOL_ISSUER_ID)"'",
+  "key": "'"$(mise exec -- fnox get ALTOOL_AUTH_KEY)"'",
+  "is_key_content_base64": true,
+  "in_house": false
+}
+JSON' _ "$key"
+
+# --force is not optional, and its absence is silent. download_metadata asks UI.confirm before
+# overwriting local metadata, and a non-interactive shell never answers - so it returns 0 having
+# written nothing, which reads exactly like a successful download of an app with no metadata.
+bundle exec fastlane deliver download_metadata \
+  --api_key_path "$key" \
+  --app_identifier com.aptumtek.app.Paperless \
+  --metadata_path "$PWD/fastlane/metadata" \
+  --force true

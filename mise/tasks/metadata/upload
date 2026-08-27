@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#MISE description="Upload the App Store listing text from fastlane/metadata"
+set -euo pipefail
+
+# Rewrites what the App Store shows. Text only: screenshots are skipped, and the binary still ships
+# through altool in mise/tasks/ci/upload, so this can neither replace nor race a release.
+cd "$MISE_PROJECT_ROOT"
+
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
+# Writes the gitignored review information from fnox first, so an upload carries the demo account
+# and contact details without either ever being committed.
+mise run metadata:review-info
+
+ASC_KEY_ID="$(mise exec -- fnox get ALTOOL_KEY_ID)" \
+ASC_ISSUER_ID="$(mise exec -- fnox get ALTOOL_ISSUER_ID)" \
+ASC_AUTH_KEY="$(mise exec -- fnox get ALTOOL_AUTH_KEY)" \
+  bundle exec fastlane upload_metadata

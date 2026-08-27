@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#MISE description="Write the App Store review information from fnox into fastlane/metadata"
+set -euo pipefail
+
+# The review section holds a demo account password, a phone number and an email address, so it is
+# gitignored and lives in fnox instead. deliver reads it from these files, so they are written just
+# before an upload and are never committed.
+#
+# All or nothing: Apple wants the contact fields together, and a listing with half a contact on it
+# is worse than one deliver leaves alone.
+cd "$MISE_PROJECT_ROOT"
+
+target="fastlane/metadata/review_information"
+
+declare -a KEYS=(
+  "ASC_REVIEW_DEMO_USER:demo_user"
+  "ASC_REVIEW_DEMO_PASSWORD:demo_password"
+  "ASC_REVIEW_FIRST_NAME:first_name"
+  "ASC_REVIEW_LAST_NAME:last_name"
+  "ASC_REVIEW_EMAIL:email_address"
+  "ASC_REVIEW_PHONE:phone_number"
+  "ASC_REVIEW_NOTES:notes"
+)
+
+# A missing secret is not an error to fnox: `fnox get` exits 0, prints nothing, and warns on stderr.
+# So presence is judged on the value being non-empty - checking the exit code alone writes an empty
+# file and calls it a success.
+present=()
+missing=()
+for pair in "${KEYS[@]}"; do
+  if [ -n "$(mise exec -- fnox get "${pair%%:*}" 2>/dev/null)" ]; then
+    present+=("$pair")
+  else
+    missing+=("${pair%%:*}")
+  fi
+done
+
+if [ ${#present[@]} -eq 0 ]; then
+  echo "No ASC_REVIEW_* secrets in fnox; leaving the review information alone."
+  echo "deliver does not touch that section of the listing when these files are absent."
+  exit 0
+fi
+
+if [ ${#missing[@]} -gt 0 ]; then
+  echo "error: some review secrets are set and others are not:" >&2
+  printf '  missing %s\n' "${missing[@]}" >&2
+  echo "Set the rest, or unset the others, so the contact details go up together." >&2
+  exit 1
+fi
+
+mkdir -p "$target"
+for pair in "${KEYS[@]}"; do
+  value="$(mise exec -- fnox get "${pair%%:*}" 2>/dev/null)"
+  # Checked again rather than trusted: writing an empty file here would hand Apple a blank field.
+  if [ -z "$value" ]; then
+    echo "error: ${pair%%:*} became empty between the check and the write" >&2
+    exit 1
+  fi
+  printf '%s' "$value" > "$target/${pair##*:}.txt"
+done
+
+echo "Wrote ${#KEYS[@]} review information files (gitignored)."

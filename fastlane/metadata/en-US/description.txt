@@ -1,0 +1,20 @@
+Less Paper is a native iOS client for paperless-ngx, the self-hosted document archive. It talks directly to your own server, and to nothing else.
+
+FIND ANYTHING
+The complete filter set from the web interface, custom fields included: title and content, correspondent, document type, storage path, tags, dates and ASN. Save any filter as a view, then create, edit and reorder your saved views without leaving the app.
+
+EDIT WHERE YOU ARE READING
+Fix a title, reassign a correspondent, add tags, notes or custom field values from the document itself. Select several documents and change them together, merge them, or delete them in one go.
+
+GET DOCUMENTS IN
+Send anything on your device to paperless-ngx from the share sheet. Password-protected PDFs are unlocked on import, and the password is kept in the keychain so the next document from the same source opens without asking.
+
+BUILT FOR REAL SETUPS
+Connect as many servers as you like and switch between them. Client certificates, custom HTTP headers and reverse proxies such as Authelia are all supported.
+
+KEEP THE ARCHIVE TIDY
+Create, rename and delete tags, correspondents, document types and storage paths, and set ownership and permissions on any document.
+
+Works with paperless-ngx 3.0.0 and earlier. Universal: iPhone and iPad.
+
+Less Paper is open source. Issues and feature requests are welcome at https://github.com/plu/less-paper

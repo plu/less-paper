@@ -1,0 +1,1 @@
+paperless,ngx,dms,dokumente,archiv,scannen,ocr,pdf,selfhosted,homelab,ablage,papierkram

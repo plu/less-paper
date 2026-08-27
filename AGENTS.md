@@ -195,6 +195,38 @@ When every call starts returning `403`, the PAT has expired. Re-mint it at
 <https://github.com/settings/personal-access-tokens> and store it with
 `cd ~ && fnox set --global GH_TOKEN`.
 
+## The App Store listing lives in `fastlane/metadata`
+
+Downloaded from App Store Connect, committed, and uploaded by `deliver`, so changing a description
+is a diff someone can review rather than a form with no history.
+
+| Task | Does |
+|---|---|
+| `mise run metadata:lint` | checks every field against Apple's published limits — no API call |
+| `mise run metadata:download` | overwrites the local files with what the store currently shows |
+| `mise run metadata:upload` | rewrites the listing text; screenshots and binary untouched |
+
+**`fnox set KEY -d "description"` with piped stdin silently discards the value.** It stores the
+description, prints `✓ Set secret`, and leaves the entry with no `value` field — after which
+`fnox get` returns nothing. Set the value first, and add a description separately if one is wanted.
+
+**A missing secret is not an error to `fnox get`.** It exits `0`, prints nothing, and warns on
+stderr, so anything checking only the exit code will happily write an empty file.
+
+Three things that cost time to work out, all of which fail quietly:
+
+- **`download_metadata` needs `--force`.** It calls `UI.confirm` before overwriting local files, and
+  a non-interactive shell never answers — so it exits `0` having written nothing, which looks exactly
+  like an app with no metadata.
+- **`deliver`'s `verify_only` cannot check metadata on its own.** It hashes a binary, so without one
+  it dies with `no implicit conversion of nil into String`. `metadata:lint` exists because of this.
+- **`review_information` is gitignored and comes from fnox.** It holds a demo account password, a
+  phone number and an email address, and this repository is public. The seven `ASC_REVIEW_*` secrets
+  are written into those files by `mise run metadata:review-info`, which `metadata:upload` runs
+  first — so an upload carries the contact details without them ever being committed. Setting some
+  and not others is an error rather than a half-filled contact card; setting none is fine, and
+  `deliver` then leaves that section of the listing alone.
+
 ## Recording a snapshot reference means editing the scheme
 
 References live under `Snapshots/`, and `SNAPSHOT_RECORD` decides whether a run writes them. The

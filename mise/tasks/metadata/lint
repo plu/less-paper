@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Check the App Store listing text against Apple's field limits"
+set -euo pipefail
+
+# No API call and no binary, so this runs on any pull request that touches the listing.
+python3 "$MISE_PROJECT_ROOT/fastlane/metadata_lint.py"

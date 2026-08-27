@@ -1,0 +1,10 @@
+Less Paper 3 is a complete rewrite.
+
+• Rebuilt in SwiftUI, quicker to launch and to scroll
+• The full filter set from the web interface, including custom fields
+• Bulk edit, merge and delete across a selection
+• Saved views can be created, edited and reordered in the app
+• Import from the share sheet, password-protected PDFs included
+• Client certificates, custom headers and reverse-proxy setups
+
+Works with paperless-ngx 3.0.0 and earlier.

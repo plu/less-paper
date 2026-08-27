@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Capture the App Store screenshots on every required device and language
 
+### ios upload_metadata
+
+```sh
+[bundle exec] fastlane ios upload_metadata
+```
+
+Upload the App Store listing text from fastlane/metadata
+
 ### ios upload_screenshots
 
 ```sh
