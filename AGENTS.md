@@ -206,6 +206,13 @@ is a diff someone can review rather than a form with no history.
 | `mise run metadata:download` | overwrites the local files with what the store currently shows |
 | `mise run metadata:upload` | rewrites the listing text; screenshots and binary untouched |
 
+**`fnox set KEY -d "description"` with piped stdin silently discards the value.** It stores the
+description, prints `✓ Set secret`, and leaves the entry with no `value` field — after which
+`fnox get` returns nothing. Set the value first, and add a description separately if one is wanted.
+
+**A missing secret is not an error to `fnox get`.** It exits `0`, prints nothing, and warns on
+stderr, so anything checking only the exit code will happily write an empty file.
+
 Three things that cost time to work out, all of which fail quietly:
 
 - **`download_metadata` needs `--force`.** It calls `UI.confirm` before overwriting local files, and

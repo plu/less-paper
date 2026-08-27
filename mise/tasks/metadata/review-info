@@ -22,10 +22,13 @@ declare -a KEYS=(
   "ASC_REVIEW_NOTES:notes"
 )
 
+# A missing secret is not an error to fnox: `fnox get` exits 0, prints nothing, and warns on stderr.
+# So presence is judged on the value being non-empty - checking the exit code alone writes an empty
+# file and calls it a success.
 present=()
 missing=()
 for pair in "${KEYS[@]}"; do
-  if mise exec -- fnox get "${pair%%:*}" >/dev/null 2>&1; then
+  if [ -n "$(mise exec -- fnox get "${pair%%:*}" 2>/dev/null)" ]; then
     present+=("$pair")
   else
     missing+=("${pair%%:*}")
@@ -47,7 +50,13 @@ fi
 
 mkdir -p "$target"
 for pair in "${KEYS[@]}"; do
-  mise exec -- fnox get "${pair%%:*}" > "$target/${pair##*:}.txt"
+  value="$(mise exec -- fnox get "${pair%%:*}" 2>/dev/null)"
+  # Checked again rather than trusted: writing an empty file here would hand Apple a blank field.
+  if [ -z "$value" ]; then
+    echo "error: ${pair%%:*} became empty between the check and the write" >&2
+    exit 1
+  fi
+  printf '%s' "$value" > "$target/${pair##*:}.txt"
 done
 
 echo "Wrote ${#KEYS[@]} review information files (gitignored)."
