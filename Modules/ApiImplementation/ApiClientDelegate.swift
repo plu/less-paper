@@ -71,21 +71,30 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         }
     }
 
-    /// One line per request: what was asked, of where, and what came back.
+    /// One line per *failed* request: what was asked, of where, and what came back.
+    ///
+    /// Successful requests are not recorded. A working app makes hundreds of them, and a log that
+    /// reports them all buries the two lines that matter under the ones that do not - which is what
+    /// happened the first time this shipped.
     ///
     /// No duration: URLSessionTask does not carry one without collecting metrics through a separate
     /// delegate, and the response size answers the question timing usually stands in for - whether
     /// a call returned far more than expected.
     private func logResponse(_ response: HTTPURLResponse, data: Data, task: URLSessionTask) {
+        guard !(200 ..< 300).contains(response.statusCode) else {
+            return
+        }
+
         let method = task.originalRequest?.httpMethod ?? "?"
         let path = task.originalRequest?.url.map(LogRedaction.redact) ?? "?"
-        let isSuccess = (200 ..< 300).contains(response.statusCode)
 
-        log.record(
-            "\(method) \(path) → \(response.statusCode) (\(data.count) bytes)",
-            isSuccess ? .info : .error,
-            .api
-        )
+        log.error("\(method) \(path) → \(response.statusCode) (\(data.count) bytes)", category: .api)
+    }
+
+    func client<T>(_ client: APIClient, decoderForRequest request: Request<T>) -> JSONDecoder? {
+        let decoder = LoggingJSONDecoder(path: request.url.map(LogRedaction.redact) ?? "?")
+        decoder.configureForApi()
+        return decoder
     }
 
     private func storeAdvertisedApiVersion(from response: HTTPURLResponse) {

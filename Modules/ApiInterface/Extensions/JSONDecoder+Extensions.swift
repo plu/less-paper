@@ -4,12 +4,19 @@ public extension JSONDecoder {
 
     static let apiDecoder = {
         let decoder = JSONDecoder()
+        decoder.configureForApi()
+        return decoder
+    }()
+
+    /// Applied rather than baked into `apiDecoder`, so a subclass - `LoggingJSONDecoder` - can carry
+    /// exactly the same behaviour instead of a copy of it that quietly drifts.
+    func configureForApi() {
         let dateFormatters = [
             DateFormatter(dateFormat: "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ"),
             DateFormatter(dateFormat: "yyyy-MM-dd'T'HH:mm:ssZ"),
             DateFormatter(dateFormat: "yyyy-MM-dd"),
         ]
-        decoder.dateDecodingStrategy = .custom { decoder in
+        dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let value = try container.decode(String.self)
             for dateFormatter in dateFormatters {
@@ -24,7 +31,6 @@ public extension JSONDecoder {
                 )
             )
         }
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return decoder
-    }()
+        keyDecodingStrategy = .convertFromSnakeCase
+    }
 }
