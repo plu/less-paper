@@ -16,7 +16,7 @@ workspace("LessPaper.xcworkspace")
 
 scheme("Snapshots")
 
-output_directory("./fastlane/screenshots")
+output_directory("./Screenshots/Captures")
 
 # Cleared by the screenshots lane instead, so a subset - one language, one device - can be
 # recaptured without deleting the rest. A stale image is still always wrong: the lane clears

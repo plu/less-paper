@@ -6,6 +6,10 @@ default_platform(:ios)
 # relative to the repository root would resolve one level too deep.
 SCREENSHOTS = File.expand_path("screenshots", __dir__)
 
+# Where the capture writes. Committed, unlike SCREENSHOTS: an hour of simulator time is worth
+# keeping, and everything rendered from it takes seconds.
+CAPTURES = File.expand_path("../Screenshots/Captures", __dir__)
+
 # The simulators available here are newer than frameit's frame library, which stops at iPhone 16
 # and iPad Pro 12.9". Each capture device is mapped to a frame whose screen is the same size, so
 # the frame fits exactly and the output stays a size the App Store accepts.
@@ -90,7 +94,7 @@ end
 # is ours to redistribute.
 # The full matrix is about to be recaptured, so anything already there is stale.
 def clear_captures
-  FileUtils.rm_f(Dir.glob(File.join(SCREENSHOTS, "*", "*.png")))
+  FileUtils.rm_f(Dir.glob(File.join(CAPTURES, "*", "*.png")))
 end
 
 def link_fonts
