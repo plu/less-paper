@@ -1,0 +1,113 @@
+/* The app's own primary, so the page and the screenshots share a ground. */
+:root {
+  --ink: #16201f;
+  --muted: #5a6b69;
+  --ground: #ffffff;
+  --panel: #f2f6f5;
+  --line: #dde6e4;
+  --brand: #006a65;
+  --brand-ink: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e6efed;
+    --muted: #9fb3b0;
+    --ground: #0d1615;
+    --panel: #16211f;
+    --line: #24322f;
+    --brand: #81d5ce;
+    --brand-ink: #00312f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+header.hero {
+  background: linear-gradient(180deg, #00504d 0%, #00312f 100%);
+  color: #fff;
+  padding: 72px 0 0;
+  text-align: center;
+}
+
+header.hero h1 { font-size: 2.6rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+header.hero p.tagline { font-size: 1.2rem; margin: 0 0 28px; color: #b9ddd9; }
+
+.badges { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; padding-bottom: 40px; }
+
+.badge {
+  display: inline-block;
+  padding: 11px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.badge.primary { background: #fff; color: #00423f; border-color: #fff; }
+.badge:hover { background: rgba(255, 255, 255, 0.22); }
+.badge.primary:hover { background: #eaf5f3; }
+
+.shot { display: block; width: 100%; max-width: 100%; margin: 0 auto; }
+
+main { padding: 56px 0 72px; }
+
+h2 { font-size: 1.5rem; margin: 40px 0 16px; letter-spacing: -0.01em; }
+h2:first-child { margin-top: 0; }
+
+ul.features { list-style: none; margin: 0; padding: 0; }
+
+ul.features li {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+
+ul.features strong { display: block; margin-bottom: 2px; }
+ul.features span { color: var(--muted); }
+
+a { color: var(--brand); }
+
+.req { color: var(--muted); font-size: 0.95rem; }
+
+footer {
+  border-top: 1px solid var(--line);
+  padding: 28px 0 48px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+footer a { margin: 0 8px; }
+
+/* Privacy pages */
+.doc { padding: 56px 0 72px; }
+.doc h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+.doc .updated { color: var(--muted); font-size: 0.9rem; margin: 0 0 32px; }
+.doc h2 { font-size: 1.25rem; margin: 32px 0 10px; }
+.doc ul { padding-left: 22px; }
+.doc li { margin-bottom: 6px; }
+.doc .back { display: inline-block; margin-bottom: 28px; text-decoration: none; }
+.doc .lang { float: right; font-size: 0.9rem; }
+
+@media (max-width: 560px) {
+  header.hero { padding-top: 48px; }
+  header.hero h1 { font-size: 2rem; }
+  body { font-size: 16px; }
+}
