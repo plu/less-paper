@@ -287,6 +287,7 @@ extension Module {
                 .external(.composableArchitecture),
                 .external(.dependenciesTestSupport),
                 .target(.diagnosticsFeature),
+                .target(.logging),
                 .target(.testSupport),
             ]
         case .licensesFeature:
@@ -398,6 +399,7 @@ extension Module {
                 .external(.dependenciesMacros),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.diagnosticsFeature),
                 .target(.correspondentsFeature),
                 .target(.customFieldsFeature),
                 .target(.documentTypesFeature),
