@@ -16,3 +16,16 @@ tuist install
 tuist generate --no-open
 
 bundle exec fastlane screenshots
+
+# capture_screenshots does not fail the lane when the build beneath it fails. It clears the previous
+# captures first, reports success, and leaves the directory empty - so a failed run looks exactly
+# like a successful one, and Record would open a pull request deleting all 28 images.
+expected=28
+actual=$(find "$MISE_PROJECT_ROOT/Screenshots/Captures" -name '*.png' | wc -l | tr -d ' ')
+
+if [ "$actual" -ne "$expected" ]; then
+  echo "error: expected $expected captures, found $actual." >&2
+  exit 1
+fi
+
+echo "Captured $actual screenshots."
