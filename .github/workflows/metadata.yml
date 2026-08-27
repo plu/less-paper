@@ -80,6 +80,7 @@ jobs:
             --body "Downloaded by [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})." \
             --head "$branch"
 
+      # metadata:upload writes the review information from fnox first; it is never committed.
       - name: Upload the listing
         if: inputs.action == 'upload'
         run: mise run metadata:upload

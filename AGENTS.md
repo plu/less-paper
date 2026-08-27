@@ -213,10 +213,12 @@ Three things that cost time to work out, all of which fail quietly:
   like an app with no metadata.
 - **`deliver`'s `verify_only` cannot check metadata on its own.** It hashes a binary, so without one
   it dies with `no implicit conversion of nil into String`. `metadata:lint` exists because of this.
-- **`review_information` is gitignored.** It holds a demo account password, a phone number and an
-  email address, and this repository is public. `deliver` leaves that section of the listing alone
-  when the files are absent, so uploads still work without it. Re-download it locally if it needs
-  changing.
+- **`review_information` is gitignored and comes from fnox.** It holds a demo account password, a
+  phone number and an email address, and this repository is public. The seven `ASC_REVIEW_*` secrets
+  are written into those files by `mise run metadata:review-info`, which `metadata:upload` runs
+  first — so an upload carries the contact details without them ever being committed. Setting some
+  and not others is an error rather than a half-filled contact card; setting none is fine, and
+  `deliver` then leaves that section of the listing alone.
 
 ## Recording a snapshot reference means editing the scheme
 
