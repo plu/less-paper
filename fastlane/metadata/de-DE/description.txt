@@ -1,0 +1,12 @@
+Less Paper ist eine native App um auf paperless-ngx zuzugreifen.
+
+Funktionen:
+
+* Kann sich mit mehreren Servern verbinden
+* Unterstützt die gleiche Such-/Filterfunktionalität wie die Web Version
+* Gespeicherte Ansichten erstellen oder editieren
+* Dokumente editieren
+* Korrespondenten, Dokument Typen, gespeicherte Ansichten, Speicherpfade und Tags verwalten
+* Import von Dokumenten
+* Zusätzliche Authentifizierung, z.B. Authelia
+* Import von passwortgeschützten Dokumenten

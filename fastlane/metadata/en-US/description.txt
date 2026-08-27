@@ -1,0 +1,12 @@
+Less Paper is a native client for paperless-ngx.
+
+Features:
+
+* Connect to multiple servers
+* Full search/filter functionality like the web app
+* Create or update saved views
+* Edit documents
+* Manage correspondents, document types, saved views, storage paths and tags
+* Import documents
+* Additional authentication, e.g. Authelia
+* Import password protected documents

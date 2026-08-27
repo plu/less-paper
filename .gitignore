@@ -92,3 +92,8 @@ Screenshots/Captures/screenshots.html
 
 # Asks the marketing render test to run; written and removed by screenshots:frame.
 .marketing-render
+
+# The App Store listing is committed, but its review information is not: it holds a demo account
+# password, a phone number and an email address, and this repository is public. deliver reads it
+# from here when it is present and leaves it alone when it is not, so uploads still work without it.
+fastlane/metadata/review_information/

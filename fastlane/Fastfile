@@ -10,11 +10,28 @@ SCREENSHOTS = File.expand_path("screenshots", __dir__)
 # and everything rendered from it takes seconds.
 CAPTURES = File.expand_path("../Screenshots/Captures", __dir__)
 
+# The App Store listing as text, committed. Downloaded from App Store Connect rather than written
+# from scratch, so what is in git starts out as what the store actually shows.
+METADATA = File.expand_path("metadata", __dir__)
+
+APP_IDENTIFIER = "com.aptumtek.app.Paperless".freeze
+
 platform :ios do
   desc "Capture the App Store screenshots on every required device and language"
   lane :screenshots do
     clear_captures
     capture_screenshots(xcodebuild_formatter: "xcbeautify")
+  end
+
+  # Text only, and screenshots are explicitly skipped so this cannot disturb them. Like the
+  # screenshot upload it touches no binary: the build ships through altool in mise/tasks/ci/upload.
+  #
+  # review_information is deliberately absent from git - it holds a demo password - so deliver
+  # leaves that section of the listing alone unless someone has downloaded it locally first.
+  desc "Upload the App Store listing text from fastlane/metadata"
+  lane :upload_metadata do
+    connect_api_key
+    deliver(**metadata_options)
   end
 
   # Screenshots only. The build still ships through altool in mise/tasks/ci/upload, so this can
@@ -26,15 +43,10 @@ platform :ios do
     # acknowledgement. Set here rather than in the task so the lane works from any entry point.
     ENV["FASTLANE_ENABLE_BETA_DELIVER_SYNC_SCREENSHOTS"] = "1"
 
-    app_store_connect_api_key(
-      key_id: ENV.fetch("ASC_KEY_ID"),
-      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
-      key_content: ENV.fetch("ASC_AUTH_KEY"),
-      is_key_content_base64: true
-    )
+    connect_api_key
 
     deliver(
-      app_identifier: "com.aptumtek.app.Paperless",
+      app_identifier: APP_IDENTIFIER,
       # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
       force: true,
       overwrite_screenshots: true,
@@ -47,6 +59,32 @@ platform :ios do
       sync_screenshots: true
     )
   end
+end
+
+# deliver's own verify_only is not an option here: it hashes a binary, so it fails with "no implicit
+# conversion of nil into String" when there is none. mise run metadata:lint checks the text instead.
+def metadata_options
+  {
+    app_identifier: APP_IDENTIFIER,
+    # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
+    force: true,
+    metadata_path: METADATA,
+    run_precheck_before_submit: false,
+    skip_app_version_update: true,
+    skip_binary_upload: true,
+    skip_metadata: false,
+    # Screenshots have their own lane, and leaving them to it means neither can disturb the other.
+    skip_screenshots: true
+  }
+end
+
+def connect_api_key
+  app_store_connect_api_key(
+    key_id: ENV.fetch("ASC_KEY_ID"),
+    issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+    key_content: ENV.fetch("ASC_AUTH_KEY"),
+    is_key_content_base64: true
+  )
 end
 
 # The full matrix is about to be recaptured, so anything already there is stale.

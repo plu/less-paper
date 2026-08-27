@@ -1,0 +1,1 @@
+paperless,paperless-ngx,paper,less,ngx,paperless ngx,lesspaper,less paper
