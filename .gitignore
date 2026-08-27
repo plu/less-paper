@@ -89,3 +89,6 @@ fastlane/screenshots/
 fastlane/screenshots/fonts/
 fastlane/screenshots/background-*.png
 fastlane/screenshots/screenshots.html
+
+# Asks the marketing render test to run; written and removed by screenshots:frame.
+.marketing-render

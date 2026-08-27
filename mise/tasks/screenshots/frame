@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#MISE description="Render the committed captures into finished App Store images"
+set -euo pipefail
+
+# Reads Screenshots/Captures and writes fastlane/screenshots. No app launch, no container, no
+# simulator install: a pure image transform, which is why it takes seconds where capturing takes an
+# hour.
+#
+# The marker asks the render test to run. It is a file because a TEST_RUNNER_-prefixed environment
+# variable does not reach the test process here.
+MARKER="$MISE_PROJECT_ROOT/.marketing-render"
+touch "$MARKER"
+trap 'rm -f "$MARKER"' EXIT
+
+mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing

@@ -50,4 +50,35 @@ struct MarketingScreenshotTests {
             named: screen.fileStem
         )
     }
+
+    // German gets its own references because German is where a caption overflows: the same sentence
+    // is reliably longer, and it was an untested language that let English captions ship on the
+    // German screenshots once already.
+    @Test(arguments: MarketingScreen.allCases)
+    func testSnapshot_iPhone_german(screen: MarketingScreen) async throws {
+        assertSnapshot(
+            of: MarketingScreenshot(
+                capture: Self.capture(for: .iPhone),
+                screen: screen,
+                device: .iPhone,
+                locale: Locale(identifier: "de-DE")
+            ),
+            as: .image(layout: .fixed(width: 660, height: 1434)),
+            named: "\(screen.fileStem)-de"
+        )
+    }
+
+    @Test(arguments: MarketingScreen.allCases)
+    func testSnapshot_iPad_german(screen: MarketingScreen) async throws {
+        assertSnapshot(
+            of: MarketingScreenshot(
+                capture: Self.capture(for: .iPad),
+                screen: screen,
+                device: .iPad,
+                locale: Locale(identifier: "de-DE")
+            ),
+            as: .image(layout: .fixed(width: 1024, height: 1366)),
+            named: "\(screen.fileStem)-de"
+        )
+    }
 }

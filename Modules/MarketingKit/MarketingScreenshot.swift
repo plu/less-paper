@@ -22,7 +22,7 @@ public struct MarketingScreenshot: View {
                 )
 
                 VStack(spacing: unit * 3) {
-                    Text(screen.caption)
+                    Text(caption)
                         .font(.system(size: unit * 4.2, weight: .bold))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
@@ -48,19 +48,33 @@ public struct MarketingScreenshot: View {
         }
     }
 
+    // The locale is stated rather than inherited from the process. A render loop writing en-US and
+    // de-DE runs in one process, so whatever locale that process happens to have would put the same
+    // language on both.
     public init(
         capture: Image,
         screen: MarketingScreen,
-        device: MarketingDevice
+        device: MarketingDevice,
+        locale: Locale = .current
     ) {
         self.capture = capture
         self.screen = screen
         self.device = device
+        self.locale = locale
+    }
+
+    // Resolved eagerly to a String rather than handed to Text as a LocalizedStringResource, because
+    // Text resolves a resource through the environment's locale and so ignores the one set here.
+    private var caption: String {
+        var caption = screen.caption
+        caption.locale = locale
+        return String(localized: caption)
     }
 
     private let capture: Image
     private let device: MarketingDevice
     private let screen: MarketingScreen
+    private let locale: Locale
 }
 
 private extension Color {
@@ -79,10 +93,11 @@ public extension MarketingScreenshot {
     static func render(
         capture: Image,
         screen: MarketingScreen,
-        device: MarketingDevice
+        device: MarketingDevice,
+        locale: Locale = .current
     ) -> Data? {
         let renderer = ImageRenderer(
-            content: Self(capture: capture, screen: screen, device: device)
+            content: Self(capture: capture, screen: screen, device: device, locale: locale)
                 .frame(width: device.size.width, height: device.size.height)
         )
         renderer.scale = 1
