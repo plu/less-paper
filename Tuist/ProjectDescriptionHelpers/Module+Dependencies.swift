@@ -74,6 +74,7 @@ extension Module {
                 .external(.sharing),
                 .external(.swiftSecurity),
                 .target(.apiInterface),
+                .target(.logging),
             ]
         case .apiImplementationTests:
             [

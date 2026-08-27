@@ -2,6 +2,7 @@ import ApiInterface
 import Dependencies
 import Foundation
 import Get
+import Logging
 import SwiftSharing
 
 struct ApiClientDelegate: Sendable {
@@ -13,6 +14,9 @@ struct ApiClientDelegate: Sendable {
 
     @Dependency(\.authenticationProvider)
     private var authenticationProvider
+
+    @Dependency(\.log)
+    private var log
 }
 
 extension ApiClientDelegate: Get.APIClientDelegate {
@@ -52,6 +56,10 @@ extension ApiClientDelegate: Get.APIClientDelegate {
     }
 
     func client(_ client: APIClient, validateResponse response: HTTPURLResponse, data: Data, task: URLSessionTask) throws {
+        // Every request passes through here, so this is the one place that has to remember to log.
+        // The alternative was 26 call sites each remembering, which is how logging rots.
+        logResponse(response, data: data, task: task)
+
         storeAdvertisedApiVersion(from: response)
 
         if (400 ..< 500).contains(response.statusCode) {
@@ -61,6 +69,23 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         guard (200 ..< 300).contains(response.statusCode) else {
             throw APIError.unacceptableStatusCode(response.statusCode)
         }
+    }
+
+    /// One line per request: what was asked, of where, and what came back.
+    ///
+    /// No duration: URLSessionTask does not carry one without collecting metrics through a separate
+    /// delegate, and the response size answers the question timing usually stands in for - whether
+    /// a call returned far more than expected.
+    private func logResponse(_ response: HTTPURLResponse, data: Data, task: URLSessionTask) {
+        let method = task.originalRequest?.httpMethod ?? "?"
+        let path = task.originalRequest?.url.map(LogRedaction.redact) ?? "?"
+        let isSuccess = (200 ..< 300).contains(response.statusCode)
+
+        log.record(
+            "\(method) \(path) → \(response.statusCode) (\(data.count) bytes)",
+            isSuccess ? .info : .error,
+            .api
+        )
     }
 
     private func storeAdvertisedApiVersion(from response: HTTPURLResponse) {

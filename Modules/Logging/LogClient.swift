@@ -52,9 +52,16 @@ extension LogClient: TestDependencyKey {
         clear: {}
     )
 
-    /// Unimplemented by default, as every other client here is: a test that logs unexpectedly should
-    /// say so rather than pass quietly.
-    public static let testValue = Self()
+    /// A no-op rather than unimplemented, matching the other clients here. Logging is incidental to
+    /// what any given test is asserting, and an unimplemented default would make every test that
+    /// happens to make a request fail for a reason that has nothing to do with it. A test that
+    /// cares about logging overrides this and records the calls.
+    public static let testValue = Self(
+        record: { _, _, _ in },
+        entries: { [] },
+        fileURLs: { [] },
+        clear: {}
+    )
 }
 
 public extension DependencyValues {
