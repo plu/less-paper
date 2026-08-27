@@ -40,12 +40,16 @@ public enum Module: String, CaseIterable {
     case customFieldsFeatureTests = "CustomFieldsFeatureTests"
     case documentTypesFeature = "DocumentTypesFeature"
     case documentTypesFeatureTests = "DocumentTypesFeatureTests"
+    case diagnosticsFeature = "DiagnosticsFeature"
+    case diagnosticsFeatureTests = "DiagnosticsFeatureTests"
     case documentsFeature = "DocumentsFeature"
     case documentsFeatureTests = "DocumentsFeatureTests"
     case imageFeature = "ImageFeature"
     case imageFeatureTests = "ImageFeatureTests"
     case licensesFeature = "LicensesFeature"
     case licensesFeatureTests = "LicensesFeatureTests"
+    case logging = "Logging"
+    case loggingTests = "LoggingTests"
     case marketingKit = "MarketingKit"
     case marketingKitTests = "MarketingKitTests"
     case pdfPasswordsFeature = "PdfPasswordsFeature"
@@ -124,10 +128,12 @@ extension Module {
              .components,
              .correspondentsFeature,
              .customFieldsFeature,
+             .diagnosticsFeature,
              .documentTypesFeature,
              .documentsFeature,
              .imageFeature,
              .licensesFeature,
+             .logging,
              .marketingKit,
              .pdfPasswordsFeature,
              .permissionsFeature,
@@ -149,10 +155,12 @@ extension Module {
              .componentsTests,
              .correspondentsFeatureTests,
              .customFieldsFeatureTests,
+             .diagnosticsFeatureTests,
              .documentTypesFeatureTests,
              .documentsFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
+             .loggingTests,
              .marketingKitTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
@@ -219,10 +227,12 @@ extension Module {
              .components,
              .correspondentsFeature,
              .customFieldsFeature,
+             .diagnosticsFeature,
              .documentTypesFeature,
              .documentsFeature,
              .imageFeature,
              .licensesFeature,
+             .logging,
              .marketingKit,
              .pdfPasswordsFeature,
              .permissionsFeature,
@@ -243,10 +253,12 @@ extension Module {
              .componentsTests,
              .correspondentsFeatureTests,
              .customFieldsFeatureTests,
+             .diagnosticsFeatureTests,
              .documentTypesFeatureTests,
              .documentsFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
+             .loggingTests,
              .marketingKitTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
