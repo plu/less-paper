@@ -9,7 +9,7 @@ extension APIClient {
         APIClient(baseURL: server.url) {
             $0.decoder = .apiDecoder
             $0.delegate = ApiClientDelegate(server: server, sendsApiVersion: sendsApiVersion)
-            $0.sessionDelegate = Dependency(\.certificateDelegate).wrappedValue
+            $0.sessionDelegate = Dependency(\.apiSessionDelegate).wrappedValue
             $0.encoder = .apiEncoder
         }
     }

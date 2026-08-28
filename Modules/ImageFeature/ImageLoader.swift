@@ -37,7 +37,7 @@ struct ImageLoader: Nuke.DataLoading {
     ) {
         self.dataLoader = dataLoader
         self.server = server
-        dataLoader.delegate = certificateDelegate
+        dataLoader.delegate = apiSessionDelegate
     }
 
     private nonisolated(nonsending)
@@ -48,8 +48,8 @@ struct ImageLoader: Nuke.DataLoading {
     private let dataLoader: DataLoader
     private let server: Server
 
-    @Dependency(\.certificateDelegate)
-    private var certificateDelegate
+    @Dependency(\.apiSessionDelegate)
+    private var apiSessionDelegate
 
     @Dependency(\.authenticationProvider.getToken)
     private var getToken
