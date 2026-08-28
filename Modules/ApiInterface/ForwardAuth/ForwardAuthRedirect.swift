@@ -1,10 +1,14 @@
 import Foundation
 
-public struct ForwardAuthRedirect: Equatable, Sendable {
+public struct ForwardAuthRedirect: Equatable, Identifiable, Sendable {
 
     public let server: Server
 
     public let url: URL
+
+    // .sheet(item:) needs an Identifiable. Redirects are one-per-server at a time (the reducer
+    // guards on that), so the server id is the stable identity.
+    public var id: String { server.id }
 
     public init(
         server: Server,
