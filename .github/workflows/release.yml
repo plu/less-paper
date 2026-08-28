@@ -58,7 +58,7 @@ jobs:
           lfs: true
 
       - name: mise
-        uses: jdx/mise-action@v3
+        uses: jdx/mise-action@v4
         with:
           cache: false
           cache_save: false
