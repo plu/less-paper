@@ -78,6 +78,7 @@ extension Module {
             ]
         case .apiImplementationTests:
             [
+                .external(.asyncAlgorithms),
                 .external(.customDump),
                 .external(.dependencies),
                 .external(.dependenciesMacros),

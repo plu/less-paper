@@ -1,4 +1,5 @@
 import ApiInterface
+import AsyncAlgorithms
 import Dependencies
 import Foundation
 import Get
@@ -67,6 +68,25 @@ extension ApiClientDelegate: Get.APIClientDelegate {
 
         storeAdvertisedApiVersion(from: response)
 
+        // Any non-2xx with a Location leaving the server's host is a proxy telling us to sign in.
+        // Both bounce shapes end up here: the 401+Location one directly, and the genuine 3xx one
+        // after ApiSessionDelegate refused to follow it into the completion.
+        if !(200 ..< 300).contains(response.statusCode),
+           let location = response.value(forHTTPHeaderField: "Location"),
+           let redirectURL = URL(string: location),
+           let redirectHost = redirectURL.host(),
+           let serverHost = server.url.host(),
+           redirectHost != serverHost {
+            let redirect = ForwardAuthRedirect(server: server, url: redirectURL)
+            Task {
+                @Dependency(\.forwardAuthChannel)
+                var channel
+
+                await channel.send(.redirect(redirect))
+            }
+            throw ForwardAuthError.required(redirectURL)
+        }
+
         if (400 ..< 500).contains(response.statusCode) {
             let error = try JSONDecoder().decode(ApiError.self, from: data)
             throw error
@@ -74,6 +94,31 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         guard (200 ..< 300).contains(response.statusCode) else {
             throw APIError.unacceptableStatusCode(response.statusCode)
         }
+    }
+
+    func client(
+        _ client: APIClient,
+        shouldRetry task: URLSessionTask,
+        error: any Error,
+        attempts: Int
+    ) async throws -> Bool {
+        guard case ForwardAuthError.required = error else {
+            return false
+        }
+
+        // Every parked request awaits the same event. Ten concurrent bounces at launch produce
+        // one login, and each request replays as soon as it finishes. The comparison is on
+        // server.id so a login for one server does not release requests parked against another.
+        @Dependency(\.forwardAuthChannel)
+        var channel
+
+        for await event in channel {
+            if case let .finish(redirect) = event, redirect.server.id == server.id {
+                return true
+            }
+        }
+
+        return false
     }
 
     /// One line per *failed* request: what was asked, of where, and what came back.

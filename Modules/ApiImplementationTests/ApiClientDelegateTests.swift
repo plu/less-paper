@@ -1,6 +1,7 @@
 @testable import ApiImplementation
 
 import ApiInterface
+import AsyncAlgorithms
 import Dependencies
 import Foundation
 import Get
@@ -223,6 +224,165 @@ struct ApiClientDelegateTests {
         }
 
         #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+    }
+
+    // Authelia's ForwardAuth answers 401 with a Location; Caddy's forward_auth passes it through.
+    // 401 is not a redirect status, so URLSession never treats this as one - validateResponse is
+    // the only place that can name it as a bounce.
+    @Test
+    func validateResponse_401WithForeignLocation_throwsForwardAuthRequired() throws {
+        let server = Server.testValue(url: URL(string: "https://paperless.example.com")!)
+        let delegate = ApiClientDelegate(server: server)
+        let response = HTTPURLResponse(
+            url: URL(string: "https://paperless.example.com/api/documents/")!,
+            statusCode: 401,
+            httpVersion: nil,
+            headerFields: ["Location": "https://auth.example.com/login"]
+        )!
+
+        do {
+            try delegate.client(
+                APIClient(baseURL: server.url),
+                validateResponse: response,
+                data: Data(),
+                task: URLSession.shared.dataTask(with: URLRequest(url: response.url!))
+            )
+            Issue.record("expected ForwardAuthError to be thrown")
+        } catch let error as ForwardAuthError {
+            #expect(error == .required(URL(string: "https://auth.example.com/login")!))
+        }
+    }
+
+    // Every other proxy answers with a real 3xx, which ApiSessionDelegate refused - the task then
+    // completes with the 3xx itself, and this test covers that branch.
+    @Test
+    func validateResponse_302WithForeignLocation_throwsForwardAuthRequired() throws {
+        let server = Server.testValue(url: URL(string: "https://paperless.example.com")!)
+        let delegate = ApiClientDelegate(server: server)
+        let response = HTTPURLResponse(
+            url: URL(string: "https://paperless.example.com/api/documents/")!,
+            statusCode: 302,
+            httpVersion: nil,
+            headerFields: ["Location": "https://auth.example.com/login"]
+        )!
+
+        do {
+            try delegate.client(
+                APIClient(baseURL: server.url),
+                validateResponse: response,
+                data: Data(),
+                task: URLSession.shared.dataTask(with: URLRequest(url: response.url!))
+            )
+            Issue.record("expected ForwardAuthError to be thrown")
+        } catch let error as ForwardAuthError {
+            #expect(error == .required(URL(string: "https://auth.example.com/login")!))
+        }
+    }
+
+    // A 401 with no Location is an ordinary unauthorized - a stale token, a wrong password.
+    // Opening a browser for that would be worse than reporting it.
+    @Test
+    func validateResponse_401WithoutLocation_isNotABounce() throws {
+        let server = Server.testValue()
+        let delegate = ApiClientDelegate(server: server)
+        let response = HTTPURLResponse(
+            url: server.url.appending(path: "/api/documents/"),
+            statusCode: 401,
+            httpVersion: nil,
+            headerFields: nil
+        )!
+        let body = try JSONEncoder().encode(["detail": "Invalid token"])
+
+        do {
+            try delegate.client(
+                APIClient(baseURL: server.url),
+                validateResponse: response,
+                data: body,
+                task: URLSession.shared.dataTask(with: URLRequest(url: response.url!))
+            )
+            Issue.record("expected an error to be thrown")
+        } catch is ForwardAuthError {
+            Issue.record("a 401 without Location must not raise a forward-auth login")
+        } catch {
+            // Expected: the ordinary ApiError.
+        }
+    }
+
+    // A 3xx pointing back to the same host is not a bounce - even though the delegate would have
+    // followed it, so this branch only triggers if validateResponse ever sees one directly.
+    @Test
+    func validateResponse_sameHostLocation_isNotABounce() throws {
+        let server = Server.testValue(url: URL(string: "https://paperless.example.com")!)
+        let delegate = ApiClientDelegate(server: server)
+        let response = HTTPURLResponse(
+            url: URL(string: "https://paperless.example.com/api/documents/")!,
+            statusCode: 302,
+            httpVersion: nil,
+            headerFields: ["Location": "https://paperless.example.com/api/documents/?page=2"]
+        )!
+
+        do {
+            try delegate.client(
+                APIClient(baseURL: server.url),
+                validateResponse: response,
+                data: Data(),
+                task: URLSession.shared.dataTask(with: URLRequest(url: response.url!))
+            )
+            Issue.record("expected an error to be thrown")
+        } catch is ForwardAuthError {
+            Issue.record("a same-host redirect must not raise a forward-auth login")
+        } catch {
+            // Expected: the ordinary unacceptableStatusCode error.
+        }
+    }
+
+    @Test
+    func shouldRetry_waitsForFinishForItsOwnServer() async throws {
+        let server = Server.testValue(id: "waiter")
+        let delegate = ApiClientDelegate(server: server)
+        let channel = AsyncChannel<ForwardAuthEvent>()
+
+        let result = await withDependencies {
+            $0.forwardAuthChannel = channel
+        } operation: {
+            async let retry = delegate.client(
+                APIClient(baseURL: server.url),
+                shouldRetry: URLSession.shared.dataTask(with: URLRequest(url: server.url)),
+                error: ForwardAuthError.required(URL(string: "https://auth.example.com/login")!),
+                attempts: 1
+            )
+
+            // A finish for a different server must not release this waiter.
+            await channel.send(.finish(ForwardAuthRedirect(
+                server: .testValue(id: "someone-else"),
+                url: URL(string: "https://auth.example.com/login")!
+            )))
+            try? await Task.sleep(for: .milliseconds(50))
+
+            await channel.send(.finish(ForwardAuthRedirect(
+                server: server,
+                url: URL(string: "https://auth.example.com/login")!
+            )))
+
+            return try? await retry
+        }
+
+        #expect(result == true)
+    }
+
+    @Test
+    func shouldRetry_returnsFalseForAnyOtherError() async throws {
+        let server = Server.testValue()
+        let delegate = ApiClientDelegate(server: server)
+
+        let result = try await delegate.client(
+            APIClient(baseURL: server.url),
+            shouldRetry: URLSession.shared.dataTask(with: URLRequest(url: server.url)),
+            error: URLError(.notConnectedToInternet),
+            attempts: 1
+        )
+
+        #expect(result == false)
     }
 }
 
