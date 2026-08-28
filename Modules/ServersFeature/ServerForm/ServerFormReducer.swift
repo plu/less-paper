@@ -13,6 +13,7 @@ public struct ServerFormReducer: Sendable {
         case destination(PresentationAction<Destination.Action>)
         case error(Error)
         case mfaCodeRequired
+        case loadProviders
         case providerTokenReceived(String)
         case providersLoaded([OIDCProvider])
         case view(View)
@@ -59,6 +60,10 @@ public struct ServerFormReducer: Sendable {
         /// has.
         var providers: [OIDCProvider] = []
 
+        /// The address `providers` was read from, so a change can be noticed without depending on
+        /// which keypath a binding action happens to carry.
+        var providersURL: URL?
+
         var section = ServerFormSection.form
 
         public init(
@@ -67,6 +72,10 @@ public struct ServerFormReducer: Sendable {
         ) {
             self.destination = destination
             self.input = input
+            // Seeded with the address the form opened on, so only a change asks the server. Left
+            // nil, the first binding of any kind - a username keystroke - would look like a new
+            // address and send a request nobody asked for.
+            providersURL = input.url
         }
     }
 
@@ -97,6 +106,8 @@ public struct ServerFormReducer: Sendable {
             case .mfaCodeRequired:
                 state.destination = .mfaForm(MfaFormReducer.State())
                 return .none
+            case .loadProviders:
+                return .runLoadProviders(input: state.input)
             case let .providerTokenReceived(token):
                 return .runSaveProviderToken(input: state.input, token: token)
             case let .providersLoaded(providers):
@@ -126,15 +137,21 @@ public struct ServerFormReducer: Sendable {
                 case let .providerButtonTapped(provider):
                     return .runProviderLogin(input: state.input, provider: provider)
                 case .urlCommitted:
-                    // Asked of the server rather than of the user. A server that offers nothing,
-                    // is unreachable, or is not paperless answers with an empty list and the form
-                    // stays exactly as it was.
-                    state.providers = []
                     return .runLoadProviders(input: state.input)
                 case .saveButtonTapped:
                     return .runSaveServer(input: state.input)
                 }
-            case .binding, .delegate, .destination:
+            case .binding:
+                // Compared by value rather than matched on \.input.url: ServerFormInput is a plain
+                // struct inside an @ObservableState State, so a chained binding does not
+                // necessarily carry the nested keypath, and matching on it silently never fires.
+                guard state.input.url != state.providersURL else {
+                    return .none
+                }
+                state.providers = []
+                state.providersURL = state.input.url
+                return .runLoadProvidersDebounced()
+            case .delegate, .destination:
                 return .none
             }
         }

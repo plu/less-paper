@@ -36,6 +36,19 @@ extension Effect where Action == ServerFormReducer.Action {
 
 extension Effect where Action == ServerFormReducer.Action {
 
+    /// Waits for the address to settle before asking. Typing a URL produces one change per
+    /// keystroke, and every prefix of a hostname is a request to somewhere.
+    static func runLoadProvidersDebounced() -> Self {
+        @Dependency(\.continuousClock)
+        var clock
+
+        return .run { send in
+            try await clock.sleep(for: .milliseconds(600))
+            await send(.loadProviders)
+        }
+        .cancellable(id: CancelID.loadProviders, cancelInFlight: true)
+    }
+
     /// Asks the server what it offers, and never fails. A server with no single sign-on, one that
     /// cannot be reached, and one that is not paperless are the same answer here: no buttons.
     static func runLoadProviders(input: ServerFormInput) -> Self {
