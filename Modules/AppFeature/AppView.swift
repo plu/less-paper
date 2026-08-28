@@ -6,7 +6,13 @@ import SwiftUI
 public struct AppView: View {
 
     public var body: some View {
-        ZStack {
+        // Read here so @ObservableState registers this view as an observer of forwardAuth.sheet.
+        // The Binding closures below are evaluated when SwiftUI queries the binding, not during
+        // body evaluation, so a read only from inside them does not invalidate this view when
+        // the state changes - and the sheet never re-checks isPresented.
+        let sheetRedirect = store.forwardAuth.sheet
+
+        return ZStack {
             if let store = store.scope(state: \.main, action: \.main) {
                 MainView(store: store)
                     .id(store.server.id)
@@ -27,19 +33,19 @@ public struct AppView: View {
         // toggles false->true each time a new sign-in is requested.
         .sheet(
             isPresented: Binding(
-                get: { store.forwardAuth.sheet != nil },
+                get: { sheetRedirect != nil },
                 set: { isPresented in
-                    if !isPresented, let redirect = store.forwardAuth.sheet {
+                    if !isPresented, let redirect = sheetRedirect {
                         store.send(.forwardAuth(.signInCancelled(redirect)))
                     }
                 }
             )
         ) {
-            if let redirect = store.forwardAuth.sheet {
+            if let sheetRedirect {
                 ForwardAuthSheetView(
-                    redirect: redirect,
-                    onFinished: { store.send(.forwardAuth(.signInFinished(redirect))) },
-                    onCancel: { store.send(.forwardAuth(.signInCancelled(redirect))) }
+                    redirect: sheetRedirect,
+                    onFinished: { store.send(.forwardAuth(.signInFinished(sheetRedirect))) },
+                    onCancel: { store.send(.forwardAuth(.signInCancelled(sheetRedirect))) }
                 )
             }
         }

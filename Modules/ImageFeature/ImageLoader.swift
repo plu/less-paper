@@ -19,7 +19,12 @@ struct ImageLoader: Nuke.DataLoading {
                     for header in server.headers {
                         request.setValue(header.value, forHTTPHeaderField: header.name)
                     }
-                    request.setValue("Token \(token)", forHTTPHeaderField: "Authorization")
+                    if let token {
+                        // Remote-user mode stores no token: the forward-auth cookie authenticates
+                        // the request, and a bare `Token ` header would be rejected. Same rule
+                        // ApiClientDelegate applies to every other API call.
+                        request.setValue("Token \(token)", forHTTPHeaderField: "Authorization")
+                    }
                 }
                 cancellable = dataLoader.loadData(with: request, didReceiveData: didReceiveData, completion: completion)
             } onCancel: { [cancellable] in
@@ -38,11 +43,6 @@ struct ImageLoader: Nuke.DataLoading {
         self.dataLoader = dataLoader
         self.server = server
         dataLoader.delegate = apiSessionDelegate
-    }
-
-    private nonisolated(nonsending)
-    func getToken(_ server: Server) async throws -> String {
-        try await getToken(server)
     }
 
     private let dataLoader: DataLoader
