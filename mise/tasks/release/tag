@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#MISE description="Tag the commit a submitted build came from and publish a GitHub release"
+#USAGE arg "<build>" help="The TestFlight build number, which is the ci.yml run number"
+set -euo pipefail
+
+cd "$MISE_PROJECT_ROOT"
+
+eval "$(mise run release:resolve "$usage_build")"
+
+notes="$(mktemp)"
+trap 'rm -f "$notes"' EXIT
+
+# What users read on the App Store, then what actually changed in the code: the release is both the
+# user-facing note and the developer-facing changelog.
+cat fastlane/metadata/en-US/release_notes.txt > "$notes"
+
+# Tags carry the build number, so they do not sort as versions. Creation order is the only order
+# that means anything here.
+previous="$(git tag --sort=-creatordate | head -1)"
+
+args=(--target "$sha" --title "$version ($build)" --notes-file "$notes")
+
+if [ -n "$previous" ]; then
+  {
+    echo
+    echo "## Changes"
+    echo
+    git log --pretty='* %s (%h)' "$previous..$sha"
+  } >> "$notes"
+else
+  # The first release has no predecessor to diff against. gh appends its own generated notes to the
+  # ones given here.
+  args+=(--generate-notes)
+fi
+
+if [ "${RELEASE_DRY_RUN:-}" = "true" ]; then
+  echo "dry run: would create release $tag on $sha titled \"$version ($build)\""
+  echo "---"
+  cat "$notes"
+  echo "---"
+  exit 0
+fi
+
+# --target creates the tag server-side from the sha, so nothing here needs a git push - which
+# matters, because pushing over HTTPS from CI prompts for a username and hangs.
+gh release create "$tag" "${args[@]}"
+
+echo
+echo "Submitted $version. Nothing bumps marketingVersion automatically:"
+echo "edit Tuist/ProjectDescriptionHelpers/Extensions/String+Extensions.swift before the next"
+echo "build, or every new TestFlight build stays on a version that can never be submitted."
