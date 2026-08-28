@@ -8,25 +8,79 @@ import Testing
 @Suite
 struct ForwardAuthReducerTests {
 
-    // A bounce presents the login straight away and reports back as .signInFinished.
+    // A bounce names the host in a popup first. The browser only opens once the user has agreed
+    // to be sent there - this is the one moment credentials get typed.
     @MainActor
     @Test
-    func redirect_setsStateAndPresentsSignIn() async {
-        let redirect = ForwardAuthRedirect.testValue()
+    func redirect_setsStateAndAsksBeforeOpeningTheBrowser() async {
+        let redirect = ForwardAuthRedirect.testValue(
+            url: URL(string: "https://auth.example.com/login")!
+        )
+        let confirmedHost = LockIsolated<String?>(nil)
 
         let store = TestStore(initialState: ForwardAuthReducer.State()) {
             ForwardAuthReducer()
         } withDependencies: {
+            $0.forwardAuthConfirmation.present = { host in
+                confirmedHost.setValue(host)
+                return true
+            }
             $0.forwardAuthSignIn.present = { _ in true }
         }
-        // The presenter and the release effect are covered by their own tests. Here we only care
-        // about the state after .redirect.
+        // The presenters and the release effect are covered by their own tests. Here we only care
+        // about the order: popup, then browser.
         store.exhaustivity = .off
 
         await store.send(.redirect(redirect)) {
             $0.redirect = redirect
         }
+        await store.receive(\.confirmed)
         await store.receive(\.signInFinished)
+
+        // The host, not the whole URL: it is what the user is being asked to trust.
+        #expect(confirmedHost.value == "auth.example.com")
+    }
+
+    // Declining the popup is a decision not to sign in. No browser opens, and the parked requests
+    // are dropped rather than replayed - replaying would be bounced again and ask again.
+    @MainActor
+    @Test
+    func redirect_whenTheUserDeclines_neverOpensTheBrowser() async {
+        let redirect = ForwardAuthRedirect.testValue()
+        let coordinator = ForwardAuthCoordinator()
+        let signedIn = LockIsolated<Bool?>(nil)
+
+        let store = TestStore(initialState: ForwardAuthReducer.State()) {
+            ForwardAuthReducer()
+        } withDependencies: {
+            $0.forwardAuthConfirmation.present = { _ in false }
+            $0.forwardAuthCoordinator = coordinator
+            $0.forwardAuthSignIn.present = { _ in
+                Issue.record("the browser must not open when the popup was declined")
+                return false
+            }
+        }
+        store.exhaustivity = .off
+
+        _ = await coordinator.redirects()
+
+        let parked = Task {
+            let result = await coordinator.awaitSignIn(for: redirect)
+            signedIn.setValue(result)
+        }
+        while await coordinator.waiterCount(for: redirect) == 0 {
+            await Task.yield()
+        }
+
+        await store.send(.redirect(redirect)) {
+            $0.redirect = redirect
+        }
+        await store.receive(\.cancelled) {
+            $0.redirect = nil
+        }
+        await parked.value
+
+        #expect(signedIn.value == false)
     }
 
     // A second server bouncing while a login is up does not open a second sheet - but its parked

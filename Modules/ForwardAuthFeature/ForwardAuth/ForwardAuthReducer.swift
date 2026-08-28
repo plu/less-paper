@@ -1,14 +1,11 @@
 import ApiInterface
-import Components
 import ComposableArchitecture
 
 @Reducer
 public struct ForwardAuthReducer: Sendable {
 
     @CasePathable
-    public enum Action: BindableAction {
-
-        case binding(BindingAction<State>)
+    public enum Action {
 
         case bootstrap
 
@@ -25,11 +22,12 @@ public struct ForwardAuthReducer: Sendable {
         case signInCancelled(ForwardAuthRedirect)
     }
 
-    @ObservableState
     public struct State: Equatable {
 
         // Set when a bounce is received. Cleared when the whole flow finishes: either sign-in
-        // succeeded, or the user dismissed something along the way.
+        // succeeded, or the user dismissed something along the way. Not observed by any view -
+        // both the popup and the sheet are presented, not declared - so it is only the guard that
+        // keeps a second login off the screen.
         public var redirect: ForwardAuthRedirect?
 
         public init(
@@ -40,12 +38,8 @@ public struct ForwardAuthReducer: Sendable {
     }
 
     public var body: some ReducerOf<Self> {
-        BindingReducer()
         Reduce { state, action in
             switch action {
-            case .binding:
-                return .none
-
             case .bootstrap:
                 return .runForwardAuthObserver()
 
@@ -71,11 +65,10 @@ public struct ForwardAuthReducer: Sendable {
                     return .runDropWaiters(redirect: redirect)
                 }
                 state.redirect = redirect
-                // Skip the confirmation popup for now: it presents through SwiftMessages on its
-                // own window, and dismissing it as the sheet tries to present is the current
-                // suspect for the sheet never appearing. The sheet's own title bar names the
-                // host, so a first-pass user still sees where they are being sent.
-                return .runPresentSignIn(redirect: redirect)
+                // The host is named before a browser opens, not after: this is the one moment
+                // credentials get typed, and a full-screen login that appears by itself cannot
+                // say where it came from until it has already loaded.
+                return .runPresentConfirmation(redirect: redirect)
 
             case let .signInCancelled(redirect):
                 // Same reasoning as .cancelled above: a dismissed sheet drops the waiters, it
