@@ -1,1 +1,1 @@
-Version 3 ist eine komplette Neuentwicklung: schnellere Listen, alle Filter der Weboberfläche, Massenbearbeitung und Import direkt über das Teilen-Menü.
+Version 3 ist eine komplette Neuentwicklung: alle Filter der Weboberfläche, Massenbearbeitung, Single Sign-on, Papierkorb und Import über das Teilen-Menü.
