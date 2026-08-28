@@ -4889,6 +4889,23 @@
         }
       }
     },
+    "shareFormForwardAuthRequired" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deine Sitzung ist abgelaufen. Bitte melde dich in Less Paper neu an, bevor du teilst."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your session has expired. Please sign in again in Less Paper before sharing."
+          }
+        }
+      }
+    },
     "showInSidebar" : {
       "extractionState" : "manual",
       "localizations" : {
