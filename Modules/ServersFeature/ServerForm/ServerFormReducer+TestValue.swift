@@ -4,10 +4,11 @@ import Foundation
 extension ServerFormReducer.State {
 
     static func testValue(
-        input: ServerFormInput = .testValue()
+        input: ServerFormInput = .testValue(),
+        providers: [OIDCProvider] = []
     ) -> Self {
-        .init(
-            input: input
-        )
+        var state = Self(input: input)
+        state.providers = providers
+        return state
     }
 }

@@ -150,6 +150,10 @@ public struct ServerFormView: View {
                     Button {
                         send(.providerButtonTapped(provider))
                     } label: {
+                        // Truncates at accessibility sizes, as every button here does: ButtonStyle
+                        // pins a scaled height, so a second line has nowhere to go. Consistent with
+                        // the rest of the app rather than a special case, and the reference records
+                        // it rather than hiding it.
                         Text(.signInWith(provider.name))
                             .frame(maxWidth: .infinity)
                     }

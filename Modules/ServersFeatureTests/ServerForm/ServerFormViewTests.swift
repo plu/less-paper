@@ -1,5 +1,6 @@
 @testable import ServersFeature
 
+import ApiInterface
 import ComposableArchitecture
 import SwiftUI
 import Testing
@@ -76,6 +77,58 @@ struct ServerFormViewTests {
             .background(Color.m3Surface),
             as: .image(layout: .device(config: .iPhone12)),
             named: "advanced"
+        )
+    }
+
+    // What a server offering single sign-on looks like. The buttons only exist when the server says
+    // so, so the reference with none of them is the one that proves the form is unchanged for every
+    // server that does not.
+    @Test
+    func testSnapshot_withProviders() async throws {
+        assertSnapshot(
+            of: ScrollView {
+                ServerFormView(
+                    store: Store(
+                        initialState: .testValue(
+                            input: .testValue(url: .testValue(string: "http://localhost:8000")),
+                            providers: [
+                                OIDCProvider.testValue(id: "authentik", name: "Authentik"),
+                                OIDCProvider.testValue(clientId: "second", id: "keycloak", name: "Keycloak")
+                            ]
+                        ),
+                        reducer: {
+                            ServerFormReducer()
+                        }
+                    )
+                )
+            }
+            .background(Color.m3Surface),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "withProviders"
+        )
+    }
+
+    @Test
+    func testSnapshot_withProvidersAccessibilityLarge() async throws {
+        assertSnapshot(
+            of: ScrollView {
+                ServerFormView(
+                    store: Store(
+                        initialState: .testValue(
+                            input: .testValue(url: .testValue(string: "http://localhost:8000")),
+                            providers: [OIDCProvider.testValue(id: "authentik", name: "Authentik")]
+                        ),
+                        reducer: {
+                            ServerFormReducer()
+                        }
+                    )
+                )
+            }
+            .environment(\.sizeCategory, .accessibilityLarge)
+            .frame(width: 375)
+            .background(Color.m3Surface),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "withProvidersAccessibilityLarge"
         )
     }
 }
