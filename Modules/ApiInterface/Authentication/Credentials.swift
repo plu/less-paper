@@ -2,12 +2,14 @@ import Foundation
 
 public struct Credentials: Equatable, Sendable {
 
-    public let password: String
+    /// Absent for a server signed in through a provider: there is no password to keep, and a type
+    /// that can say so beats storing an empty string and hoping nothing reads it.
+    public let password: String?
 
     public let token: String
 
     public init(
-        password: String,
+        password: String?,
         token: String
     ) {
         self.password = password

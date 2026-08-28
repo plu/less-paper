@@ -4158,6 +4158,23 @@
         }
       }
     },
+    "orUsePassword" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "oder mit Passwort anmelden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "or sign in with a password"
+          }
+        }
+      }
+    },
     "original" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4817,6 +4834,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show on dashboard"
+          }
+        }
+      }
+    },
+    "signInWith" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anmelden mit %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign in with %@"
           }
         }
       }

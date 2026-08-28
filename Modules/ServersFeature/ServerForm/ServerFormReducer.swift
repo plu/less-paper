@@ -13,6 +13,9 @@ public struct ServerFormReducer: Sendable {
         case destination(PresentationAction<Destination.Action>)
         case error(Error)
         case mfaCodeRequired
+        case loadProviders
+        case providerTokenReceived(String)
+        case providersLoaded([OIDCProvider])
         case view(View)
 
         @CasePathable
@@ -24,7 +27,9 @@ public struct ServerFormReducer: Sendable {
             case addHeaderButtonTapped
             case cancelButtonTapped
             case closeButtonTapped
+            case providerButtonTapped(OIDCProvider)
             case deleteHeaderButtonTapped(HTTPHeader.ID)
+            case urlCommitted
             case headerNameChanged(HTTPHeader.ID, String)
             case headerValueChanged(HTTPHeader.ID, String)
             case saveButtonTapped
@@ -46,6 +51,19 @@ public struct ServerFormReducer: Sendable {
 
         var isSaving = false
 
+        /// Set while a provider login is waiting for its second factor, so the shared MFA sheet
+        /// knows which login to finish - the password flow re-runs the save with a code, this one
+        /// confirms against the pending provider session.
+        var isAwaitingProviderSecondFactor = false
+
+        /// What the server offers. Empty is the ordinary case and means the form looks as it always
+        /// has.
+        var providers: [OIDCProvider] = []
+
+        /// The address `providers` was read from, so a change can be noticed without depending on
+        /// which keypath a binding action happens to carry.
+        var providersURL: URL?
+
         var section = ServerFormSection.form
 
         public init(
@@ -54,6 +72,10 @@ public struct ServerFormReducer: Sendable {
         ) {
             self.destination = destination
             self.input = input
+            // Seeded with the address the form opened on, so only a change asks the server. Left
+            // nil, the first binding of any kind - a username keystroke - would look like a new
+            // address and send a request nobody asked for.
+            providersURL = input.url
         }
     }
 
@@ -66,10 +88,15 @@ public struct ServerFormReducer: Sendable {
                 case .cancel:
                     state.destination = nil
                     state.input.code = nil
+                    state.isAwaitingProviderSecondFactor = false
                     state.isSaving = false
                     return .none
                 case let .mfaCode(code):
                     state.destination = nil
+                    if state.isAwaitingProviderSecondFactor {
+                        state.isAwaitingProviderSecondFactor = false
+                        return .runConfirmProviderSecondFactor(code: code, input: state.input)
+                    }
                     state.input.code = code
                     return .runSaveServer(input: state.input)
                 }
@@ -78,6 +105,13 @@ public struct ServerFormReducer: Sendable {
                 return .toast(error)
             case .mfaCodeRequired:
                 state.destination = .mfaForm(MfaFormReducer.State())
+                return .none
+            case .loadProviders:
+                return .runLoadProviders(input: state.input)
+            case let .providerTokenReceived(token):
+                return .runSaveProviderToken(input: state.input, token: token)
+            case let .providersLoaded(providers):
+                state.providers = providers
                 return .none
             case let .view(viewAction):
                 switch viewAction {
@@ -100,10 +134,24 @@ public struct ServerFormReducer: Sendable {
                 case let .headerValueChanged(id, value):
                     state.input.headers[id: id]?.value = value
                     return .none
+                case let .providerButtonTapped(provider):
+                    return .runProviderLogin(input: state.input, provider: provider)
+                case .urlCommitted:
+                    return .runLoadProviders(input: state.input)
                 case .saveButtonTapped:
                     return .runSaveServer(input: state.input)
                 }
-            case .binding, .delegate, .destination:
+            case .binding:
+                // Compared by value rather than matched on \.input.url: ServerFormInput is a plain
+                // struct inside an @ObservableState State, so a chained binding does not
+                // necessarily carry the nested keypath, and matching on it silently never fires.
+                guard state.input.url != state.providersURL else {
+                    return .none
+                }
+                state.providers = []
+                state.providersURL = state.input.url
+                return .runLoadProvidersDebounced()
+            case .delegate, .destination:
                 return .none
             }
         }

@@ -1,0 +1,154 @@
+# Authentik, for developing and testing the OIDC login.
+#
+#   cd docker
+#   docker compose -f docker-compose.oidc.yml -p less-paper-oidc up -d
+#
+# Its own project, deliberately. The host already runs paperless-dev on 8000 and paperless-ci on
+# 9000; this must not restart either, so it shares nothing with them and takes a port they do not.
+#
+# ONE THING HAS TO BE RIGHT, and everything else follows from it: AUTHENTIK_URL must be reachable
+# from BOTH the paperless container and the iOS simulator, at the same address.
+#
+# The app does not choose where the identity provider lives. It asks paperless, through
+# api/auth/headless/app/v1/config, and paperless answers with whatever openid_configuration_url it
+# was configured with. Point paperless at an address only Docker can resolve and the simulator is
+# handed the same one, failing the browser step with a DNS error that looks nothing like the actual
+# mistake. Use the host address the simulator already uses for paperless.
+
+x-authentik-env: &authentik-env
+  AUTHENTIK_POSTGRESQL__HOST: authentik-db
+  AUTHENTIK_POSTGRESQL__NAME: authentik
+  AUTHENTIK_POSTGRESQL__PASSWORD: c0ff33
+  AUTHENTIK_POSTGRESQL__USER: authentik
+  AUTHENTIK_REDIS__HOST: authentik-redis
+  AUTHENTIK_SECRET_KEY: development-only-not-a-secret
+  # Bootstrapped so the provider can be created through the API rather than by clicking through the
+  # setup flow, which makes the whole thing reproducible.
+  AUTHENTIK_BOOTSTRAP_EMAIL: admin@less-paper.test
+  AUTHENTIK_BOOTSTRAP_PASSWORD: ${AUTHENTIK_PASSWORD:-development-only}
+  AUTHENTIK_BOOTSTRAP_TOKEN: ${AUTHENTIK_TOKEN:-development-only-token}
+  AUTHENTIK_DISABLE_UPDATE_CHECK: "true"
+  AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+  # colima here has 1.9 GiB and two CPUs, and already runs both paperless stacks. At its defaults
+  # authentik sizes its gunicorn and worker pools for a real machine, and the kernel kills them:
+  # "Worker (pid:3433) was sent SIGKILL! Perhaps out of memory?", which surfaces as a 502 from the
+  # Go frontend and looks like authentik is simply broken. One of each is enough for development.
+  AUTHENTIK_WEB__WORKERS: "1"
+  AUTHENTIK_WEB__THREADS: "2"
+  AUTHENTIK_WORKER__CONCURRENCY: "1"
+
+services:
+  # A paperless of its own, pointed at Authentik.
+  #
+  # Not paperless-dev: that is what every local test targets, and giving it a social provider means
+  # restarting it with new environment - which cannot be driven from the agent's VM anyway, because
+  # the dev stack bind-mounts paths that only exist on the host. This one uses named volumes only,
+  # so it can be brought up and reconfigured from either side.
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.0.5
+    restart: unless-stopped
+    depends_on:
+      - paperless-redis
+    environment:
+      OPENSSL_armcap: "0"
+      PAPERLESS_ADMIN_MAIL: admin@less-paper.test
+      PAPERLESS_ADMIN_PASSWORD: development-only
+      PAPERLESS_ADMIN_USER: admin
+      PAPERLESS_REDIS: redis://paperless-redis:6379
+      PAPERLESS_SECRET_KEY: c0ff33
+      PAPERLESS_TIME_ZONE: Europe/Berlin
+      PAPERLESS_URL: ${PAPERLESS_OIDC_URL:-http://192.168.64.1:8100}
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: ${PAPERLESS_OIDC_URL:-http://192.168.64.1:8100}
+      # So a provider login lands on a paperless user without one having to be made by hand first.
+      PAPERLESS_SOCIAL_AUTO_SIGNUP: "true"
+      # Without a group the new user has no permissions at all, and every request after a perfectly
+      # successful login answers 403 "You do not have permission to perform this action" - which
+      # looks like the token was rejected when it was accepted and is simply allowed to do nothing.
+      PAPERLESS_SOCIAL_ACCOUNT_DEFAULT_GROUPS: paperless-users
+      # Without this the provider settings are read and then ignored: allauth has no provider class
+      # installed, so socialaccount.providers in the headless config stays empty and the app
+      # correctly shows no buttons. Django reports SOCIALACCOUNT_PROVIDERS populated either way,
+      # which is what makes it confusing.
+      PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+      # No secret: the app exchanges its code as a public client with PKCE, and paperless only has
+      # to verify the id_token against the provider's published JWKS.
+      PAPERLESS_SOCIALACCOUNT_PROVIDERS: >-
+        {"openid_connect": {"APPS": [{
+          "provider_id": "authentik",
+          "name": "Authentik",
+          "client_id": "${OIDC_CLIENT_ID:-MkTqw6gmZVccFQhFCGEtpMusEcnyqAycYIAHNfeq}",
+          "secret": "",
+          "settings": {
+            "server_url": "${AUTHENTIK_URL:-http://192.168.64.1:9100}/application/o/paperless/.well-known/openid-configuration"
+          }
+        }]}}
+    ports:
+      - "${PAPERLESS_OIDC_PORT:-8100}:8000"
+    volumes:
+      - paperless-data:/usr/src/paperless/data
+      - paperless-media:/usr/src/paperless/media
+
+  paperless-redis:
+    image: docker.io/library/redis:7-alpine
+    restart: unless-stopped
+
+  authentik-db:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_PASSWORD: c0ff33
+      POSTGRES_USER: authentik
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authentik"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - authentik-db:/var/lib/postgresql/data
+
+  authentik-redis:
+    image: docker.io/library/redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  authentik:
+    image: ghcr.io/goauthentik/server:2025.8
+    restart: unless-stopped
+    command: server
+    depends_on:
+      authentik-db:
+        condition: service_healthy
+      authentik-redis:
+        condition: service_healthy
+    environment:
+      <<: *authentik-env
+    ports:
+      # 8000, 8010, 9000 and 9010 belong to the two paperless stacks.
+      - "${AUTHENTIK_PORT:-9100}:9000"
+    volumes:
+      - authentik-media:/media
+
+  authentik-worker:
+    image: ghcr.io/goauthentik/server:2025.8
+    restart: unless-stopped
+    command: worker
+    depends_on:
+      authentik-db:
+        condition: service_healthy
+      authentik-redis:
+        condition: service_healthy
+    environment:
+      <<: *authentik-env
+    volumes:
+      - authentik-media:/media
+
+volumes:
+  authentik-db:
+  authentik-media:
+  paperless-data:
+  paperless-media:

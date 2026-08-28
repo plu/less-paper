@@ -105,7 +105,11 @@ public struct ServerFormView: View {
             focus: $focus,
             equals: .url
         )
-        .onSubmit { focus = .username }
+        .onSubmit {
+            focus = .username
+            // Asked when the address is settled rather than on every keystroke.
+            send(.urlCommitted)
+        }
         .submitLabel(.next)
     }
 
@@ -129,9 +133,38 @@ public struct ServerFormView: View {
     private func formView() -> some View {
         VStack(spacing: .x4) {
             urlField()
+            providerButtons()
             usernameField()
             passwordField()
             aliasField()
+        }
+    }
+
+    /// Only present when the server says it has them, so a server without single sign-on shows the
+    /// form exactly as it always has.
+    @ViewBuilder
+    private func providerButtons() -> some View {
+        if !store.providers.isEmpty {
+            VStack(spacing: .x3) {
+                ForEach(store.providers) { provider in
+                    Button {
+                        send(.providerButtonTapped(provider))
+                    } label: {
+                        // Truncates at accessibility sizes, as every button here does: ButtonStyle
+                        // pins a scaled height, so a second line has nowhere to go. Consistent with
+                        // the rest of the app rather than a special case, and the reference records
+                        // it rather than hiding it.
+                        Text(.signInWith(provider.name))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.secondary())
+                    .disabled(store.isSaving)
+                }
+
+                Text(.orUsePassword)
+                    .font(.footnote)
+                    .foregroundStyle(Color.m3OnSurface.opacity(0.6))
+            }
         }
     }
 
