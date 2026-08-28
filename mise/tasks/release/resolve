@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+#MISE description="Resolve a TestFlight build number to the commit and version behind it"
+#USAGE arg "<build>" help="The TestFlight build number, which is the ci.yml run number"
+set -euo pipefail
+
+# The build number is github.run_number: ci.yml passes it as TUIST_GITHUB_RUN_NUMBER, Tuist reads
+# it into CURRENT_PROJECT_VERSION, so build 68 is run 68 of ci.yml and nothing else. Newer runs are
+# unrelated rows, which is why nothing here looks at "latest".
+build="$usage_build"
+
+# The run-number sequence is shared with pull request runs, and failed runs consume numbers too, so
+# most numbers have no build behind them. 200 is far more than Apple's 90-day build expiry needs; a
+# number outside the window fails here rather than resolving to something else.
+row="$(gh run list --workflow=ci.yml --limit 200 \
+  --json number,databaseId,headSha,headBranch \
+  --jq "[.[] | select(.number == $build)][0] | select(. != null) | [.databaseId, .headSha, .headBranch] | @tsv")"
+
+if [ -z "$row" ]; then
+  echo "error: no ci.yml run numbered $build" >&2
+  exit 1
+fi
+
+IFS=$'\t' read -r run_id sha branch <<<"$row"
+
+# A run number is not a build. ci.yml uploads only from main and from pull requests labelled
+# TestFlight, and a run whose UI tests failed skips the job entirely - so the Upload job's
+# conclusion is the only thing separating "a number GitHub handed out" from "a build Apple has".
+# Without this check most numbers resolve to a valid sha and fail much later inside fastlane.
+upload="$(gh api "repos/{owner}/{repo}/actions/runs/$run_id/jobs" \
+  --jq '[.jobs[] | select(.name == "Upload") | .conclusion // "unfinished"][0]')"
+
+if [ "$upload" != "success" ]; then
+  echo "error: run $build has no successful Upload job (Upload=${upload:-absent})" >&2
+  echo "       build $build does not exist in TestFlight" >&2
+  exit 1
+fi
+
+if ! git rev-parse --verify --quiet origin/main >/dev/null; then
+  echo "error: no origin/main - run 'git fetch origin main' first" >&2
+  exit 1
+fi
+
+if ! git merge-base --is-ancestor "$sha" origin/main; then
+  # A TestFlight-labelled pull request build. It is real and tagging it is defensible, but the
+  # branch is usually squashed and deleted afterwards, so it should not happen by accident.
+  if [ "${RELEASE_ALLOW_OFF_MAIN:-}" != "true" ]; then
+    echo "error: $sha is not on origin/main (branch $branch)" >&2
+    echo "       set RELEASE_ALLOW_OFF_MAIN=true to tag it anyway" >&2
+    exit 1
+  fi
+  echo "warning: $sha is not on origin/main (branch $branch)" >&2
+fi
+
+# Read from the commit, never from the working tree: main has usually moved on, and pairing build 68
+# with a version it was not compiled with is the single mistake this task exists to prevent.
+version="$(git show "$sha:Tuist/ProjectDescriptionHelpers/Extensions/String+Extensions.swift" \
+  | sed -n 's/.*marketingVersion = "\(.*\)".*/\1/p')"
+
+if [ -z "$version" ]; then
+  echo "error: no marketingVersion in String+Extensions.swift at $sha" >&2
+  exit 1
+fi
+
+emit() {
+  echo "$1=$2"
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    echo "$1=$2" >> "$GITHUB_OUTPUT"
+  fi
+}
+
+emit build "$build"
+emit sha "$sha"
+emit branch "$branch"
+emit version "$version"
+emit tag "v$version+$build"
