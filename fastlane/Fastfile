@@ -61,12 +61,72 @@ platform :ios do
       sync_screenshots: true
     )
   end
+
+  # A successful Upload job in ci.yml proves altool sent the binary. It does not prove Apple
+  # finished processing it, or accepted it - and deliver's own error for a build it cannot find
+  # names neither the version nor the build number, so it is worth failing here instead.
+  desc "Fail unless the given build is on App Store Connect and finished processing"
+  lane :verify_testflight_build do
+    connect_api_key
+
+    version = ENV.fetch("ASC_APP_VERSION")
+    number = ENV.fetch("ASC_BUILD_NUMBER")
+
+    app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+    UI.user_error!("no app #{APP_IDENTIFIER} on App Store Connect") if app.nil?
+
+    # In Spaceship a Build's own `version` is CFBundleVersion - the build number - while the
+    # `version` filter means the marketing version. Reading one as the other returns nothing and
+    # looks exactly like a build that was never uploaded.
+    build = Spaceship::ConnectAPI::Build.all(app_id: app.id, version: version)
+                                        .find { |candidate| candidate.version == number }
+
+    UI.user_error!("no build #{version} (#{number}) on App Store Connect") if build.nil?
+
+    unless build.processing_state == "VALID"
+      UI.user_error!("build #{version} (#{number}) is #{build.processing_state}, not VALID")
+    end
+
+    UI.success("build #{version} (#{number}) is VALID")
+  end
+
+  # The binary is already on TestFlight and the listing has already been uploaded, so everything
+  # here is skipped except the submission itself.
+  desc "Attach an existing TestFlight build to its version and submit it for review"
+  lane :submit_for_review do
+    connect_api_key
+
+    deliver(
+      app_identifier: APP_IDENTIFIER,
+      app_version: ENV.fetch("ASC_APP_VERSION"),
+      build_number: ENV.fetch("ASC_BUILD_NUMBER"),
+      # Apple approves and then waits: the version sits in Pending Developer Release until someone
+      # presses Release, and only then rolls out over seven days. An approval landing at 3am does
+      # not put itself in front of users.
+      automatic_release: false,
+      phased_release: true,
+      # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
+      force: true,
+      # Unlike the text-only lanes, which skip it: a failed precheck here saves a day of review,
+      # where there it would only block a routine copy change.
+      run_precheck_before_submit: true,
+      precheck_include_in_app_purchases: false,
+      skip_app_version_update: false,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: true,
+      # Without this deliver asks about IDFA on stdin and a CI run hangs until it times out. Export
+      # compliance needs no answer here: ITSAppUsesNonExemptEncryption is false in the Info.plist.
+      submission_information: { add_id_info_uses_idfa: false },
+      submit_for_review: true
+    )
+  end
 end
 
 # deliver's own verify_only is not an option here: it hashes a binary, so it fails with "no implicit
 # conversion of nil into String" when there is none. mise run metadata:lint checks the text instead.
 def metadata_options
-  {
+  options = {
     app_identifier: APP_IDENTIFIER,
     # deliver removes phased release when this is not set, and it logs "Removing phased release"
     # rather than asking. A text-only upload has no business changing how a version rolls out.
@@ -81,6 +141,13 @@ def metadata_options
     # Screenshots have their own lane, and leaving them to it means neither can disturb the other.
     skip_screenshots: true
   }
+
+  # Set only by the release pipeline. The version has to exist in App Store Connect before
+  # screenshots or a build can attach to it; every other caller leaves the editable version alone.
+  version = ENV["ASC_APP_VERSION"]
+  return options if version.nil? || version.empty?
+
+  options.merge(app_version: version, skip_app_version_update: false)
 end
 
 def connect_api_key

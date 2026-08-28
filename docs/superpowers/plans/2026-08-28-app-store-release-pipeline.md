@@ -64,7 +64,7 @@ verified before a real submission.
 
 | File | Change |
 |---|---|
-| `fastlane/Fastfile` | `metadata_options` learns an optional `ASC_APP_VERSION`; two new lanes, `verify_build` and `submit_for_review`. |
+| `fastlane/Fastfile` | `metadata_options` learns an optional `ASC_APP_VERSION`; two new lanes, `verify_testflight_build` and `submit_for_review`. |
 
 **Unchanged, but called by the pipeline:** `mise/tasks/metadata/upload`, `mise/tasks/metadata/lint`, `mise/tasks/ci/screenshots/frame`, `mise/tasks/ci/screenshots/upload`, `.github/workflows/ci.yml`.
 
@@ -225,7 +225,7 @@ git commit -m "feat: resolve a TestFlight build number to its commit"
 
 ---
 
-### Task 2: `verify_build` lane and `release:preflight`
+### Task 2: `verify_testflight_build` lane and `release:preflight`
 
 The last exit before anything writes. Four checks, all read-only. The App Store Connect one needs a
 fastlane lane because it is the only part that talks to Apple.
@@ -236,7 +236,7 @@ fastlane lane because it is the only part that talks to Apple.
 
 **Interfaces:**
 - Consumes: `release:resolve`, for `$build`, `$sha`, `$version`, `$tag`.
-- Produces: exit status only. The `verify_build` lane reads `ASC_APP_VERSION` and `ASC_BUILD_NUMBER`
+- Produces: exit status only. The `verify_testflight_build` lane reads `ASC_APP_VERSION` and `ASC_BUILD_NUMBER`
   from the environment and raises via `UI.user_error!` on any failure.
 
 - [ ] **Step 1: Verify the task does not exist yet**
@@ -247,7 +247,7 @@ mise run release:preflight 68
 
 Expected: failure — mise reports no such task.
 
-- [ ] **Step 2: Add the `verify_build` lane**
+- [ ] **Step 2: Add the `verify_testflight_build` lane**
 
 In `fastlane/Fastfile`, inside `platform :ios do`, after the `upload_screenshots` lane:
 
@@ -256,7 +256,7 @@ In `fastlane/Fastfile`, inside `platform :ios do`, after the `upload_screenshots
   # finished processing it, or accepted it - and deliver's own error for a build it cannot find
   # names neither the version nor the build number, so it is worth failing here instead.
   desc "Fail unless the given build is on App Store Connect and finished processing"
-  lane :verify_build do
+  lane :verify_testflight_build do
     connect_api_key
 
     version = ENV.fetch("ASC_APP_VERSION")
@@ -341,7 +341,7 @@ ASC_ISSUER_ID="$(mise exec -- fnox get ALTOOL_ISSUER_ID)" \
 ASC_AUTH_KEY="$(mise exec -- fnox get ALTOOL_AUTH_KEY)" \
 ASC_APP_VERSION="$version" \
 ASC_BUILD_NUMBER="$build" \
-  bundle exec fastlane verify_build
+  bundle exec fastlane verify_testflight_build
 
 echo "Preflight passed: $version ($build) is ready to submit as $tag"
 ```
@@ -360,7 +360,7 @@ mise run release:preflight 68
 
 Expected: prints `Preflight for 3.0.1 (68) at 6285919…`, the lint output, then either
 `Preflight passed: 3.0.1 (68) is ready to submit as v3.0.1+68`, or a clear failure naming which
-check failed. A failure from `verify_build` is a real answer, not a bug — it means that build is not
+check failed. A failure from `verify_testflight_build` is a real answer, not a bug — it means that build is not
 `VALID` on App Store Connect.
 
 - [ ] **Step 6: Verify the release-notes check catches an empty file**
@@ -439,7 +439,7 @@ end
 
 - [ ] **Step 3: Add the `submit_for_review` lane**
 
-In `fastlane/Fastfile`, inside `platform :ios do`, after `verify_build`:
+In `fastlane/Fastfile`, inside `platform :ios do`, after `verify_testflight_build`:
 
 ```ruby
   # The binary is already on TestFlight and the listing has already been uploaded, so everything
@@ -539,7 +539,7 @@ Do **not** run it without `RELEASE_DRY_RUN`. That submits to Apple.
 bundle exec fastlane lanes
 ```
 
-Expected: `verify_build`, `submit_for_review` and the three original lanes are listed. Confirm by
+Expected: `verify_testflight_build`, `submit_for_review` and the three original lanes are listed. Confirm by
 reading `metadata_options` that with `ASC_APP_VERSION` unset it returns a hash with
 `skip_app_version_update: true` and no `app_version` key.
 

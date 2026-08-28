@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+#MISE description="Check everything that must be true before a build is submitted for review"
+#USAGE arg "<build>" help="The TestFlight build number, which is the ci.yml run number"
+set -euo pipefail
+
+# The last step that touches nothing. Everything after it writes, and the write in the middle -
+# submitting to Apple - cannot be undone, so every check that can be made cheaply is made here.
+cd "$MISE_PROJECT_ROOT"
+
+eval "$(mise run release:resolve "$usage_build")"
+
+echo "Preflight for $version ($build) at $sha"
+
+# Tags carry the build number, so this is what makes submitting the same build twice impossible.
+# Submitting a different build of a version already in review is caught by Apple, not here.
+if gh release list --limit 200 --json tagName --jq '.[].tagName' | grep -Fxq "$tag"; then
+  echo "error: $tag already exists - build $build has been released" >&2
+  exit 1
+fi
+
+# Text Apple would reject costs a round trip through review, so check the published limits first.
+mise run metadata:lint
+
+# The one listing field Apple requires for every new version. deliver would upload an empty file
+# without complaint and leave the review board to find it.
+for dir in fastlane/metadata/*/; do
+  name="$(basename "$dir")"
+  [ "$name" = "review_information" ] && continue
+
+  notes="${dir}release_notes.txt"
+  if [ ! -f "$notes" ] || [ -z "$(tr -d '[:space:]' < "$notes")" ]; then
+    echo "error: $notes is empty - Apple requires What's New for every version" >&2
+    exit 1
+  fi
+done
+
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
+ASC_KEY_ID="$(mise exec -- fnox get ALTOOL_KEY_ID)" \
+ASC_ISSUER_ID="$(mise exec -- fnox get ALTOOL_ISSUER_ID)" \
+ASC_AUTH_KEY="$(mise exec -- fnox get ALTOOL_AUTH_KEY)" \
+ASC_APP_VERSION="$version" \
+ASC_BUILD_NUMBER="$build" \
+  bundle exec fastlane verify_testflight_build
+
+echo "Preflight passed: $version ($build) is ready to submit as $tag"
