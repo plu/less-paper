@@ -1,7 +1,8 @@
+@testable import ForwardAuthFeature
+
 import ApiInterface
 import ComposableArchitecture
 import Foundation
-@testable import ForwardAuthFeature
 import Testing
 
 @Suite
