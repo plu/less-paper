@@ -13,6 +13,8 @@ public struct ServerFormReducer: Sendable {
         case destination(PresentationAction<Destination.Action>)
         case error(Error)
         case mfaCodeRequired
+        case providerTokenReceived(String)
+        case providersLoaded([OIDCProvider])
         case view(View)
 
         @CasePathable
@@ -24,7 +26,9 @@ public struct ServerFormReducer: Sendable {
             case addHeaderButtonTapped
             case cancelButtonTapped
             case closeButtonTapped
+            case providerButtonTapped(OIDCProvider)
             case deleteHeaderButtonTapped(HTTPHeader.ID)
+            case urlCommitted
             case headerNameChanged(HTTPHeader.ID, String)
             case headerValueChanged(HTTPHeader.ID, String)
             case saveButtonTapped
@@ -46,6 +50,15 @@ public struct ServerFormReducer: Sendable {
 
         var isSaving = false
 
+        /// Set while a provider login is waiting for its second factor, so the shared MFA sheet
+        /// knows which login to finish - the password flow re-runs the save with a code, this one
+        /// confirms against the pending provider session.
+        var isAwaitingProviderSecondFactor = false
+
+        /// What the server offers. Empty is the ordinary case and means the form looks as it always
+        /// has.
+        var providers: [OIDCProvider] = []
+
         var section = ServerFormSection.form
 
         public init(
@@ -66,10 +79,15 @@ public struct ServerFormReducer: Sendable {
                 case .cancel:
                     state.destination = nil
                     state.input.code = nil
+                    state.isAwaitingProviderSecondFactor = false
                     state.isSaving = false
                     return .none
                 case let .mfaCode(code):
                     state.destination = nil
+                    if state.isAwaitingProviderSecondFactor {
+                        state.isAwaitingProviderSecondFactor = false
+                        return .runConfirmProviderSecondFactor(code: code, input: state.input)
+                    }
                     state.input.code = code
                     return .runSaveServer(input: state.input)
                 }
@@ -78,6 +96,11 @@ public struct ServerFormReducer: Sendable {
                 return .toast(error)
             case .mfaCodeRequired:
                 state.destination = .mfaForm(MfaFormReducer.State())
+                return .none
+            case let .providerTokenReceived(token):
+                return .runSaveProviderToken(input: state.input, token: token)
+            case let .providersLoaded(providers):
+                state.providers = providers
                 return .none
             case let .view(viewAction):
                 switch viewAction {
@@ -100,6 +123,14 @@ public struct ServerFormReducer: Sendable {
                 case let .headerValueChanged(id, value):
                     state.input.headers[id: id]?.value = value
                     return .none
+                case let .providerButtonTapped(provider):
+                    return .runProviderLogin(input: state.input, provider: provider)
+                case .urlCommitted:
+                    // Asked of the server rather than of the user. A server that offers nothing,
+                    // is unreachable, or is not paperless answers with an empty list and the form
+                    // stays exactly as it was.
+                    state.providers = []
+                    return .runLoadProviders(input: state.input)
                 case .saveButtonTapped:
                     return .runSaveServer(input: state.input)
                 }

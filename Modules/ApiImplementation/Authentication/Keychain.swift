@@ -52,7 +52,10 @@ private extension Keychain {
         server: Server
     ) async throws -> Credentials {
         try Credentials(
-            password: keychain.retrieve(
+            // Optional, and not with `.get()`: a provider login stores no password, and reading one
+            // that was never written must not fail the whole lookup - the token is what the app
+            // actually needs.
+            password: try? keychain.retrieve(
                 .credential(for: "\(server.id).password")
             ).get(),
             token: keychain.retrieve(
@@ -68,10 +71,12 @@ private extension Keychain {
         for id in ["password", "token"].map({ "\(server.id).\($0)" }) {
             _ = try? keychain.remove(.credential(for: id))
         }
-        try keychain.store(
-            credentials.password,
-            query: .credential(for: "\(server.id).password")
-        )
+        if let password = credentials.password {
+            try keychain.store(
+                password,
+                query: .credential(for: "\(server.id).password")
+            )
+        }
         try keychain.store(
             credentials.token,
             query: .credential(for: "\(server.id).token")
