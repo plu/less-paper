@@ -25,6 +25,16 @@ public struct TrashListReducer: Reducer, Sendable {
         public init(server: Server) {
             self.server = server
         }
+
+        init(
+            documents: IdentifiedArrayOf<Document> = [],
+            isLoaded: Bool = false,
+            server: Server
+        ) {
+            self.documents = documents
+            self.isLoaded = isLoaded
+            self.server = server
+        }
     }
 
     public enum Action: ViewAction {
@@ -37,6 +47,7 @@ public struct TrashListReducer: Reducer, Sendable {
             case deleteForeverButtonTapped(Document.Id)
             case emptyTrashButtonTapped
             case onAppear
+            case onRefresh
             case restoreButtonTapped(Document.Id)
         }
     }
@@ -77,7 +88,7 @@ public struct TrashListReducer: Reducer, Sendable {
                     return .runDeleteForever(ids: [id], server: state.server, title: title)
                 case .emptyTrashButtonTapped:
                     return .runEmptyTrash(ids: Set(state.documents.ids), server: state.server)
-                case .onAppear:
+                case .onAppear, .onRefresh:
                     return .runLoadTrash(server: state.server)
                 case let .restoreButtonTapped(id):
                     return .runRestore(ids: [id], server: state.server)
