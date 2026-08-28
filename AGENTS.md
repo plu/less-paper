@@ -136,12 +136,38 @@ server. Launching with no configuration at all would let the app read whatever `
 simulator happens to hold, which is how a developer machine and a clean CI runner end up
 disagreeing.
 
-## Claude uses the dev instance at `192.168.64.1:8000`, never Docker
+## Claude uses the dev instance at `192.168.64.1:8000`, and Docker only through the host
 
-**Never run `mise run docker:start`, `colima`, or any `docker`/`docker-compose` command.** Claude
-works from a machine that cannot run them: it is itself an Apple Virtual Machine
-(`kern.hv_support` is `0`), so colima's VM fails to boot with *"Virtualization is not available on
-this hardware"*. There is no container runtime to reach, and no amount of retrying will produce one.
+**Never run `mise run docker:start` or `colima` here.** Claude works from an Apple Virtual Machine
+(`hw.model` is `VirtualMac2,1`, `kern.hv_support` is `0`), so colima's own VM cannot boot: *"Virtualization
+is not available on this hardware"*. That has not changed and will not.
+
+**`docker` itself can work, when the host forwards its socket in.** The host runs colima; forwarding
+its socket over SSH gives this VM a working Docker CLI with no runtime of its own:
+
+```bash
+# On the host, once per session. -R, not -L: the socket is bound on the remote side, which is here.
+ssh -fN -R /Users/admin/docker-host.sock:/Users/plu/.colima/default/docker.sock admin@<vm-ip>
+
+# Here
+export DOCKER_HOST=unix:///Users/admin/docker-host.sock
+```
+
+`sshd` refuses to bind over an existing file and `StreamLocalBindUnlink` is off by default, so a
+dropped connection leaves a stale socket that makes the next attempt fail with *"cannot bind"*.
+Delete it and reconnect.
+
+**Containers started this way run on the host, not in this sandbox.** They share the host's ports,
+disk and colima state — including the two paperless stacks that are always up:
+
+| Project | Port | What it is |
+|---|---|---|
+| `paperless-dev` | 8000 | the instance every local test targets |
+| `paperless-ci` | 9000 | what CI targets |
+
+Both are someone else's working environment. Use a distinct `-p` project name, pick a port that is
+free (8000, 8010, 9000 and 9010 are taken), and do not restart or remove a container you did not
+create without saying so first.
 
 Use the **dev instance running on the host** instead, at `http://192.168.64.1:8000` —
 `192.168.64.1` is the host as seen from inside the VM, and `localhost` is not. Point the tests at it
