@@ -1,4 +1,4 @@
-Less Paper 3 ist eine komplette Neuentwicklung.
+Less Paper 3.0.1 ist eine grundlegende Neuentwicklung – die App wurde von Grund auf neu gebaut.
 
 • Neu gebaut mit SwiftUI, startet und scrollt schneller
 • Alle Filter der Weboberfläche, inklusive benutzerdefinierter Felder
@@ -6,5 +6,11 @@ Less Paper 3 ist eine komplette Neuentwicklung.
 • Gespeicherte Ansichten in der App anlegen, bearbeiten und sortieren
 • Import über das Teilen-Menü, auch passwortgeschützte PDFs
 • Client-Zertifikate, eigene Header und Reverse-Proxy-Setups
+• Single Sign-on bei dem Anbieter, für den dein Server eingerichtet ist
+• Papierkorb: Gelöschtes zurückholen oder endgültig leeren
+• Auf dem iPad steht das Dokument in einer Spalte neben der Liste
+• Ein lokales Fehlerprotokoll zum Lesen und Weitergeben, falls etwas schiefgeht
 
 Funktioniert mit paperless-ngx 3.0.0 und älter.
+
+Weil sich so viel geändert hat, funktioniert vielleicht nicht mehr alles, was vorher lief. Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.

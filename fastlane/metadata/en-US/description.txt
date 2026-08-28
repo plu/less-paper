@@ -10,11 +10,11 @@ GET DOCUMENTS IN
 Send anything on your device to paperless-ngx from the share sheet. Password-protected PDFs are unlocked on import, and the password is kept in the keychain so the next document from the same source opens without asking.
 
 BUILT FOR REAL SETUPS
-Connect as many servers as you like and switch between them. Client certificates, custom HTTP headers and reverse proxies such as Authelia are all supported.
+Connect as many servers as you like and switch between them. Sign in with a password, or with the single sign-on provider your server is configured with. Client certificates, custom HTTP headers and reverse proxies such as Authelia are all supported. When something does go wrong, a local error log — with anything credential-shaped redacted out of it — is there to read and share, and nothing leaves the device unless you send it.
 
 KEEP THE ARCHIVE TIDY
-Create, rename and delete tags, correspondents, document types and storage paths, and set ownership and permissions on any document.
+Create, rename and delete tags, correspondents, document types and storage paths, and set ownership and permissions on any document. Restore anything you deleted from the trash, or empty it for good.
 
-Works with paperless-ngx 3.0.0 and earlier. Universal: iPhone and iPad.
+Works with paperless-ngx 3.0.0 and earlier. Universal: iPhone and iPad — on iPad the document opens in a column beside the list rather than covering it.
 
 Less Paper is open source. Issues and feature requests are welcome at https://github.com/plu/less-paper
