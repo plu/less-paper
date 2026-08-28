@@ -85,7 +85,12 @@ public struct ForwardAuthReducer: Sendable {
                     return .none
                 }
                 state.redirect = redirect
-                return .runPresentConfirmation(redirect: redirect)
+                // Skip the confirmation popup for now: it presents through SwiftMessages on its
+                // own window, and dismissing it as the sheet tries to present is the current
+                // suspect for the sheet never appearing. The sheet's own title bar names the
+                // host, so a first-pass user still sees where they are being sent.
+                state.sheet = redirect
+                return .none
 
             case let .signInCancelled(redirect):
                 // Same reasoning as .cancelled above: a dismissed sheet drops the waiters, it
