@@ -104,7 +104,32 @@ sets.
 
 Copy the provider's **Client ID**.
 
-## 3. Give the client ID to paperless
+## 3. A paperless that offers it
+
+`docker-compose.oidc.yml` brings up its own paperless on **8100**, already configured, rather than
+reconfiguring `paperless-dev` — that is what every local test targets, and its stack bind-mounts
+paths that only exist on the host, so it cannot be driven from the agent's VM at all.
+
+**`PAPERLESS_APPS` is the part that is easy to miss.** Setting
+`PAPERLESS_SOCIALACCOUNT_PROVIDERS` alone is not enough: allauth needs the provider app installed
+too, and without it `socialaccount.providers` stays `[]` while Django happily reports
+`SOCIALACCOUNT_PROVIDERS` as populated. The app then correctly shows no buttons, and everything looks
+configured.
+
+```yaml
+PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+```
+
+To check what Django actually installed rather than what it was told:
+
+```sh
+docker exec less-paper-oidc-paperless-1 python3 -c "
+import os, django; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'paperless.settings'); django.setup()
+from django.conf import settings
+print([a for a in settings.INSTALLED_APPS if 'allauth' in a])"
+```
+
+## 3b. Pointing another paperless at it
 
 paperless-dev is not ours to restart casually — it is what every local test targets — so this is a
 deliberate step, not part of bringing Authentik up. Add to that stack's environment:
@@ -135,7 +160,7 @@ docker exec paperless-dev-paperless-1 \
 ## 4. Check paperless is offering it
 
 ```sh
-curl -s http://192.168.64.1:8000/api/auth/headless/app/v1/config | python3 -m json.tool
+curl -s http://192.168.64.1:8100/api/auth/headless/app/v1/config | python3 -m json.tool
 ```
 
 `socialaccount.providers` should now hold one entry with `"id": "authentik"` and the client ID. While
