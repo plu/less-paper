@@ -30,6 +30,35 @@ struct GetForwardAuthIdentityUseCaseTests {
         #expect(username == "authelia-user")
     }
 
+    // The probe has to ask as nobody. With the stored token attached, an ordinary healthy server
+    // answers 200, every edit of one reads as remote-user mode, and the save then stores it with
+    // no token and no password - logging the user out of a server they only renamed.
+    @Test
+    func probe_asksWithoutTheStoredToken() async throws {
+        let tokenSeenByTheProbe = LockIsolated<String??>(nil)
+
+        _ = try await withDependencies {
+            $0.authenticationProvider.getToken = { _ in "the-stored-token" }
+            $0.uiSettingsRepository.getUISettings = { _, server in
+                @Dependency(\.authenticationProvider)
+                var authenticationProvider
+
+                // What ApiClientDelegate reads when it builds the Authorization header.
+                let token = try await authenticationProvider.getToken(server: server)
+                tokenSeenByTheProbe.setValue(token)
+
+                return UISettings.testValue(user: .testValue(id: 42))
+            }
+            $0.usersRepository.getUser = { _, _ in
+                User.testValue(id: 42, username: "authelia-user")
+            }
+        } operation: {
+            try await GetForwardAuthIdentityUseCase.liveValue.execute(server: .testValue())
+        }
+
+        #expect(tokenSeenByTheProbe.value == .some(nil))
+    }
+
     // 401 from paperless behind a gate-only proxy means the cookie got past the proxy but
     // paperless still needs a token. Return nil so the caller runs the ordinary login.
     @Test
