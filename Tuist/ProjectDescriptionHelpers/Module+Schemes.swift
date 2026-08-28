@@ -98,7 +98,8 @@ public extension Module {
              .settingsFeature,
              .shareFeature,
              .storagePathsFeature,
-             .tagsFeature:
+             .tagsFeature,
+             .trashFeature:
             [
                 .scheme(
                     name: rawValue,
@@ -164,6 +165,7 @@ public extension Module {
              .snapshotSupport,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
+             .trashFeatureTests,
              .testSupport,
              .uiTestSupport:
             []

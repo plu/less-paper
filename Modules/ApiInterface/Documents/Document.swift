@@ -17,6 +17,10 @@ public struct Document: Codable, Equatable, Hashable, Identifiable, Sendable {
 
     public let created: Date
 
+    /// Only sent by `/api/trash/`. Absent everywhere else, which is exactly what it means: this
+    /// document has not been deleted.
+    public let deletedAt: Date?
+
     public let customFields: [DocumentCustomField]
 
     public let documentType: DocumentType.Id?
@@ -43,6 +47,7 @@ public struct Document: Codable, Equatable, Hashable, Identifiable, Sendable {
         correspondent: Correspondent.Id?,
         created: Date,
         customFields: [DocumentCustomField],
+        deletedAt: Date? = nil,
         documentType: DocumentType.Id?,
         id: Id,
         modified: Date,
@@ -59,6 +64,7 @@ public struct Document: Codable, Equatable, Hashable, Identifiable, Sendable {
         self.correspondent = correspondent
         self.created = created
         self.customFields = customFields
+        self.deletedAt = deletedAt
         self.documentType = documentType
         self.id = id
         self.modified = modified
@@ -74,7 +80,8 @@ public extension Document {
 
     private enum CodingKeys: String, CodingKey {
         case added, archiveSerialNumber, archivedFileName, content, correspondent, created
-        case createdDate, customFields, documentType, id, modified, originalFileName, owner
+        case createdDate, customFields, deletedAt, documentType, id, modified, originalFileName
+        case owner
         case storagePath, tags, title
     }
 
@@ -92,6 +99,7 @@ public extension Document {
         created = try container.decodeIfPresent(Date.self, forKey: .createdDate)
             ?? container.decode(Date.self, forKey: .created)
         customFields = try container.decodeIfPresent([DocumentCustomField].self, forKey: .customFields) ?? []
+        deletedAt = try container.decodeIfPresent(Date.self, forKey: .deletedAt)
         documentType = try container.decodeIfPresent(DocumentType.Id.self, forKey: .documentType)
         id = try container.decode(Id.self, forKey: .id)
         modified = try container.decode(Date.self, forKey: .modified)
@@ -138,6 +146,7 @@ public extension Document {
         correspondent: Correspondent.Id? = 1,
         created: Date = .testValue(),
         customFields: [DocumentCustomField] = [],
+        deletedAt: Date? = nil,
         documentType: DocumentType.Id? = 1,
         id: Id = 1,
         modified: Date = .testValue(),
@@ -155,6 +164,7 @@ public extension Document {
             correspondent: correspondent,
             created: created,
             customFields: customFields,
+            deletedAt: deletedAt,
             documentType: documentType,
             id: id,
             modified: modified,

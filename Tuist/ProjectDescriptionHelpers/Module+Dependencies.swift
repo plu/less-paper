@@ -291,6 +291,24 @@ extension Module {
                 .target(.logging),
                 .target(.testSupport),
             ]
+        case .trashFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .external(.tagged),
+                .target(.apiInterface),
+                .target(.components),
+            ]
+        case .trashFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .target(.apiInterface),
+                .target(.apiTestSupport),
+                .target(.testSupport),
+                .target(.trashFeature),
+            ]
         case .licensesFeature:
             [
                 .external(.composableArchitecture),
@@ -411,6 +429,7 @@ extension Module {
                 .target(.shareFeature),
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
+                .target(.trashFeature),
             ]
         case .settingsFeatureTests:
             [
