@@ -14,7 +14,12 @@ public struct GetForwardAuthIdentityUseCase: Sendable {
 
 extension GetForwardAuthIdentityUseCase: TestDependencyKey {
 
-    public static let testValue = Self()
+    // nil is the "gate-only or not-a-proxy" answer, which is what every existing test that never
+    // heard of forward auth wants. A test that cares about the remote-user path stubs execute
+    // to return a username explicitly.
+    public static let testValue = Self(
+        execute: { _ in nil }
+    )
 }
 
 public extension DependencyValues {
