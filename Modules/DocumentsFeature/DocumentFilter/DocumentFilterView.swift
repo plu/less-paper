@@ -95,7 +95,7 @@ struct DocumentFilterView: View {
         ) { store in
             DocumentFilterGenericValueListView(
                 store: store,
-                title: .correspondent
+                title: .documentType
             )
             .presentationDetents([.sheet])
         }
