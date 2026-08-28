@@ -39,6 +39,22 @@ Upload the App Store listing text from fastlane/metadata
 
 Upload the framed screenshots to App Store Connect
 
+### ios verify_testflight_build
+
+```sh
+[bundle exec] fastlane ios verify_testflight_build
+```
+
+Fail unless the given build is on App Store Connect and finished processing
+
+### ios submit_for_review
+
+```sh
+[bundle exec] fastlane ios submit_for_review
+```
+
+Attach an existing TestFlight build to its version and submit it for review
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

@@ -1,0 +1,110 @@
+name: Release
+
+# Promotes a build that is already on TestFlight to the App Store. It builds and uploads nothing:
+# ci.yml does that on every push to main, and this picks one of the builds it produced.
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: The TestFlight build number to submit (the ci.yml run number)
+        type: string
+        required: true
+      dry_run:
+        description: Run every check and print what would happen, touching neither Apple nor GitHub
+        type: boolean
+        default: false
+      skip_screenshots:
+        description: Leave the screenshots on the listing alone
+        type: boolean
+        default: false
+      allow_off_main:
+        description: Allow a build from a TestFlight-labelled pull request
+        type: boolean
+        default: false
+
+# One release at a time, and never cancelled. Same reasoning as ci.yml's upload job: killing a
+# submission halfway is worse than waiting.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile --norc -euo pipefail {0}
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  RELEASE_ALLOW_OFF_MAIN: ${{ inputs.allow_off_main }}
+  RELEASE_DRY_RUN: ${{ inputs.dry_run }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          # git show of an older commit, the tag list and the commit range all need real history.
+          fetch-depth: 0
+          # Framing reads the committed captures.
+          lfs: true
+
+      - name: mise
+        uses: jdx/mise-action@v3
+        with:
+          cache: false
+          cache_save: false
+
+      - name: Resolve the build
+        id: resolve
+        run: mise run release:resolve ${{ inputs.build }}
+
+      # The last step that touches nothing. Everything below writes.
+      - name: Preflight
+        run: mise run release:preflight ${{ inputs.build }}
+
+      # Creates the version in App Store Connect as well as uploading the text: nothing can attach
+      # to a version that does not exist yet.
+      - name: Upload the listing text and create the version
+        if: inputs.dry_run != true
+        run: mise run metadata:upload
+        env:
+          ASC_APP_VERSION: ${{ steps.resolve.outputs.version }}
+
+      - name: Frame the screenshots
+        if: inputs.dry_run != true && inputs.skip_screenshots != true
+        run: mise run ci:screenshots:frame
+
+      - name: Upload the screenshots
+        if: inputs.dry_run != true && inputs.skip_screenshots != true
+        run: mise run ci:screenshots:upload
+
+      - name: Submit for review
+        run: mise run release:submit ${{ inputs.build }}
+
+      - name: Tag and release
+        run: mise run release:tag ${{ inputs.build }}
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Release"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Build | ${{ inputs.build }} |"
+            echo "| Version | ${{ steps.resolve.outputs.version }} |"
+            echo "| Commit | ${{ steps.resolve.outputs.sha }} |"
+            echo "| Branch | ${{ steps.resolve.outputs.branch }} |"
+            echo "| Tag | ${{ steps.resolve.outputs.tag }} |"
+            echo "| Dry run | ${{ inputs.dry_run }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
