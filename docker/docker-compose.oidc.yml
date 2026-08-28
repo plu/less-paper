@@ -61,6 +61,10 @@ services:
       PAPERLESS_CSRF_TRUSTED_ORIGINS: ${PAPERLESS_OIDC_URL:-http://192.168.64.1:8100}
       # So a provider login lands on a paperless user without one having to be made by hand first.
       PAPERLESS_SOCIAL_AUTO_SIGNUP: "true"
+      # Without a group the new user has no permissions at all, and every request after a perfectly
+      # successful login answers 403 "You do not have permission to perform this action" - which
+      # looks like the token was rejected when it was accepted and is simply allowed to do nothing.
+      PAPERLESS_SOCIAL_ACCOUNT_DEFAULT_GROUPS: paperless-users
       # Without this the provider settings are read and then ignored: allauth has no provider class
       # installed, so socialaccount.providers in the headless config stays empty and the app
       # correctly shows no buttons. Django reports SOCIALACCOUNT_PROVIDERS populated either way,

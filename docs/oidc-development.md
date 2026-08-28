@@ -167,7 +167,36 @@ curl -s http://192.168.64.1:8100/api/auth/headless/app/v1/config | python3 -m js
 it is still `[]`, the app will show only username and password — correctly, because that is all the
 server is offering.
 
-## 5. A user that can log in
+## 5. Permissions for the user the login creates
+
+**A successful login and a usable session are not the same thing.** With auto-signup on, the first
+provider login creates a paperless user with no groups and no permissions, so every request after it
+answers `403 "You do not have permission to perform this action"` — which reads as the token having
+been rejected when it was accepted and is simply allowed to do nothing.
+
+The compose file sets `PAPERLESS_SOCIAL_ACCOUNT_DEFAULT_GROUPS: paperless-users`, which only helps
+once that group exists:
+
+```sh
+docker exec less-paper-oidc-paperless-1 sh -c "cd /usr/src/paperless/src && python3 manage.py shell -c \"
+from django.contrib.auth.models import Group, Permission
+group, _ = Group.objects.get_or_create(name='paperless-users')
+group.permissions.set(Permission.objects.all())
+group.save()\""
+```
+
+Every permission, because a development instance is for exercising the app rather than paperless's
+permission model.
+
+For a user that already exists without permissions, the quickest fix is to make them a superuser:
+
+```sh
+curl -X PATCH http://192.168.64.1:8100/api/users/<id>/ \
+  -H "Authorization: Token <admin token>" -H "Content-Type: application/json" \
+  -d '{"is_superuser": true}'
+```
+
+## 6. A user that can log in
 
 Authentik's `akadmin` is not a paperless user. Either create a user in Authentik whose email matches
 an existing paperless user, or set `PAPERLESS_SOCIAL_AUTO_SIGNUP: "true"` so the first successful
