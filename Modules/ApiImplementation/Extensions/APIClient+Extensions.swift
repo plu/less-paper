@@ -22,9 +22,7 @@ private extension URLSessionConfiguration {
     // authenticates a share without a second login through the proxy.
     static let apiClient: URLSessionConfiguration = {
         let configuration = URLSessionConfiguration.default
-        configuration.httpCookieStorage = HTTPCookieStorage.sharedCookieStorage(
-            forGroupContainerIdentifier: "group.com.plunien.app.Paperless"
-        )
+        configuration.httpCookieStorage = AppGroup.cookieStorage
         return configuration
     }()
 }

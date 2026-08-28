@@ -1,13 +1,12 @@
+import ApiInterface
 import Foundation
 
 // Wraps the app-group cookie storage the API session uses. Extracted so the read and write
 // can be tested without spinning up a WKWebView.
 enum ForwardAuthCookieStorage {
 
-    static let appGroupIdentifier = "group.com.plunien.app.Paperless"
-
     static var appGroup: HTTPCookieStorage {
-        HTTPCookieStorage.sharedCookieStorage(forGroupContainerIdentifier: appGroupIdentifier)
+        AppGroup.cookieStorage
     }
 
     // Cookies to hand to a freshly opened WKWebView so a still-valid session does not force a

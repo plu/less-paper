@@ -24,7 +24,7 @@ public struct AppReducer {
 
         var certificateApproval = CertificateApprovalReducer.State()
 
-        public var forwardAuth = ForwardAuthReducer.State()
+        var forwardAuth = ForwardAuthReducer.State()
 
         var main: MainReducer.State?
 
