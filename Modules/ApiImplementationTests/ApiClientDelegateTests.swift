@@ -207,6 +207,23 @@ struct ApiClientDelegateTests {
 
         #expect(apiVersion == 10)
     }
+
+    // Remote-user mode stores no token: the proxy injects a trusted identity, and paperless
+    // takes it. Sending Authorization: Token <empty> is worse than no header at all.
+    @Test
+    func willSendRequest_omitsAuthorizationWhenThereIsNoToken() async throws {
+        let server = Server.testValue()
+        let delegate = ApiClientDelegate(server: server)
+        var request = URLRequest(url: server.url.appending(path: "/api/documents/"))
+
+        try await withDependencies {
+            $0.authenticationProvider.getToken = { _ in nil }
+        } operation: {
+            try await delegate.client(APIClient(baseURL: server.url), willSendRequest: &request)
+        }
+
+        #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+    }
 }
 
 private extension HTTPURLResponse {

@@ -27,7 +27,7 @@ private extension AuthenticationProvider {
 
     static func getToken(
         server: Server
-    ) async throws -> String {
+    ) async throws -> String? {
         @Dependency(\.keychain)
         var keychain
 

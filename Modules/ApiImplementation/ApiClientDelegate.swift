@@ -51,7 +51,12 @@ extension ApiClientDelegate: Get.APIClientDelegate {
             return
         }
 
-        let token = try await authenticationProvider.getToken(server: server)
+        guard let token = try await authenticationProvider.getToken(server: server) else {
+            // Remote-user mode: a forward-auth proxy injects a trusted identity header and
+            // paperless takes it. The cookie authenticates the request, so no Authorization is
+            // sent - a bare `Token ` with nothing after it would be rejected.
+            return
+        }
         request.setValue("Token \(token)", forHTTPHeaderField: "Authorization")
     }
 
