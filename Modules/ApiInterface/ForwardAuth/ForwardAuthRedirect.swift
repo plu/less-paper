@@ -6,8 +6,8 @@ public struct ForwardAuthRedirect: Equatable, Identifiable, Sendable {
 
     public let url: URL
 
-    // .sheet(item:) needs an Identifiable. Redirects are one-per-server at a time (the reducer
-    // guards on that), so the server id is the stable identity.
+    // Redirects are one-per-server at a time (the reducer guards on that), so the server id is
+    // the stable identity.
     public var id: String { server.id }
 
     public init(

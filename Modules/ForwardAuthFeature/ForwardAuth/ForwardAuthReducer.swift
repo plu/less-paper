@@ -34,16 +34,10 @@ public struct ForwardAuthReducer: Sendable {
         // succeeded, or the user dismissed something along the way.
         public var redirect: ForwardAuthRedirect?
 
-        // Drives the login sheet through the parent view's .sheet(item:) binding. Set only after
-        // the confirmation popup is confirmed.
-        public var sheet: ForwardAuthRedirect?
-
         public init(
-            redirect: ForwardAuthRedirect? = nil,
-            sheet: ForwardAuthRedirect? = nil
+            redirect: ForwardAuthRedirect? = nil
         ) {
             self.redirect = redirect
-            self.sheet = sheet
         }
     }
 
@@ -66,18 +60,16 @@ public struct ForwardAuthReducer: Sendable {
                 return .runDropWaiters(redirect: redirect)
 
             case let .confirmed(redirect):
-                // Present the sheet. The web view's completion sends .signInFinished; a
-                // user-dismissed sheet reaches .signInCancelled through the binding's
-                // .onDismiss.
-                state.sheet = redirect
-                return .none
+                // Presented by ForwardAuthSignInPresenter rather than by a .sheet on AppView: the
+                // bounce arrives while the server form sheet is up, and SwiftUI queues a second
+                // sheet from the same host until the first one is dismissed.
+                return .runPresentSignIn(redirect: redirect)
 
             case let .finish(redirect):
                 guard state.redirect == redirect else {
                     return .none
                 }
                 state.redirect = nil
-                state.sheet = nil
                 return .none
 
             case let .redirect(redirect):
@@ -95,12 +87,10 @@ public struct ForwardAuthReducer: Sendable {
             case let .signInCancelled(redirect):
                 // Same reasoning as .cancelled above: a dismissed sheet drops the waiters, it
                 // does not release them.
-                state.sheet = nil
                 state.redirect = nil
                 return .runDropWaiters(redirect: redirect)
 
             case let .signInFinished(redirect):
-                state.sheet = nil
                 state.redirect = nil
                 return .runReleaseWaiters(redirect: redirect)
             }

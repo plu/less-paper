@@ -75,21 +75,44 @@ struct ForwardAuthReducerTests {
         await store.send(.finish(other))
     }
 
-    // The confirmation popup being confirmed sets the sheet trigger. The parent view binds
-    // .sheet(item:) to this and presents the login web view.
+    // Confirming the popup hands off to the presenter, which puts the login web view on top of
+    // whatever is on screen. A sign-in that lands reports back as .signInFinished.
+    @MainActor
     @Test
-    func confirmed_setsSheet() async {
+    func confirmed_presentsSignIn_andReportsSuccess() async {
         let redirect = ForwardAuthRedirect.testValue()
 
-        let store = await TestStore(
+        let store = TestStore(
             initialState: ForwardAuthReducer.State(redirect: redirect)
         ) {
             ForwardAuthReducer()
+        } withDependencies: {
+            $0.forwardAuthSignIn.present = { _ in true }
         }
+        store.exhaustivity = .off
 
-        await store.send(.confirmed(redirect)) {
-            $0.sheet = redirect
+        await store.send(.confirmed(redirect))
+        await store.receive(\.signInFinished)
+    }
+
+    // A closed browser is a decision: the presenter returns false and the flow cancels rather
+    // than releasing the parked requests to be bounced again.
+    @MainActor
+    @Test
+    func confirmed_presentsSignIn_andReportsCancellation() async {
+        let redirect = ForwardAuthRedirect.testValue()
+
+        let store = TestStore(
+            initialState: ForwardAuthReducer.State(redirect: redirect)
+        ) {
+            ForwardAuthReducer()
+        } withDependencies: {
+            $0.forwardAuthSignIn.present = { _ in false }
         }
+        store.exhaustivity = .off
+
+        await store.send(.confirmed(redirect))
+        await store.receive(\.signInCancelled)
     }
 
     // A completed sign-in clears state and releases waiters. shouldRetry sees .finish and
@@ -100,7 +123,7 @@ struct ForwardAuthReducerTests {
         let redirect = ForwardAuthRedirect.testValue()
 
         let store = TestStore(
-            initialState: ForwardAuthReducer.State(redirect: redirect, sheet: redirect)
+            initialState: ForwardAuthReducer.State(redirect: redirect)
         ) {
             ForwardAuthReducer()
         }
@@ -108,7 +131,6 @@ struct ForwardAuthReducerTests {
 
         await store.send(.signInFinished(redirect)) {
             $0.redirect = nil
-            $0.sheet = nil
         }
     }
 
@@ -121,7 +143,7 @@ struct ForwardAuthReducerTests {
         let redirect = ForwardAuthRedirect.testValue()
 
         let store = TestStore(
-            initialState: ForwardAuthReducer.State(redirect: redirect, sheet: redirect)
+            initialState: ForwardAuthReducer.State(redirect: redirect)
         ) {
             ForwardAuthReducer()
         }
@@ -129,7 +151,6 @@ struct ForwardAuthReducerTests {
 
         await store.send(.signInCancelled(redirect)) {
             $0.redirect = nil
-            $0.sheet = nil
         }
     }
 }

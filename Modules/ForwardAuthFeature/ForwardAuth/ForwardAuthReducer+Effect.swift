@@ -38,6 +38,19 @@ extension Effect where Action == ForwardAuthReducer.Action {
         }
     }
 
+    static func runPresentSignIn(redirect: ForwardAuthRedirect) -> Self {
+        .run { send in
+            @Dependency(\.forwardAuthSignIn.present)
+            var presentSignIn
+
+            if await presentSignIn(redirect) {
+                await send(.signInFinished(redirect))
+            } else {
+                await send(.signInCancelled(redirect))
+            }
+        }
+    }
+
     // The sign-in landed a cookie. Parked shouldRetry calls see .finish and replay.
     static func runReleaseWaiters(redirect: ForwardAuthRedirect) -> Self {
         .run { _ in
