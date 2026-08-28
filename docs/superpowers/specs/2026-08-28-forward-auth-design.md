@@ -58,10 +58,27 @@ view answer it, whether the server is being added or has been in use for a month
 sign-in method the user chooses; it is a fact about the network that the app discovers. Discovering
 it in one place means one code path to build, test and reason about.
 
-**Concurrent bounces produce one login.** The reducer ignores a `.redirect` while one is already
-presented, and every waiting request awaits the same `.finish`. Ten parallel calls at launch is the
-ordinary case, not the edge case. Cancelling sends `.finish` too, so nothing waits forever — a
-cancelled login fails the parked requests, it does not hang them.
+**Concurrent bounces produce one login.** Every bounced request parks on `ForwardAuthCoordinator`,
+which holds one continuation per waiting request keyed by server; the first to park raises the
+login and the rest join it. One resolution releases them all. Ten parallel calls at launch is the
+ordinary case, not the edge case. A cancelled login resolves them too, with "do not replay" — it
+fails the parked requests rather than hanging them.
+
+**Not a channel, for the rendezvous.** `AsyncChannel` hands each element to exactly one consumer,
+which is right for `certificateApprovalChannel` — each request carries its own completion and is
+addressed to one presenter — and wrong here, where one login has to answer many waiting requests.
+Built on a channel, this released one request per login and left the rest waiting forever, and a
+parked request could swallow the redirect the reducer was meant to see.
+
+**Holding the coordinator's redirect stream is what registers a presenter.** A process with no
+presenter — the share extension, which deliberately has none — fails a bounced request immediately
+instead of parking it against a login that can never appear. This is what makes the dead-end
+message below reachable rather than an endless spinner.
+
+**One replay per bounce.** `shouldRetry` gives up after the first. A cookie the proxy never accepts
+— a session scoped to a domain that does not cover paperless, the misconfiguration the dev-stack
+notes warn about — would otherwise loop through bounce, login and replay for as long as the app is
+open.
 
 **The mode is settled by one probe, once, after the cookie lands.** `GET /api/ui_settings/` with no
 `Authorization` header. A `200` means the proxy is injecting a trusted identity and the server is
@@ -90,9 +107,10 @@ moment credentials are being typed is the hole the approval flow exists to close
 
 **Thumbnails refuse the redirect but do not raise a login.** `ImageLoader` shares the session
 delegate, so a bounced thumbnail stops at the redirect instead of caching a login page as an image.
-It does not raise the event: `.redirect` is sent from `ApiClientDelegate.validateResponse`, which
-only the API client has. A failed thumbnail recovers on the next render once the session is back,
-and a scrolling list does not raise a login popup per visible row.
+It does not raise a login: only a request that parks in `client(_:shouldRetry:)` does, and
+thumbnails go through Nuke's `DataLoader` rather than Get, so they never reach it. A failed
+thumbnail recovers on the next render once the session is back, and a scrolling list does not raise
+a login popup per visible row.
 
 **The share extension shares the cookie and never presents a login.** App-group cookie storage means
 the extension is authenticated whenever the app's session is live, which is the normal case. When it
@@ -102,8 +120,8 @@ memory-constrained extension is a bad place to be, and the app is one tap away.
 ## Architecture
 
 ```
-ApiInterface        ForwardAuthEvent, ForwardAuthRedirect, ForwardAuthError,
-                    ForwardAuthChannel, ApiSessionDelegate          — the vocabulary and the hook
+ApiInterface        ForwardAuthRedirect, ForwardAuthError, ForwardAuthCoordinator,
+                    ApiSessionDelegate                              — the vocabulary and the hook
 ApiImplementation   the bounce rule, the retry await, cookie storage,
                     GetForwardAuthIdentityUseCase                   — the mechanism
 ForwardAuthFeature  the popup, the web view, the cookie handoff     — what the user sees
@@ -112,10 +130,10 @@ ShareFeature        one error case                                  — the dead
 
 ### `ApiInterface`
 
-`ForwardAuthRedirect` (`server`, `url`) and `ForwardAuthEvent` (`.redirect`, `.finish`), with
-`ForwardAuthChannel` as an `AsyncChannel<ForwardAuthEvent>` dependency — the same shape as
-`CertificateApprovalChannel`, which solves the same problem of a `URLSession` callback needing to
-reach a reducer.
+`ForwardAuthRedirect` (`server`, `url`), and `ForwardAuthCoordinator`, an actor holding the
+continuations of every parked request keyed by server. `redirects()` hands the reducer an
+`AsyncStream` of logins to present and registers it as the presenter; `awaitSignIn(for:)` parks a
+request; `resolve(_:signedIn:)` releases every request parked against that server at once.
 
 `ForwardAuthError.required(URL)`, whose `errorDescription` names the host the user is being sent to.
 
@@ -139,8 +157,9 @@ non-2xx carrying a `Location` to a host that is not the server's is a forward-au
 `.redirect` and throws `ForwardAuthError.required`. This single rule covers both bounce shapes,
 because refusing the `3xx` in the session delegate turns the second shape into the first.
 
-`client(_:shouldRetry:)` catches `ForwardAuthError.required`, awaits a `.finish` naming its own
-server, and returns `true`.
+`client(_:shouldRetry:)` catches `ForwardAuthError.required` and parks on the coordinator, which
+answers `true` once the login landed a cookie and `false` when it was dismissed, when no presenter
+exists, or after the first replay.
 
 `APIClient+Extensions` sets `sessionConfiguration.httpCookieStorage` to the app-group store. The
 group `group.com.plunien.app.Paperless` is already entitled for `.app`, `.shareApp` and
@@ -177,9 +196,11 @@ The bounce rule is a pure function of a response and a server, and that is where
   paperless's own redirects still work
 - a `403` from paperless's permission system is not a bounce
 
-Reducer tests cover the rendezvous: one login from ten concurrent bounces, a cancel completing the
-waiters rather than hanging them, and a `.finish` for a different server not releasing this server's
-parked requests. Snapshot references for the popup and the sheet.
+Tests cover the rendezvous where it lives, in `ApiClientDelegateTests`: ten concurrent bounces
+released by one login (the case a channel got wrong), a dismissed login answering "do not replay"
+rather than hanging, a login for another server not releasing this one's requests, a process with
+no presenter failing fast, and the replay cap. Reducer tests cover the popup preceding the browser,
+and a declined popup dropping the waiters. Snapshot references for the popup and the sheet.
 
 `GetForwardAuthIdentityUseCase` gets `URLProtocol` stubs for the `200` and `401` answers and for the
 follow-up user fetch.
@@ -201,8 +222,9 @@ internal CA. Getting this wrong produces a login loop that looks like a bug in t
 - **A UI test journey.** It would need the whole proxy stack running in CI.
 - **Basic-auth proxies.** A different mechanism — a challenge, not a redirect — and a different
   design.
-- **Signing out of the proxy.** Clearing web data already exists as a lever if one is needed; a
-  first-class sign-out is its own change.
+- **Signing out of the proxy.** Its own change — and note there is no lever at all today: nothing
+  in the app clears cookies or website data, so the only way to force a fresh bounce is to wait the
+  session out or delete the app. That makes a sign-out worth more than this list implies.
 - **Remembering that a server sits behind a proxy.** The reactive path costs one bounced request to
   rediscover it, and per-server state that can go stale is worse than that request.
 
