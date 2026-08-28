@@ -11,6 +11,7 @@ import ShareFeature
 import StoragePathsFeature
 import SwiftUI
 import TagsFeature
+import TrashFeature
 import VisionKit
 
 @ViewAction(for: SettingListReducer.self)
@@ -77,6 +78,13 @@ public struct SettingListView: View {
                         state: SettingListReducer.Path.State.tagList(TagListReducer.State(server: store.server))
                     ) {
                         Label(.tags, systemImage: "tag")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.trashList(TrashListReducer.State(server: store.server))
+                    ) {
+                        Label(.trash, systemImage: "trash")
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
                 }
@@ -167,6 +175,8 @@ public struct SettingListView: View {
                 ServerListView(store: store)
             case let .storagePathList(store):
                 StoragePathListView(store: store)
+            case let .trashList(store):
+                TrashListView(store: store)
             case let .tagList(store):
                 TagListView(store: store)
             }

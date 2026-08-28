@@ -73,6 +73,8 @@ public enum Module: String, CaseIterable {
     case tagsFeature = "TagsFeature"
     case tagsFeatureTests = "TagsFeatureTests"
     case testSupport = "TestSupport"
+    case trashFeature = "TrashFeature"
+    case trashFeatureTests = "TrashFeatureTests"
     case uiTestSupport = "UITestSupport"
 }
 
@@ -142,7 +144,8 @@ extension Module {
              .settingsFeature,
              .shareFeature,
              .storagePathsFeature,
-             .tagsFeature:
+             .tagsFeature,
+             .trashFeature:
             true
         case .apiInterfaceTests,
              .apiImplementationTests,
@@ -174,6 +177,7 @@ extension Module {
              .snapshotSupport,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
+             .trashFeatureTests,
              .testSupport,
              .uiTestSupport:
             false
@@ -243,6 +247,7 @@ extension Module {
              .snapshotSupport,
              .storagePathsFeature,
              .tagsFeature,
+             .trashFeature,
              .testSupport,
              .uiTestSupport:
             Environment.staticFrameworks.getBoolean(default: false) ? .staticFramework : .framework
@@ -267,7 +272,8 @@ extension Module {
              .settingsFeatureTests,
              .shareFeatureTests,
              .storagePathsFeatureTests,
-             .tagsFeatureTests:
+             .tagsFeatureTests,
+             .trashFeatureTests:
             .unitTests
         case .appSnapshots,
              .appUITests,
