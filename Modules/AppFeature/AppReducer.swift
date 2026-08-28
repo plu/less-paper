@@ -2,6 +2,7 @@ import ApiInterface
 import CertificatesFeature
 import Combine
 import ComposableArchitecture
+import ForwardAuthFeature
 import Foundation
 import ServersFeature
 
@@ -12,6 +13,7 @@ public struct AppReducer {
         case bootstrap
         case certificateApproval(CertificateApprovalReducer.Action)
         case didBecomeActive
+        case forwardAuth(ForwardAuthReducer.Action)
         case main(MainReducer.Action)
         case selectedServerChanged(Server?)
         case serverList(ServerListReducer.Action)
@@ -21,6 +23,8 @@ public struct AppReducer {
     public struct State: Equatable {
 
         var certificateApproval = CertificateApprovalReducer.State()
+
+        var forwardAuth = ForwardAuthReducer.State()
 
         var main: MainReducer.State?
 
@@ -40,12 +44,19 @@ public struct AppReducer {
         Scope(state: \.certificateApproval, action: \.certificateApproval) {
             CertificateApprovalReducer()
         }
+        Scope(state: \.forwardAuth, action: \.forwardAuth) {
+            ForwardAuthReducer()
+        }
         Reduce { state, action in
             switch action {
             case .bootstrap:
-                return .runSelectedServerObserver().merge(with: .run { send in
-                    await send(.certificateApproval(.bootstrap))
-                })
+                return .runSelectedServerObserver()
+                    .merge(with: .run { send in
+                        await send(.certificateApproval(.bootstrap))
+                    })
+                    .merge(with: .run { send in
+                        await send(.forwardAuth(.bootstrap))
+                    })
             case .didBecomeActive:
                 guard let server = state.main?.server else {
                     return .none
@@ -60,7 +71,7 @@ public struct AppReducer {
                     state.serverList = ServerListReducer.State()
                     return .none
                 }
-            case .certificateApproval, .main, .serverList:
+            case .certificateApproval, .forwardAuth, .main, .serverList:
                 return .none
             }
         }

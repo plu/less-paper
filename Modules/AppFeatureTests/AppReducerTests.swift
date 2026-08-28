@@ -72,6 +72,8 @@ struct AppReducerTests {
 
         await store.receive(\.certificateApproval.bootstrap)
 
+        await store.receive(\.forwardAuth.bootstrap)
+
         #expect(updateCacheServer.value == server1)
 
         $selectedServer.withLock { $0 = server2 }

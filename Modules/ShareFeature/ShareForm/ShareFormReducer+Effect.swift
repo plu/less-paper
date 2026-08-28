@@ -106,6 +106,14 @@ extension Effect where Action == ShareFormReducer.Action {
             await send(.set(\.isImporting, false))
             await send(.fileImported)
         } catch: { error, send in
+            // An SSO login inside a memory-constrained extension is a bad place to be, and the
+            // main app is one tap away. Translate the bounce to a dedicated error so the toast
+            // names the actual remedy rather than showing a raw network failure.
+            if case ForwardAuthError.required = error {
+                await send(.error(ShareFormError.forwardAuthRequired))
+                await send(.set(\.isImporting, false))
+                return
+            }
             await send(.error(error))
             await send(.set(\.isImporting, false))
         }

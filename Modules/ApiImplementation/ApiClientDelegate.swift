@@ -51,7 +51,12 @@ extension ApiClientDelegate: Get.APIClientDelegate {
             return
         }
 
-        let token = try await authenticationProvider.getToken(server: server)
+        guard let token = try await authenticationProvider.getToken(server: server) else {
+            // Remote-user mode: a forward-auth proxy injects a trusted identity header and
+            // paperless takes it. The cookie authenticates the request, so no Authorization is
+            // sent - a bare `Token ` with nothing after it would be rejected.
+            return
+        }
         request.setValue("Token \(token)", forHTTPHeaderField: "Authorization")
     }
 
@@ -62,6 +67,21 @@ extension ApiClientDelegate: Get.APIClientDelegate {
 
         storeAdvertisedApiVersion(from: response)
 
+        // Any non-2xx with a Location leaving the server's host is a proxy telling us to sign in.
+        // Both bounce shapes end up here: the 401+Location one directly, and the genuine 3xx one
+        // after ApiSessionDelegate refused to follow it into the completion.
+        if !(200 ..< 300).contains(response.statusCode),
+           let location = response.value(forHTTPHeaderField: "Location"),
+           let redirectURL = URL(string: location),
+           let redirectHost = redirectURL.host(),
+           let serverHost = server.url.host(),
+           redirectHost != serverHost {
+            // Only thrown, never announced: the login is raised by shouldRetry, where the request
+            // that needs it is parked. Announcing it here would leave a suspended task behind for
+            // every bounce the share extension takes, which has nothing listening.
+            throw ForwardAuthError.required(redirectURL)
+        }
+
         if (400 ..< 500).contains(response.statusCode) {
             let error = try JSONDecoder().decode(ApiError.self, from: data)
             throw error
@@ -69,6 +89,36 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         guard (200 ..< 300).contains(response.statusCode) else {
             throw APIError.unacceptableStatusCode(response.statusCode)
         }
+    }
+
+    func client(
+        _ client: APIClient,
+        shouldRetry task: URLSessionTask,
+        error: any Error,
+        attempts: Int
+    ) async throws -> Bool {
+        guard case let ForwardAuthError.required(url) = error else {
+            return false
+        }
+
+        // One login, one replay. A cookie that never satisfies the proxy - a session scoped to a
+        // domain that does not cover paperless is the classic misconfiguration - would otherwise
+        // loop through bounce, login and replay for as long as the app is open.
+        guard attempts <= 1 else {
+            return false
+        }
+
+        // Parks the request until the login for this server is over: every request bounced for it
+        // awaits the same one, and each replays as soon as the cookie lands. A dismissed login
+        // answers false and the request errors out, which is what the user asked for by
+        // dismissing. Where no login can be presented - the share extension - this answers false
+        // straight away and the error reaches the user as ShareFormError.forwardAuthRequired.
+        @Dependency(\.forwardAuthCoordinator)
+        var coordinator
+
+        return await coordinator.awaitSignIn(
+            for: ForwardAuthRedirect(server: server, url: url)
+        )
     }
 
     /// One line per *failed* request: what was asked, of where, and what came back.

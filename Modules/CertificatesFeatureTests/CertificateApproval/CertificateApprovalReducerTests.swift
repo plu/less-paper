@@ -112,4 +112,93 @@ struct CertificateApprovalReducerTests {
 
         await bootstrap.cancel()
     }
+
+    // A challenge the reducer answers without presenting anything - here one with no certificate
+    // to inspect, which is what a host with an ordinary certificate amounts to - must still pump
+    // the queue. Whatever is queued behind it would otherwise wait for the next challenge to
+    // arrive, and a request whose completion is never called hangs for as long as the app is
+    // open. The forward-auth web view makes several hosts per login ordinary.
+    @Test
+    func test_requestAnsweredWithoutAPopup_stillDrainsTheQueue() async throws {
+        let channel = AsyncChannel<CertificateApprovalEvent>()
+        let completed = LockIsolated<[String]>([])
+
+        func request(_ name: String, challenge: URLAuthenticationChallenge) -> CertificateApprovalRequest {
+            CertificateApprovalRequest.testValue(
+                challenge: challenge,
+                completion: { _, _ in completed.withValue { $0.append(name) } },
+                id: UUID()
+            )
+        }
+
+        let presented = request("presented", challenge: .testValue())
+        let first = request("first", challenge: .withoutServerTrust())
+        let second = request("second", challenge: .withoutServerTrust())
+
+        let store = TestStore(
+            initialState: CertificateApprovalReducer.State(),
+            reducer: { CertificateApprovalReducer() },
+            withDependencies: {
+                $0.certificateApprovalChannel = channel
+                $0.popupPresenter.present = { _ in }
+            }
+        )
+        store.exhaustivity = .off
+
+        let bootstrap = await store.send(.bootstrap)
+
+        // The first challenge is untrusted and takes the popup; the other two queue behind it.
+        for approvalRequest in [presented, first, second] {
+            await channel.send(.request(approvalRequest))
+            await store.receive(\.certificateApprovalRequest)
+            await store.receive(\.processNextApprovalRequest)
+        }
+
+        await channel.send(.response(presented, false))
+        await store.receive(\.certificateApprovalResponse)
+        await store.receive(\.processNextApprovalRequest)
+        await store.receive(\.processNextApprovalRequest)
+        await store.receive(\.processNextApprovalRequest)
+
+        // Not just the one at the head of the queue: everything behind it too.
+        #expect(completed.value == ["presented", "first", "second"])
+
+        await bootstrap.cancel()
+    }
+}
+
+private extension URLAuthenticationChallenge {
+
+    // A challenge with nothing to inspect, which is the shape the reducer answers with
+    // performDefaultHandling and no popup.
+    static func withoutServerTrust() -> URLAuthenticationChallenge {
+        URLAuthenticationChallenge(
+            protectionSpace: NoServerTrustProtectionSpace(
+                host: "assets.example.com",
+                port: 443,
+                protocol: "https",
+                realm: nil,
+                authenticationMethod: nil
+            ),
+            proposedCredential: nil,
+            previousFailureCount: 0,
+            failureResponse: nil,
+            error: nil,
+            sender: NoOpChallengeSender()
+        )
+    }
+}
+
+private final class NoServerTrustProtectionSpace: URLProtectionSpace, @unchecked Sendable {
+
+    override var serverTrust: SecTrust? { nil }
+}
+
+private final class NoOpChallengeSender: NSObject, URLAuthenticationChallengeSender {
+
+    func use(_ credential: URLCredential, for challenge: URLAuthenticationChallenge) {}
+
+    func continueWithoutCredential(for challenge: URLAuthenticationChallenge) {}
+
+    func cancel(_ challenge: URLAuthenticationChallenge) {}
 }

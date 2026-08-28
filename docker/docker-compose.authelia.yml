@@ -1,0 +1,82 @@
+# Authelia, for developing and testing the forward-auth login.
+#
+#   cd docker
+#   docker compose -f docker-compose.authelia.yml -p less-paper-authelia up -d
+#
+# Its own project. The host already runs paperless-dev on 8000/8010, paperless-ci on 9000/9010, and
+# less-paper-oidc on 8100/9100; this must not restart any of them, so it shares nothing and takes
+# ports they do not.
+#
+# ONE THING HAS TO BE RIGHT, and everything else follows from it: the Authelia session cookie
+# must cover both the portal AND paperless. Cookies bind to a registrable domain, so both
+# hostnames sit under one - here `auth.local.plunien.com` and `paperless.local.plunien.com`. Both
+# must resolve to the Docker host from the iOS simulator (add them to /etc/hosts on the host; the
+# simulator inherits from there), and the simulator must trust Caddy's internal CA. See
+# docs/forward-auth-development.md - getting either of these wrong produces a login loop that
+# looks like a bug in the app.
+
+services:
+  # Its own paperless, so paperless-dev keeps running for ordinary work. Configured for
+  # remote-user mode (PAPERLESS_ENABLE_HTTP_REMOTE_USER_API) so the forward-auth cookie is the
+  # whole login. To exercise gate-only mode instead, unset the two REMOTE_USER variables and
+  # restart.
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.0.5
+    restart: unless-stopped
+    depends_on:
+      - paperless-redis
+    environment:
+      OPENSSL_armcap: "0"
+      PAPERLESS_ADMIN_MAIL: admin@less-paper.test
+      PAPERLESS_ADMIN_PASSWORD: development-only
+      PAPERLESS_ADMIN_USER: admin
+      PAPERLESS_REDIS: redis://paperless-redis:6379
+      PAPERLESS_SECRET_KEY: c0ff33
+      PAPERLESS_TIME_ZONE: Europe/Berlin
+      PAPERLESS_URL: https://paperless.local.plunien.com:8200
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: https://paperless.local.plunien.com:8200
+      # Remote-user mode: paperless trusts the header the proxy injects. Without _API this only
+      # affects the web session and the app still runs the ordinary token login (which is
+      # gate-only mode - useful to test both branches from the same stack).
+      PAPERLESS_ENABLE_HTTP_REMOTE_USER: "true"
+      PAPERLESS_ENABLE_HTTP_REMOTE_USER_API: "true"
+      PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME: HTTP_REMOTE_USER
+      PAPERLESS_LOGOUT_REDIRECT_URL: https://auth.local.plunien.com:8200/logout
+    volumes:
+      - paperless-data:/usr/src/paperless/data
+      - paperless-media:/usr/src/paperless/media
+
+  paperless-redis:
+    image: docker.io/library/redis:7-alpine
+    restart: unless-stopped
+
+  authelia:
+    image: docker.io/authelia/authelia:4.39
+    restart: unless-stopped
+    volumes:
+      - ./authelia:/config
+      - authelia-data:/data
+
+  # Caddy of its own, on port 8200. Not the paperless-dev caddy - that binds to 8010, and this
+  # stack must not restart it. Terminates TLS with an internal CA (Caddy generates and manages
+  # it), so the simulator has to trust that CA once - see the development doc.
+  caddy:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      - authelia
+      - paperless
+    ports:
+      - "8200:443"
+    volumes:
+      - ./caddy/Caddyfile.authelia:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+
+volumes:
+  authelia-data:
+  caddy-config:
+  caddy-data:
+  paperless-data:
+  paperless-media:

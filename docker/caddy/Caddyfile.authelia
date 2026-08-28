@@ -1,0 +1,21 @@
+# Caddy for the Authelia forward-auth dev stack. Its own file - the paperless-dev Caddy uses
+# Caddyfile and does not know about these hostnames.
+
+# The proxy portal. Authelia sees requests here as its own and skips the forward-auth check.
+auth.local.plunien.com:443 {
+    tls internal
+    reverse_proxy authelia:9091
+}
+
+# Paperless behind forward_auth. Every request is asked to Authelia first; unauthenticated
+# requests come back with a 302 pointing at auth.local.plunien.com, which the app treats as the
+# bounce. The four copy_headers are what makes remote-user mode work: paperless reads
+# Remote-User for the injected identity.
+paperless.local.plunien.com:443 {
+    tls internal
+    forward_auth authelia:9091 {
+        uri /api/authz/forward-auth
+        copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+    }
+    reverse_proxy paperless:8000
+}

@@ -6,8 +6,14 @@ extension Effect where Action == ServerFormReducer.Action {
     static func runSaveServer(
         input: ServerFormInput
     ) -> Self {
+        @Dependency(\.getForwardAuthIdentity.execute)
+        var getForwardAuthIdentity
+
         @Dependency(\.negotiateApiVersion.execute)
         var negotiateApiVersion
+
+        @Dependency(\.storeServerWithoutToken.execute)
+        var storeServerWithoutToken
 
         @Dependency(\.storeToken.execute)
         var storeToken
@@ -17,6 +23,20 @@ extension Effect where Action == ServerFormReducer.Action {
 
         return .run { send in
             await send(.binding(.set(\.isSaving, true)))
+
+            // Probe first: if the cookie the user picked up from the forward-auth login (or one
+            // that survived from a previous session) makes an unauthenticated /api/ui_settings/
+            // succeed, the proxy is injecting a trusted identity and no token is needed.
+            if let username = try await getForwardAuthIdentity(input.server) {
+                let server = input.server.with(username: username)
+                try await storeServerWithoutToken(server)
+                _ = try await negotiateApiVersion(server)
+                try await updateCache(server)
+                await send(.delegate(.serverSaved(server)), animation: .default)
+                await send(.binding(.set(\.isSaving, false)))
+                return
+            }
+
             try await storeToken(input.code, input.password, input.server, input.username)
             _ = try await negotiateApiVersion(input.server)
             try await updateCache(input.server)
@@ -106,16 +126,35 @@ extension Effect where Action == ServerFormReducer.Action {
     /// negotiate the API version and warm the cache - which is what makes a provider login
     /// indistinguishable from a password one everywhere downstream.
     static func runSaveProviderToken(input: ServerFormInput, token: String) -> Self {
+        @Dependency(\.getForwardAuthIdentity.execute)
+        var getForwardAuthIdentity
+
         @Dependency(\.negotiateApiVersion.execute)
         var negotiateApiVersion
 
         @Dependency(\.storeProviderToken.execute)
         var storeProviderToken
 
+        @Dependency(\.storeServerWithoutToken.execute)
+        var storeServerWithoutToken
+
         @Dependency(\.updateCache.execute)
         var updateCache
 
         return .run { send in
+            // Probe first even on the provider path. A user could be behind a proxy that
+            // *also* offers OIDC through the same identity provider - remote-user mode wins if
+            // paperless says so.
+            if let username = try await getForwardAuthIdentity(input.server) {
+                let server = input.server.with(username: username)
+                try await storeServerWithoutToken(server)
+                _ = try await negotiateApiVersion(server)
+                try await updateCache(server)
+                await send(.delegate(.serverSaved(server)), animation: .default)
+                await send(.binding(.set(\.isSaving, false)))
+                return
+            }
+
             try await storeProviderToken(input.server, token)
             _ = try await negotiateApiVersion(input.server)
             try await updateCache(input.server)

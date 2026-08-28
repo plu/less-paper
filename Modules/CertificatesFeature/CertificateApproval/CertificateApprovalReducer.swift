@@ -60,18 +60,25 @@ public struct CertificateApprovalReducer: Sendable {
 
                 let request = state.requests.removeFirst()
 
+                // Both answers below finish this request without presenting anything, so the queue
+                // has to be drained rather than left where it is: nothing else pumps it until the
+                // next challenge arrives, and a request whose completion is never called is a
+                // network task that hangs for as long as the app is open. One challenge answered
+                // without a popup - a host with an ordinary certificate - would otherwise strand
+                // every challenge queued behind it. The forward-auth web view makes that ordinary:
+                // an identity provider's assets come from hosts the API never talks to.
                 guard let certificate = request.challenge.firstCertificate,
                       let serverTrust = request.challenge.protectionSpace.serverTrust
                 else {
                     request.completion(.performDefaultHandling, nil)
-                    return .none
+                    return .send(.processNextApprovalRequest)
                 }
 
                 var error: CFError?
                 let isTrusted = SecTrustEvaluateWithError(serverTrust, &error)
                 if isTrusted && error == nil {
                     request.completion(.performDefaultHandling, nil)
-                    return .none
+                    return .send(.processNextApprovalRequest)
                 }
 
                 if state.trustedCertificates.contains(where: { $0.serialNumber == certificate.serialNumber.description }) {

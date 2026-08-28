@@ -51,14 +51,16 @@ private extension Keychain {
     static func getCredentials(
         server: Server
     ) async throws -> Credentials {
-        try Credentials(
+        Credentials(
             // Optional, and not with `.get()`: a provider login stores no password, and reading one
             // that was never written must not fail the whole lookup - the token is what the app
             // actually needs.
             password: try? keychain.retrieve(
                 .credential(for: "\(server.id).password")
             ).get(),
-            token: keychain.retrieve(
+            // Optional for the same reason password is: remote-user mode behind a forward-auth
+            // proxy stores no token, and a read that fails must not fail the whole lookup.
+            token: try? keychain.retrieve(
                 .credential(for: "\(server.id).token")
             ).get()
         )
@@ -77,10 +79,12 @@ private extension Keychain {
                 query: .credential(for: "\(server.id).password")
             )
         }
-        try keychain.store(
-            credentials.token,
-            query: .credential(for: "\(server.id).token")
-        )
+        if let token = credentials.token {
+            try keychain.store(
+                token,
+                query: .credential(for: "\(server.id).token")
+            )
+        }
     }
 
     // The whole list lives in one item. SwiftSecurity stores any SecDataConvertible, and Data

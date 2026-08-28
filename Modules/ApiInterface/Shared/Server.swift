@@ -31,6 +31,19 @@ public struct Server: Codable, Equatable, Hashable, Identifiable, Sendable {
 
 public extension Server {
 
+    // Used when remote-user mode discovers a username other than the one the user typed. In that
+    // mode the proxy authenticates the human, so whatever paperless returns for the injected
+    // identity is authoritative - not the placeholder the form was completed with.
+    func with(username: String) -> Self {
+        Self(
+            alias: alias,
+            headers: headers,
+            id: id,
+            username: username,
+            url: url
+        )
+    }
+
     static func testValue(
         alias: String = "dev",
         headers: IdentifiedArrayOf<HTTPHeader> = [],

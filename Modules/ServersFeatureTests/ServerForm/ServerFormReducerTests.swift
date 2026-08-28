@@ -60,6 +60,46 @@ struct ServerFormReducerTests {
         #expect(events.value == ["storeToken", "negotiateApiVersion", "updateCache"])
     }
 
+    // When the probe finds a proxy-injected identity, no token is stored - the cookie is the
+    // whole login - and the username the form was filled with gets replaced by whatever paperless
+    // returned. That last part matters: the form's username may have been a placeholder because
+    // isValid requires the field to be non-empty.
+    @Test
+    func test_view_saveButtonTapped_forwardAuthIdentity_storesServerWithoutToken() async throws {
+        let events = LockIsolated<[String]>([])
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: .testValue(username: "placeholder")
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.getForwardAuthIdentity.execute = { _ in "authelia-user" }
+            $0.storeServerWithoutToken.execute = { _ in
+                events.withValue { $0.append("storeServerWithoutToken") }
+            }
+            $0.storeToken.execute = { _, _, _, _ in
+                Issue.record("storeToken must not run when the proxy authenticated the identity")
+            }
+            $0.negotiateApiVersion.execute = { _ in
+                events.withValue { $0.append("negotiateApiVersion") }
+                return 10
+            }
+            $0.updateCache.execute = { _ in
+                events.withValue { $0.append("updateCache") }
+            }
+        }
+
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.binding, .set(\.isSaving, true)) {
+            $0.isSaving = true
+        }
+        await store.receive(\.delegate.serverSaved, .testValue(username: "authelia-user"))
+        await store.receive(\.binding, .set(\.isSaving, false)) {
+            $0.isSaving = false
+        }
+
+        #expect(events.value == ["storeServerWithoutToken", "negotiateApiVersion", "updateCache"])
+    }
+
     @Test
     func test_view_saveButtonTapped_cacheError() async throws {
         let toasts = LockIsolated<[Toast]>([])

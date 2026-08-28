@@ -35,6 +35,7 @@ extension Module {
                 .target(.certificatesFeature),
                 .target(.components),
                 .target(.documentsFeature),
+                .target(.forwardAuthFeature),
                 .target(.serversFeature),
                 .target(.settingsFeature),
             ]
@@ -78,6 +79,7 @@ extension Module {
             ]
         case .apiImplementationTests:
             [
+                .external(.asyncAlgorithms),
                 .external(.customDump),
                 .external(.dependencies),
                 .external(.dependenciesMacros),
@@ -245,6 +247,25 @@ extension Module {
                 .target(.documentsFeature),
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
+                .target(.testSupport),
+            ]
+        case .forwardAuthFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .target(.apiInterface),
+                .target(.certificatesFeature),
+                .target(.components),
+            ]
+        case .forwardAuthFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .external(.snapshotTesting),
+                .target(.apiInterface),
+                .target(.components),
+                .target(.forwardAuthFeature),
                 .target(.testSupport),
             ]
         case .imageFeature:

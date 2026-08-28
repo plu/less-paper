@@ -7,7 +7,7 @@ public struct AuthenticationProvider: Sendable {
 
     public var getToken: @Sendable (
         _ server: Server
-    ) async throws -> String
+    ) async throws -> String?
 }
 
 extension AuthenticationProvider: TestDependencyKey {
