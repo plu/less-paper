@@ -16,8 +16,6 @@ public struct ForwardAuthReducer: Sendable {
 
         case confirmed(ForwardAuthRedirect)
 
-        case finish(ForwardAuthRedirect)
-
         case redirect(ForwardAuthRedirect)
 
         // The sheet reports its outcome back so the reducer can clear state and release parked
@@ -65,24 +63,19 @@ public struct ForwardAuthReducer: Sendable {
                 // sheet from the same host until the first one is dismissed.
                 return .runPresentSignIn(redirect: redirect)
 
-            case let .finish(redirect):
-                guard state.redirect == redirect else {
-                    return .none
-                }
-                state.redirect = nil
-                return .none
-
             case let .redirect(redirect):
                 guard state.redirect == nil else {
-                    return .none
+                    // A second server bouncing while this login is up. Its requests are told no
+                    // rather than left waiting for a sheet that cannot present over the first
+                    // one; they raise a login of their own the next time they are tried.
+                    return .runDropWaiters(redirect: redirect)
                 }
                 state.redirect = redirect
                 // Skip the confirmation popup for now: it presents through SwiftMessages on its
                 // own window, and dismissing it as the sheet tries to present is the current
                 // suspect for the sheet never appearing. The sheet's own title bar names the
                 // host, so a first-pass user still sees where they are being sent.
-                state.sheet = redirect
-                return .none
+                return .runPresentSignIn(redirect: redirect)
 
             case let .signInCancelled(redirect):
                 // Same reasoning as .cancelled above: a dismissed sheet drops the waiters, it

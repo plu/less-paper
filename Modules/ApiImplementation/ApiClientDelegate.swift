@@ -1,5 +1,4 @@
 import ApiInterface
-import AsyncAlgorithms
 import Dependencies
 import Foundation
 import Get
@@ -77,13 +76,9 @@ extension ApiClientDelegate: Get.APIClientDelegate {
            let redirectHost = redirectURL.host(),
            let serverHost = server.url.host(),
            redirectHost != serverHost {
-            let redirect = ForwardAuthRedirect(server: server, url: redirectURL)
-            Task {
-                @Dependency(\.forwardAuthChannel)
-                var channel
-
-                await channel.send(.redirect(redirect))
-            }
+            // Only thrown, never announced: the login is raised by shouldRetry, where the request
+            // that needs it is parked. Announcing it here would leave a suspended task behind for
+            // every bounce the share extension takes, which has nothing listening.
             throw ForwardAuthError.required(redirectURL)
         }
 
@@ -102,32 +97,28 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         error: any Error,
         attempts: Int
     ) async throws -> Bool {
-        guard case ForwardAuthError.required = error else {
+        guard case let ForwardAuthError.required(url) = error else {
             return false
         }
 
-        // Every parked request awaits the same event. Ten concurrent bounces at launch produce
-        // one login, and each request replays as soon as it finishes. The comparison is on
-        // server.id so a login for one server does not release requests parked against another.
-        //
-        // .finish means the sign-in landed a cookie - retry. .cancelled means the user backed
-        // out - error the parked request rather than retrying, or the app loops through popup
-        // -> cancel -> retry -> new bounce forever.
-        @Dependency(\.forwardAuthChannel)
-        var channel
-
-        for await event in channel {
-            switch event {
-            case let .finish(redirect) where redirect.server.id == server.id:
-                return true
-            case let .cancelled(redirect) where redirect.server.id == server.id:
-                return false
-            default:
-                continue
-            }
+        // One login, one replay. A cookie that never satisfies the proxy - a session scoped to a
+        // domain that does not cover paperless is the classic misconfiguration - would otherwise
+        // loop through bounce, login and replay for as long as the app is open.
+        guard attempts <= 1 else {
+            return false
         }
 
-        return false
+        // Parks the request until the login for this server is over: every request bounced for it
+        // awaits the same one, and each replays as soon as the cookie lands. A dismissed login
+        // answers false and the request errors out, which is what the user asked for by
+        // dismissing. Where no login can be presented - the share extension - this answers false
+        // straight away and the error reaches the user as ShareFormError.forwardAuthRequired.
+        @Dependency(\.forwardAuthCoordinator)
+        var coordinator
+
+        return await coordinator.awaitSignIn(
+            for: ForwardAuthRedirect(server: server, url: url)
+        )
     }
 
     /// One line per *failed* request: what was asked, of where, and what came back.

@@ -1,7 +1,6 @@
 @testable import ApiImplementation
 
 import ApiInterface
-import AsyncAlgorithms
 import Dependencies
 import Foundation
 import Get
@@ -337,13 +336,14 @@ struct ApiClientDelegateTests {
     }
 
     @Test
-    func shouldRetry_waitsForFinishForItsOwnServer() async throws {
+    func shouldRetry_replaysOnceTheLoginForItsOwnServerLands() async throws {
         let server = Server.testValue(id: "waiter")
         let delegate = ApiClientDelegate(server: server)
-        let channel = AsyncChannel<ForwardAuthEvent>()
+        let coordinator = ForwardAuthCoordinator()
+        let redirects = await coordinator.redirects()
 
         let result = await withDependencies {
-            $0.forwardAuthChannel = channel
+            $0.forwardAuthCoordinator = coordinator
         } operation: {
             async let retry = delegate.client(
                 APIClient(baseURL: server.url),
@@ -352,17 +352,18 @@ struct ApiClientDelegateTests {
                 attempts: 1
             )
 
-            // A finish for a different server must not release this waiter.
-            await channel.send(.finish(ForwardAuthRedirect(
-                server: .testValue(id: "someone-else"),
-                url: URL(string: "https://auth.example.com/login")!
-            )))
-            try? await Task.sleep(for: .milliseconds(50))
+            // The parked request is what raises the login, so waiting for the redirect to arrive
+            // is also how this test knows the request is parked.
+            var iterator = redirects.makeAsyncIterator()
+            let redirect = await iterator.next()
+            #expect(redirect?.server.id == "waiter")
 
-            await channel.send(.finish(ForwardAuthRedirect(
-                server: server,
-                url: URL(string: "https://auth.example.com/login")!
-            )))
+            // A login for a different server must not release this one's waiter.
+            await coordinator.resolve(
+                ForwardAuthRedirect(server: .testValue(id: "someone-else"), url: redirect!.url),
+                signedIn: true
+            )
+            await coordinator.resolve(redirect!, signedIn: true)
 
             return try? await retry
         }
@@ -370,16 +371,62 @@ struct ApiClientDelegateTests {
         #expect(result == true)
     }
 
-    // A cancelled sign-in must NOT retry the parked request - otherwise the popup dismisses,
-    // shouldRetry replays, a new bounce arrives, and the popup loops forever.
+    // The bug this replaced an AsyncChannel to fix: a channel hands each element to one consumer,
+    // so one login released one parked request and the rest waited forever. Ten concurrent
+    // bounces at launch are the ordinary case.
     @Test
-    func shouldRetry_returnsFalseWhenCancelledForItsOwnServer() async throws {
+    func shouldRetry_releasesEveryRequestParkedAgainstTheSameServer() async throws {
         let server = Server.testValue(id: "waiter")
         let delegate = ApiClientDelegate(server: server)
-        let channel = AsyncChannel<ForwardAuthEvent>()
+        let coordinator = ForwardAuthCoordinator()
+        let redirects = await coordinator.redirects()
+
+        let results = await withDependencies {
+            $0.forwardAuthCoordinator = coordinator
+        } operation: {
+            async let retries = withTaskGroup(of: Bool.self, returning: [Bool].self) { group in
+                for _ in 0 ..< 10 {
+                    group.addTask {
+                        (try? await delegate.client(
+                            APIClient(baseURL: server.url),
+                            shouldRetry: URLSession.shared.dataTask(with: URLRequest(url: server.url)),
+                            error: ForwardAuthError.required(URL(string: "https://auth.example.com/login")!),
+                            attempts: 1
+                        )) ?? false
+                    }
+                }
+                return await group.reduce(into: []) { $0.append($1) }
+            }
+
+            // Ten bounces, one login: only the first request to park raises a redirect.
+            var iterator = redirects.makeAsyncIterator()
+            let redirect = await iterator.next()
+
+            // Park the remaining nine before resolving, so this asserts one login answering all
+            // ten rather than a race that happens to resolve them one at a time.
+            while await coordinator.waiterCount(for: redirect!) < 10 {
+                await Task.yield()
+            }
+
+            await coordinator.resolve(redirect!, signedIn: true)
+
+            return await retries
+        }
+
+        #expect(results == Array(repeating: true, count: 10))
+    }
+
+    // A cancelled sign-in must NOT retry the parked request - otherwise the sheet closes,
+    // shouldRetry replays, a new bounce arrives, and the login loops forever.
+    @Test
+    func shouldRetry_returnsFalseWhenTheLoginWasDismissed() async throws {
+        let server = Server.testValue(id: "waiter")
+        let delegate = ApiClientDelegate(server: server)
+        let coordinator = ForwardAuthCoordinator()
+        let redirects = await coordinator.redirects()
 
         let result = await withDependencies {
-            $0.forwardAuthChannel = channel
+            $0.forwardAuthCoordinator = coordinator
         } operation: {
             async let retry = delegate.client(
                 APIClient(baseURL: server.url),
@@ -388,12 +435,55 @@ struct ApiClientDelegateTests {
                 attempts: 1
             )
 
-            await channel.send(.cancelled(ForwardAuthRedirect(
-                server: server,
-                url: URL(string: "https://auth.example.com/login")!
-            )))
+            var iterator = redirects.makeAsyncIterator()
+            await coordinator.resolve(await iterator.next()!, signedIn: false)
 
             return try? await retry
+        }
+
+        #expect(result == false)
+    }
+
+    // The share extension links no presenter: nothing there can show a login. A request bounced
+    // in it must fail rather than park forever behind a sign-in that cannot happen - the spinner
+    // never ends otherwise, and ShareFormError.forwardAuthRequired is never seen.
+    @Test
+    func shouldRetry_returnsFalseWhenNoLoginCanBePresented() async throws {
+        let server = Server.testValue()
+        let delegate = ApiClientDelegate(server: server)
+
+        let result = await withDependencies {
+            $0.forwardAuthCoordinator = ForwardAuthCoordinator()
+        } operation: {
+            try? await delegate.client(
+                APIClient(baseURL: server.url),
+                shouldRetry: URLSession.shared.dataTask(with: URLRequest(url: server.url)),
+                error: ForwardAuthError.required(URL(string: "https://auth.example.com/login")!),
+                attempts: 1
+            )
+        }
+
+        #expect(result == false)
+    }
+
+    // One login, one replay. A cookie the proxy never accepts would otherwise loop through
+    // bounce, login and replay for as long as the app is open.
+    @Test
+    func shouldRetry_returnsFalseAfterTheFirstReplay() async throws {
+        let server = Server.testValue()
+        let delegate = ApiClientDelegate(server: server)
+        let coordinator = ForwardAuthCoordinator()
+        _ = await coordinator.redirects()
+
+        let result = await withDependencies {
+            $0.forwardAuthCoordinator = coordinator
+        } operation: {
+            try? await delegate.client(
+                APIClient(baseURL: server.url),
+                shouldRetry: URLSession.shared.dataTask(with: URLRequest(url: server.url)),
+                error: ForwardAuthError.required(URL(string: "https://auth.example.com/login")!),
+                attempts: 2
+            )
         }
 
         #expect(result == false)

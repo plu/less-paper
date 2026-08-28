@@ -251,7 +251,6 @@ extension Module {
             ]
         case .forwardAuthFeature:
             [
-                .external(.asyncAlgorithms),
                 .external(.composableArchitecture),
                 .external(.dependencies),
                 .external(.dependenciesMacros),
@@ -261,7 +260,6 @@ extension Module {
             ]
         case .forwardAuthFeatureTests:
             [
-                .external(.asyncAlgorithms),
                 .external(.composableArchitecture),
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),

@@ -5,20 +5,13 @@ extension Effect where Action == ForwardAuthReducer.Action {
 
     static func runForwardAuthObserver() -> Self {
         .run { send in
-            @Dependency(\.forwardAuthChannel)
-            var channel
+            @Dependency(\.forwardAuthCoordinator)
+            var coordinator
 
-            for await event in channel {
-                switch event {
-                case let .cancelled(redirect):
-                    await send(.finish(redirect))
-
-                case let .finish(redirect):
-                    await send(.finish(redirect))
-
-                case let .redirect(redirect):
-                    await send(.redirect(redirect))
-                }
+            // Taking the stream also registers this reducer as the presenter. Until it runs, a
+            // bounced request has nowhere to raise a login and fails rather than parking.
+            for await redirect in await coordinator.redirects() {
+                await send(.redirect(redirect))
             }
         }
     }
@@ -51,26 +44,25 @@ extension Effect where Action == ForwardAuthReducer.Action {
         }
     }
 
-    // The sign-in landed a cookie. Parked shouldRetry calls see .finish and replay.
+    // The sign-in landed a cookie. Every request parked against this server replays.
     static func runReleaseWaiters(redirect: ForwardAuthRedirect) -> Self {
         .run { _ in
-            @Dependency(\.forwardAuthChannel)
-            var channel
+            @Dependency(\.forwardAuthCoordinator)
+            var coordinator
 
-            await channel.send(.finish(redirect))
+            await coordinator.resolve(redirect, signedIn: true)
         }
     }
 
-    // The user backed out. Parked shouldRetry calls see .cancelled and return false; the
-    // requests error out - which is what the user asked for by dismissing. Without this
-    // distinction the popup dismisses, shouldRetry replays, a new bounce comes back, and the
-    // popup loops.
+    // The user backed out. The parked requests error out - which is what the user asked for by
+    // dismissing. Without this distinction the sheet closes, shouldRetry replays, a new bounce
+    // comes back, and the login loops.
     static func runDropWaiters(redirect: ForwardAuthRedirect) -> Self {
         .run { _ in
-            @Dependency(\.forwardAuthChannel)
-            var channel
+            @Dependency(\.forwardAuthCoordinator)
+            var coordinator
 
-            await channel.send(.cancelled(redirect))
+            await coordinator.resolve(redirect, signedIn: false)
         }
     }
 }
