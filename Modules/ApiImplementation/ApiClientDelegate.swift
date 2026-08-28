@@ -109,12 +109,21 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         // Every parked request awaits the same event. Ten concurrent bounces at launch produce
         // one login, and each request replays as soon as it finishes. The comparison is on
         // server.id so a login for one server does not release requests parked against another.
+        //
+        // .finish means the sign-in landed a cookie - retry. .cancelled means the user backed
+        // out - error the parked request rather than retrying, or the app loops through popup
+        // -> cancel -> retry -> new bounce forever.
         @Dependency(\.forwardAuthChannel)
         var channel
 
         for await event in channel {
-            if case let .finish(redirect) = event, redirect.server.id == server.id {
+            switch event {
+            case let .finish(redirect) where redirect.server.id == server.id:
                 return true
+            case let .cancelled(redirect) where redirect.server.id == server.id:
+                return false
+            default:
+                continue
             }
         }
 

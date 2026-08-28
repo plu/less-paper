@@ -58,11 +58,12 @@ public struct ForwardAuthReducer: Sendable {
                 return .runForwardAuthObserver()
 
             case let .cancelled(redirect):
-                // A user who dismisses the popup is a user who has decided not to sign in. The
-                // parked request has to be released - .finish is the only signal shouldRetry
-                // waits for, and this sends it so shouldRetry returns false rather than hangs.
+                // A user who dismisses the popup is a user who has decided not to sign in. Drop
+                // the parked requests rather than releasing them - releasing means shouldRetry
+                // returns true and the request replays, gets bounced again, and the popup comes
+                // right back.
                 state.redirect = nil
-                return .runReleaseWaiters(redirect: redirect)
+                return .runDropWaiters(redirect: redirect)
 
             case let .confirmed(redirect):
                 // Present the sheet. The web view's completion sends .signInFinished; a
@@ -87,9 +88,11 @@ public struct ForwardAuthReducer: Sendable {
                 return .runPresentConfirmation(redirect: redirect)
 
             case let .signInCancelled(redirect):
+                // Same reasoning as .cancelled above: a dismissed sheet drops the waiters, it
+                // does not release them.
                 state.sheet = nil
                 state.redirect = nil
-                return .runReleaseWaiters(redirect: redirect)
+                return .runDropWaiters(redirect: redirect)
 
             case let .signInFinished(redirect):
                 state.sheet = nil

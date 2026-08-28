@@ -370,6 +370,35 @@ struct ApiClientDelegateTests {
         #expect(result == true)
     }
 
+    // A cancelled sign-in must NOT retry the parked request - otherwise the popup dismisses,
+    // shouldRetry replays, a new bounce arrives, and the popup loops forever.
+    @Test
+    func shouldRetry_returnsFalseWhenCancelledForItsOwnServer() async throws {
+        let server = Server.testValue(id: "waiter")
+        let delegate = ApiClientDelegate(server: server)
+        let channel = AsyncChannel<ForwardAuthEvent>()
+
+        let result = await withDependencies {
+            $0.forwardAuthChannel = channel
+        } operation: {
+            async let retry = delegate.client(
+                APIClient(baseURL: server.url),
+                shouldRetry: URLSession.shared.dataTask(with: URLRequest(url: server.url)),
+                error: ForwardAuthError.required(URL(string: "https://auth.example.com/login")!),
+                attempts: 1
+            )
+
+            await channel.send(.cancelled(ForwardAuthRedirect(
+                server: server,
+                url: URL(string: "https://auth.example.com/login")!
+            )))
+
+            return try? await retry
+        }
+
+        #expect(result == false)
+    }
+
     @Test
     func shouldRetry_returnsFalseForAnyOtherError() async throws {
         let server = Server.testValue()

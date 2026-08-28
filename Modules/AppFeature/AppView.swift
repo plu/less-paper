@@ -21,24 +21,27 @@ public struct AppView: View {
                 }
             }
         }
+        // isPresented rather than item(:) because ForwardAuthRedirect.id is the server id, which
+        // is the same across bounces of the same server - SwiftUI's item-based sheet would then
+        // see the item as unchanged on the second bounce and refuse to re-present. isPresented
+        // toggles false->true each time a new sign-in is requested.
         .sheet(
-            item: Binding(
-                get: { store.forwardAuth.sheet },
-                set: { newValue in
-                    // A user-dismissed sheet still needs to release parked requests. Setting to
-                    // nil here means the sheet is being torn down; the reducer clears state and
-                    // sends .finish on the channel through .signInCancelled.
-                    if newValue == nil, let redirect = store.forwardAuth.sheet {
+            isPresented: Binding(
+                get: { store.forwardAuth.sheet != nil },
+                set: { isPresented in
+                    if !isPresented, let redirect = store.forwardAuth.sheet {
                         store.send(.forwardAuth(.signInCancelled(redirect)))
                     }
                 }
             )
-        ) { redirect in
-            ForwardAuthSheetView(
-                redirect: redirect,
-                onFinished: { store.send(.forwardAuth(.signInFinished(redirect))) },
-                onCancel: { store.send(.forwardAuth(.signInCancelled(redirect))) }
-            )
+        ) {
+            if let redirect = store.forwardAuth.sheet {
+                ForwardAuthSheetView(
+                    redirect: redirect,
+                    onFinished: { store.send(.forwardAuth(.signInFinished(redirect))) },
+                    onCancel: { store.send(.forwardAuth(.signInCancelled(redirect))) }
+                )
+            }
         }
         .onChange(of: scenePhase) { _, newPhase in
             guard newPhase == .active else {
