@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#MISE description="Submit an existing TestFlight build for App Store review"
+#USAGE arg "<build>" help="The TestFlight build number, which is the ci.yml run number"
+set -euo pipefail
+
+# The one step in the pipeline that cannot be undone. Everything checkable has been checked by
+# release:preflight, and everything after this is re-runnable on its own.
+cd "$MISE_PROJECT_ROOT"
+
+eval "$(mise run release:resolve "$usage_build")"
+
+if [ "${RELEASE_DRY_RUN:-}" = "true" ]; then
+  echo "dry run: would submit $version ($build) for review,"
+  echo "         to be released manually and then rolled out over seven days"
+  exit 0
+fi
+
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
+ASC_KEY_ID="$(mise exec -- fnox get ALTOOL_KEY_ID)" \
+ASC_ISSUER_ID="$(mise exec -- fnox get ALTOOL_ISSUER_ID)" \
+ASC_AUTH_KEY="$(mise exec -- fnox get ALTOOL_AUTH_KEY)" \
+ASC_APP_VERSION="$version" \
+ASC_BUILD_NUMBER="$build" \
+  bundle exec fastlane submit_for_review

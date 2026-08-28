@@ -519,14 +519,9 @@ chmod +x mise/tasks/release/submit
 RELEASE_DRY_RUN=true mise run release:submit 68
 ```
 
-Expected, exactly:
+Expected, exactly — `eval` consumes resolve's `key=value` lines, so they do not appear here:
 
 ```
-build=68
-sha=62859198d163720b0e0cc4e320f0752b43d1b78d
-branch=main
-version=3.0.1
-tag=v3.0.1+68
 dry run: would submit 3.0.1 (68) for review,
          to be released manually and then rolled out over seven days
 ```
@@ -639,8 +634,7 @@ chmod +x mise/tasks/release/tag
 RELEASE_DRY_RUN=true mise run release:tag 68
 ```
 
-Expected: the five `key=value` lines, then
-`dry run: would create release v3.0.1+68 on 6285919… titled "3.0.1 (68)"`, then the contents of
+Expected: `dry run: would create release v3.0.1+68 on 6285919… titled "3.0.1 (68)"`, then the contents of
 `fastlane/metadata/en-US/release_notes.txt` between `---` markers. There are no tags in the
 repository yet, so no `## Changes` section appears and `--generate-notes` is what would be passed.
 
