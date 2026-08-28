@@ -102,12 +102,11 @@ extension OIDCSession {
         var request = URLRequest(url: url.appending(path: "api/auth/headless/app/v1/auth/provider/token"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode([
-            "client_id": provider.clientId,
-            "id_token": idToken,
-            "process": "login",
-            "provider": provider.id,
-        ])
+        request.httpBody = try JSONEncoder().encode(ProviderTokenRequest(
+            process: "login",
+            provider: provider.id,
+            token: .init(clientId: provider.clientId, idToken: idToken)
+        ))
 
         let (data, response) = try await ephemeral.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
@@ -124,7 +123,10 @@ extension OIDCSession {
             return .secondFactorRequired
         }
 
-        throw OIDCError.serverRejectedIdentity(status: status)
+        throw OIDCError.serverRejectedIdentity(
+            status: status,
+            reason: (try? JSONDecoder().decode(HeadlessFailure.self, from: data))?.summary
+        )
     }
 
     private func formBody(_ parameters: [String: String]) -> Data {

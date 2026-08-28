@@ -101,7 +101,10 @@ actor OIDCSession {
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
 
         guard status == 200, let token = try? JSONDecoder().decode(TokenResponse.self, from: data).meta.accessToken else {
-            throw OIDCError.serverRejectedIdentity(status: status)
+            throw OIDCError.serverRejectedIdentity(
+                status: status,
+                reason: (try? JSONDecoder().decode(HeadlessFailure.self, from: data))?.summary
+            )
         }
 
         pendingSessionToken = nil

@@ -30,8 +30,9 @@ public enum OIDCError: Error, Equatable, Sendable {
     /// The provider rejected the code exchange.
     case tokenExchangeFailed(reason: String)
 
-    /// paperless rejected the identity, or answered in a way that was not understood.
-    case serverRejectedIdentity(status: Int)
+    /// paperless rejected the identity, or answered in a way that was not understood. Carries what
+    /// the server said, because allauth names the field it objected to and that is the whole answer.
+    case serverRejectedIdentity(status: Int, reason: String?)
 
     /// A second factor was expected but there is no login waiting for one.
     case noSecondFactorPending
