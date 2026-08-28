@@ -1,0 +1,11 @@
+users:
+  admin:
+    disabled: false
+    displayname: admin
+    email: admin@less-paper.test
+    groups:
+      - admin
+    # argon2id hash of 'secret'. Regenerate with:
+    #   docker run --rm authelia/authelia:latest \
+    #     authelia crypto hash generate argon2 --password '<new password>'
+    password: '$argon2id$v=19$m=65536,t=3,p=4$g3wW/6Yz1VzHlt3AVBUKqw$cQ/yMoFBCMinYaXuEjiTwjd69/Nqi7hm4hXROEaXHNU'

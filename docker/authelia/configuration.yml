@@ -1,0 +1,71 @@
+access_control:
+  default_policy: deny
+  rules:
+    - domain: '*.local.plunien.com'
+      policy: one_factor
+      subject:
+        - group:admin
+
+authentication_backend:
+  file:
+    path: /config/users_database.yml
+    watch: true
+
+identity_validation:
+  reset_password:
+    # Development-only. Regenerate with `openssl rand -hex 32` for anything shipping.
+    jwt_secret: b0476e0930adb2029d9728be0d6a57ad75466f3d38a4977254313bb061202a15
+
+log:
+  level: error
+
+notifier:
+  disable_startup_check: true
+  filesystem:
+    filename: /data/notification.txt
+
+password_policy:
+  standard:
+    enabled: false
+  zxcvbn:
+    enabled: false
+
+regulation:
+  max_retries: 0
+
+server:
+  address: tcp4://0.0.0.0:9091
+  disable_healthcheck: true
+  endpoints:
+    authz:
+      forward-auth:
+        implementation: 'ForwardAuth'
+        authn_strategies:
+          - name: 'HeaderLegacy'
+          - name: 'CookieSession'
+      legacy:
+        implementation: 'Legacy'
+        authn_strategies:
+          - name: 'HeaderLegacy'
+          - name: 'CookieSession'
+
+# The cookie domain is what makes forward-auth work: one cookie for both hostnames means the
+# portal can sign in and paperless immediately sees the session. Change the domain and the app
+# gets a fresh 401 for every request.
+session:
+  cookies:
+    - domain: local.plunien.com
+      authelia_url: https://auth.local.plunien.com:8200
+      default_redirection_url: https://paperless.local.plunien.com:8200
+
+storage:
+  # Development-only. Regenerate with `openssl rand -hex 32` for anything shipping.
+  encryption_key: b19ca1820e7a6f570fb9997cf699768bef9d0983d872fbcfcc24571d8ca8aa18
+  local:
+    path: /data/db.sqlite3
+
+telemetry:
+  metrics:
+    enabled: false
+
+theme: light
