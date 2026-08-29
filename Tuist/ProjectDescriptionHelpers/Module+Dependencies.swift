@@ -252,6 +252,25 @@ extension Module {
                 .target(.tagsFeature),
                 .target(.testSupport),
             ]
+        case .favoritesFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .external(.sharing),
+                .target(.apiInterface),
+                .target(.components),
+                .target(.documentsFeature),
+            ]
+        case .favoritesFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .external(.snapshotTesting),
+                .target(.apiInterface),
+                .target(.favoritesFeature),
+                .target(.testSupport),
+            ]
         case .forwardAuthFeature:
             [
                 .external(.composableArchitecture),
