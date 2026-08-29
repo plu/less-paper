@@ -91,59 +91,11 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func detailsView() -> some View {
-        VStack(alignment: .leading, spacing: .x3) {
-            AdaptiveStack(
-                horizontalSpacing: .x2,
-                verticalAlignment: .top
-            ) {
-                Text(store.correspondent)
-                    .font(.footnote)
-                    .fontWeight(.bold)
-                    .foregroundColor(.m3Primary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                if sizeCategory < .accessibilityMedium {
-                    Spacer(minLength: 0)
-                }
-                Text(DateFormatter.createdDate.string(from: store.document.created))
-                    .font(.footnote)
-                    .fontWeight(.medium)
-                    .foregroundColor(.m3Outline)
-                    .lineLimit(1)
-                    .padding(.trailing, .x2)
-            }
-            Text(store.document.title)
-                .fixedSize(horizontal: false, vertical: true)
-                .font(.body)
-                .foregroundColor(.m3OnSurface)
-                .lineLimit(store.titleLineLimit)
-                .multilineTextAlignment(.leading)
-            Spacer(minLength: 0)
-            Grid(alignment: .leading, horizontalSpacing: .x2) {
-                if let asn = store.document.archiveSerialNumber {
-                    GridRow {
-                        Image(systemName: "barcode").accessibilityHidden(true)
-                        Text(String(asn)).lineLimit(1)
-                    }
-                }
-                if let documentTypeName = store.documentType {
-                    GridRow {
-                        Image(systemName: "doc").accessibilityHidden(true)
-                        Text(documentTypeName).lineLimit(1)
-                    }
-                }
-                if let storagePathName = store.storagePath {
-                    GridRow {
-                        Image(systemName: "folder").accessibilityHidden(true)
-                        Text(storagePathName).lineLimit(1)
-                    }
-                }
-            }
-        }
-        .foregroundColor(.m3Outline)
-        .fontWeight(.medium)
-        .font(.footnote)
-        .padding(sizeCategory >= breakpoint ? .x4 : .x3)
+        DocumentRowContent(
+            document: store.document,
+            server: store.server,
+            titleLineLimit: store.titleLineLimit
+        )
     }
 
     @ViewBuilder
