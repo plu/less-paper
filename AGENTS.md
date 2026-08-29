@@ -284,6 +284,32 @@ When every call starts returning `403`, the PAT has expired. Re-mint it at
 <https://github.com/settings/personal-access-tokens> and store it with
 `cd ~ && fnox set --global GH_TOKEN`.
 
+## A pull request title is a commit message
+
+**Every PR title takes a Conventional Commits prefix** — `feat:`, `fix:`, `docs:`, `chore:`,
+`refactor:` — in the same voice as the commits inside it.
+
+This is not tidiness. Pull requests here are **squash merged**, so the PR title *becomes* the commit
+message on `main`, permanently, with the number appended. `git log origin/main` is a list of PR
+titles:
+
+```
+feat: a tip jar in Settings (#28)
+feat: open a document from a lesspaper:// link (#27)
+chore: bump jdx/mise-action to v4 (#26)
+```
+
+Write the title as the line you want in that log, not as a headline for the PR page. A title that
+reads well on GitHub and badly in `git log` is the wrong way round: the page is temporary and the
+log is forever.
+
+**One title in that history is already wrong** — `Give every module its own string catalogue (#29)`
+— because it was written as a headline. It cannot be fixed now without rewriting `main`, which is
+why it is worth getting right the first time rather than at review.
+
+The prefix should match what the change is, not which branch it came from: a branch named
+`chore/…` holding a user-visible fix still gets `fix:`.
+
 ## The App Store listing lives in `fastlane/metadata`
 
 Downloaded from App Store Connect, committed, and uploaded by `deliver`, so changing a description
