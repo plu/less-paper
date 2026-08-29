@@ -58,6 +58,20 @@ struct DocumentDetailView: View {
                 } else {
                     viewerMenu()
                 }
+
+                // Outside the download branch: a link to the document is worth sharing whether or
+                // not its file has come down yet.
+                if let url = DeepLink.appURL(server: store.server, route: .documentDetail(store.document.id)) {
+                    ShareLink(item: url) {
+                        Label(.shareAppLink, systemImage: "candybarphone")
+                    }
+                }
+
+                if let url = DeepLink.webURL(server: store.server, route: .documentDetail(store.document.id)) {
+                    ShareLink(item: url) {
+                        Label(.shareWebLink, systemImage: "globe")
+                    }
+                }
             } label: {
                 Label(.moreActions, systemImage: "ellipsis.circle")
             }

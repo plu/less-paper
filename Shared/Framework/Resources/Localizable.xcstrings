@@ -4906,6 +4906,23 @@
         }
       }
     },
+    "shareAppLink" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App-Link teilen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share app link"
+          }
+        }
+      }
+    },
     "shareFormForwardAuthRequired" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4919,6 +4936,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your session has expired. Please sign in again in Less Paper before sharing."
+          }
+        }
+      }
+    },
+    "shareWebLink" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web-Link teilen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share web link"
           }
         }
       }
