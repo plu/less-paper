@@ -465,9 +465,9 @@ git commit -m "feat: a FavoritesStore over the PDFs on disk"
 
 ```swift
 import ApiInterface
-import ComposableArchitecture
 import Dependencies
 import Foundation
+import IdentifiedCollections
 import SwiftSharing
 import Testing
 
@@ -569,9 +569,9 @@ public extension DependencyValues {
 
 ```swift
 import ApiInterface
-import ComposableArchitecture
 import Dependencies
 import Foundation
+import IdentifiedCollections
 import SwiftSharing
 
 extension SaveFavoriteUseCase: @retroactive DependencyKey {
@@ -613,9 +613,9 @@ private extension SaveFavoriteUseCase {
 
 ```swift
 import ApiInterface
-import ComposableArchitecture
 import Dependencies
 import Foundation
+import IdentifiedCollections
 import SwiftSharing
 
 extension RemoveFavoriteUseCase: @retroactive DependencyKey {
@@ -669,9 +669,9 @@ This is the task most likely to be quietly wrong. Read the "Refresh" section of 
 
 ```swift
 import ApiInterface
-import ComposableArchitecture
 import Dependencies
 import Foundation
+import IdentifiedCollections
 import SwiftSharing
 import Testing
 
@@ -867,9 +867,9 @@ public extension DependencyValues {
 
 ```swift
 import ApiInterface
-import ComposableArchitecture
 import Dependencies
 import Foundation
+import IdentifiedCollections
 import SwiftSharing
 
 extension RefreshFavoritesUseCase: @retroactive DependencyKey {
