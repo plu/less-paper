@@ -2,6 +2,7 @@ import ApiInterface
 import ComposableArchitecture
 import Foundation
 import SwiftSharing
+import TipsFeature
 
 extension Effect where Action == AppReducer.Action {
 
@@ -35,6 +36,20 @@ extension Effect where Action == AppReducer.Action {
             id: CancelID.refreshStatistics,
             cancelInFlight: true
         )
+    }
+
+    // For the whole life of the app, not the life of the tip screen: a purchase approved through
+    // Ask to Buy arrives long after that screen is gone, and TipJar has already finished the
+    // transaction by the time it reaches here.
+    static func runTipObserver() -> Self {
+        @Dependency(\.tipJar.updates)
+        var updates
+
+        return .run { send in
+            for await tip in updates() {
+                await send(.tipReceived(tip))
+            }
+        }
     }
 
     static func runUpdateCache(server: Server) -> Self {

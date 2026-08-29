@@ -38,6 +38,7 @@ extension Module {
                 .target(.forwardAuthFeature),
                 .target(.serversFeature),
                 .target(.settingsFeature),
+                .target(.tipsFeature),
             ]
         case .appFeatureTests:
             [
@@ -47,9 +48,11 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .target(.apiInterface),
                 .target(.appFeature),
+                .target(.components),
                 .target(.serversFeature),
                 .target(.settingsFeature),
                 .target(.testSupport),
+                .target(.tipsFeature),
             ]
         case .appSnapshots:
             [
