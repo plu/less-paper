@@ -186,13 +186,14 @@ A heart in the `DocumentDetailView` toolbar, beside the existing edit and overfl
 when the document is a favorite and outlined when it is not, and a new item in `DocumentRowView`'s
 **existing long-press context menu** — not a swipe action.
 
-**The heart is already spoken for, and that is a known overlap.** `SettingListView` labels the tip
-jar `Label(.tips, systemImage: "heart")`, and `TipsFeature` uses `heart` on each tip row and
-`heart.slash` for its failure state. Favorites is the more strongly heart-coded of the two — it is
-what Photos uses — and it takes the filled variant in the tab bar and the toggle, leaving the
-outline to Settings' tips row one level down. They never appear in the same view. If that still
-reads as one glyph meaning two things, the cheaper move is to re-symbol tips (`cup.and.saucer` or
-`gift` both fit "leave a tip") rather than to give favorites something it is not.
+**The heart was the tip jar's, and has been handed over.** `SettingListView` labelled tips with a
+heart, which favorites has the stronger claim to — it is what Photos uses for exactly this. Tips
+moved to `cup.and.saucer` on the `chore/settings-tidy` branch, so nothing here competes for the
+glyph. `TipsFeature` keeps `heart.slash` for its failure state, which is why the favorites empty
+state uses an outline `heart` instead.
+
+**This feature therefore depends on that branch landing first.** It is a two-line change to a screen
+this feature also touches, and doing it separately keeps the favorites diff about favorites.
 
 `DocumentRowView` has no swipe actions today: it has `.onTapGesture` and `.contextMenu`, and the
 only swipe anywhere in `DocumentsFeature` is on `DocumentNoteRowView`. Adding one would introduce a
@@ -226,8 +227,9 @@ which `TipsFeature` already uses to mean something went wrong.
 committed captures under `Screenshots/Captures` stop matching the app the moment this ships — and
 they are already a version behind, having been taken before the tip jar. This is the expensive part
 of the feature: `mise run screenshots:capture` is about an hour, against `screenshots:frame`'s five
-seconds. It has to be planned in, and it is the one task here that cannot be hurried. It is also the
-moment to decide the tips symbol question above, since re-recording pays for that change too.
+seconds. It has to be planned in, and it is the one task here that cannot be hurried. The Settings
+tidy-up should land before the re-record, so the new tab and the new tip jar symbol are captured in
+one pass rather than two.
 
 `FavoriteListReducer` holds `@Shared(.favorites(server))`, a `searchText`, and rows as
 `IdentifiedArrayOf<FavoriteRowReducer.State>`. Tapping a row pushes the detail through a `Path`,
@@ -303,11 +305,27 @@ than a pile of identical ones.
 
 ### Settings and cleanup
 
-An "Offline documents" row in `SettingListView` shows the total on disk and offers two actions:
-"Redownload all", which forces phase two for every favorite, and a destructive "Remove all
-favorites" behind the existing `DeleteConfirmationPresenter`. Deleting a server deletes its
-favorites and their files too; without that hook the bytes outlive the server that explains them,
-with nothing in the UI to reach them.
+Favorites get a **screen of their own** in Settings rather than three rows in the main list.
+`DiagnosticsListView` is the precedent and the shape is identical: a screen about data the app is
+holding, with the actions on that data in one place. Three rows in the main list — one of them
+destructive — would lengthen a list that is already long, and would put "Remove all favorites" one
+mistap from "Tags".
+
+The row sits in the last section, which the tidy-up sorts A-Z, so the section reads Diagnostics,
+Favorites, GitHub, Licenses, Tip jar. It is called **Favorites**, matching the tab: one concept, one
+name, even though this screen is about the bytes rather than the list.
+
+The screen shows the total on disk and offers "Redownload all", which forces phase two for every
+favorite, and a destructive "Remove all favorites" behind the existing `DeleteConfirmationPresenter`.
+
+**It lives in `SettingsFeature`, not `FavoritesFeature`.** It needs only the store and the use cases,
+which are in `ApiInterface` and `ApiImplementation`; it needs nothing from the tab. Reaching for
+`FavoritesFeature` would give `SettingsFeature` a dependency on `DocumentsFeature` through it — a
+large module it does not currently link — for a screen with three rows on it. The favorites *tab* is
+what depends on `DocumentsFeature`; Settings should not inherit that.
+
+Deleting a server deletes its favorites and their files too; without that hook the bytes outlive the
+server that explains them, with nothing in the UI to reach them.
 
 ## Testing
 
@@ -330,8 +348,12 @@ tabs, and the existing row snapshots are what prove it: they must not change. A 
 is the signal that the extraction altered layout, not that a reference needs re-recording.
 
 Strings land in `Modules/FavoritesFeature/Resources/Localizable.xcstrings` in both `en` and `de`,
-with the few belonging to the toolbar and the Settings row going to `DocumentsFeature` and
-`SettingsFeature` respectively.
+with the few belonging to the toolbar going to `DocumentsFeature`, and the row plus the whole
+management screen to `SettingsFeature`.
+
+The Settings screen gets a snapshot per state — a size with favorites, and the empty case — and
+`TestStore` tests that "Redownload all" forces phase two and that "Remove all favorites" clears both
+records and files.
 
 ## Out of scope
 
