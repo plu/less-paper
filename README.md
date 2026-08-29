@@ -38,17 +38,21 @@ A public beta is available on TestFlight: <https://testflight.apple.com/join/3CM
 
 ## Requirements
 
-| | |
-|---|---|
-| iOS | 18.0+ |
-| Xcode | 26.5 |
-| Swift | 6.3 |
+- iOS 18.0 or newer
+- A running [paperless-ngx](https://docs.paperless-ngx.com) instance to talk to
 
-A running [paperless-ngx](https://docs.paperless-ngx.com) instance to talk to — or use the bundled Docker setup below.
+## Single sign-on (OIDC)
 
-## Getting started
+If your server offers [OpenID Connect sign-in](https://docs.paperless-ngx.com/advanced_usage/#openid-connect-and-social-authentication), the app shows the same providers on its sign-in screen and runs the login through a system browser sheet. For that flow to complete, the OAuth client your paperless instance uses needs two things on the identity provider:
 
-Tooling is pinned with [mise](https://mise.jdx.dev); it installs Tuist, SwiftLint, SwiftFormat and everything else at the exact versions CI uses.
+- **`lesspaper://oidc-callback` registered as a redirect URI** — this is how the browser hands the login back to the app
+- **a public (PKCE) code exchange allowed** — like any native client, the app exchanges its authorization code with PKCE and no client secret; a strictly confidential client will reject that exchange
+
+If the browser sheet ends on an error from the provider about the redirect URI, the callback URL above is the thing that's missing.
+
+## Building the app
+
+Building requires Xcode 26.5; everything else is pinned with [mise](https://mise.jdx.dev), which installs Tuist, SwiftLint, SwiftFormat and everything else at the exact versions CI uses.
 
 ```sh
 mise install       # tools + `brew bundle` via the postinstall hook
@@ -94,25 +98,9 @@ The API layer is tested against a live paperless-ngx container rather than mocks
 
 UI tests live in `AppUITests` and drive the assembled app end to end — onboarding, server management, settings, the create/edit/delete lifecycle of each entity, custom fields, and document browsing and editing — rather than a harness app per feature. Each test creates its own paperless user, so what it makes is invisible to every other test and the lists it opens start empty. The journeys run serially and take several minutes; they are the slow part of the suite, so CI reserves them for `main` and for pull requests labelled `UITests` or `TestFlight`.
 
-## Releasing
-
-Every push to `main` ships a build to TestFlight, numbered with the CI run number — a tester looking at 3.0.1 (68) is looking at run 68 of `ci.yml`.
-
-Promoting one of those builds to the App Store is the Release workflow, which takes that number and nothing else:
-
-```sh
-gh workflow run release.yml -f build=68
-```
-
-It resolves the number back to the commit and marketing version that produced it, refuses if that run never uploaded a build or if the build is not `VALID` on App Store Connect, uploads the listing, submits for review, and tags the commit as `v3.0.1+68` with a GitHub release. Add `-f dry_run=true` to see all of that without doing any of it, and `-f skip_screenshots=true` to leave the images on the listing alone.
-
-Apple holds the approved version in Pending Developer Release until you press Release in App Store Connect; it then rolls out over seven days.
-
-Nothing bumps `marketingVersion` in `Tuist/ProjectDescriptionHelpers/Extensions/String+Extensions.swift`. Edit it by hand after a submission — otherwise every subsequent TestFlight build carries a version that has already been used and can never be submitted.
-
 ## Contributing
 
-Conventions for this codebase — comment style, TCA patterns, the confirmation-popup rule and more — live in [AGENTS.md](AGENTS.md). Please read it before opening a pull request.
+Conventions for this codebase — comment style, TCA patterns, the confirmation-popup rule and more — live in [AGENTS.md](AGENTS.md). Please read it before opening a pull request. Releasing to the App Store is a maintainer task, documented in [docs/releasing.md](docs/releasing.md).
 
 ## License
 
