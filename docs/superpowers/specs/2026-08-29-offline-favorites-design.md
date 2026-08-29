@@ -182,8 +182,17 @@ Four use cases, all in `ApiImplementation`:
 
 ### Favoriting
 
-A star in the `DocumentDetailView` toolbar, beside the existing edit and overflow buttons, and a new
-item in `DocumentRowView`'s **existing long-press context menu** — not a swipe action.
+A heart in the `DocumentDetailView` toolbar, beside the existing edit and overflow buttons, filled
+when the document is a favorite and outlined when it is not, and a new item in `DocumentRowView`'s
+**existing long-press context menu** — not a swipe action.
+
+**The heart is already spoken for, and that is a known overlap.** `SettingListView` labels the tip
+jar `Label(.tips, systemImage: "heart")`, and `TipsFeature` uses `heart` on each tip row and
+`heart.slash` for its failure state. Favorites is the more strongly heart-coded of the two — it is
+what Photos uses — and it takes the filled variant in the tab bar and the toggle, leaving the
+outline to Settings' tips row one level down. They never appear in the same view. If that still
+reads as one glyph meaning two things, the cheaper move is to re-symbol tips (`cup.and.saucer` or
+`gift` both fit "leave a tip") rather than to give favorites something it is not.
 
 `DocumentRowView` has no swipe actions today: it has `.onTapGesture` and `.contextMenu`, and the
 only swipe anywhere in `DocumentsFeature` is on `DocumentNoteRowView`. Adding one would introduce a
@@ -209,8 +218,16 @@ leaving a half-written record. Unfavoriting is the same two affordances inverted
 
 ### The tab
 
-A fourth tab between Documents and Settings, `Label(.favorites, systemImage: "star.fill")`, added to
-`AppTab` and `MainView`.
+A fourth tab between Documents and Settings, `Label(.favorites, systemImage: "heart.fill")`, added
+to `AppTab` and `MainView`. The empty state uses the outline `heart` rather than `heart.slash`,
+which `TipsFeature` already uses to mean something went wrong.
+
+**A fourth tab invalidates every App Store screenshot.** The tab bar is in all seven screens, so the
+committed captures under `Screenshots/Captures` stop matching the app the moment this ships — and
+they are already a version behind, having been taken before the tip jar. This is the expensive part
+of the feature: `mise run screenshots:capture` is about an hour, against `screenshots:frame`'s five
+seconds. It has to be planned in, and it is the one task here that cannot be hurried. It is also the
+moment to decide the tips symbol question above, since re-recording pays for that change too.
 
 `FavoriteListReducer` holds `@Shared(.favorites(server))`, a `searchText`, and rows as
 `IdentifiedArrayOf<FavoriteRowReducer.State>`. Tapping a row pushes the detail through a `Path`,
