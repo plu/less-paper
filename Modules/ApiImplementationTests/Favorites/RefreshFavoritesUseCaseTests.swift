@@ -53,7 +53,7 @@ struct RefreshFavoritesUseCaseTests {
 
         let result = try await withDependencies {
             $0.getDocumentsByIds.execute = { _, _ in [fresh] }
-            $0.saveFavorite.execute = { _, _ in saved.withValue { $0 += 1 } }
+            $0.saveFavorite.execute = { _, _, _ in saved.withValue { $0 += 1 } }
         } operation: {
             try await RefreshFavoritesUseCase.liveValue.execute(false, server)
         }
@@ -143,7 +143,7 @@ struct RefreshFavoritesUseCaseTests {
 
         _ = try await withDependencies {
             $0.getDocumentsByIds.execute = { _, _ in [document] }
-            $0.saveFavorite.execute = { _, _ in saved.withValue { $0 += 1 } }
+            $0.saveFavorite.execute = { _, _, _ in saved.withValue { $0 += 1 } }
         } operation: {
             try await RefreshFavoritesUseCase.liveValue.execute(true, server)
         }

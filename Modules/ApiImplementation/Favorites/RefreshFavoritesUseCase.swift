@@ -89,7 +89,7 @@ private extension RefreshFavoritesUseCase {
                 guard let document = iterator.next() else { return }
                 group.addTask {
                     do {
-                        try await save(document, server)
+                        try await save(document, server, .refreshExisting)
                         return true
                     } catch {
                         return false

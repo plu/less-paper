@@ -32,7 +32,7 @@ struct SaveFavoriteUseCaseTests {
             $0.favoritesStore.writePDF = { data, _, _ in written.setValue(data); return data.count }
             $0.date.now = Date(timeIntervalSince1970: 100)
         } operation: {
-            try await SaveFavoriteUseCase.liveValue.execute(document, server)
+            try await SaveFavoriteUseCase.liveValue.execute(document, server, .add)
         }
 
         #expect(written.value?.count == 64)
@@ -57,11 +57,47 @@ struct SaveFavoriteUseCaseTests {
                 $0.getDocumentMetadata.execute = { _, _ in .testValue() }
                 $0.downloadDocument.execute = { _, _ in throw ApiError.testValue() }
             } operation: {
-                try await SaveFavoriteUseCase.liveValue.execute(.testValue(id: 7), server)
+                try await SaveFavoriteUseCase.liveValue.execute(.testValue(id: 7), server, .add)
             }
         }
 
         #expect($favorites.wrappedValue.isEmpty)
+    }
+
+    // A refresh must not put back a favorite the user removed while its fetch was in flight, and
+    // losing that race must not strand the PDF the save had already written.
+    @Test
+    func test_aRefreshSaveDoesNotResurrectAFavoriteRemovedMidFlight() async throws {
+        let server = Self.server("removed-mid-save")
+        defer { cleanUp(server) }
+
+        let deleted = LockIsolated<Document.Id?>(nil)
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 7))
+        ]
+        let shared = $favorites
+
+        try await withDependencies {
+            $0.getNotes.execute = { _, _ in [] }
+            $0.getDocumentMetadata.execute = { _, _ in .testValue() }
+            $0.downloadDocument.execute = { _, _ in
+                shared.withLock { $0.remove(id: 7) }
+                return Data(repeating: 9, count: 64)
+            }
+            $0.favoritesStore.writePDF = { data, _, _ in data.count }
+            $0.favoritesStore.deletePDF = { id, _ in deleted.setValue(id) }
+            $0.date.now = Date(timeIntervalSince1970: 100)
+        } operation: {
+            try await SaveFavoriteUseCase.liveValue.execute(
+                .testValue(id: 7),
+                server,
+                .refreshExisting
+            )
+        }
+
+        #expect($favorites.wrappedValue[id: 7] == nil)
+        #expect(deleted.value == 7)
     }
 
     private func cleanUp(_ server: Server) {
