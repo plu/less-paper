@@ -1667,9 +1667,14 @@ unoverridden, opening any viewer section offline errors — which is the feature
   document that was never favorited cannot resolve offline, and showing the ones we do hold beats
   failing the whole section.
 
-That the count was wrong is the exact risk this design carries, and it is why the no-network test
-below is worth more than it looks: the next person to add a call to the detail screen will not think
-about this tab.
+That the count was wrong is the exact risk this design carries. **The no-network test does not fully
+close it, and must say so.** It counts fetches through explicit stubs, so it catches a new *call
+site* of the five and a new viewer section — but a genuinely new sixth dependency falls through to
+its own `testValue`, and every use case in this codebase ships a working one rather than an
+unimplemented trap. The new call would return fixture data, increment nothing, and the suite would
+stay green while the offline screen broke. There is no choke point to assert on, so the honest
+mitigation is a comment on the test stating exactly what it does and does not cover, rather than a
+name that implies more.
 
 This test is the one that catches a future fourth network call in the detail screen, which would
 otherwise only show up offline:
