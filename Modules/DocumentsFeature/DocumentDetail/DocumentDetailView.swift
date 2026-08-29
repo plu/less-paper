@@ -40,10 +40,10 @@ struct DocumentDetailView: View {
                 .presentationDetents([.large])
         }
         .toolbar {
-            // Not disabled while the download is in flight: the viewer needs no PDF, so the menu
-            // always has that submenu even before Preview and Share appear.
+            // Not disabled while the download is in flight: only Preview needs the PDF, so the
+            // menu still carries Share and View before one has arrived.
             Menu {
-                if let url = store.downloadedURL {
+                if store.downloadedURL != nil {
                     Button {
                         send(.previewButtonTapped)
                     } label: {
