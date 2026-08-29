@@ -26,6 +26,9 @@ public struct AppView: View {
             }
             store.send(.didBecomeActive)
         }
+        .onOpenURL { url in
+            store.send(.openURL(url))
+        }
     }
 
     public init(store: StoreOf<AppReducer>) {
