@@ -12,18 +12,21 @@ public struct FavoriteListReducer: Sendable {
     public enum Path {
         case documentDetail(DocumentDetailReducer)
 
-        // The whole point of reusing the detail screen: its three fetches are pointed at the
-        // record, so it reads with no connection. A fourth fetch added to that screen would
-        // compile, pass every other test, and only fail offline — which is what
+        // The whole point of reusing the detail screen: every fetch it makes is pointed at the
+        // record, so it reads with no connection. These five are the whole set — the detail's own
+        // download, and the four the viewer sheet's sections reach. A sixth added to that screen
+        // would compile, pass every other test, and only fail offline, which is what
         // `test_theDetailScreenReadsFromTheStoreRatherThanTheNetwork` is there to catch.
         @ReducerBuilder<State, Action>
         public static var body: some ReducerOf<Self> {
             EmptyReducer()
                 .ifCaseLet(\.documentDetail, action: \.documentDetail) {
                     DocumentDetailReducer()
-                        .dependency(\.getNotes, .favoritesStore)
-                        .dependency(\.getDocumentMetadata, .favoritesStore)
                         .dependency(\.downloadDocument, .favoritesStore)
+                        .dependency(\.getDocument, .favoritesStore)
+                        .dependency(\.getDocumentMetadata, .favoritesStore)
+                        .dependency(\.getDocumentsByIds, .favoritesStore)
+                        .dependency(\.getNotes, .favoritesStore)
                 }
         }
     }

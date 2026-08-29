@@ -88,6 +88,33 @@ struct RefreshFavoritesUseCaseTests {
         #expect(saved.value == 0)
     }
 
+    // Phase one's write-back takes its document from `id__in`, which paperless truncates. Copying
+    // that `content` over would throw away the full text the save fetched, and phase two would not
+    // put it back: nothing that genuinely changes content leaves `modified` where it was, so an
+    // unchanged `modified` means the stored content is still the right one.
+    @Test
+    func test_phaseOneKeepsTheStoredContent() async throws {
+        let server = Self.server("keeps-stored-content")
+        defer { cleanUp(server) }
+
+        let full = "The quick brown fox jumped over the lazy dog"
+        let fresh = Document.testValue(content: "The quick brown fox jum", id: 7, modified: Self.stored, title: "Renamed")
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(content: full, id: 7, modified: Self.stored, title: "Old"))
+        ]
+
+        _ = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [fresh] }
+            $0.saveFavorite.execute = { _, _, _ in }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect($favorites.wrappedValue[id: 7]?.document.title == "Renamed")
+        #expect($favorites.wrappedValue[id: 7]?.document.content == full)
+    }
+
     @Test
     func test_anIdMissingFromTheResponseIsMarkedUnavailable() async throws {
         let server = Self.server("missing-id")

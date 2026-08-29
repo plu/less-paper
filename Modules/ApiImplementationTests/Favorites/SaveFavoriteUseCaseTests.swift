@@ -26,6 +26,7 @@ struct SaveFavoriteUseCaseTests {
         @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
 
         try await withDependencies {
+            $0.getDocument.execute = { _, _ in document }
             $0.getNotes.execute = { _, _ in [note] }
             $0.getDocumentMetadata.execute = { _, _ in .testValue() }
             $0.downloadDocument.execute = { _, _ in Data(repeating: 9, count: 64) }
@@ -42,6 +43,33 @@ struct SaveFavoriteUseCaseTests {
         #expect($favorites.wrappedValue[id: 7]?.isUnavailable == false)
     }
 
+    // The document handed to a save came from a list response, and paperless truncates content on
+    // those (`truncate_content=true`). Storing that copy would leave the offline viewer showing a
+    // preview of the text as if it were the whole document, and saying nothing about it.
+    @Test
+    func test_storesTheUntruncatedDocumentRatherThanTheListCopy() async throws {
+        let server = Self.server("untruncated-document")
+        defer { cleanUp(server) }
+
+        let listCopy = Document.testValue(content: "The quick brown fox jum", id: 7)
+        let full = Document.testValue(content: "The quick brown fox jumped over the lazy dog", id: 7)
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+
+        try await withDependencies {
+            $0.getDocument.execute = { _, _ in full }
+            $0.getNotes.execute = { _, _ in [] }
+            $0.getDocumentMetadata.execute = { _, _ in .testValue() }
+            $0.downloadDocument.execute = { _, _ in Data(repeating: 9, count: 64) }
+            $0.favoritesStore.writePDF = { data, _, _ in data.count }
+            $0.date.now = Date(timeIntervalSince1970: 100)
+        } operation: {
+            try await SaveFavoriteUseCase.liveValue.execute(listCopy, server, .add)
+        }
+
+        #expect($favorites.wrappedValue[id: 7]?.document.content == full.content)
+    }
+
     // A failed download must leave nothing behind: a record without its PDF is a favorite that
     // cannot be read offline, which is the one thing it exists to do.
     @Test
@@ -53,6 +81,7 @@ struct SaveFavoriteUseCaseTests {
 
         await #expect(throws: (any Error).self) {
             try await withDependencies {
+                $0.getDocument.execute = { _, _ in .testValue(id: 7) }
                 $0.getNotes.execute = { _, _ in [] }
                 $0.getDocumentMetadata.execute = { _, _ in .testValue() }
                 $0.downloadDocument.execute = { _, _ in throw ApiError.testValue() }
@@ -79,6 +108,7 @@ struct SaveFavoriteUseCaseTests {
         let shared = $favorites
 
         try await withDependencies {
+            $0.getDocument.execute = { _, _ in .testValue(id: 7) }
             $0.getNotes.execute = { _, _ in [] }
             $0.getDocumentMetadata.execute = { _, _ in .testValue() }
             $0.downloadDocument.execute = { _, _ in

@@ -115,13 +115,13 @@ struct FavoriteListReducerTests {
         #expect(store.state.rows.map(\.id) == [1])
     }
 
-    // The detail screen is the network screen, run against the record. This is what catches a
-    // further fetch being added to the three paths below: without the assertion such a change
-    // compiles, passes every other test, and only fails once there is no connection.
+    // The detail screen is the network screen, run against the record. Every fetch it makes is
+    // counted here, not a chosen few: someone adding a call to that screen will not be thinking
+    // about this tab, and without this assertion their change compiles, passes every other test,
+    // and only fails once there is no connection.
     //
-    // It drives the detail's own download and the viewer's Notes and Metadata sections. The
-    // viewer's own `onAppear` (getDocument) and its Custom Fields section (getDocumentsByIds) are
-    // deliberately not driven: both still reach the network, and neither is overridden here.
+    // It opens the detail and each of the viewer's four sections, which between them reach
+    // downloadDocument, getDocument, getNotes, getDocumentMetadata and getDocumentsByIds.
     @Test
     func test_theDetailScreenReadsFromTheStoreRatherThanTheNetwork() async throws {
         let server = Server.testValue(id: "detail-reads-from-the-store")
@@ -132,9 +132,22 @@ struct FavoriteListReducerTests {
         try Data("%PDF-1.4".utf8).write(to: pdfURL)
         defer { try? FileManager.default.removeItem(at: pdfURL) }
 
+        // A document-link field is what makes the custom fields section resolve anything at all;
+        // with no such field it never asks, and the section would pass by doing nothing.
+        @Shared(.customFields(server))
+        var customFields: IdentifiedArrayOf<CustomField> = [
+            .testValue(dataType: .documentLink, id: 1)
+        ]
+
+        let document = Document.testValue(
+            customFields: [.testValue(field: 1, value: .array([.number(8)]))],
+            id: 7
+        )
+
         @Shared(.favorites(server))
         var favorites: IdentifiedArrayOf<FavoriteDocument> = [
-            .testValue(document: .testValue(id: 7), metadata: .testValue(), notes: [note])
+            .testValue(document: document, metadata: .testValue(), notes: [note]),
+            .testValue(document: .testValue(id: 8, title: "Linked")),
         ]
 
         let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
@@ -145,9 +158,17 @@ struct FavoriteListReducerTests {
                 return Data()
             }
             $0.favoritesStore.pdfURL = { _, _ in pdfURL }
+            $0.getDocument.execute = { _, _ in
+                networkCalls.withValue { $0 += 1 }
+                return .testValue()
+            }
             $0.getDocumentMetadata.execute = { _, _ in
                 networkCalls.withValue { $0 += 1 }
                 return .testValue()
+            }
+            $0.getDocumentsByIds.execute = { _, _ in
+                networkCalls.withValue { $0 += 1 }
+                return []
             }
             $0.getNotes.execute = { _, _ in
                 networkCalls.withValue { $0 += 1 }
@@ -158,17 +179,30 @@ struct FavoriteListReducerTests {
 
         let favorite = try #require(favorites[id: 7])
         await store.send(.rows(.element(id: 7, action: .delegate(.open(favorite)))))
-
         await store.send(.path(.element(id: 0, action: .documentDetail(.view(.onAppear)))))
-        await store.send(.path(.element(id: 0, action: .documentDetail(.view(.viewButtonTapped(.notes))))))
-        await store.send(.path(.element(
-            id: 0,
-            action: .documentDetail(.destination(.presented(.documentViewer(.notes(.view(.onAppear))))))
-        )))
-        await store.send(.path(.element(
-            id: 0,
-            action: .documentDetail(.destination(.presented(.documentViewer(.metadata(.view(.onAppear))))))
-        )))
+
+        for section in DocumentViewerSection.allCases {
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.view(.viewButtonTapped(section)))
+            )))
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.destination(.presented(.documentViewer(.view(.onAppear)))))
+            )))
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.destination(.presented(.documentViewer(.customFields(.view(.onAppear))))))
+            )))
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.destination(.presented(.documentViewer(.metadata(.view(.onAppear))))))
+            )))
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.destination(.presented(.documentViewer(.notes(.view(.onAppear))))))
+            )))
+        }
 
         await store.finish()
 

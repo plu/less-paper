@@ -61,8 +61,13 @@ private extension RefreshFavoritesUseCase {
                 // Written back unconditionally: bulk edit changes fields without moving `modified`.
                 // `syncedModified` is carried rather than advanced — the notes, metadata and PDF
                 // have not been fetched yet, and phase two may still fail to fetch them.
+                //
+                // The stored `content` is carried too. This document came from `id__in`, which
+                // paperless truncates, so copying its `content` over would replace the whole text
+                // with a preview of it. Anything that genuinely changes content moves `modified`,
+                // so phase two is what refreshes it.
                 favorites[id: favorite.id] = FavoriteDocument(
-                    document: document,
+                    document: document.with(content: favorite.document.content),
                     metadata: favorite.metadata,
                     notes: favorite.notes,
                     pdfByteCount: favorite.pdfByteCount,

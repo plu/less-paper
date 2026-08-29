@@ -23,6 +23,38 @@ extension DownloadDocumentUseCase {
     }
 }
 
+extension GetDocumentUseCase {
+
+    // Safe to answer with the stored copy only because `SaveFavoriteUseCase` fetches this endpoint
+    // rather than keeping the list document it was handed: the list copy's `content` is truncated,
+    // and serving that here would show a preview of the text as if it were all of it.
+    static var favoritesStore: Self {
+        Self(execute: { id, server in
+            @Shared(.favorites(server))
+            var favorites: IdentifiedArrayOf<FavoriteDocument>
+
+            guard let document = favorites[id: id]?.document else {
+                throw FavoritesStoreError.notStored
+            }
+            return document
+        })
+    }
+}
+
+extension GetDocumentsByIdsUseCase {
+
+    // Whichever of the requested ids are themselves favorites. A linked document that was never
+    // favorited cannot resolve offline; showing the ones that are beats failing the whole section.
+    static var favoritesStore: Self {
+        Self(execute: { input, server in
+            @Shared(.favorites(server))
+            var favorites: IdentifiedArrayOf<FavoriteDocument>
+
+            return input.ids.compactMap { favorites[id: $0]?.document }
+        })
+    }
+}
+
 extension GetDocumentMetadataUseCase {
 
     static var favoritesStore: Self {

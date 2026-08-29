@@ -15,11 +15,17 @@ private extension SaveFavoriteUseCase {
         @Dependency(\.date.now) var now
         @Dependency(\.downloadDocument.execute) var downloadDocument
         @Dependency(\.favoritesStore) var store
+        @Dependency(\.getDocument.execute) var getDocument
         @Dependency(\.getDocumentMetadata.execute) var getMetadata
         @Dependency(\.getNotes.execute) var getNotes
 
         // Everything is fetched before anything is stored, so a failure anywhere leaves no
         // half-written favorite.
+
+        // The document handed in came from a list response, which paperless truncates
+        // (`truncate_content=true`), so its `content` is a preview. A favorite has to hold the whole
+        // thing or the offline viewer shows partial text and says nothing about it.
+        let full = try await getDocument(document.id, server)
         let notes = try await getNotes(document.id, server)
         let metadata = try await getMetadata(document.id, server)
         let data = try await downloadDocument(document.id, server)
@@ -35,8 +41,11 @@ private extension SaveFavoriteUseCase {
                 return false
             }
 
+            // Keyed and gated on the id that was handed in; only the persisted value is the
+            // untruncated copy. `syncedModified` stays the list copy's `modified`, because that is
+            // the field the refresh gate compares against.
             favorites[id: document.id] = FavoriteDocument(
-                document: document,
+                document: full,
                 metadata: metadata,
                 notes: notes,
                 pdfByteCount: byteCount,
