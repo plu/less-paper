@@ -47,6 +47,7 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .target(.apiInterface),
                 .target(.appFeature),
+                .target(.components),
                 .target(.serversFeature),
                 .target(.settingsFeature),
                 .target(.testSupport),

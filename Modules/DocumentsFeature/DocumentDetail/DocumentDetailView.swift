@@ -40,24 +40,20 @@ struct DocumentDetailView: View {
                 .presentationDetents([.large])
         }
         .toolbar {
-            // Not disabled while the download is in flight: the viewer needs no PDF, so the menu
-            // always has that submenu even before Preview and Share appear.
+            // Not disabled while the download is in flight: only Preview needs the PDF, so the
+            // menu still carries Share and View before one has arrived.
             Menu {
-                if let url = store.downloadedURL {
+                if store.downloadedURL != nil {
                     Button {
                         send(.previewButtonTapped)
                     } label: {
                         Label(.preview, systemImage: "eye")
                     }
-
-                    ShareLink(item: url) {
-                        Label(.share, systemImage: "square.and.arrow.up")
-                    }
-
-                    viewerMenu()
-                } else {
-                    viewerMenu()
                 }
+
+                shareMenu()
+
+                viewerMenu()
             } label: {
                 Label(.moreActions, systemImage: "ellipsis.circle")
             }
@@ -79,6 +75,19 @@ struct DocumentDetailView: View {
     @ViewBuilder
     private func viewerMenu() -> some View {
         DocumentViewerMenu { send(.viewButtonTapped($0)) }
+    }
+
+    @ViewBuilder
+    private func shareMenu() -> some View {
+        DocumentShareMenu(documentId: store.document.id, server: store.server) {
+            // Only once the file is here: detail has it downloaded already, so this shares it
+            // directly rather than asking for it again.
+            if let url = store.downloadedURL {
+                ShareLink(item: url) {
+                    Label(.document, systemImage: "doc")
+                }
+            }
+        }
     }
 
     @ViewBuilder

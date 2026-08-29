@@ -154,6 +154,23 @@
         }
       }
     },
+    "appLink" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App-Link"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App link"
+          }
+        }
+      }
+    },
     "apply" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2049,6 +2066,23 @@
         }
       }
     },
+    "deepLinkServerNotFound" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Server für %@ eingerichtet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No server configured for %@"
+          }
+        }
+      }
+    },
     "delete" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2477,6 +2511,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Share log"
+          }
+        }
+      }
+    },
+    "document" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokument"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Document"
           }
         }
       }
@@ -5940,6 +5991,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "HTTP Headers"
+          }
+        }
+      }
+    },
+    "webLink" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web-Link"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Web link"
           }
         }
       }

@@ -10,8 +10,12 @@ extension Module {
                 "CFBundleURLTypes": [
                     [
                         "CFBundleTypeRole": "Editor",
+                        // atlp is the OIDC callback scheme, and it is also what every deep link the
+                        // shipping app ever wrote uses. lesspaper is what new links are written
+                        // with; both are parsed the same way.
                         "CFBundleURLSchemes": [
                             "atlp",
+                            "lesspaper",
                         ]
                     ]
                 ],
