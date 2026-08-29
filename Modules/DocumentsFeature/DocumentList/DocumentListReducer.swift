@@ -17,10 +17,12 @@ public struct DocumentListReducer: Sendable {
         case documentImport(DocumentImportReducer.Action)
         case documentSelection(DocumentSelectionReducer.Action)
         case documents(IdentifiedActionOf<DocumentRowReducer>)
+        case documentFetched(Document)
         case documentsDeleted(Set<Document.Id>)
         case documentsRefreshed([Document])
         case error(Error)
         case isUpdating(ids: Set<Document.Id>, isUpdating: Bool)
+        case openDocument(Document.Id)
         case path(StackActionOf<Path>)
         case replaceDocuments(GetDocumentsOutput)
         case view(View)
@@ -308,19 +310,20 @@ public struct DocumentListReducer: Sendable {
                 case .deleteDocument:
                     return .runDeleteDocuments(ids: [id], server: state.server)
                 case let .presentDocumentDetail(document):
-                    let detail = Path.State.documentDetail(DocumentDetailReducer.State(
-                        document: document,
-                        server: state.server
-                    ))
-                    // A detail column shows one document: picking a second replaces the first
-                    // rather than stacking behind it, which is what appending would do and what
-                    // makes three taps leave three screens deep on iPad.
-                    if state.isSplitLayout {
-                        state.path.removeAll()
-                    }
-                    state.path.append(detail)
+                    state.presentDocumentDetail(document)
                     return .none
                 }
+            case let .documentFetched(document):
+                state.presentDocumentDetail(Shared(value: document))
+                return .none
+            case let .openDocument(id):
+                // A document the list already holds keeps its shared value: a copy would let an
+                // edit made here go unseen by the row behind it.
+                if let document = state.documents[id: id]?.$document {
+                    state.presentDocumentDetail(document)
+                    return .none
+                }
+                return .runGetDocument(id: id, server: state.server)
             case let .documentsDeleted(ids):
                 let countBefore = state.documents.count
                 state.documents.removeAll { ids.contains($0.id) }
