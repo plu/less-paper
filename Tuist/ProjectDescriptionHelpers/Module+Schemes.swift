@@ -45,7 +45,13 @@ public extension Module {
                             codeCoverageTargets: Module.allCodeCoverageTargets
                         )
                     ),
-                    runAction: .runAction()
+                    runAction: .runAction(
+                        // The only way to open a real purchase sheet in the simulator before the
+                        // products exist in App Store Connect.
+                        options: .options(
+                            storeKitConfigurationPath: .relativeToRoot("Tuist/Tips.storekit")
+                        )
+                    )
                 )
             ]
         case .appSnapshots:

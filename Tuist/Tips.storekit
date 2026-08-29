@@ -1,0 +1,59 @@
+{
+  "identifier" : "less-paper-tips",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "5.00",
+      "familyShareable" : false,
+      "internalID" : "A1000001",
+      "localizations" : [
+        {
+          "description" : "Supports development. Unlocks nothing.",
+          "displayName" : "Small tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.aptumtek.app.Paperless.tip.small",
+      "referenceName" : "Small tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "10.00",
+      "familyShareable" : false,
+      "internalID" : "A1000002",
+      "localizations" : [
+        {
+          "description" : "Supports development. Unlocks nothing.",
+          "displayName" : "Medium tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.aptumtek.app.Paperless.tip.medium",
+      "referenceName" : "Medium tip",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "25.00",
+      "familyShareable" : false,
+      "internalID" : "A1000003",
+      "localizations" : [
+        {
+          "description" : "Supports development. Unlocks nothing.",
+          "displayName" : "Large tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.aptumtek.app.Paperless.tip.large",
+      "referenceName" : "Large tip",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : false
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

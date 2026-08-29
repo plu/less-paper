@@ -5485,6 +5485,23 @@
         }
       }
     },
+    "tipProductUnavailable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Trinkgeld ist gerade nicht verfügbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That tip is not available right now."
+          }
+        }
+      }
+    },
     "title" : {
       "extractionState" : "manual",
       "localizations" : {
