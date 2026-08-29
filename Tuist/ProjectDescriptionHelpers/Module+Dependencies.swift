@@ -573,6 +573,23 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
             ]
+        case .tipsFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .target(.components),
+                .target(.logging),
+            ]
+        case .tipsFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .external(.snapshotTesting),
+                .target(.components),
+                .target(.testSupport),
+                .target(.tipsFeature),
+            ]
         case .uiTestSupport:
             [
                 .external(.dependencies),

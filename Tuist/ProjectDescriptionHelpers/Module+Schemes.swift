@@ -100,6 +100,7 @@ public extension Module {
              .shareFeature,
              .storagePathsFeature,
              .tagsFeature,
+             .tipsFeature,
              .trashFeature:
             [
                 .scheme(
@@ -167,6 +168,7 @@ public extension Module {
              .snapshotSupport,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
+             .tipsFeatureTests,
              .trashFeatureTests,
              .testSupport,
              .uiTestSupport:
