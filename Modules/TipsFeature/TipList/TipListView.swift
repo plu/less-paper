@@ -31,8 +31,15 @@ public struct TipListView: View {
                                 send(.tipButtonTapped(product.tip))
                             } label: {
                                 HStack {
-                                    Text(product.displayName)
-                                        .foregroundStyle(Color.m3OnSurface)
+                                    // The same Label-with-an-icon every row in Settings uses, and
+                                    // the same heart as the row that leads here: three sizes of
+                                    // one thing, told apart by their price rather than their icon.
+                                    Label {
+                                        Text(product.displayName)
+                                            .foregroundStyle(Color.m3OnSurface)
+                                    } icon: {
+                                        Image(systemName: "heart")
+                                    }
 
                                     Spacer()
 
