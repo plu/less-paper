@@ -936,14 +936,14 @@ private extension RefreshFavoritesUseCase {
         }
 
         // Phase two.
+        // A sliding window: `concurrency` tasks in flight, and each one that finishes starts the
+        // next. `withTaskGroup(of:)` would otherwise run all of them at once.
         let failed = await withTaskGroup(of: Bool.self) { group in
-            var running = 0
             var iterator = changed.makeIterator()
             var failures = 0
 
             func addNext() {
                 guard let document = iterator.next() else { return }
-                running += 1
                 group.addTask {
                     do {
                         try await saveFavorite(document, server)
@@ -957,7 +957,6 @@ private extension RefreshFavoritesUseCase {
             for _ in 0 ..< concurrency { addNext() }
 
             while let succeeded = await group.next() {
-                running -= 1
                 if !succeeded { failures += 1 }
                 addNext()
             }
