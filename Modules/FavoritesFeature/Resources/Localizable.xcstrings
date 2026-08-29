@@ -1,5 +1,40 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {},
-  "version" : "1.1"
+  "sourceLanguage": "en",
+  "strings": {
+    "favoriteUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht verfügbar"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unavailable"
+          }
+        }
+      }
+    },
+    "unfavorite": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Favoriten entfernen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from Favorites"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.1"
 }

@@ -258,6 +258,7 @@ extension Module {
                 .external(.dependencies),
                 .external(.dependenciesMacros),
                 .external(.sharing),
+                .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
                 .target(.documentsFeature),
