@@ -78,14 +78,23 @@ struct FavoriteDocumentTests {
         #expect(favorite.id == 7)
     }
 
+    // Not the API coders: JSONEncoder.apiEncoder formats every Date as "yyyy-MM-dd", which would
+    // truncate `storedAt` and — far worse — `document.modified`, the field the refresh gate
+    // compares. Favorites is the first thing to persist a Document to disk, so it is the first to
+    // need a lossless pair.
     @Test
-    func test_roundTripsThroughTheApiCoders() throws {
-        let favorite = FavoriteDocument.testValue()
+    func test_roundTripsLosslesslyIncludingTimeOfDay() throws {
+        let modified = Date(timeIntervalSince1970: 1_756_290_271)
+        let favorite = FavoriteDocument.testValue(
+            document: .testValue(modified: modified),
+            storedAt: modified
+        )
 
-        let data = try JSONEncoder.apiEncoder.encode(favorite)
-        let decoded = try JSONDecoder.apiDecoder.decode(FavoriteDocument.self, from: data)
+        let data = try JSONEncoder.favoritesEncoder.encode(favorite)
+        let decoded = try JSONDecoder.favoritesDecoder.decode(FavoriteDocument.self, from: data)
 
         #expect(decoded == favorite)
+        #expect(decoded.document.modified == modified)
     }
 }
 ```
@@ -159,7 +168,40 @@ public extension FavoriteDocument {
 }
 ```
 
-- [ ] **Step 4: Add the shared key**
+- [ ] **Step 4: Add lossless coders and the shared key**
+
+Create `Modules/ApiInterface/Extensions/JSONCoder+Favorites.swift`:
+
+```swift
+import Foundation
+
+// The API pair cannot be reused here. JSONEncoder.apiEncoder formats every Date as "yyyy-MM-dd",
+// which is right for the API — paperless wants a day for `created` — and wrong for a file we read
+// back. It would round `storedAt` to midnight, and round `document.modified` with it: the field the
+// refresh gate compares, which would then differ from the server's on every launch and re-download
+// every PDF. Nothing has hit this before because `documents(_:)` is `.inMemory`, so no Document has
+// ever been written to disk.
+public extension JSONEncoder {
+
+    static let favoritesEncoder = {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .millisecondsSince1970
+        return encoder
+    }()
+}
+
+public extension JSONDecoder {
+
+    static let favoritesDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .millisecondsSince1970
+        return decoder
+    }()
+}
+```
+
+The two are symmetric and use default key coding, so the property names are the contract on both
+sides. This file is private to the device; there is no interop to honour.
 
 Append to `Modules/ApiInterface/Extensions/SharedReaderKey+Extensions.swift`, in the same shape as `correspondents(_:)`:
 
@@ -171,8 +213,8 @@ where Self == FileStorageKey<IdentifiedArrayOf<FavoriteDocument>>.Default {
         Self[
             .fileStorage(
                 .applicationGroupDirectory.appending(component: "\(server.id)-favorites.json"),
-                decoder: .apiDecoder,
-                encoder: .apiEncoder
+                decoder: .favoritesDecoder,
+                encoder: .favoritesEncoder
             ),
             default: []
         ]
@@ -1392,7 +1434,45 @@ Expected: FAIL — `cannot find 'FavoriteListReducer' in scope`.
 
 - [ ] **Step 4: Write the reducer**
 
-`State` holds `@Shared(.favorites(server)) var favorites`, `searchText`, `isRefreshing`, a `StackState<Path.State>`, and:
+`State` holds `@Shared(.favorites(server)) var favorites`, `searchText`, `isRefreshing`, a `StackState<Path.State>`, and — so a favorite does not show a pre-edit copy in the same session — the live cache the other lists project their rows out of:
+
+```swift
+@Shared(.documents(server))
+var documentCache: IdentifiedArrayOf<Document>
+
+// The live copy when the cache has one, the stored snapshot otherwise. A cold launch and an
+// offline session get the snapshot, which is exactly when it is the only truth available.
+func displayed(_ favorite: FavoriteDocument) -> Document {
+    documentCache[id: favorite.id] ?? favorite.document
+}
+```
+
+Rows are built with `displayed(favorite)`, and the detail push passes `Shared($documentCache[id:])`
+when the cache has an entry and `Shared(value: favorite.document)` when it does not.
+
+Add this test alongside the search one:
+
+```swift
+@Test
+func test_aRowShowsTheLiveDocumentWhenTheCacheHasOne() async {
+    let server = Server.testValue()
+
+    @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        .testValue(document: .testValue(id: 1, title: "Stored"))
+    ]
+    @Shared(.documents(server)) var cache: IdentifiedArrayOf<Document> = [
+        .testValue(id: 1, title: "Edited")
+    ]
+
+    let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
+        FavoriteListReducer()
+    }
+
+    #expect(store.state.rows[id: 1]?.document.title == "Edited")
+}
+```
+
+and the filter:
 
 ```swift
 var visibleFavorites: IdentifiedArrayOf<FavoriteDocument> {

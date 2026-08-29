@@ -266,6 +266,19 @@ make a hit impossible to see in a row. Everything it searches is already on disk
 server round-trip and no debounce to get wrong. `.refreshable` drives the refresh, and
 `EmptyListView` covers having no favorites yet.
 
+**The list reads through the live document cache when it has one.** `documents(_ server:)` is the
+`.inMemory` array every other list projects its rows out of — `DocumentListReducer` builds each row
+as `Shared($documentCache[id:])!`, which is how an edit in Documents shows up in Inbox. A favorite
+embeds its own `Document`, so without this it would show the pre-edit copy in the same session, with
+no refresh able to correct it because refresh runs on pull or foreground and the user never left the
+app.
+
+So `FavoriteListReducer` holds `@Shared(.documents(server))` too, and a row displays
+`documentCache[id: favorite.id] ?? favorite.document`. The live copy wins when the cache has one;
+the stored copy is what a cold launch and an offline session get, which is exactly when it is the
+only truth there is. Nothing is written: refresh still owns the stored copy, and this is a read-side
+reconcile that costs one lookup.
+
 `FavoriteRowView` renders `DocumentRowContent` — the extracted correspondent, date, title, ASN /
 type / storage-path grid and tag chips — so a favorite looks like a document everywhere else. What
 it puts around that content is its own: a thumbnail drawn from page one of the stored PDF instead of
@@ -400,9 +413,11 @@ upgrade path if that changes.
 do it — no `BGAppRefreshTask`, no push. A favorite is current as of the last time the app was open,
 which is the moment before you needed it offline anyway.
 
-**Re-saving a favorite after editing that document elsewhere in the app.** The next foreground
-catches it. Wiring the document form to the favorites store to save one refresh would couple two
-features for a few seconds' latency.
+**Re-saving a favorite's PDF after editing that document elsewhere in the app.** The row and the
+detail already show the edit, because both read through the live document cache. What stays behind
+is the stored snapshot — the PDF, notes and metadata — until the next refresh. Wiring the document
+form to the favorites store would couple two features to re-download a PDF that a title edit did not
+change.
 
 **A UI test journey.** Worth adding once the flow settles; it needs its own document uploaded by the
 test user, per the rules in `AGENTS.md`.
