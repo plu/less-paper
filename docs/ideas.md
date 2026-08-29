@@ -73,12 +73,12 @@ Surfaced during: `docs/superpowers/specs/2026-08-14-delete-document-design.md` a
 
 ---
 
-## One string catalog invalidates every module
+## One string catalog invalidates every module — done
 
-`Module+Targets.swift` gives every `.framework`/`.staticFramework` target
-`Shared/Framework/Resources/**` as a resource, so all ~30 of them embed the single
-`Localizable.xcstrings`. Changing one string changes every module's fingerprint, and Tuist's
-selective testing correctly concludes that everything changed.
+`Module+Targets.swift` used to give every `.framework`/`.staticFramework` target
+`Shared/Framework/Resources/**` as a resource, so all ~30 of them embedded the single
+`Localizable.xcstrings`. Changing one string changed every module's fingerprint, and Tuist's
+selective testing correctly concluded that everything changed.
 
 Measured on three runs from the same day:
 
@@ -88,29 +88,21 @@ Measured on three runs from the same day:
 | `fix_unresolved_filter_ids` | `DocumentsFeature` only | 222s |
 | `fix_has_any_tag` | `DocumentsFeature` + one string | 1711s |
 
-Since most feature PRs add a string, most PRs take the slow path.
+Since most feature PRs add a string, most PRs took the slow path.
 
-The obvious cheap fix does not work: moving the catalog into one shared module changes nothing,
-because every module would then depend on that module and the fan-out is identical. It has to
-actually split. Of 170 keys, **110 (64%) were used by exactly one module**, so per-module catalogs
-would not duplicate much — but the 56 genuinely shared ones (`cancel`, `close`, `save`, `name`,
-`title`, `url`, `tags`, `deleteConfirmation`, …) need a home.
+The catalogue is now split per module, one `Modules/<Name>/Resources/Localizable.xcstrings` each.
+The worry that killed earlier attempts — that the 56 shared keys would need hand-written `public`
+accessors, because Xcode's generated symbols are `internal` to whichever target compiles the
+catalogue — turned out to be avoidable: a shared key is simply **copied** into each module that
+uses it. Duplication measured 1.30x (434 key-copies for 333 unique keys), which buys back the whole
+fan-out without giving up symbol generation for a single string.
 
-That split was measured when the catalog held 170 keys; it now holds 206, so the proportions need
-re-deriving before they are quoted at anyone.
+The earlier estimate was also pessimistic. Re-derived with a matcher that understands positional
+arguments (`Label(.edit, systemImage:)`) as well as labelled ones, **283 of 333 keys (84%) are used
+by exactly one module**, not 64%. The old figure missed `Label(…)` call sites, which
+is the same gap that made `edit` and `Tag` look dead below.
 
-The catch is why the current design exists at all: there are no hand-written
-`LocalizedStringResource` extensions and Tuist's synthesizers are off, so `.cancel` comes from
-Xcode's built-in string catalog symbol generation — and those symbols are `internal` to whichever
-target compiles the catalog. Attaching the catalog everywhere is *how* every module can say
-`.cancel`. Sharing a subset means hand-written `public` accessors for those 56 keys, losing
-auto-generation for exactly the strings a translator is most likely to touch.
-
-Worth re-measuring first: #139 stopped the XCUITest targets running on every PR, which should take
-a lot out of the slow path. If a string-change run lands somewhere tolerable, this may not be worth
-its cost.
-
-Surfaced during: the CI runtime investigation, 2026-08-15.
+Surfaced during: the CI runtime investigation, 2026-08-15. Done 2026-08-29.
 
 ---
 
@@ -128,21 +120,49 @@ Surfaced during: the CI runtime investigation, 2026-08-15.
 
 ---
 
-## Small localization loose ends
+## Small localization loose ends — done
 
-Two things noticed while working on the tag filter, neither urgent:
+Noticed while working on the tag filter, re-checked during the per-module catalogue split, and
+fixed with it. German wording was taken from the paperless-ngx web UI wherever it had a term for
+the same control, so the app and the web interface read the same to a German user.
 
-- The tag rule picker reads **All | Any | Assigned | Not assigned** in English but
-  **Alle | Alle | Zugewiesen | Nicht zugewiesen** in German, because `any` is translated `"Alle"`,
-  identical to `all`. It predates the fourth segment added in #133, and the string also drives the
-  correspondent, document type and storage path fields, so it was left alone rather than changed
-  underneath them.
-- Four keys have no detected usage and may be dead: `edit`, `makeDefault`,
-  `SavedViewsFeature_formHasFieldErrors`, `Tag`. Detection accounted for Xcode's key→symbol
-  transform (`asnType.equals` → `asnTypeEquals`), so these are more likely genuine than the rest,
-  but worth confirming by hand before deleting.
+- The tag rule picker read **All | Any | Assigned | Not assigned** in English but
+  **Alle | Alle | …** in German, because `any` was translated `"Alle"`, identical to `all`. The same
+  pair is also the AND/OR picker in `CustomFieldQueryCardView` — `Text(.all).tag(.and)` beside
+  `Text(.any).tag(.or)`, two identical options. `any` is now **"Beliebig"**. paperless-ngx uses
+  *Einzelne* for its own query dropdown, which is deliberately **not** what was copied: `.any` also
+  backs six `Text(.any).capsule()` placeholders meaning "no filter set", where *Einzelne* would be
+  wrong and *Beliebig* is right. One word had to serve all seven sites.
+- `customFieldQueryOperatorContains` and `...Icontains` were both "Contains" / "Enthält", so the
+  case-sensitive and case-insensitive operators were indistinguishable. `icontains` is now
+  **"Contains (case insensitive)"** / **"Enthält (Groß-/Kleinschreibung irrelevant)"**, reusing the
+  app's own `caseInsensitive` phrasing. Note that paperless-ngx's German for its equivalent string
+  says *"beachte Groß- und Kleinschreibung"*, which states the opposite of what the operator does —
+  a bug on their side, so it was not copied.
+- `owner` was *Besitzer* while `sortFieldOwner` was *Eigentümer*. Both are now **"Eigentümer"**,
+  which is what paperless-ngx uses.
+- `retry` was *Erneut versuchen* while `retryDownload` was *Nochmal versuchen*. The deeper problem
+  was that `retryDownload` existed at all: five identical retry buttons, and only
+  `DocumentDetailView` used its own key. It now uses `.retry` like the other four, and the key is
+  gone.
+- `select` was *Selektieren*, an anglicism. Now **"Auswählen"**, per paperless-ngx. This also keeps
+  it properly distinct from `customFieldDataTypeSelect` (*Auswahl*, the data type).
+- The key `Tag` was renamed to `tag`; it was the last capitalised key. The generated symbol is
+  `.tag` either way, so nothing in Swift changed.
+- **The dead-key list was wrong about two of the four.** `edit` and `Tag` are both live —
+  `Label(.edit, systemImage:)` in `DocumentDetailView` and `DocumentRowView`, `String(localized:
+  .tag)` in `TagFormSection` — and the earlier detection missed them because it only understood
+  labelled arguments, not a leading-dot resource in first position. `makeDefault` and
+  `SavedViewsFeature_formHasFieldErrors` were genuinely dead and are gone, together with `back`,
+  `host` and `customFieldQueryUnknownOption`, which the same re-check turned up.
 
-Surfaced during: #133 and the string catalog analysis.
+Deliberately **not** aligned to paperless-ngx, having compared all 136 strings where the two share
+an English source: it agrees on 113. Of the rest, several of ours are better — paperless leaves
+*Created date* untranslated, and *Teilen* beats *Freigeben* for an iOS share sheet — and others are
+settled house style, such as *Benutzerdefiniertes Feld* over *Zusatzfeld* and *Passwort* over
+*Kennwort*. Those are choices, not defects, and were left alone.
+
+Surfaced during: #133 and the string catalog analysis. Done 2026-08-29.
 
 ---
 

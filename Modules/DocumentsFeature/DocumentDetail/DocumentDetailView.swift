@@ -99,7 +99,7 @@ struct DocumentDetailView: View {
             Button {
                 send(.retryDownloadButtonTapped)
             } label: {
-                Text(.retryDownload)
+                Text(.retry)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.primary())

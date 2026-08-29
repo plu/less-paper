@@ -6,10 +6,11 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      # The captions live in Modules/MarketingKit/Resources/Localizable.xcstrings, so the
+      # MarketingKit entry already covers a copy change. There is no shared catalogue to watch.
       - Modules/MarketingKit/**
       - Modules/MarketingKitTests/**
       - Screenshots/Captures/**
-      - Shared/Framework/Resources/Localizable.xcstrings
 
 # One runner, and a push while a run is queued makes the queued one pointless - it would render an
 # older commit. Frame only: cancelling Record would throw away an hour, and cancelling Upload could

@@ -104,6 +104,69 @@ guard await presentConfirmation(.deleteTag, name) else {
 Reach for that first. Write a presenter of your own only when the popup needs custom content, as
 `DocumentBulkEditConfirmationPresenter` does.
 
+## Every module owns its strings
+
+Each framework module carries its own `Modules/<Name>/Resources/Localizable.xcstrings`. **There is
+no shared catalogue.** A new user-facing string goes into the catalogue of the module that displays
+it, in both `en` and `de`, with `"extractionState": "manual"`, keys sorted alphabetically.
+
+One catalogue used to be globbed into all ~30 framework targets, which made every new string dirty
+every target: a PR touching one module took 222s, the same PR plus one string took 1711s. The split
+is what removed that, and anything that reintroduces a shared catalogue brings the 1711s back.
+
+**A module can only use the strings in its own catalogue.** `STRING_CATALOG_GENERATE_SYMBOLS`
+emits `LocalizedStringResource.cancel` as `internal` to whichever target compiles the catalogue, so
+no symbol crosses a module boundary. Two modules that both show *Cancel* each get their own `cancel`
+key — **the duplication is the design, not an oversight.** It measures 1.30x across the project,
+and it is what buys back the rebuild time without giving up symbol generation.
+
+The compiler catches a string you have not added, but says it two different ways:
+
+```
+// No other module defines it.
+error: type 'LocalizedStringResource' has no member 'save'
+
+// Another module does define it — same problem, different message.
+error: 'import' is inaccessible due to 'internal' protection level
+```
+
+Both mean: add the key to *this* module's catalogue. Copy the entry verbatim from whichever module
+already has it, translation included, so the two do not drift.
+
+Three more things worth knowing:
+
+- **The catalogue reaches the target through the buildable folder, not a `resources:` glob.**
+  `Module+Targets.swift` sets `resources` only for `.app`; frameworks pick the file up because
+  `Modules/<Name>` is a synchronized folder. Creating the file is the whole job — no manifest edit.
+- **Modules with no user-facing text have no catalogue at all** — `ApiImplementation`,
+  `ImageFeature`, `Logging`, `SnapshotSupport` and the test-support modules. Do not add an empty one
+  for symmetry; that puts the module back on the rebuild path for every string change.
+- **The symbol is derived from the key, not equal to it.** `asnType.equals` becomes
+  `.asnTypeEquals`, and a key that collides with a keyword is declared backticked (`` `import` ``)
+  while the call site stays `Text(.import)`. Anything grepping for usages has to account for both,
+  and for `Label(.edit, systemImage:)` — a resource in first position, which is what an earlier
+  audit missed when it wrongly concluded `edit` and `Tag` were dead.
+
+**`@testable import` re-exposes those internal symbols**, so a test target that `@testable import`s
+two modules which both define `cancel` gets an ambiguity error rather than a missing-member one.
+Every test module imports exactly one product module today except `ApiImplementationTests` and
+`DocumentsFeatureTests`, and neither of those uses a string symbol. Keep it that way; if a test
+needs one, reach for it through the single module under test.
+
+Finally, a log line to ignore. Any build that compiles more than one catalogue prints, once or
+twice per catalogue-owning target:
+
+```
+Internal Error: DecodingError.dataCorrupted: Data was corrupted. Debug description: Corrupted JSON. Underlying error: unexpected end of file
+```
+
+It is **not** a broken catalogue and it fails nothing. It appeared with the split, so it is new, but
+it was chased down: `xcstringstool compile` and `generate-symbols` both exit 0 on every catalogue,
+a single-catalogue build (`Components` alone) prints it zero times, and the built framework carries
+the full key set — `ServersFeature.framework` ships all 23 keys in both `en.lproj` and `de.lproj`
+with the right German values. It is Xcode's build system logging against itself when several
+`CompileXCStrings` tasks run in parallel. Don't spend an afternoon on it.
+
 ## UI tests never mutate global server state
 
 UI tests live in `AppUITests` and drive the real app against paperless-ngx. Each test creates its own
