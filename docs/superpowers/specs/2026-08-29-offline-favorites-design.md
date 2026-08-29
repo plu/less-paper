@@ -86,6 +86,28 @@ Because pull-to-refresh no longer re-downloads unconditionally, Settings also ca
 **"Redownload all"** action for when a local copy is suspected wrong — the original behaviour, kept,
 just moved off the gesture that will be used most.
 
+**Refresh also runs on launch and on returning to the foreground.** This was out of scope while a
+refresh meant re-downloading everything; making phase one a single `id__in` request changed the
+economics, and the decision deserves revisiting rather than inheriting. `AppReducer` already does
+exactly this for statistics — `case .didBecomeActive` returns `.runRefreshStatistics(server:)` — so
+favorites join it there, and at `bootstrap` for launch.
+
+It belongs in `AppReducer` rather than the tab's `onAppear`, because the point is to be current
+*before* the user needs it. Someone opening the Favorites tab has often opened it precisely because
+they have no signal; refreshing then is too late to help.
+
+**No throttle is needed, because phase two is self-limiting.** Once a refresh has run, nothing has
+changed, so the next foreground costs one request and downloads nothing — the same profile as the
+statistics call already sitting there. A throttle would be machinery guarding against a cost that
+does not recur.
+
+**An automatic refresh is silent.** It reports nothing on success and nothing on failure: the user
+did not ask for it, and a toast every time a phone comes back into signal would be noise. Only
+pull-to-refresh and "Redownload all" report. Nor may a *failed* phase one mark anything unavailable
+— absence only means deleted when the request actually succeeded, and conflating "the server did not
+answer" with "the document is gone" would badge every favorite the first time the app opens on a
+plane.
+
 **The app does not ask whether it is online, and this feature does not teach it to.** Adding an
 `NWPathMonitor` would report the *interface*, not whether the paperless server is reachable — a
 device on Wi-Fi with no route to the server still reads as online — so it would buy a gate that is
@@ -301,7 +323,14 @@ A refresh that finds nothing changed therefore makes exactly one request. `Redow
 is the same thing with phase two forced for every favorite, and is what the Settings action calls.
 
 Refreshing without a reachable server fails in phase one, so the list reports one failure rather
-than a pile of identical ones.
+than a pile of identical ones — and marks nothing unavailable, since it learned nothing about what
+the server holds.
+
+It runs from three places: pull-to-refresh in the tab, `AppReducer.bootstrap` at launch, and
+`AppReducer.didBecomeActive` on returning to the foreground, alongside the statistics refresh
+already there. The automatic two report nothing either way. An in-flight refresh is not restarted —
+the effect is `.cancellable(id:)` and a second trigger is dropped rather than queued, so
+backgrounding and foregrounding repeatedly cannot stack downloads.
 
 ### Settings and cleanup
 
@@ -336,7 +365,12 @@ The refresh gate earns three of its own, because it is the part most likely to b
 unchanged `modified` fetches no notes, no metadata and no PDF; a moved `modified` fetches all three;
 and a document whose fields changed while `modified` did not — the bulk-edit case — still ends up
 with the new fields stored. That last one is the test that would catch someone "simplifying" the
-unconditional write-back away. Store tests for the file layer
+unconditional write-back away.
+
+Automatic refresh gets two more, both about staying quiet: `AppReducer` on `didBecomeActive`
+refreshes favorites alongside statistics, and a phase one that *fails* leaves every record untouched
+— no badge, no error surfaced. The second is the one that matters, because getting it wrong badges
+every favorite as unavailable the first time the app opens without signal. Store tests for the file layer
 against a temporary directory, covering the atomic write, the size sum, and deletion removing both
 record and file. Snapshot tests for the list in its empty, populated, badged-unavailable
 and offline states, following the existing suites. The dependency overrides get a test of their own:
@@ -362,9 +396,13 @@ records and files.
 **Syncing favorites between devices.** The local flag is the decision; a tag-backed store is the
 upgrade path if that changes.
 
-**Automatic refresh.** No background refresh, no refresh on foreground, and no re-save after an edit
-made elsewhere in the app. Pull-to-refresh and "Redownload all" are the only ways favorites update,
-which keeps when-the-bytes-change something the user decides.
+**Background refresh.** Refresh runs on launch and on foreground, but the app never wakes itself to
+do it — no `BGAppRefreshTask`, no push. A favorite is current as of the last time the app was open,
+which is the moment before you needed it offline anyway.
+
+**Re-saving a favorite after editing that document elsewhere in the app.** The next foreground
+catches it. Wiring the document form to the favorites store to save one refresh would couple two
+features for a few seconds' latency.
 
 **A UI test journey.** Worth adding once the flow settles; it needs its own document uploaded by the
 test user, per the rules in `AGENTS.md`.
@@ -384,10 +422,18 @@ adds a fourth network call, the Favorites tab will silently start hitting the ne
 the failure only shows up offline. The test that feeds the detail screen from the store is what
 catches it; it needs to stay honest as the detail screen grows.
 
-**A favorite goes stale until it is refreshed.** Nothing syncs on its own: edit a document anywhere
-and its favorite keeps the old copy until the next pull, with nothing saying so. That is the design
-— refresh is the user's to run — but showing `storedAt` on the row is the cheap answer if it turns
-out people cannot tell how old a copy is.
+**A favorite is only as fresh as the last time the app was open.** Launch and foreground refreshes
+close most of the gap, but a phone that has been in a pocket since yesterday holds yesterday's copy,
+and nothing on screen says how old it is. Showing `storedAt` on the row is the cheap answer if that
+turns out to matter.
+
+**Phase two downloads without being asked.** An automatic refresh that finds a changed favorite
+re-fetches its PDF, which could be megabytes on a cellular connection the user would not have chosen
+to spend. The volume is bounded by design — a handful of documents, and only the ones that actually
+changed, which in practice is rarely more than one — so no gate is built for it. If it bites,
+`NWPathMonitor`'s `isExpensive` is the fix, and it is worth noting that this is the question that
+monitor is *good* at: it reports the link honestly, unlike reachability, which is what it was
+rejected for earlier in this document.
 
 **The refresh gate leans on paperless-ngx internals.** That `modified` is `auto_now`, that the notes
 endpoints bump it by hand, and that `bulk_edit` bypasses it are all facts read from the source at a
