@@ -313,13 +313,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enthält"
+            "value": "Enthält (Groß-/Kleinschreibung irrelevant)"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Contains"
+            "value": "Contains (case insensitive)"
           }
         }
       }

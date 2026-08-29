@@ -120,32 +120,49 @@ Surfaced during: the CI runtime investigation, 2026-08-15.
 
 ---
 
-## Small localization loose ends
+## Small localization loose ends — done
 
-Noticed while working on the tag filter, and re-checked during the per-module catalogue split:
+Noticed while working on the tag filter, re-checked during the per-module catalogue split, and
+fixed with it. German wording was taken from the paperless-ngx web UI wherever it had a term for
+the same control, so the app and the web interface read the same to a German user.
 
-- The tag rule picker reads **All | Any | Assigned | Not assigned** in English but
-  **Alle | Alle | Zugewiesen | Nicht zugewiesen** in German, because `any` is translated `"Alle"`,
-  identical to `all`. It predates the fourth segment added in #133, and the string also drives the
-  correspondent, document type and storage path fields, so it was left alone rather than changed
-  underneath them. Still open, and it is the one German string worth fixing: the same two words are
-  also the AND/OR picker in `CustomFieldQueryCardView`, where `Text(.all).tag(.and)` and
-  `Text(.any).tag(.or)` render as two identical options. `"Beliebig"` reads correctly in both
-  places. Changing it re-records the German snapshot references that show either segment.
+- The tag rule picker read **All | Any | Assigned | Not assigned** in English but
+  **Alle | Alle | …** in German, because `any` was translated `"Alle"`, identical to `all`. The same
+  pair is also the AND/OR picker in `CustomFieldQueryCardView` — `Text(.all).tag(.and)` beside
+  `Text(.any).tag(.or)`, two identical options. `any` is now **"Beliebig"**. paperless-ngx uses
+  *Einzelne* for its own query dropdown, which is deliberately **not** what was copied: `.any` also
+  backs six `Text(.any).capsule()` placeholders meaning "no filter set", where *Einzelne* would be
+  wrong and *Beliebig* is right. One word had to serve all seven sites.
+- `customFieldQueryOperatorContains` and `...Icontains` were both "Contains" / "Enthält", so the
+  case-sensitive and case-insensitive operators were indistinguishable. `icontains` is now
+  **"Contains (case insensitive)"** / **"Enthält (Groß-/Kleinschreibung irrelevant)"**, reusing the
+  app's own `caseInsensitive` phrasing. Note that paperless-ngx's German for its equivalent string
+  says *"beachte Groß- und Kleinschreibung"*, which states the opposite of what the operator does —
+  a bug on their side, so it was not copied.
+- `owner` was *Besitzer* while `sortFieldOwner` was *Eigentümer*. Both are now **"Eigentümer"**,
+  which is what paperless-ngx uses.
+- `retry` was *Erneut versuchen* while `retryDownload` was *Nochmal versuchen*. The deeper problem
+  was that `retryDownload` existed at all: five identical retry buttons, and only
+  `DocumentDetailView` used its own key. It now uses `.retry` like the other four, and the key is
+  gone.
+- `select` was *Selektieren*, an anglicism. Now **"Auswählen"**, per paperless-ngx. This also keeps
+  it properly distinct from `customFieldDataTypeSelect` (*Auswahl*, the data type).
+- The key `Tag` was renamed to `tag`; it was the last capitalised key. The generated symbol is
+  `.tag` either way, so nothing in Swift changed.
 - **The dead-key list was wrong about two of the four.** `edit` and `Tag` are both live —
   `Label(.edit, systemImage:)` in `DocumentDetailView` and `DocumentRowView`, `String(localized:
   .tag)` in `TagFormSection` — and the earlier detection missed them because it only understood
   labelled arguments, not a leading-dot resource in first position. `makeDefault` and
   `SavedViewsFeature_formHasFieldErrors` were genuinely dead and are gone, together with `back`,
   `host` and `customFieldQueryUnknownOption`, which the same re-check turned up.
-- Two more one-English-word-two-German-words pairs, both cosmetic: `owner` is *Besitzer* while
-  `sortFieldOwner` is *Eigentümer*, and `retry` is *Erneut versuchen* while `retryDownload` is
-  *Nochmal versuchen*.
-- `customFieldQueryOperatorContains` and `customFieldQueryOperatorIcontains` are both "Contains" /
-  "Enthält", so the case-sensitive and case-insensitive operators are indistinguishable in the
-  picker in both languages. This one needs wording, not just unification.
 
-Surfaced during: #133, the string catalog analysis, and the catalogue split on 2026-08-29.
+Deliberately **not** aligned to paperless-ngx, having compared all 136 strings where the two share
+an English source: it agrees on 113. Of the rest, several of ours are better — paperless leaves
+*Created date* untranslated, and *Teilen* beats *Freigeben* for an iOS share sheet — and others are
+settled house style, such as *Benutzerdefiniertes Feld* over *Zusatzfeld* and *Passwort* over
+*Kennwort*. Those are choices, not defects, and were left alone.
+
+Surfaced during: #133 and the string catalog analysis. Done 2026-08-29.
 
 ---
 

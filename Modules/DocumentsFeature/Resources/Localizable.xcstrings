@@ -1,23 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "Tag": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tag"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tag"
-          }
-        }
-      }
-    },
     "addCustomField": {
       "extractionState": "manual",
       "localizations": {
@@ -126,7 +109,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alle"
+            "value": "Beliebig"
           }
         },
         "en": {
@@ -2430,7 +2413,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Besitzer"
+            "value": "Eigentümer"
           }
         },
         "en": {
@@ -2533,23 +2516,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Erneut versuchen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Retry"
-          }
-        }
-      }
-    },
-    "retryDownload": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nochmal versuchen"
           }
         },
         "en": {
@@ -2719,7 +2685,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Selektieren"
+            "value": "Auswählen"
           }
         },
         "en": {
@@ -3148,6 +3114,23 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "tag": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tag"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tag"
           }
         }
       }
