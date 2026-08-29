@@ -53,6 +53,21 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func contextMenu() -> some View {
+        // Favorite cannot sit in the A-Z run below: its label flips between "Add to Favorites" and
+        // "Remove from Favorites" as the state it reports changes, so an alphabetical position would
+        // move it under the user's thumb between taps. Anchored at the top instead, above its own
+        // divider — the same reasoning that holds Delete below the one at the bottom.
+        Button {
+            send(.favoriteButtonTapped)
+        } label: {
+            Label(
+                store.isFavorited ? .unfavorite : .favorite,
+                systemImage: store.isFavorited ? "heart.fill" : "heart"
+            )
+        }
+
+        Divider()
+
         Button {
             send(.editButtonTapped)
         } label: {

@@ -69,6 +69,11 @@ public struct DocumentViewerReducer: Sendable {
             }
         }
 
+        // Carried only so a linked document opened from here inherits it: that document is a fresh
+        // DocumentDetailReducer, not the one the Favorites tab already marked, and its own edit
+        // form would otherwise reach the network same as any other document's.
+        let isOfflineSnapshot: Bool
+
         var isLoadingDocument = false
 
         var loadError: String?
@@ -83,6 +88,7 @@ public struct DocumentViewerReducer: Sendable {
 
         init(
             document: Shared<Document>,
+            isOfflineSnapshot: Bool = false,
             section: DocumentViewerSection = .content,
             server: Server
         ) {
@@ -91,6 +97,7 @@ public struct DocumentViewerReducer: Sendable {
                 document: document,
                 server: server
             )
+            self.isOfflineSnapshot = isOfflineSnapshot
             self.metadata = DocumentMetadataReducer.State(
                 documentId: document.wrappedValue.id,
                 server: server
@@ -122,6 +129,7 @@ public struct DocumentViewerReducer: Sendable {
             case let .customFields(.delegate(.openDocument(document))):
                 state.destination = .documentDetail(DocumentDetailReducer.State(
                     document: Shared(value: document),
+                    isOfflineSnapshot: state.isOfflineSnapshot,
                     server: state.server
                 ))
                 return .none

@@ -13,8 +13,24 @@ extension Effect where Action == DocumentDetailReducer.Action {
         }
         .cancellable(id: CancelID.downloadDocument)
     }
+
+    static func runToggleFavorite(document: Document, isFavorited: Bool, server: Server) -> Self {
+        .run { _ in
+            if isFavorited {
+                @Dependency(\.removeFavorite.execute)
+                var removeFavorite
+                try await removeFavorite(document.id, server)
+            } else {
+                @Dependency(\.saveFavorite.execute)
+                var saveFavorite
+                try await saveFavorite(document, server, .add)
+            }
+        }
+        .cancellable(id: CancelID.toggleFavorite)
+    }
 }
 
 private enum CancelID {
     case downloadDocument
+    case toggleFavorite
 }

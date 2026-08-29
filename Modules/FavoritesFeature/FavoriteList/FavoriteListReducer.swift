@@ -145,6 +145,8 @@ public struct FavoriteListReducer: Sendable {
                     // The row's own reference, so an edit made in the detail reaches the row
                     // behind it rather than a copy of it.
                     document: state.rows[id: id]?.$document ?? Shared(value: favorite.document),
+                    // A favorite is a snapshot: read everything, change nothing.
+                    isOfflineSnapshot: true,
                     server: state.server
                 )))
                 return .none

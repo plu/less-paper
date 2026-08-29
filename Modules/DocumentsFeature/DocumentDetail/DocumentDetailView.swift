@@ -58,10 +58,23 @@ public struct DocumentDetailView: View {
                 Label(.moreActions, systemImage: "ellipsis.circle")
             }
 
-            Button(action: {
-                send(.editDocumentButtonTapped)
-            }) {
-                Label(.edit, systemImage: "square.and.pencil")
+            Button {
+                send(.favoriteButtonTapped)
+            } label: {
+                Label(
+                    store.isFavorited ? .unfavorite : .favorite,
+                    systemImage: store.isFavorited ? "heart.fill" : "heart"
+                )
+            }
+
+            // A snapshot is read-only: its edit form is the only door to a network write this
+            // screen can otherwise reach, so it is not offered here at all.
+            if !store.isOfflineSnapshot {
+                Button(action: {
+                    send(.editDocumentButtonTapped)
+                }) {
+                    Label(.edit, systemImage: "square.and.pencil")
+                }
             }
         }
     }

@@ -8,6 +8,7 @@ extension DocumentViewerReducer.State {
     static func testValue(
         document: Document = .testValue(),
         hasLoadedContent: Bool = false,
+        isOfflineSnapshot: Bool = false,
         loadError: String? = nil,
         metadata: DocumentMetadata? = nil,
         notes: IdentifiedArrayOf<Note>? = nil,
@@ -16,6 +17,7 @@ extension DocumentViewerReducer.State {
     ) -> Self {
         var state = Self(
             document: Shared(value: document),
+            isOfflineSnapshot: isOfflineSnapshot,
             section: section,
             server: server
         )

@@ -30,10 +30,30 @@ extension Effect where Action == DocumentRowReducer.Action {
         }
         .cancellable(id: CancelID.downloadDocument(document.id))
     }
+
+    static func runToggleFavorite(
+        document: Document,
+        isFavorited: Bool,
+        server: Server
+    ) -> Self {
+        .run { _ in
+            if isFavorited {
+                @Dependency(\.removeFavorite.execute)
+                var removeFavorite
+                try await removeFavorite(document.id, server)
+            } else {
+                @Dependency(\.saveFavorite.execute)
+                var saveFavorite
+                try await saveFavorite(document, server, .add)
+            }
+        }
+        .cancellable(id: CancelID.toggleFavorite(document.id))
+    }
 }
 
 // Keyed by document: a bare case would make a tap on one row cancel another row's download.
 private enum CancelID: Hashable {
     case confirmDelete
     case downloadDocument(Document.Id)
+    case toggleFavorite(Document.Id)
 }

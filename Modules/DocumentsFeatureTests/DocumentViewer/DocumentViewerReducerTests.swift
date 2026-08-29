@@ -240,6 +240,32 @@ struct DocumentViewerReducerTests {
         }
     }
 
+    // A viewer opened from a favorite's detail is itself a snapshot, and a linked document reached
+    // through it is not the document the Favorites tab already vouched for — its own edit form must
+    // stay just as unreachable.
+    @Test
+    func openingALinkFromAnOfflineSnapshotCarriesTheFlagIntoTheLinkedDetail() async throws {
+        let linked = Document.testValue(id: 2, title: "Contract")
+        let store = TestStore(
+            initialState: DocumentViewerReducer.State.testValue(
+                isOfflineSnapshot: true,
+                section: .customFields
+            )
+        ) {
+            DocumentViewerReducer()
+        }
+
+        await store.send(.customFields(.delegate(.openDocument(linked)))) {
+            $0.destination = .documentDetail(
+                DocumentDetailReducer.State(
+                    document: Shared(value: linked),
+                    isOfflineSnapshot: true,
+                    server: $0.server
+                )
+            )
+        }
+    }
+
     @Test
     func dismissingTheSheetClearsTheDestination() async throws {
         let linked = Document.testValue(id: 2, title: "Contract")

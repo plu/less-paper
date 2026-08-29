@@ -14,6 +14,7 @@ public struct DocumentDetailReducer: Sendable {
 
         public enum View {
             case editDocumentButtonTapped
+            case favoriteButtonTapped
             case onAppear
             case previewButtonTapped
             case retryDownloadButtonTapped
@@ -41,6 +42,19 @@ public struct DocumentDetailReducer: Sendable {
             downloadResult?.value?.url
         }
 
+        @SharedReader
+        var favorites: IdentifiedArrayOf<FavoriteDocument>
+
+        // A favorite is a snapshot: it reads what was saved, and every user-initiated write the
+        // detail path can otherwise reach — the edit form's save, its ASN lookup, its notes
+        // composer and delete, its document picker — must stay unreachable, since none of those
+        // dependencies are among the ones the Favorites tab overrides for reading.
+        var isOfflineSnapshot = false
+
+        var isFavorited: Bool {
+            favorites[id: document.id] != nil
+        }
+
         var quickLookPreview: URL?
 
         let server: Server
@@ -49,12 +63,15 @@ public struct DocumentDetailReducer: Sendable {
             destination: Destination.State? = nil,
             document: Shared<Document>,
             downloadResult: DownloadResult? = nil,
+            isOfflineSnapshot: Bool = false,
             quickLookPreview: URL? = nil,
             server: Server
         ) {
             self.destination = destination
             self._document = document
             self.downloadResult = downloadResult
+            self._favorites = SharedReader(wrappedValue: [], .favorites(server))
+            self.isOfflineSnapshot = isOfflineSnapshot
             self.quickLookPreview = quickLookPreview
             self.server = server
         }
@@ -75,11 +92,23 @@ public struct DocumentDetailReducer: Sendable {
             case let .view(viewAction):
                 switch viewAction {
                 case .editDocumentButtonTapped:
+                    // A snapshot changes nothing: this stays unreachable even if something manages
+                    // to send it with the edit button hidden, since it is the only door to the
+                    // form's save, its ASN lookup, its notes composer and delete, and its picker.
+                    guard !state.isOfflineSnapshot else {
+                        return .none
+                    }
                     state.destination = .documentForm(DocumentFormReducer.State(
                         document: state.$document,
                         server: state.server
                     ))
                     return .none
+                case .favoriteButtonTapped:
+                    return .runToggleFavorite(
+                        document: state.document,
+                        isFavorited: state.isFavorited,
+                        server: state.server
+                    )
                 case .onAppear:
                     guard state.downloadResult == nil else {
                         return .none
@@ -94,6 +123,7 @@ public struct DocumentDetailReducer: Sendable {
                 case let .viewButtonTapped(section):
                     state.destination = .documentViewer(DocumentViewerReducer.State(
                         document: state.$document,
+                        isOfflineSnapshot: state.isOfflineSnapshot,
                         section: section,
                         server: state.server
                     ))
