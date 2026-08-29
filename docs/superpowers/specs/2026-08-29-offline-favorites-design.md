@@ -59,10 +59,32 @@ The user deliberately kept that copy. A refresh that reacted to a 404 by destroy
 be the one behaviour capable of losing something irreplaceable, so refresh marks the record and
 leaves the bytes alone; removing it stays a deliberate act.
 
-**Refresh reloads everything.** Pull-to-refresh re-fetches document, notes, metadata and PDF for
-every favorite rather than diffing on `modified`. It is the behaviour asked for, it is the one that
-cannot leave a stale PDF behind a fresh title, and at the scale this feature targets — a handful of
-documents — the cost is a few seconds.
+**Refresh re-reads every favorite but re-downloads only what changed.** One request —
+`GetDocumentsByIdsUseCase`, which already exists and issues `id__in` — returns the current
+`Document` for every favorite at once. That payload is most of what a favorite stores, so it is
+written back unconditionally. Only where `modified` has moved are the three expensive calls made
+again: notes, metadata and the PDF. In the common case where nothing changed, a refresh is **one
+request and a few kilobytes** instead of four requests per favorite and every PDF over the wire.
+
+Two facts from the paperless-ngx source make this safe, and one makes it necessary to do it in
+exactly this order.
+
+`modified` is a sound gate for the expensive three. It is `auto_now=True` on `Document`, so any save
+moves it; the notes endpoint explicitly does `doc.modified = timezone.now()` on **both** create and
+delete, so a note added from the web UI is caught; and the PDF-mutating operations (`rotate`,
+`edit_pdf`) route their output back through the consume pipeline as a new version, which saves the
+document.
+
+**Bulk edit does not move `modified`, which is why the document is written back unconditionally.**
+`bulk_edit.py` sets correspondent, document type, storage path, owner, tags and ASN through
+`QuerySet.update()`, which bypasses `auto_now` entirely, and its follow-up `bulk_update_documents`
+task only reindexes — it never calls `save()`. A `modified`-gated refresh alone would therefore keep
+stale tags forever, and this app has bulk edit, so it can cause that itself. Taking the fresh
+`Document` from the same request that computed the gate costs nothing and closes the hole.
+
+Because pull-to-refresh no longer re-downloads unconditionally, Settings also carries a
+**"Redownload all"** action for when a local copy is suspected wrong — the original behaviour, kept,
+just moved off the gesture that will be used most.
 
 **The app does not ask whether it is online, and this feature does not teach it to.** Adding an
 `NWPathMonitor` would report the *interface*, not whether the paperless server is reachable — a
@@ -154,7 +176,8 @@ Four use cases, all in `ApiImplementation`:
 |---|---|
 | `SaveFavoriteUseCase` | fetches document, notes, metadata and PDF, writes the file, upserts the record |
 | `RemoveFavoriteUseCase` | deletes the record and its PDF |
-| `RefreshFavoritesUseCase` | re-runs the save for every favorite, reporting per-document results |
+| `RefreshFavoritesUseCase` | one `id__in` request, then re-saves only the favorites whose `modified` moved |
+| `RedownloadFavoritesUseCase` | the same, with the re-save forced for every favorite |
 | `FavoritesStorageSizeUseCase` | sums the records and the files on disk |
 
 ### Favoriting
@@ -241,23 +264,44 @@ back.
 
 ### Refresh
 
-`RefreshFavoritesUseCase` walks the favorites with a `TaskGroup` bounded to three at a time — enough
-to be quick, not enough to hammer a home server — and isolates each document: one failure does not
-abort the run. It returns a per-document result, which the list summarises. A 404 sets
-`isUnavailable` and touches nothing else. Refreshing while offline surfaces the offline state rather
-than a pile of identical failures.
+`RefreshFavoritesUseCase` runs in two phases.
+
+**Phase one is a single request.** `GetDocumentsByIdsUseCase` is called with every favorite's id and
+returns their current `Document`s. Each favorite's stored `Document` is replaced from that response
+— unconditionally, for the bulk-edit reason above — and any id the server did not return is marked
+`isUnavailable`. Absence is the signal here rather than a 404, because one request cannot 404 for
+one document; a deleted document simply is not in the results. The id list goes out in chunks of 100
+so a large favorites set cannot produce a URL the server rejects.
+
+**Phase two touches only the changed.** Favorites whose returned `modified` differs from the stored
+one get their notes, metadata and PDF re-fetched, through a `TaskGroup` bounded to three at a time —
+enough to be quick, not enough to hammer a home server. Each document is isolated: one failure does
+not abort the run. The use case returns a per-document result, which the list summarises.
+
+A refresh that finds nothing changed therefore makes exactly one request. `RedownloadFavoritesUseCase`
+is the same thing with phase two forced for every favorite, and is what the Settings action calls.
+
+Refreshing without a reachable server fails in phase one, so the list reports one failure rather
+than a pile of identical ones.
 
 ### Settings and cleanup
 
-An "Offline documents" row in `SettingListView` shows the total on disk and offers a destructive
-"Remove all favorites" behind the existing `DeleteConfirmationPresenter`. Deleting a server deletes
-its favorites and their files too; without that hook the bytes outlive the server that explains
-them, with nothing in the UI to reach them.
+An "Offline documents" row in `SettingListView` shows the total on disk and offers two actions:
+"Redownload all", which forces phase two for every favorite, and a destructive "Remove all
+favorites" behind the existing `DeleteConfirmationPresenter`. Deleting a server deletes its
+favorites and their files too; without that hook the bytes outlive the server that explains them,
+with nothing in the UI to reach them.
 
 ## Testing
 
 `TestStore` tests for `FavoriteListReducer`: search filtering, refresh success, refresh with one
-document failing, a document going unavailable, and the empty state. Store tests for the file layer
+document failing, a document going unavailable, and the empty state.
+
+The refresh gate earns three of its own, because it is the part most likely to be quietly wrong: an
+unchanged `modified` fetches no notes, no metadata and no PDF; a moved `modified` fetches all three;
+and a document whose fields changed while `modified` did not — the bulk-edit case — still ends up
+with the new fields stored. That last one is the test that would catch someone "simplifying" the
+unconditional write-back away. Store tests for the file layer
 against a temporary directory, covering the atomic write, the size sum, and deletion removing both
 record and file. Snapshot tests for the list in its empty, populated, badged-unavailable
 and offline states, following the existing suites. The dependency overrides get a test of their own:
@@ -279,8 +323,9 @@ with the few belonging to the toolbar and the Settings row going to `DocumentsFe
 **Syncing favorites between devices.** The local flag is the decision; a tag-backed store is the
 upgrade path if that changes.
 
-**Automatic refresh.** No background refresh, no refresh on foreground. Pull-to-refresh is the only
-way favorites update, which keeps when-the-bytes-change something the user decides.
+**Automatic refresh.** No background refresh, no refresh on foreground, and no re-save after an edit
+made elsewhere in the app. Pull-to-refresh and "Redownload all" are the only ways favorites update,
+which keeps when-the-bytes-change something the user decides.
 
 **A UI test journey.** Worth adding once the flow settles; it needs its own document uploaded by the
 test user, per the rules in `AGENTS.md`.
@@ -300,11 +345,18 @@ adds a fourth network call, the Favorites tab will silently start hitting the ne
 the failure only shows up offline. The test that feeds the detail screen from the store is what
 catches it; it needs to stay honest as the detail screen grows.
 
-**A favorite goes stale silently.** Edit a document from the Documents tab and its favorite still
-holds the old title, notes and PDF until the next pull-to-refresh, with nothing saying so. Refresh
-after a save would close the gap, but only for edits made in this app — a change from the web UI or
-another device is invisible either way, so the honest fix is that refresh is the user's to run. If
-this bites in practice, showing `storedAt` on the row is a cheaper answer than automatic syncing.
+**A favorite goes stale until it is refreshed.** Nothing syncs on its own: edit a document anywhere
+and its favorite keeps the old copy until the next pull, with nothing saying so. That is the design
+— refresh is the user's to run — but showing `storedAt` on the row is the cheap answer if it turns
+out people cannot tell how old a copy is.
+
+**The refresh gate leans on paperless-ngx internals.** That `modified` is `auto_now`, that the notes
+endpoints bump it by hand, and that `bulk_edit` bypasses it are all facts read from the source at a
+point in time, not guarantees of the API. If a future release adds another `QuerySet.update()` path
+that changes something the gate protects — notes or the file — a favorite would stay stale through
+refreshes with nothing to show for it. The unconditional document write-back limits the blast radius
+to notes and the PDF, "Redownload all" is the escape hatch, and the reasoning is written down here
+so the next person can check it rather than rediscover it.
 
 **Extracting `DocumentRowContent` touches two shipping tabs.** The row is the most-seen view in the
 app, and the extraction is pure refactoring in service of a third tab. The existing snapshot
