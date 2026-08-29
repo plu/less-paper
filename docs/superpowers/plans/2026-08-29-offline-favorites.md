@@ -537,17 +537,29 @@ import Dependencies
 import DependenciesMacros
 import Foundation
 
+// Refresh and favoriting share this use case, and they want opposite things from a document that
+// was unfavorited while the fetch was in flight: the add path must write it, a refresh must not
+// resurrect it.
+public enum SaveFavoriteMode: Equatable, Sendable {
+    case add
+    case refreshExisting
+}
+
 @DependencyClient
 public struct SaveFavoriteUseCase: Sendable {
 
-    public var execute: @Sendable (_ document: Document, _ server: Server) async throws -> Void
+    public var execute: @Sendable (
+        _ document: Document,
+        _ server: Server,
+        _ mode: SaveFavoriteMode
+    ) async throws -> Void
 }
 
 extension SaveFavoriteUseCase: TestDependencyKey {
 
-    public static let previewValue = Self(execute: { _, _ in })
+    public static let previewValue = Self(execute: { _, _, _ in })
 
-    public static let testValue = Self(execute: { _, _ in })
+    public static let testValue = Self(execute: { _, _, _ in })
 }
 
 public extension DependencyValues {
@@ -596,18 +608,32 @@ private extension SaveFavoriteUseCase {
 
         @Shared(.favorites(server)) var favorites
 
-        $favorites.withLock {
-            $0[id: document.id] = FavoriteDocument(
+        // The check and the write share one lock, so nothing can remove the favorite between them.
+        // A refresh that loses that race deletes the PDF it just wrote rather than leaving an
+        // orphan file behind.
+        let wrote = $favorites.withLock { favorites -> Bool in
+            guard mode == .add || favorites[id: document.id] != nil else {
+                return false
+            }
+            favorites[id: document.id] = FavoriteDocument(
                 document: document,
                 metadata: metadata,
                 notes: notes,
                 pdfByteCount: byteCount,
                 storedAt: now
             )
+            return true
+        }
+
+        if !wrote {
+            try await store.deletePDF(document.id, server)
         }
     }
 }
 ```
+
+`RefreshFavoritesUseCase` passes `.refreshExisting`; favoriting from the row or the toolbar passes
+`.add`.
 
 `Modules/ApiImplementation/Favorites/RemoveFavoriteUseCase.swift`:
 
@@ -713,7 +739,7 @@ struct RefreshFavoritesUseCaseTests {
 
         let result = try await withDependencies {
             $0.getDocumentsByIds.execute = { _, _ in [fresh] }
-            $0.saveFavorite.execute = { _, _ in saved.withValue { $0 += 1 } }
+            $0.saveFavorite.execute = { _, _, _ in saved.withValue { $0 += 1 } }
         } operation: {
             try await RefreshFavoritesUseCase.liveValue.execute(false, server)
         }
@@ -797,7 +823,7 @@ struct RefreshFavoritesUseCaseTests {
 
         _ = try await withDependencies {
             $0.getDocumentsByIds.execute = { _, _ in [document] }
-            $0.saveFavorite.execute = { _, _ in saved.withValue { $0 += 1 } }
+            $0.saveFavorite.execute = { _, _, _ in saved.withValue { $0 += 1 } }
         } operation: {
             try await RefreshFavoritesUseCase.liveValue.execute(true, server)
         }
@@ -946,7 +972,7 @@ private extension RefreshFavoritesUseCase {
                 guard let document = iterator.next() else { return }
                 group.addTask {
                     do {
-                        try await saveFavorite(document, server)
+                        try await saveFavorite(document, server, .refreshExisting)
                         return true
                     } catch {
                         return false
@@ -1632,7 +1658,10 @@ func test_favoriteButtonSavesWhenNotYetFavorited() async {
     ) {
         DocumentRowReducer()
     } withDependencies: {
-        $0.saveFavorite.execute = { document, _ in saved.setValue(document.id) }
+        $0.saveFavorite.execute = { document, _, mode in
+            #expect(mode == .add)
+            saved.setValue(document.id)
+        }
     }
 
     await store.send(.view(.favoriteButtonTapped))
