@@ -33,6 +33,19 @@ struct TipListReducerTests {
         }
     }
 
+    // A re-appearance (a push/pop, or the app leaving and returning) must not re-trigger the
+    // fetch once the screen already has an answer - otherwise revisiting an already-failed screen
+    // flashes back to a blank list while it silently refetches.
+    @Test
+    func onAppear_whenAlreadyResolved_doesNothing() async {
+        let store = TestStore(
+            initialState: TipListReducer.State(isLoading: false, loadFailed: true),
+            reducer: { TipListReducer() }
+        )
+
+        await store.send(.view(.onAppear))
+    }
+
     // An empty answer is a failure as far as the screen is concerned: a tip jar that renders as an
     // empty list reads as broken rather than as unavailable.
     @Test

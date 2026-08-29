@@ -78,7 +78,19 @@ public struct TipListReducer: Sendable {
                     return .toast(Toast.error(String(localized: .tipFailed)))
                 }
 
-            case .view(.onAppear), .view(.retryButtonTapped):
+            case .view(.onAppear):
+                // A re-appearance (a push/pop, or the app leaving and returning) must not
+                // re-trigger the fetch once the screen already has an answer - otherwise
+                // revisiting an already-failed or already-loaded screen flashes back to a blank
+                // list while it silently refetches. `isLoading` starts `true`, so a fresh push
+                // still loads; `retryButtonTapped` sets it back to `true` to force one.
+                guard state.isLoading else {
+                    return .none
+                }
+                state.loadFailed = false
+                return .runLoadProducts()
+
+            case .view(.retryButtonTapped):
                 state.isLoading = true
                 state.loadFailed = false
                 return .runLoadProducts()

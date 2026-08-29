@@ -59,12 +59,6 @@ public struct TipListView: View {
         .navigationTitle(Text(.tips))
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            // Only the very first appearance (or a retry, which sets this back to true) should
-            // fetch. Without this guard, reappearing after an already-loaded or already-failed
-            // state briefly wipes the screen back to a blank list while it re-fetches.
-            guard store.isLoading else {
-                return
-            }
             await send(.onAppear).finish()
         }
     }
