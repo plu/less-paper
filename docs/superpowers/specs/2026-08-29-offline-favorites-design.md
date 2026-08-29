@@ -74,18 +74,18 @@ read-only gets the same outcome with no infrastructure and no lie.
 and `DocumentRowView` are ~570 lines, and most of that is behaviour a favorite must not have: a
 context menu offering edit and delete, download-for-preview and download-for-share intents that hit
 the network, a `documentForm` destination, and a `DocumentImage` thumbnail that is a network call.
-Reusing it would mean forking the thumbnail source, the context menu, the swipe action, the download
-intents and the unavailable badge — five behavioural special cases in a reducer two other tabs
-depend on.
+Reusing it would mean forking the thumbnail source, the context menu, the download intents, the
+`documentForm` destination and the unavailable badge — five behavioural special cases in a reducer
+two other tabs depend on.
 
 What the lists genuinely share is presentation, so that is what gets shared: `detailsView` and
 `tagsView` become a `DocumentRowContent` view over a plain `Document` and `Server`, rendered by both
 rows. `FavoriteRowReducer` is then small — open, unfavorite, a local thumbnail, a badge.
 
-`DocumentRowReducer` does still gain one thing, because you asked for swipe-to-favorite there: a
+`DocumentRowReducer` does still gain one thing, because favoriting is offered from the row: a
 `favoriteButtonTapped` action, and a `@SharedReader(.favorites(server))` it derives `isFavorited`
-from so the swipe can read "Favorite" or "Unfavorite". That is one capability the row genuinely has,
-derived from shared state rather than passed in as a mode — not a flag that makes it behave
+from so the menu item can read "Favorite" or "Unfavorite". That is one capability the row genuinely
+has, derived from shared state rather than passed in as a mode — not a flag that makes it behave
 differently for one caller.
 
 **Removing offline data and unfavoriting are the same act.** A "keep the favorite, drop the
@@ -159,18 +159,30 @@ Four use cases, all in `ApiImplementation`:
 
 ### Favoriting
 
-A star in the `DocumentDetailView` toolbar, beside the existing edit and overflow buttons, and a
-swipe action on `DocumentRowView` in the shape `CorrespondentRowView` and its siblings already use.
+A star in the `DocumentDetailView` toolbar, beside the existing edit and overflow buttons, and a new
+item in `DocumentRowView`'s **existing long-press context menu** — not a swipe action.
 
-`DocumentRowView` is shared by the Documents tab and the Inbox, so **the swipe appears in both**.
+`DocumentRowView` has no swipe actions today: it has `.onTapGesture` and `.contextMenu`, and the
+only swipe anywhere in `DocumentsFeature` is on `DocumentNoteRowView`. Adding one would introduce a
+second interaction affordance to the most-seen row in the app for the sake of a third tab, when the
+row already has a menu holding exactly this class of per-document action.
+
+**Where it sits in that menu needs deciding, because the menu has a rule.** A comment in
+`contextMenu()` records it: the reversible actions run A-Z — Edit, Preview, Share, View — and Delete
+is deliberately held out below a divider rather than "taking whatever row its initial earns it".
+Favorite cannot follow the A-Z rule, because its label changes with state: *Favorite* sorts between
+Edit and Preview, *Unfavorite* between Share and View, so the item would move under the user's
+thumb as they used it. It is therefore anchored at the top above its own divider, mirroring how
+Delete is anchored at the bottom, for the same reason the comment already gives.
+
+`DocumentRowView` is shared by the Documents tab and the Inbox, so **the menu item appears in both**.
 That is worth stating rather than discovering: favoriting straight out of the inbox is a reasonable
 thing to want, and suppressing it there would cost a flag on the row whose only purpose is to make
 one tab worse.
 
 Both call `SaveFavoriteUseCase`, which does real work — a PDF download — so the row and the toolbar
 show progress while it runs and report failure through the existing error handling rather than
-leaving a half-written record. Unfavoriting is the same two affordances inverted, which is also how
-a favorite is removed from inside the Favorites tab.
+leaving a half-written record. Unfavoriting is the same two affordances inverted.
 
 ### The tab
 
@@ -193,8 +205,14 @@ server round-trip and no debounce to get wrong. `.refreshable` drives the refres
 `FavoriteRowView` renders `DocumentRowContent` — the extracted correspondent, date, title, ASN /
 type / storage-path grid and tag chips — so a favorite looks like a document everywhere else. What
 it puts around that content is its own: a thumbnail drawn from page one of the stored PDF instead of
-`DocumentImage`, a swipe action that unfavorites, a badge when the record is unavailable, and no
-context menu at all. `FavoriteRowReducer` has two actions worth the name — open, and unfavorite.
+`DocumentImage`, a badge when the record is unavailable, and a swipe action that unfavorites.
+`FavoriteRowReducer` has two actions worth the name — open, and unfavorite.
+
+**The two rows use different gestures on purpose.** On a document row, favoriting is one action
+among many, so it belongs in the menu that already holds them. On a favorites row, removal is the
+list's single management gesture, which is what `CorrespondentRowView`, `ServerRowView`,
+`CustomFieldRowView` and `DocumentTypeRowView` all express as a swipe. Each row follows the idiom
+its own list already established, rather than one being made to match the other.
 
 ### Reading offline
 
@@ -245,8 +263,8 @@ record and file. Snapshot tests for the list in its empty, populated, badged-una
 and offline states, following the existing suites. The dependency overrides get a test of their own:
 the detail screen fed by the store must produce the same state it would from the network.
 
-`DocumentRowReducer` changed in exactly one way — the swipe that favorites a document — and gets one
-test for it. Extracting `DocumentRowContent` is meant to be invisible to the Documents and Inbox
+`DocumentRowReducer` changed in exactly one way — the context-menu item that favorites a document —
+and gets one test for it, covering both labels the item takes. Extracting `DocumentRowContent` is meant to be invisible to the Documents and Inbox
 tabs, and the existing row snapshots are what prove it: they must not change. A snapshot diff there
 is the signal that the extraction altered layout, not that a reference needs re-recording.
 
