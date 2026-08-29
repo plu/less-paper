@@ -1,0 +1,259 @@
+# Offline favorites
+
+Keep a handful of important documents on the device — everything about them, including the PDF —
+and read them with no server in reach, from a tab of their own.
+
+## Context
+
+**Nothing about a document survives a relaunch today.** Correspondents, custom fields, document
+types and groups are file-backed through `SharedReaderKey+Extensions.swift`, each keyed by server
+and written into the app group directory. Documents are the exception: `documents(_ server:)` is
+`.inMemory`, so a document list is rebuilt from the server every launch. That asymmetry is the gap
+this feature closes, and it closes it for a chosen few rather than for everything.
+
+**A document's data arrives from four calls.** `Document` already carries `customFields` and `tags`
+inline, so the list payload is most of it. `notes` and `DocumentMetadata` are separate endpoints
+fetched per document by `DocumentNotesReducer` and `DocumentMetadataReducer`. The PDF is the fourth,
+`DownloadDocumentUseCase`, which returns `Data` with no caching of any kind — the detail screen
+writes it to a temporary file and forgets it.
+
+**Thumbnails are cached but not kept.** `PipelineProvider` gives Nuke a `DataCache(name: "default")`,
+which is an LRU: it will serve a thumbnail offline if it happens to still be there, and a blank one
+otherwise. Nothing pins a thumbnail, so nothing about it can be relied on.
+
+**paperless-ngx has no notion of a favorite.** There is no favorite flag on the API and no endpoint
+to sync one. Anything the app calls a favorite is either its own idea or a tag wearing a costume.
+
+## Decisions
+
+**A favorite is a local flag, and the device is the only place it exists.** No tag is written to
+the server, so favoriting needs no change permission, works against any paperless version, does not
+pollute a document's tags or the tag list, and cannot fail because the network is down. The cost is
+real and accepted: favorites do not sync between devices and are invisible in the web UI. Storing
+the record behind a `FavoritesStore` dependency leaves room to back it with a tag later without the
+UI knowing.
+
+**Favorites are per server**, like every other piece of persisted state in the app. The tab shows
+the selected server's favorites; another server's are neither shown nor searched.
+
+**Offline is read-only.** The value here is reading a document you already decided matters, in a
+basement or on a plane. Editing offline would need an outbox, conflict resolution against
+server-side changes, and partial-failure recovery — a project of its own, and one that can silently
+lose an edit if it is done carelessly. Offline the detail screen hides its edit affordances and says
+why.
+
+**The row renders page one of the stored PDF instead of storing a thumbnail.** Downloading and
+pinning a second asset would mean a second network call per favorite and a second thing to keep in
+step; Nuke's cache cannot be relied on because it evicts. PDFKit is already in `Components` for
+`PDFKitView`, and a thumbnail drawn from the file on disk is by construction consistent with the
+file on disk. Documents whose original is not a PDF still have an archived PDF in practice, and the
+empty state is the existing placeholder.
+
+**A favorite whose document has been deleted on the server is marked unavailable, never deleted.**
+The user deliberately kept that copy. A refresh that reacted to a 404 by destroying local data would
+be the one behaviour capable of losing something irreplaceable, so refresh marks the record and
+leaves the bytes alone; removing it stays a deliberate act.
+
+**Refresh reloads everything.** Pull-to-refresh re-fetches document, notes, metadata and PDF for
+every favorite rather than diffing on `modified`. It is the behaviour asked for, it is the one that
+cannot leave a stale PDF behind a fresh title, and at the scale this feature targets — a handful of
+documents — the cost is a few seconds.
+
+**Connectivity gets a dependency of its own.** The app has never needed to know whether it is
+online; it discovers that by failing. Read-only-offline needs the answer before it fails, so this
+adds a `NetworkMonitor` over `NWPathMonitor`. It is the only new infrastructure here, and only
+`FavoritesFeature` consumes it in this version.
+
+**Removing offline data and unfavoriting are the same act.** A "keep the favorite, drop the
+download" state would be a favorite that is not offline, which is the one thing a favorite is for.
+Settings offers the total size and a single destructive "Remove all favorites".
+
+## Architecture
+
+### The record and where it lives
+
+`FavoriteDocument` is the whole of a document as the app can render it without a server:
+
+```swift
+public struct FavoriteDocument: Codable, Equatable, Identifiable, Sendable {
+    public var id: Document.Id { document.id }
+
+    public let document: Document          // carries customFields and tags already
+    public let notes: [Note]
+    public let metadata: DocumentMetadata?
+    public let pdfByteCount: Int
+    public let storedAt: Date
+
+    // Set by a refresh that got a 404. Mutable because it is the one field that changes without
+    // the document behind it changing — everything else is replaced wholesale by the next save.
+    public var isUnavailable: Bool
+}
+```
+
+It joins the other shared keys in `ApiInterface`, following their shape exactly:
+
+```swift
+public extension SharedReaderKey
+where Self == FileStorageKey<IdentifiedArrayOf<FavoriteDocument>>.Default {
+    static func favorites(_ server: Server) -> Self {
+        Self[
+            .fileStorage(
+                .applicationGroupDirectory.appending(component: "\(server.id)-favorites.json"),
+                decoder: .apiDecoder,
+                encoder: .apiEncoder
+            ),
+            default: []
+        ]
+    }
+}
+```
+
+PDFs do not belong in that JSON. They are files at
+`<applicationGroupDirectory>/Favorites/<server.id>/<document.id>.pdf`, written to a temporary
+neighbour and moved into place, so a download killed mid-flight cannot leave a truncated file that
+later reads as a corrupt PDF.
+
+### Modules
+
+`FavoriteDocument`, the shared key and the `FavoritesStore` client go in `ApiInterface`; the live
+store and the use cases go in `ApiImplementation`. Both sit below `DocumentsFeature`, which is what
+lets the detail screen and the row favorite a document without a dependency cycle.
+
+`FavoritesFeature` is a new framework module holding the tab. It depends on `ApiInterface`,
+`Components` and `DocumentsFeature` — the last because it reuses `DocumentRowReducer` and
+`DocumentDetailReducer` rather than growing a second document UI. `AppFeature` depends on it. The
+module carries its own `Resources/Localizable.xcstrings`, per the per-module catalogue convention.
+
+Four use cases, all in `ApiImplementation`:
+
+| Use case | Does |
+|---|---|
+| `SaveFavoriteUseCase` | fetches document, notes, metadata and PDF, writes the file, upserts the record |
+| `RemoveFavoriteUseCase` | deletes the record and its PDF |
+| `RefreshFavoritesUseCase` | re-runs the save for every favorite, reporting per-document results |
+| `FavoritesStorageSizeUseCase` | sums the records and the files on disk |
+
+### Favoriting
+
+A star in the `DocumentDetailView` toolbar, beside the existing edit and overflow buttons, and a
+swipe action on `DocumentRowView` in the shape `CorrespondentRowView` and its siblings already use.
+
+`DocumentRowView` is shared by the Documents tab and the Inbox, so **the swipe appears in both**.
+That is worth stating rather than discovering: favoriting straight out of the inbox is a reasonable
+thing to want, and suppressing it there would cost a flag on the row whose only purpose is to make
+one tab worse.
+
+Both call `SaveFavoriteUseCase`, which does real work — a PDF download — so the row and the toolbar
+show progress while it runs and report failure through the existing error handling rather than
+leaving a half-written record. Unfavoriting is the same two affordances inverted, which is also how
+a favorite is removed from inside the Favorites tab.
+
+### The tab
+
+A fourth tab between Documents and Settings, `Label(.favorites, systemImage: "star.fill")`, added to
+`AppTab` and `MainView`.
+
+`FavoriteListReducer` holds `@Shared(.favorites(server))`, a `searchText`, and rows built as
+`IdentifiedArrayOf<DocumentRowReducer.State>` so they look and behave exactly like the other tabs'.
+Tapping a row pushes the detail through a `Path`, matching how `SettingListReducer` and
+`DocumentListReducer` already navigate. Unfavoriting the document being viewed pops back to the
+list, because the thing the screen was showing no longer exists offline.
+
+The view follows the established search shape — `Searchable { … }.searchable(text: $store.searchText)`
+— filtering in memory over title, the resolved correspondent, document type, storage path and tag
+names, and the document's `content`. Notes are **not** searched: they are the one field that would
+make a hit impossible to see in a row. Everything it searches is already on disk, so there is no
+server round-trip and no debounce to get wrong. `.refreshable` drives the refresh, and
+`EmptyListView` covers having no favorites yet.
+
+**Reusing the row means teaching it about the stored file.** `DocumentRowView` gets its thumbnail
+through `ImageFeature`, which is a network call and an evictable cache — reusing it unchanged would
+quietly contradict the decision above. So `DocumentRowReducer.State` gains an optional
+`offlinePDFURL`, and the row's thumbnail prefers page one of that file when it is set. The Documents
+and Inbox tabs leave it `nil` and behave exactly as before.
+
+### Reading offline
+
+The tab pushes the existing `DocumentDetailReducer` with three dependencies rewritten to read from
+the store rather than the server. Each use case gains a store-backed instance beside its existing
+`liveValue`, and the Favorites path installs them:
+
+```swift
+DocumentDetailReducer()
+    .dependency(\.getNotes, .favoritesStore)
+    .dependency(\.getDocumentMetadata, .favoritesStore)
+    .dependency(\.downloadDocument, .favoritesStore)
+```
+
+One detail UI, no duplication, and an override that is explicit at the call site and trivial to
+assert in a `TestStore`. `NetworkMonitor` supplies the online flag; offline, the detail hides edit
+and shows a "needs a connection" state.
+
+A favorite marked `isUnavailable` reads exactly as it always did — the bytes are still there. The
+list badges it so the state is visible, and refresh is what clears the badge if the document comes
+back.
+
+### Refresh
+
+`RefreshFavoritesUseCase` walks the favorites with a `TaskGroup` bounded to three at a time — enough
+to be quick, not enough to hammer a home server — and isolates each document: one failure does not
+abort the run. It returns a per-document result, which the list summarises. A 404 sets
+`isUnavailable` and touches nothing else. Refreshing while offline surfaces the offline state rather
+than a pile of identical failures.
+
+### Settings and cleanup
+
+An "Offline documents" row in `SettingListView` shows the total on disk and offers a destructive
+"Remove all favorites" behind the existing `DeleteConfirmationPresenter`. Deleting a server deletes
+its favorites and their files too; without that hook the bytes outlive the server that explains
+them, with nothing in the UI to reach them.
+
+## Testing
+
+`TestStore` tests for `FavoriteListReducer`: search filtering, refresh success, refresh with one
+document failing, a document going unavailable, and the empty state. Store tests for the file layer
+against a temporary directory, covering the atomic write, the size sum, and deletion removing both
+record and file. Snapshot tests for the list in its empty, populated, badged-unavailable
+and offline states, following the existing suites. The dependency overrides get a test of their own:
+the detail screen fed by the store must produce the same state it would from the network.
+
+`DocumentRowReducer` gains coverage for the two ways it changed — the swipe favoriting a document,
+and `offlinePDFURL` selecting the stored file over the network thumbnail — plus a snapshot proving
+the Documents and Inbox rows are unchanged when it is `nil`.
+
+Strings land in `Modules/FavoritesFeature/Resources/Localizable.xcstrings` in both `en` and `de`,
+with the few belonging to the toolbar and the Settings row going to `DocumentsFeature` and
+`SettingsFeature` respectively.
+
+## Out of scope
+
+**Editing offline.** No outbox, no queued mutations, no conflict resolution.
+
+**Syncing favorites between devices.** The local flag is the decision; a tag-backed store is the
+upgrade path if that changes.
+
+**Automatic refresh.** No background refresh, no refresh on foreground. Pull-to-refresh is the only
+way favorites update, which keeps when-the-bytes-change something the user decides.
+
+**A UI test journey.** Worth adding once the flow settles; it needs its own document uploaded by the
+test user, per the rules in `AGENTS.md`.
+
+## Risks
+
+**A large PDF is held in memory.** `DownloadDocumentUseCase` returns `Data`, so a favorite is as big
+in memory as it is on disk while it is being saved. Fine for the documents this targets, and the fix
+if it bites is a streaming download, which is a change to the use case rather than to this design.
+
+**Nothing bounds total size.** Unbounded storage was chosen deliberately, with Settings showing the
+total and offering to clear it. If real use shows people favoriting hundreds of documents, a cap is
+a later decision informed by that, not a guess now.
+
+**The dependency-override trick is load-bearing.** If a future change to `DocumentDetailReducer`
+adds a fourth network call, the Favorites tab will silently start hitting the network for it, and
+the failure only shows up offline. The test that feeds the detail screen from the store is what
+catches it; it needs to stay honest as the detail screen grows.
+
+**`NWPathMonitor` reports the interface, not reachability.** A device on a Wi-Fi network with no
+route to the paperless server reads as online, and the read-only gate will let an edit through that
+then fails. That is the same failure the app has everywhere today, so the gate is an improvement
+rather than a guarantee.
