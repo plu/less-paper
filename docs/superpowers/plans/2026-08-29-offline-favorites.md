@@ -1159,7 +1159,8 @@ Pure refactoring in service of Task 7. **The existing row snapshots must not cha
 - Modify: `Modules/DocumentsFeature/DocumentRow/DocumentRowView.swift`
 
 **Interfaces:**
-- Produces: `public struct DocumentRowContent: View` with `init(document: Document, server: Server, titleLineLimit: Int)`.
+- Produces: `public struct DocumentRowContent: View` with `init(document: Document, server: Server, titleLineLimit: Int)` — the text column: correspondent, created date, title, and the ASN / document-type / storage-path grid.
+- Produces: `public struct DocumentRowTags: View` with `init(tags: [Tag], height: CGFloat)` — the tag chips. These are **not** part of the text column: `DocumentRowView` overlays them on the thumbnail at `.topTrailing`, and they size themselves against the image height. They are extracted separately so the favourites row can overlay the same chips on its own thumbnail rather than restyling them.
 
 - [ ] **Step 1: Run the existing snapshots to capture the baseline**
 
@@ -1194,7 +1195,29 @@ public struct DocumentRowContent: View {
 }
 ```
 
-- [ ] **Step 3: Call it from DocumentRowView**
+- [ ] **Step 3: Move the tag chips out too**
+
+`tagsView()` is an overlay on the thumbnail, not part of the text column, so it becomes its own view rather than a member of `DocumentRowContent`:
+
+```swift
+public struct DocumentRowTags: View {
+
+    public var body: some View {
+        // The body of DocumentRowView.tagsView(), with `store.tags` replaced by `tags` and
+        // `imageSize.height` by `height`.
+    }
+
+    public init(tags: [Tag], height: CGFloat) {
+        self.tags = tags
+        self.height = height
+    }
+
+    private let tags: [Tag]
+    private let height: CGFloat
+}
+```
+
+- [ ] **Step 4: Call both from DocumentRowView**
 
 Replace `detailsView()`'s body with:
 
@@ -1206,12 +1229,18 @@ DocumentRowContent(
 )
 ```
 
-- [ ] **Step 4: Run the snapshots and confirm they are unchanged**
+and `tagsView()`'s with:
+
+```swift
+DocumentRowTags(tags: store.tags, height: imageSize.height)
+```
+
+- [ ] **Step 5: Run the snapshots and confirm they are unchanged**
 
 Run: `mise exec -- xcodebuild test -workspace LessPaper.xcworkspace -scheme DocumentsFeature -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max'`
 Expected: PASS with **no** reference changes. Confirm with `git status Snapshots/` — it must be empty. A diff there means the extraction changed layout; fix the view rather than re-recording.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add Modules/DocumentsFeature/DocumentRow
@@ -1387,7 +1416,10 @@ struct FavoriteThumbnail: View {
 }
 ```
 
-`FavoriteRowView.swift` renders `DocumentRowContent` beside that thumbnail, with an "Unavailable" badge when `store.favorite.isUnavailable`, `.onTapGesture { send(.rowTapped) }`, and:
+`FavoriteRowView.swift` renders `DocumentRowContent` beside that thumbnail, overlays
+`DocumentRowTags(tags:height:)` on the thumbnail at `.topTrailing` exactly as `DocumentRowView` does
+— same chips, not a restyled copy — adds an "Unavailable" badge when `store.favorite.isUnavailable`,
+`.onTapGesture { send(.rowTapped) }`, and:
 
 ```swift
 .swipeActions {
