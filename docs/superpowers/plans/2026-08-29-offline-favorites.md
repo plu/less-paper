@@ -606,8 +606,14 @@ private extension SaveFavoriteUseCase {
         @Dependency(\.date.now) var now
         @Dependency(\.downloadDocument.execute) var downloadDocument
         @Dependency(\.favoritesStore) var store
+        @Dependency(\.getDocument.execute) var getDocument
         @Dependency(\.getDocumentMetadata.execute) var getMetadata
         @Dependency(\.getNotes.execute) var getNotes
+
+        // The document handed in came from a list response, which paperless truncates
+        // (`truncate_content=true`), so its `content` is a preview. A favorite has to hold the
+        // whole thing or the offline viewer shows partial text and says nothing about it.
+        let full = try await getDocument(document.id, server)
 
         // Everything is fetched before anything is stored, so a failure anywhere leaves no
         // half-written favorite.
@@ -626,7 +632,7 @@ private extension SaveFavoriteUseCase {
                 return false
             }
             favorites[id: document.id] = FavoriteDocument(
-                document: document,
+                document: full,
                 metadata: metadata,
                 notes: notes,
                 pdfByteCount: byteCount,
@@ -962,8 +968,11 @@ private extension RefreshFavoritesUseCase {
                 }
 
                 // Written back unconditionally: bulk edit changes fields without moving `modified`.
+                // The content is carried from the stored copy rather than taken from this one:
+                // phase one is a list response and its `content` is truncated. Anything that
+                // actually changes content moves `modified`, so phase two is what refreshes it.
                 favorites[id: favorite.id] = FavoriteDocument(
-                    document: document,
+                    document: document.with(content: favorite.document.content),
                     metadata: favorite.metadata,
                     notes: favorite.notes,
                     pdfByteCount: favorite.pdfByteCount,
@@ -1646,6 +1655,21 @@ case .documentDetail:
 Each `.favoritesStore` instance reads the record instead of the network — `getNotes` returns
 `favorites[id: documentId]?.notes ?? []`, `getDocumentMetadata` returns its `metadata`, and
 `downloadDocument` returns `Data(contentsOf: favoritesStore.pdfURL(id, server))`.
+
+**There are five, not three.** `DocumentViewerReducer` calls `getDocument` on every section's
+`onAppear`, and the custom-fields section calls `getDocumentsByIds` to resolve document links. Left
+unoverridden, opening any viewer section offline errors — which is the feature's main use. So:
+
+- `getDocument` returns the stored `document`. This is only safe because `SaveFavoriteUseCase`
+  stores the **full** document from the detail endpoint; the list copy it is handed has truncated
+  `content`, and serving that would show partial text with nothing saying so.
+- `getDocumentsByIds` returns whichever of the requested ids are themselves favorites. A linked
+  document that was never favorited cannot resolve offline, and showing the ones we do hold beats
+  failing the whole section.
+
+That the count was wrong is the exact risk this design carries, and it is why the no-network test
+below is worth more than it looks: the next person to add a call to the detail screen will not think
+about this tab.
 
 This test is the one that catches a future fourth network call in the detail screen, which would
 otherwise only show up offline:
