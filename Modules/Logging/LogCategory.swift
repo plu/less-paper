@@ -10,4 +10,5 @@ public enum LogCategory: String, CaseIterable, Sendable {
     case server
     case share
     case storage
+    case tips
 }

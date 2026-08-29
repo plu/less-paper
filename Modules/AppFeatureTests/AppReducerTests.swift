@@ -9,6 +9,7 @@ import SettingsFeature
 import SwiftSharing
 import Testing
 import TestSupport
+import TipsFeature
 
 @MainActor
 @Suite(
@@ -62,6 +63,9 @@ struct AppReducerTests {
             reducer: { AppReducer() },
             withDependencies: {
                 $0.updateCache.execute = { updateCacheServer.setValue($0) }
+                // Unrelated to this test, but bootstrap now also starts the tip observer, and an
+                // unstubbed TipJar.updates reports an "Unimplemented" issue the moment it is called.
+                $0.tipJar.updates = { AsyncStream { $0.finish() } }
             }
         )
         let bootstrap = await store.send(.bootstrap)
@@ -113,6 +117,7 @@ struct AppReducerTests {
             reducer: { AppReducer() },
             withDependencies: {
                 $0.updateCache.execute = { _ in }
+                $0.tipJar.updates = { AsyncStream { $0.finish() } }
             }
         )
         store.exhaustivity = .off

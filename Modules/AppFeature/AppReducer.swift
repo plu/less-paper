@@ -6,6 +6,7 @@ import ComposableArchitecture
 import ForwardAuthFeature
 import Foundation
 import ServersFeature
+import TipsFeature
 
 // A link that has been resolved to a server but cannot be acted on yet, because the selected server
 // has to change first and MainReducer.State is rebuilt asynchronously when it does. A URL arriving
@@ -31,6 +32,7 @@ public struct AppReducer {
         case openURL(URL)
         case selectedServerChanged(Server?)
         case serverList(ServerListReducer.Action)
+        case tipReceived(Tip)
     }
 
     @ObservableState
@@ -114,6 +116,7 @@ public struct AppReducer {
                     .merge(with: .run { send in
                         await send(.forwardAuth(.bootstrap))
                     })
+                    .merge(with: .runTipObserver())
             case .didBecomeActive:
                 guard let server = state.main?.server else {
                     return .none
@@ -134,6 +137,8 @@ public struct AppReducer {
                 }
             case .certificateApproval, .forwardAuth, .main, .serverList:
                 return .none
+            case .tipReceived:
+                return .toast(Toast.success(String(localized: .tipThankYou)))
             }
         }
         .ifLet(\.main, action: \.main) {

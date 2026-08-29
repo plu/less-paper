@@ -75,6 +75,8 @@ public enum Module: String, CaseIterable {
     case tagsFeature = "TagsFeature"
     case tagsFeatureTests = "TagsFeatureTests"
     case testSupport = "TestSupport"
+    case tipsFeature = "TipsFeature"
+    case tipsFeatureTests = "TipsFeatureTests"
     case trashFeature = "TrashFeature"
     case trashFeatureTests = "TrashFeatureTests"
     case uiTestSupport = "UITestSupport"
@@ -148,6 +150,7 @@ extension Module {
              .shareFeature,
              .storagePathsFeature,
              .tagsFeature,
+             .tipsFeature,
              .trashFeature:
             true
         case .apiInterfaceTests,
@@ -181,6 +184,7 @@ extension Module {
              .snapshotSupport,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
+             .tipsFeatureTests,
              .trashFeatureTests,
              .testSupport,
              .uiTestSupport:
@@ -252,6 +256,7 @@ extension Module {
              .snapshotSupport,
              .storagePathsFeature,
              .tagsFeature,
+             .tipsFeature,
              .trashFeature,
              .testSupport,
              .uiTestSupport:
@@ -279,6 +284,7 @@ extension Module {
              .shareFeatureTests,
              .storagePathsFeatureTests,
              .tagsFeatureTests,
+             .tipsFeatureTests,
              .trashFeatureTests:
             .unitTests
         case .appSnapshots,

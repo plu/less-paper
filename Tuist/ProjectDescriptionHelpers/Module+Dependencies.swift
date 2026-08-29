@@ -38,6 +38,7 @@ extension Module {
                 .target(.forwardAuthFeature),
                 .target(.serversFeature),
                 .target(.settingsFeature),
+                .target(.tipsFeature),
             ]
         case .appFeatureTests:
             [
@@ -51,6 +52,7 @@ extension Module {
                 .target(.serversFeature),
                 .target(.settingsFeature),
                 .target(.testSupport),
+                .target(.tipsFeature),
             ]
         case .appSnapshots:
             [
@@ -451,6 +453,7 @@ extension Module {
                 .target(.shareFeature),
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
+                .target(.tipsFeature),
                 .target(.trashFeature),
             ]
         case .settingsFeatureTests:
@@ -573,6 +576,24 @@ extension Module {
             [
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
+            ]
+        case .tipsFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .target(.components),
+                .target(.logging),
+            ]
+        case .tipsFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .external(.snapshotTesting),
+                .target(.components),
+                .target(.logging),
+                .target(.testSupport),
+                .target(.tipsFeature),
             ]
         case .uiTestSupport:
             [
