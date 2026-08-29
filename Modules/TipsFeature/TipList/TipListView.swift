@@ -64,8 +64,16 @@ public struct TipListView: View {
                             .textCase(nil)
                     }
                 }
+                // Every list in the app hides the system's grouped background and paints its own,
+                // which is what makes a row's m3SurfaceContainer read as a card rather than as the
+                // same grey it sits on. LicenseListView, pushed from the same Settings section,
+                // does exactly this.
+                .scrollContentBackground(.hidden)
             }
         }
+        // On the group rather than the list, so the loading and unavailable states stand on the
+        // same ground as the rows do.
+        .background(Color.m3SurfaceContainerLowest)
         .navigationTitle(Text(.tips))
         .navigationBarTitleDisplayMode(.inline)
         .task {
