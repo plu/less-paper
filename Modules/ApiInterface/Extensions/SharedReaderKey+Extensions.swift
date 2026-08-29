@@ -218,7 +218,7 @@ public extension SharedReaderKey where Self == FileStorageKey<Int?>.Default {
     }
 }
 
-private extension URL {
+public extension URL {
     static var applicationGroupDirectory: URL {
         guard let applicationGroupDirectory = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: "group.com.plunien.app.Paperless")
