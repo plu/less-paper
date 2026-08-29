@@ -87,3 +87,30 @@ public struct DocumentRowContent: View {
     @Environment(\.sizeCategory)
     private var sizeCategory
 }
+
+public struct DocumentRowTags: View {
+
+    public var body: some View {
+        VStack(alignment: .trailing, spacing: .x2) {
+            ForEach(tags) { tag in
+                Text(tag.name)
+                    .capsule(
+                        backgroundColor: Color(hex: tag.color),
+                        font: .footnote,
+                        foregroundColor: Color(hex: tag.textColor)
+                    )
+            }
+        }
+        .frame(height: height - .x4, alignment: .top)
+        .clipped()
+        .padding(.x3)
+    }
+
+    public init(tags: [Tag], height: CGFloat) {
+        self.tags = tags
+        self.height = height
+    }
+
+    private let tags: [Tag]
+    private let height: CGFloat
+}

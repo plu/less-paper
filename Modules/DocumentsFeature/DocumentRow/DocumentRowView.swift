@@ -124,19 +124,7 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func tagsView() -> some View {
-        VStack(alignment: .trailing, spacing: .x2) {
-            ForEach(store.tags) { tag in
-                Text(tag.name)
-                    .capsule(
-                        backgroundColor: Color(hex: tag.color),
-                        font: .footnote,
-                        foregroundColor: Color(hex: tag.textColor)
-                    )
-            }
-        }
-        .frame(height: imageSize.height - .x4, alignment: .top)
-        .clipped()
-        .padding(.x3)
+        DocumentRowTags(tags: store.tags, height: imageSize.height)
     }
 
     private let breakpoint = ContentSizeCategory.extraLarge
