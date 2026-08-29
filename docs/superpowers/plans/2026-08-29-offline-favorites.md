@@ -260,10 +260,17 @@ import Testing
 @Suite
 struct FavoritesStoreTests {
 
+    // A server per test, so the directories cannot collide. swift-testing runs a suite's tests in
+    // parallel, and the byte-count test asserts an exact total over its whole directory — sharing
+    // one server would make it flake whenever a sibling's file happened to exist.
+    private static func server(_ name: String) -> Server {
+        .testValue(id: "favorites-store-tests-\(name)")
+    }
+
     @Test
     func test_writeThenReadThenDelete() async throws {
         let store = FavoritesStore.liveValue
-        let server = Server.testValue()
+        let server = Self.server("write-read-delete")
         let data = Data("%PDF-1.4 hello".utf8)
 
         let written = try await store.writePDF(data, 42, server)
@@ -281,7 +288,7 @@ struct FavoritesStoreTests {
     @Test
     func test_writeReplacesAnExistingFile() async throws {
         let store = FavoritesStore.liveValue
-        let server = Server.testValue()
+        let server = Self.server("write-replaces")
 
         _ = try await store.writePDF(Data(repeating: 0, count: 100), 43, server)
         let second = try await store.writePDF(Data(repeating: 1, count: 10), 43, server)
@@ -295,7 +302,7 @@ struct FavoritesStoreTests {
     @Test
     func test_totalByteCountSumsTheFilesAndDeleteAllClearsThem() async throws {
         let store = FavoritesStore.liveValue
-        let server = Server.testValue()
+        let server = Self.server("total-bytes")
 
         _ = try await store.writePDF(Data(repeating: 0, count: 300), 44, server)
         _ = try await store.writePDF(Data(repeating: 0, count: 700), 45, server)
@@ -368,10 +375,10 @@ extension FavoritesStore: @retroactive DependencyKey {
 
     public static let liveValue = Self(
         deleteAll: { server in
-            try? FileManager.default.removeItem(at: directory(server))
+            try removeIfPresent(directory(server))
         },
         deletePDF: { id, server in
-            try? FileManager.default.removeItem(at: url(id, server))
+            try removeIfPresent(url(id, server))
         },
         pdfURL: { id, server in
             url(id, server)
@@ -382,19 +389,21 @@ extension FavoritesStore: @retroactive DependencyKey {
                 includingPropertiesForKeys: [.fileSizeKey]
             )) ?? []
 
-            return urls.reduce(0) { total, url in
-                total + ((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
-            }
+            // Only the PDFs. Summing whatever happens to be in the directory would let any stray
+            // file inflate the number Settings shows as "storage used".
+            return urls
+                .filter { $0.pathExtension == "pdf" }
+                .reduce(0) { total, url in
+                    total + ((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+                }
         },
         writePDF: { data, id, server in
-            let directory = directory(server)
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: directory(server), withIntermediateDirectories: true)
 
-            // Written beside the destination and moved onto it: a download killed mid-flight must
-            // not leave a truncated file that later reads as a corrupt PDF.
-            let temporary = directory.appending(component: "\(id.rawValue).pdf.partial")
-            try data.write(to: temporary, options: .atomic)
-            _ = try FileManager.default.replaceItemAt(url(id, server), withItemAt: temporary)
+            // `.atomic` already writes to a temporary file and renames it into place, so a download
+            // killed mid-flight cannot leave a truncated file that later reads as a corrupt PDF.
+            // Doing that dance by hand would only add a partial file to leak when the rename throws.
+            try data.write(to: url(id, server), options: .atomic)
 
             return data.count
         }
@@ -404,6 +413,17 @@ extension FavoritesStore: @retroactive DependencyKey {
         URL.applicationGroupDirectory
             .appending(component: "Favorites")
             .appending(component: "\(server.id)")
+    }
+
+    // Already gone is the outcome the caller wanted, so it is not an error. Anything else —
+    // permissions, a busy volume — is, and must not be swallowed: a `try?` here would report a
+    // favorite as removed while its bytes stayed on disk.
+    private static func removeIfPresent(_ url: URL) throws {
+        do {
+            try FileManager.default.removeItem(at: url)
+        } catch CocoaError.fileNoSuchFile {
+            return
+        }
     }
 
     private static func url(_ id: Document.Id, _ server: Server) -> URL {
