@@ -11,12 +11,27 @@ public struct FavoriteRowReducer: Sendable {
 
         public var id: Document.Id { favorite.id }
 
+        // What the row renders, which is not always `favorite.document`: the list hands over the
+        // live cache entry where there is one, so an edit made elsewhere in the session shows here
+        // too. The stored copy is what a cold launch and an offline session get.
+        @Shared
+        var document: Document
+
         var favorite: FavoriteDocument
         let server: Server
 
-        public init(favorite: FavoriteDocument, server: Server) {
+        public init(document: Shared<Document>, favorite: FavoriteDocument, server: Server) {
+            self._document = document
             self.favorite = favorite
             self.server = server
+        }
+
+        public init(favorite: FavoriteDocument, server: Server) {
+            self.init(
+                document: Shared(value: favorite.document),
+                favorite: favorite,
+                server: server
+            )
         }
     }
 

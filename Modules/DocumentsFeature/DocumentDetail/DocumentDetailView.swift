@@ -6,8 +6,8 @@ import QuickLook
 import SwiftUI
 
 @ViewAction(for: DocumentDetailReducer.self)
-struct DocumentDetailView: View {
-    var body: some View {
+public struct DocumentDetailView: View {
+    public var body: some View {
         ZStack {
             switch store.downloadResult {
             case let .success(data, _):
@@ -66,8 +66,12 @@ struct DocumentDetailView: View {
         }
     }
 
+    public init(store: StoreOf<DocumentDetailReducer>) {
+        self.store = store
+    }
+
     @Bindable
-    var store: StoreOf<DocumentDetailReducer>
+    public var store: StoreOf<DocumentDetailReducer>
 
     @Environment(\.horizontalSizeClass)
     private var horizontalSizeClass

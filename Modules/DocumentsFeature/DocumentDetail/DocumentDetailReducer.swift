@@ -45,7 +45,7 @@ public struct DocumentDetailReducer: Sendable {
 
         let server: Server
 
-        init(
+        public init(
             destination: Destination.State? = nil,
             document: Shared<Document>,
             downloadResult: DownloadResult? = nil,
@@ -59,6 +59,8 @@ public struct DocumentDetailReducer: Sendable {
             self.server = server
         }
     }
+
+    public init() {}
 
     public var body: some ReducerOf<Self> {
         BindingReducer()

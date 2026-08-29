@@ -39,7 +39,7 @@ struct FavoriteRowView: View {
     @ViewBuilder
     private func detailsView() -> some View {
         DocumentRowContent(
-            document: store.favorite.document,
+            document: store.document,
             server: store.server,
             titleLineLimit: titleLineLimit
         )
@@ -86,13 +86,13 @@ struct FavoriteRowView: View {
     }
 
     private var tags: [Tag] {
-        store.favorite.document.tags.compactMap { $0.get(store.server) }
+        store.document.tags.compactMap { $0.get(store.server) }
     }
 
     // Mirrors DocumentRowReducer.State.titleLineLimit: one less line per detail row the document
     // carries, so a busy row still fits inside the same thumbnail height.
     private var titleLineLimit: Int {
-        let document = store.favorite.document
+        let document = store.document
         var titleLineLimit = 6
         if document.archiveSerialNumber != nil {
             titleLineLimit -= 1
