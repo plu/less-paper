@@ -66,6 +66,21 @@ public extension SharedReaderKey where Self == InMemoryKey<IdentifiedArrayOf<Doc
     }
 }
 
+public extension SharedReaderKey
+where Self == FileStorageKey<IdentifiedArrayOf<FavoriteDocument>>.Default {
+
+    static func favorites(_ server: Server) -> Self {
+        Self[
+            .fileStorage(
+                .applicationGroupDirectory.appending(component: "\(server.id)-favorites.json"),
+                decoder: .favoritesDecoder,
+                encoder: .favoritesEncoder
+            ),
+            default: []
+        ]
+    }
+}
+
 public extension SharedReaderKey where Self == FileStorageKey<IdentifiedArrayOf<Group>>.Default {
 
     static func groups(_ server: Server) -> Self {
