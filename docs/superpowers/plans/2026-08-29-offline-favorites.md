@@ -125,6 +125,12 @@ public struct FavoriteDocument: Codable, Equatable, Hashable, Identifiable, Send
 
     public let storedAt: Date
 
+    // The `document.modified` at which notes, metadata and the PDF were last successfully fetched.
+    // The refresh gate compares against this rather than `document.modified`, because phase one
+    // writes the fresh document unconditionally: comparing against that would mean a failed phase
+    // two hides itself, and the favorite stays stale until someone hits "Redownload all".
+    public let syncedModified: Date
+
     // Set by a refresh whose id__in response did not include this document. Mutable because it is
     // the one field that changes without the document behind it changing.
     public var isUnavailable: Bool
@@ -135,6 +141,7 @@ public struct FavoriteDocument: Codable, Equatable, Hashable, Identifiable, Send
         notes: [Note],
         pdfByteCount: Int,
         storedAt: Date,
+        syncedModified: Date,
         isUnavailable: Bool = false
     ) {
         self.document = document
@@ -142,6 +149,7 @@ public struct FavoriteDocument: Codable, Equatable, Hashable, Identifiable, Send
         self.notes = notes
         self.pdfByteCount = pdfByteCount
         self.storedAt = storedAt
+        self.syncedModified = syncedModified
         self.isUnavailable = isUnavailable
     }
 }
@@ -154,6 +162,7 @@ public extension FavoriteDocument {
         notes: [Note] = [],
         pdfByteCount: Int = 1024,
         storedAt: Date = Date(timeIntervalSince1970: 1_756_290_271),
+        syncedModified: Date? = nil,
         isUnavailable: Bool = false
     ) -> Self {
         .init(
@@ -162,6 +171,7 @@ public extension FavoriteDocument {
             notes: notes,
             pdfByteCount: pdfByteCount,
             storedAt: storedAt,
+            syncedModified: syncedModified ?? document.modified,
             isUnavailable: isUnavailable
         )
     }
@@ -620,7 +630,10 @@ private extension SaveFavoriteUseCase {
                 metadata: metadata,
                 notes: notes,
                 pdfByteCount: byteCount,
-                storedAt: now
+                storedAt: now,
+                // The expensive three were just fetched at this document's `modified`, so this is
+                // the version the offline copy actually holds.
+                syncedModified: document.modified
             )
             return true
         }
@@ -653,11 +666,14 @@ private extension RemoveFavoriteUseCase {
     static func execute(id: Document.Id, server: Server) async throws {
         @Dependency(\.favoritesStore) var store
 
-        try await store.deletePDF(id, server)
-
         @Shared(.favorites(server)) var favorites
 
-        $favorites.withLock { $0.remove(id: id) }
+        // The record goes first. A `.refreshExisting` save racing this then fails its in-lock
+        // check, refuses to write, and deletes the PDF it had already written - so no file is
+        // left with nothing pointing at it.
+        _ = $favorites.withLock { $0.remove(id: id) }
+
+        try await store.deletePDF(id, server)
     }
 }
 ```
@@ -952,10 +968,12 @@ private extension RefreshFavoritesUseCase {
                     notes: favorite.notes,
                     pdfByteCount: favorite.pdfByteCount,
                     storedAt: favorite.storedAt,
+                    // Carried, not advanced: only a successful phase-two save may move it.
+                    syncedModified: favorite.syncedModified,
                     isUnavailable: false
                 )
 
-                if force || document.modified != favorite.document.modified {
+                if force || document.modified != favorite.syncedModified {
                     changed.append(document)
                 }
             }
