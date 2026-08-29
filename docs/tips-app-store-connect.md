@@ -1,7 +1,11 @@
 # The tips in App Store Connect
 
-Three consumables, created once by a throwaway script on 2026-08-29. **Product ids can never be
-renamed or reused**, so they are recorded here rather than left to be rediscovered.
+Three consumables, **not yet created** — dry-run only, verified against a live read of App Store
+Connect on 2026-08-29. A throwaway script (not committed) authenticates, reads the app and its
+existing in-app purchases, and resolves the DEU price point for each price below; it creates
+nothing until it is run with `DRY_RUN=0`, which has not happened yet. **Product ids can never be
+renamed or reused**, so they are recorded here ahead of that run rather than left to be
+rediscovered afterwards.
 
 | Product id | en-US | de-DE | Price (base: Germany) |
 |---|---|---|---|
@@ -18,6 +22,8 @@ rather than an amount.
 
 ## What still has to be done by hand
 
+- **Run the live script (`DRY_RUN=0`).** This creates the three products, their localizations, and
+  their price schedules for real. Everything below depends on this having happened first.
 - **A review screenshot per product.** Apple requires one before a product can be submitted. A
   capture of the tip screen (Settings → Tips) is enough; the same image serves all three.
 - **Submission for review.** Apple has historically required a first in-app purchase to be reviewed
