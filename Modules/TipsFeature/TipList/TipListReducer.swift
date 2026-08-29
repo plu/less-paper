@@ -11,6 +11,8 @@ public struct TipListReducer: Sendable {
 
         case productsLoaded([TipProduct])
 
+        case purchaseFailed(Error)
+
         case purchaseResult(TipPurchaseResult)
 
         case view(View)
@@ -64,6 +66,13 @@ public struct TipListReducer: Sendable {
                 state.loadFailed = products.isEmpty
                 state.products = products
                 return .none
+
+            // The one throw `purchase` documents rather than the catch-all `.unverified` others
+            // land on: the product itself is gone, so the generic "something went wrong with that
+            // tip" would be misleading about what the user could try next.
+            case let .purchaseFailed(error):
+                state.purchasingTip = nil
+                return .toast(error)
 
             case let .purchaseResult(result):
                 state.purchasingTip = nil

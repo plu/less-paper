@@ -20,6 +20,9 @@ public struct TipListView: View {
                     }
                     .buttonStyle(.primary())
                 }
+            } else if store.isLoading {
+                ProgressView()
+                    .controlSize(.large)
             } else {
                 List {
                     Section {

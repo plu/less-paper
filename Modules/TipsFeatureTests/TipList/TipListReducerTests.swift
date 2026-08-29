@@ -2,6 +2,7 @@
 
 import Components
 import ComposableArchitecture
+import Logging
 import Testing
 import TestSupport
 
@@ -65,13 +66,20 @@ struct TipListReducerTests {
         }
     }
 
+    // A user reporting "Tips are unavailable" leaves Diagnostics as the only place to look, so the
+    // failure has to reach the log, not just the screen.
     @Test
-    func onAppear_whenLoadingThrows_showsTheFailureState() async {
+    func onAppear_whenLoadingThrows_showsTheFailureStateAndLogsIt() async {
+        let logged = LockIsolated<[(message: String, category: LogCategory)]>([])
+
         let store = TestStore(
             initialState: TipListReducer.State(),
             reducer: { TipListReducer() },
             withDependencies: {
                 $0.tipJar.products = { throw TestError.someError }
+                $0.log.record = { message, _, category in
+                    logged.withValue { $0.append((message, category)) }
+                }
             }
         )
 
@@ -80,6 +88,9 @@ struct TipListReducerTests {
             $0.isLoading = false
             $0.loadFailed = true
         }
+
+        #expect(logged.value.count == 1)
+        #expect(logged.value.first?.category == .tips)
     }
 
     @Test
@@ -188,5 +199,38 @@ struct TipListReducerTests {
             .success(String(localized: .tipPending)),
             .error(String(localized: .tipFailed)),
         ])
+    }
+
+    // The product being gone is the one throw `purchase` documents, and it reads a lot less
+    // helpfully as "something went wrong with that tip" than as its own message.
+    @Test
+    func tipButtonTapped_whenProductUnavailable_showsItsOwnMessage() async {
+        let logged = LockIsolated<[LogCategory]>([])
+        let toasts = LockIsolated<[Toast]>([])
+
+        let store = TestStore(
+            initialState: TipListReducer.State(),
+            reducer: { TipListReducer() },
+            withDependencies: {
+                $0.tipJar.purchase = { _ in throw TipJarError.productUnavailable }
+                $0.log.record = { _, _, category in
+                    logged.withValue { $0.append(category) }
+                }
+                $0.toastPresenter.present = { value in
+                    toasts.withValue { $0.append(value) }
+                }
+            }
+        )
+
+        await store.send(.view(.tipButtonTapped(.small))) {
+            $0.purchasingTip = .small
+        }
+        await store.receive(\.purchaseFailed) {
+            $0.purchasingTip = nil
+        }
+        await store.finish()
+
+        #expect(logged.value == [.tips])
+        #expect(toasts.value == [.error(String(localized: .tipProductUnavailable))])
     }
 }

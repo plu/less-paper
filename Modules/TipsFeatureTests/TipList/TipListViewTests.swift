@@ -1,12 +1,14 @@
 @testable import TipsFeature
 
 import ComposableArchitecture
+import Dependencies
 import SwiftUI
 import Testing
 import TestSupport
 
 @MainActor
 @Suite(
+    .dependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
@@ -31,6 +33,29 @@ struct TipListViewTests {
             },
             as: .image(layout: .device(config: .iPhone12))
         )
+    }
+
+    @Test
+    func testSnapshot_loading() async throws {
+        // The stub never returns, so `onAppear`'s fetch stays in flight for the capture.
+        withDependencies {
+            $0.tipJar.products = {
+                try await Task.sleep(for: .seconds(60))
+                return []
+            }
+        } operation: {
+            assertSnapshot(
+                of: NavigationStack {
+                    TipListView(
+                        store: Store(
+                            initialState: .init(),
+                            reducer: { TipListReducer() }
+                        )
+                    )
+                },
+                as: .image(layout: .device(config: .iPhone12))
+            )
+        }
     }
 
     @Test

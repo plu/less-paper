@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Logging
 
 extension Effect where Action == TipListReducer.Action {
 
@@ -8,7 +9,10 @@ extension Effect where Action == TipListReducer.Action {
 
         return .run { send in
             await send(.productsLoaded(try await products()))
-        } catch: { _, send in
+        } catch: { error, send in
+            @Dependency(\.log)
+            var log
+            log.error(error, category: .tips)
             await send(.productsFailed)
         }
     }
@@ -19,10 +23,18 @@ extension Effect where Action == TipListReducer.Action {
 
         return .run { send in
             await send(.purchaseResult(try await purchase(tip)))
-        } catch: { _, send in
-            // A throw here is the product being unavailable, which the user can do nothing about
-            // and which reads the same as any other failed tip.
-            await send(.purchaseResult(.unverified))
+        } catch: { error, send in
+            @Dependency(\.log)
+            var log
+            log.error(error, category: .tips)
+
+            // The product being gone is the one throw worth naming to the user; anything else
+            // reads the same as any other failed tip.
+            if case TipJarError.productUnavailable = error {
+                await send(.purchaseFailed(error))
+            } else {
+                await send(.purchaseResult(.unverified))
+            }
         }
     }
 }

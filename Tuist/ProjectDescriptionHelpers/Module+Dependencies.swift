@@ -591,6 +591,7 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
                 .target(.components),
+                .target(.logging),
                 .target(.testSupport),
                 .target(.tipsFeature),
             ]

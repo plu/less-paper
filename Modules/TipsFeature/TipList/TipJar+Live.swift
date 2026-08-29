@@ -70,10 +70,20 @@ private extension TipJar {
     static func updates() -> AsyncStream<Tip> {
         AsyncStream { continuation in
             let task = Task {
+                @Dependency(\.log)
+                var log
+
                 for await verification in Transaction.updates {
-                    let transaction = switch verification {
-                    case let .verified(transaction): transaction
-                    case let .unverified(transaction, _): transaction
+                    let transaction: Transaction
+                    switch verification {
+                    case let .verified(verified):
+                        transaction = verified
+                    case let .unverified(unverified, error):
+                        transaction = unverified
+                        log.error(
+                            "tip \(unverified.productID) failed verification: \(error.localizedDescription)",
+                            category: .tips
+                        )
                     }
 
                     await transaction.finish()
