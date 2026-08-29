@@ -36,11 +36,16 @@ UI knowing.
 **Favorites are per server**, like every other piece of persisted state in the app. The tab shows
 the selected server's favorites; another server's are neither shown nor searched.
 
-**Offline is read-only.** The value here is reading a document you already decided matters, in a
-basement or on a plane. Editing offline would need an outbox, conflict resolution against
-server-side changes, and partial-failure recovery — a project of its own, and one that can silently
-lose an edit if it is done carelessly. Offline the detail screen hides its edit affordances and says
-why.
+**The Favorites tab is a reading surface: its detail screen is always read-only.** Editing offline
+would need an outbox, conflict resolution against server-side changes, and partial-failure recovery
+— a project of its own, and one that can silently lose an edit if done carelessly. The app has no
+way to tell whether it is online (see below), so rather than guess, the tab commits: a favorite is a
+snapshot, and a snapshot is not where you edit. Changing a document is still one tap away in
+Documents or Inbox.
+
+The gain is more than avoided machinery. Because nothing in the tab can write, an edit made *in the
+tab* can never leave the snapshot behind it stale. Edits made elsewhere still can, which is a known
+risk recorded below, but the tab is no longer both the cause and the victim.
 
 **The row renders page one of the stored PDF instead of storing a thumbnail.** Downloading and
 pinning a second asset would mean a second network call per favorite and a second thing to keep in
@@ -59,10 +64,29 @@ every favorite rather than diffing on `modified`. It is the behaviour asked for,
 cannot leave a stale PDF behind a fresh title, and at the scale this feature targets — a handful of
 documents — the cost is a few seconds.
 
-**Connectivity gets a dependency of its own.** The app has never needed to know whether it is
-online; it discovers that by failing. Read-only-offline needs the answer before it fails, so this
-adds a `NetworkMonitor` over `NWPathMonitor`. It is the only new infrastructure here, and only
-`FavoritesFeature` consumes it in this version.
+**The app does not ask whether it is online, and this feature does not teach it to.** Adding an
+`NWPathMonitor` would report the *interface*, not whether the paperless server is reachable — a
+device on Wi-Fi with no route to the server still reads as online — so it would buy a gate that is
+wrong exactly when it matters, plus a new dependency to keep honest. Making the tab unconditionally
+read-only gets the same outcome with no infrastructure and no lie.
+
+**The favorites row is a new reducer, not the document row wearing a flag.** `DocumentRowReducer`
+and `DocumentRowView` are ~570 lines, and most of that is behaviour a favorite must not have: a
+context menu offering edit and delete, download-for-preview and download-for-share intents that hit
+the network, a `documentForm` destination, and a `DocumentImage` thumbnail that is a network call.
+Reusing it would mean forking the thumbnail source, the context menu, the swipe action, the download
+intents and the unavailable badge — five behavioural special cases in a reducer two other tabs
+depend on.
+
+What the lists genuinely share is presentation, so that is what gets shared: `detailsView` and
+`tagsView` become a `DocumentRowContent` view over a plain `Document` and `Server`, rendered by both
+rows. `FavoriteRowReducer` is then small — open, unfavorite, a local thumbnail, a badge.
+
+`DocumentRowReducer` does still gain one thing, because you asked for swipe-to-favorite there: a
+`favoriteButtonTapped` action, and a `@SharedReader(.favorites(server))` it derives `isFavorited`
+from so the swipe can read "Favorite" or "Unfavorite". That is one capability the row genuinely has,
+derived from shared state rather than passed in as a mode — not a flag that makes it behave
+differently for one caller.
 
 **Removing offline data and unfavoriting are the same act.** A "keep the favorite, drop the
 download" state would be a favorite that is not offline, which is the one thing a favorite is for.
@@ -153,11 +177,11 @@ a favorite is removed from inside the Favorites tab.
 A fourth tab between Documents and Settings, `Label(.favorites, systemImage: "star.fill")`, added to
 `AppTab` and `MainView`.
 
-`FavoriteListReducer` holds `@Shared(.favorites(server))`, a `searchText`, and rows built as
-`IdentifiedArrayOf<DocumentRowReducer.State>` so they look and behave exactly like the other tabs'.
-Tapping a row pushes the detail through a `Path`, matching how `SettingListReducer` and
-`DocumentListReducer` already navigate. Unfavoriting the document being viewed pops back to the
-list, because the thing the screen was showing no longer exists offline.
+`FavoriteListReducer` holds `@Shared(.favorites(server))`, a `searchText`, and rows as
+`IdentifiedArrayOf<FavoriteRowReducer.State>`. Tapping a row pushes the detail through a `Path`,
+matching how `SettingListReducer` and `DocumentListReducer` already navigate. Unfavoriting the
+document being viewed pops back to the list, because the thing the screen was showing no longer
+exists offline.
 
 The view follows the established search shape — `Searchable { … }.searchable(text: $store.searchText)`
 — filtering in memory over title, the resolved correspondent, document type, storage path and tag
@@ -166,11 +190,11 @@ make a hit impossible to see in a row. Everything it searches is already on disk
 server round-trip and no debounce to get wrong. `.refreshable` drives the refresh, and
 `EmptyListView` covers having no favorites yet.
 
-**Reusing the row means teaching it about the stored file.** `DocumentRowView` gets its thumbnail
-through `ImageFeature`, which is a network call and an evictable cache — reusing it unchanged would
-quietly contradict the decision above. So `DocumentRowReducer.State` gains an optional
-`offlinePDFURL`, and the row's thumbnail prefers page one of that file when it is set. The Documents
-and Inbox tabs leave it `nil` and behave exactly as before.
+`FavoriteRowView` renders `DocumentRowContent` — the extracted correspondent, date, title, ASN /
+type / storage-path grid and tag chips — so a favorite looks like a document everywhere else. What
+it puts around that content is its own: a thumbnail drawn from page one of the stored PDF instead of
+`DocumentImage`, a swipe action that unfavorites, a badge when the record is unavailable, and no
+context menu at all. `FavoriteRowReducer` has two actions worth the name — open, and unfavorite.
 
 ### Reading offline
 
@@ -186,8 +210,12 @@ DocumentDetailReducer()
 ```
 
 One detail UI, no duplication, and an override that is explicit at the call site and trivial to
-assert in a `TestStore`. `NetworkMonitor` supplies the online flag; offline, the detail hides edit
-and shows a "needs a connection" state.
+assert in a `TestStore`. Unlike the row, these are not special cases: it is the same screen showing
+the same content, reading from a different source.
+
+The one thing that does change is a single `isOfflineSnapshot` flag on `DocumentDetailReducer.State`,
+`false` everywhere else, which hides the edit and delete affordances. One flag for one coherent idea
+— this screen is a snapshot — rather than the five the row would have needed.
 
 A favorite marked `isUnavailable` reads exactly as it always did — the bytes are still there. The
 list badges it so the state is visible, and refresh is what clears the badge if the document comes
@@ -217,9 +245,10 @@ record and file. Snapshot tests for the list in its empty, populated, badged-una
 and offline states, following the existing suites. The dependency overrides get a test of their own:
 the detail screen fed by the store must produce the same state it would from the network.
 
-`DocumentRowReducer` gains coverage for the two ways it changed — the swipe favoriting a document,
-and `offlinePDFURL` selecting the stored file over the network thumbnail — plus a snapshot proving
-the Documents and Inbox rows are unchanged when it is `nil`.
+`DocumentRowReducer` changed in exactly one way — the swipe that favorites a document — and gets one
+test for it. Extracting `DocumentRowContent` is meant to be invisible to the Documents and Inbox
+tabs, and the existing row snapshots are what prove it: they must not change. A snapshot diff there
+is the signal that the extraction altered layout, not that a reference needs re-recording.
 
 Strings land in `Modules/FavoritesFeature/Resources/Localizable.xcstrings` in both `en` and `de`,
 with the few belonging to the toolbar and the Settings row going to `DocumentsFeature` and
@@ -253,7 +282,13 @@ adds a fourth network call, the Favorites tab will silently start hitting the ne
 the failure only shows up offline. The test that feeds the detail screen from the store is what
 catches it; it needs to stay honest as the detail screen grows.
 
-**`NWPathMonitor` reports the interface, not reachability.** A device on a Wi-Fi network with no
-route to the paperless server reads as online, and the read-only gate will let an edit through that
-then fails. That is the same failure the app has everywhere today, so the gate is an improvement
-rather than a guarantee.
+**A favorite goes stale silently.** Edit a document from the Documents tab and its favorite still
+holds the old title, notes and PDF until the next pull-to-refresh, with nothing saying so. Refresh
+after a save would close the gap, but only for edits made in this app — a change from the web UI or
+another device is invisible either way, so the honest fix is that refresh is the user's to run. If
+this bites in practice, showing `storedAt` on the row is a cheaper answer than automatic syncing.
+
+**Extracting `DocumentRowContent` touches two shipping tabs.** The row is the most-seen view in the
+app, and the extraction is pure refactoring in service of a third tab. The existing snapshot
+references are the guard, and they should pass untouched; if they need re-recording, something moved
+that was not supposed to.
