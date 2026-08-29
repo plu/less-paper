@@ -1,0 +1,184 @@
+import ApiInterface
+import Dependencies
+import Foundation
+import IdentifiedCollections
+import SwiftSharing
+import Testing
+
+@Suite
+struct RefreshFavoritesUseCaseTests {
+
+    private static let stored = Date(timeIntervalSince1970: 1_000)
+
+    // A server per test, so the shared favorites file cannot collide under swift-testing's
+    // in-suite parallelism.
+    private static func server(_ name: String) -> Server {
+        .testValue(id: "refresh-favorites-use-case-tests-\(name)")
+    }
+
+    @Test
+    func test_unchangedModifiedFetchesNothingExpensive() async throws {
+        let server = Self.server("unchanged-modified")
+        defer { cleanUp(server) }
+
+        let document = Document.testValue(id: 7, modified: Self.stored)
+        let downloads = LockIsolated(0)
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: document)
+        ]
+
+        let result = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [document] }
+            $0.downloadDocument.execute = { _, _ in downloads.withValue { $0 += 1 }; return Data() }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect(downloads.value == 0)
+        #expect(result.updated == 0)
+    }
+
+    @Test
+    func test_movedModifiedRefetchesEverything() async throws {
+        let server = Self.server("moved-modified")
+        defer { cleanUp(server) }
+
+        let fresh = Document.testValue(id: 7, modified: Self.stored.addingTimeInterval(60))
+        let saved = LockIsolated(0)
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 7, modified: Self.stored))
+        ]
+
+        let result = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [fresh] }
+            $0.saveFavorite.execute = { _, _ in saved.withValue { $0 += 1 } }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect(saved.value == 1)
+        #expect(result.updated == 1)
+    }
+
+    // bulk_edit changes tags and correspondent through QuerySet.update(), which bypasses Django's
+    // auto_now, so `modified` does not move. The document from phase one is written back anyway,
+    // and this is the test that catches anyone "simplifying" that away.
+    @Test
+    func test_fieldsChangedWithoutModifiedMovingAreStillStored() async throws {
+        let server = Self.server("fields-changed")
+        defer { cleanUp(server) }
+
+        let fresh = Document.testValue(id: 7, modified: Self.stored, title: "Renamed")
+        let downloads = LockIsolated(0)
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 7, modified: Self.stored, title: "Old"))
+        ]
+
+        _ = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [fresh] }
+            $0.downloadDocument.execute = { _, _ in downloads.withValue { $0 += 1 }; return Data() }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect($favorites.wrappedValue[id: 7]?.document.title == "Renamed")
+        #expect(downloads.value == 0)
+    }
+
+    @Test
+    func test_anIdMissingFromTheResponseIsMarkedUnavailable() async throws {
+        let server = Self.server("missing-id")
+        defer { cleanUp(server) }
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 7))
+        ]
+
+        let result = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [] }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect($favorites.wrappedValue[id: 7]?.isUnavailable == true)
+        #expect(result.unavailable == 1)
+    }
+
+    // The one that matters most: a failed request knows nothing about what the server holds.
+    // Marking on failure would badge every favorite the first time the app opens on a plane.
+    @Test
+    func test_aFailedPhaseOneMarksNothing() async {
+        let server = Self.server("failed-phase-one")
+        defer { cleanUp(server) }
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 7))
+        ]
+
+        await #expect(throws: (any Error).self) {
+            try await withDependencies {
+                $0.getDocumentsByIds.execute = { _, _ in throw ApiError.testValue() }
+            } operation: {
+                try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+            }
+        }
+
+        #expect($favorites.wrappedValue[id: 7]?.isUnavailable == false)
+    }
+
+    @Test
+    func test_forceRefetchesEvenWhenModifiedIsUnchanged() async throws {
+        let server = Self.server("force")
+        defer { cleanUp(server) }
+
+        let document = Document.testValue(id: 7, modified: Self.stored)
+        let saved = LockIsolated(0)
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: document)
+        ]
+
+        _ = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [document] }
+            $0.saveFavorite.execute = { _, _ in saved.withValue { $0 += 1 } }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(true, server)
+        }
+
+        #expect(saved.value == 1)
+    }
+
+    // Phase one works from a snapshot taken before the request. Writing that snapshot back
+    // wholesale would resurrect a favorite the user removed while the request was in flight —
+    // as a record pointing at a PDF `RemoveFavoriteUseCase` has already deleted.
+    @Test
+    func test_aFavoriteRemovedDuringPhaseOneIsNotResurrected() async throws {
+        let server = Self.server("removed-mid-flight")
+        defer { cleanUp(server) }
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 7))
+        ]
+        let shared = $favorites
+
+        _ = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in
+                shared.withLock { $0.remove(id: 7) }
+                return [.testValue(id: 7)]
+            }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect($favorites.wrappedValue[id: 7] == nil)
+    }
+
+    private func cleanUp(_ server: Server) {
+        try? FileManager.default.removeItem(
+            at: URL.applicationGroupDirectory.appending(component: "\(server.id)-favorites.json")
+        )
+    }
+}
