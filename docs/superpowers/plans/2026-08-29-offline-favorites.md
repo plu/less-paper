@@ -1061,7 +1061,7 @@ case favoritesFeature = "FavoritesFeature"
 case favoritesFeatureTests = "FavoritesFeatureTests"
 ```
 
-Then add `.favoritesFeature` to the framework list in `product` (line ~153), to `codeCoverageTarget` (line ~128), and `.favoritesFeatureTests` to the `.unitTests` list in `product` (line ~187). Add both to the corresponding lists at lines ~259 and ~287 (`infoPlist`), copying what `.tipsFeature` / `.tipsFeatureTests` do.
+Then mirror `.tipsFeature` / `.tipsFeatureTests` everywhere they appear. **Grep rather than trusting line numbers** — `grep -rn 'tipsFeature' Tuist/` lists every switch arm that needs the new cases, and the set has drifted before. In `Module.swift` that is the `product` and `codeCoverageTarget` switches; there is no `infoPlist` switch there.
 
 - [ ] **Step 2: Add the dependencies**
 
