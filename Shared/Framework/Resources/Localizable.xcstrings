@@ -5553,6 +5553,40 @@
         }
       }
     },
+    "tips" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trinkgeld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tips"
+          }
+        }
+      }
+    },
+    "tipsExplanation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn dir Less Paper nützt, kannst du Trinkgeld dalassen. Es schaltet nichts frei — alle Funktionen sind ohnehin da."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If Less Paper is useful to you, you can leave a tip. It unlocks nothing — every feature is there either way."
+          }
+        }
+      }
+    },
     "tipsUnavailable" : {
       "extractionState" : "manual",
       "localizations" : {
