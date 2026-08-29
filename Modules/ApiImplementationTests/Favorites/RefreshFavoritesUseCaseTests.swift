@@ -22,7 +22,7 @@ struct RefreshFavoritesUseCaseTests {
         defer { cleanUp(server) }
 
         let document = Document.testValue(id: 7, modified: Self.stored)
-        let downloads = LockIsolated(0)
+        let saved = LockIsolated(0)
 
         @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
             .testValue(document: document)
@@ -30,12 +30,12 @@ struct RefreshFavoritesUseCaseTests {
 
         let result = try await withDependencies {
             $0.getDocumentsByIds.execute = { _, _ in [document] }
-            $0.downloadDocument.execute = { _, _ in downloads.withValue { $0 += 1 }; return Data() }
+            $0.saveFavorite.execute = { _, _, _ in saved.withValue { $0 += 1 } }
         } operation: {
             try await RefreshFavoritesUseCase.liveValue.execute(false, server)
         }
 
-        #expect(downloads.value == 0)
+        #expect(saved.value == 0)
         #expect(result.updated == 0)
     }
 
@@ -71,7 +71,7 @@ struct RefreshFavoritesUseCaseTests {
         defer { cleanUp(server) }
 
         let fresh = Document.testValue(id: 7, modified: Self.stored, title: "Renamed")
-        let downloads = LockIsolated(0)
+        let saved = LockIsolated(0)
 
         @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
             .testValue(document: .testValue(id: 7, modified: Self.stored, title: "Old"))
@@ -79,13 +79,13 @@ struct RefreshFavoritesUseCaseTests {
 
         _ = try await withDependencies {
             $0.getDocumentsByIds.execute = { _, _ in [fresh] }
-            $0.downloadDocument.execute = { _, _ in downloads.withValue { $0 += 1 }; return Data() }
+            $0.saveFavorite.execute = { _, _, _ in saved.withValue { $0 += 1 } }
         } operation: {
             try await RefreshFavoritesUseCase.liveValue.execute(false, server)
         }
 
         #expect($favorites.wrappedValue[id: 7]?.document.title == "Renamed")
-        #expect(downloads.value == 0)
+        #expect(saved.value == 0)
     }
 
     @Test
@@ -174,6 +174,92 @@ struct RefreshFavoritesUseCaseTests {
         }
 
         #expect($favorites.wrappedValue[id: 7] == nil)
+    }
+
+    @Test
+    func test_aFailedSaveIsCountedAndNotReportedAsUpdated() async throws {
+        let server = Self.server("failed-save")
+        defer { cleanUp(server) }
+
+        let fresh = Document.testValue(id: 7, modified: Self.stored.addingTimeInterval(60))
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 7, modified: Self.stored))
+        ]
+
+        let result = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [fresh] }
+            $0.saveFavorite.execute = { _, _, _ in throw ApiError.testValue() }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect(result.failed == 1)
+        #expect(result.updated == 0)
+    }
+
+    // A failed phase two must not hide itself. Phase one has already stored the server's new
+    // `modified`, so a gate comparing against that would find them equal on the next refresh and
+    // never retry the notes, metadata and PDF that failed to download — the favorite would stay
+    // stale until someone hit "Redownload all".
+    @Test
+    func test_aFailedSaveIsRetriedByTheNextRefresh() async throws {
+        let server = Self.server("failed-save-retried")
+        defer { cleanUp(server) }
+
+        let fresh = Document.testValue(id: 7, modified: Self.stored.addingTimeInterval(60))
+        let attempts = LockIsolated(0)
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 7, modified: Self.stored))
+        ]
+
+        _ = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [fresh] }
+            $0.saveFavorite.execute = { _, _, _ in
+                attempts.withValue { $0 += 1 }
+                throw ApiError.testValue()
+            }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        let second = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [fresh] }
+            $0.saveFavorite.execute = { _, _, _ in attempts.withValue { $0 += 1 } }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect(attempts.value == 2)
+        #expect(second.updated == 1)
+    }
+
+    @Test
+    func test_everyIdIsRequestedOnceAcrossTheChunkBoundary() async throws {
+        let server = Self.server("chunk-boundary")
+        defer { cleanUp(server) }
+
+        let ids = (1 ... 101).map { Document.Id(rawValue: $0) }
+        let requested = LockIsolated<[Document.Id]>([])
+        let chunkSizes = LockIsolated<[Int]>([])
+
+        @Shared(.favorites(server)) var favorites = IdentifiedArrayOf<FavoriteDocument>(
+            uniqueElements: ids.map { .testValue(document: .testValue(id: $0)) }
+        )
+
+        _ = try await withDependencies {
+            $0.getDocumentsByIds.execute = { input, _ in
+                requested.withValue { $0.append(contentsOf: input.ids) }
+                chunkSizes.withValue { $0.append(input.ids.count) }
+                return []
+            }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect(chunkSizes.value == [100, 1])
+        #expect(requested.value.sorted() == ids)
     }
 
     private func cleanUp(_ server: Server) {

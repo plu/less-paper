@@ -40,7 +40,8 @@ private extension SaveFavoriteUseCase {
                 metadata: metadata,
                 notes: notes,
                 pdfByteCount: byteCount,
-                storedAt: now
+                storedAt: now,
+                syncedModified: document.modified
             )
             return true
         }

@@ -59,16 +59,19 @@ private extension RefreshFavoritesUseCase {
                 }
 
                 // Written back unconditionally: bulk edit changes fields without moving `modified`.
+                // `syncedModified` is carried rather than advanced — the notes, metadata and PDF
+                // have not been fetched yet, and phase two may still fail to fetch them.
                 favorites[id: favorite.id] = FavoriteDocument(
                     document: document,
                     metadata: favorite.metadata,
                     notes: favorite.notes,
                     pdfByteCount: favorite.pdfByteCount,
                     storedAt: favorite.storedAt,
+                    syncedModified: favorite.syncedModified,
                     isUnavailable: false
                 )
 
-                if force || document.modified != favorite.document.modified {
+                if force || document.modified != favorite.syncedModified {
                     changed.append(document)
                 }
             }
