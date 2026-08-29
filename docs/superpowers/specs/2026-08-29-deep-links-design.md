@@ -143,9 +143,11 @@ that id is popped to instead of pushed again.
 
 ### The outbound side
 
-`DocumentDetailView`'s existing `Menu` gains **Copy link** and **Copy web link**, the pair the old
-app offered, built by `DeepLink` from the state's `document` and `server`. The file `ShareLink` stays
-as it is; it shares a PDF, which is a different thing to want.
+`DocumentDetailView`'s existing `Menu` gains an app link and a web link, the pair the old app
+offered, built by `DeepLink` from the state's `document` and `server`. Each is a `ShareLink`, which
+is what the old app used and what this app already uses for the document file — nothing in this
+codebase reaches for `UIPasteboard`, and a share sheet can copy anyway. The file `ShareLink` stays as
+it is; it shares a PDF, which is a different thing to want.
 
 ## Testing
 
