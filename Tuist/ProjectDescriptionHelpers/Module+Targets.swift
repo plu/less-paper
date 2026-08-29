@@ -60,15 +60,12 @@ extension Module {
             ]
         )
 
-        // Resources for demo/test apps
+        // Only app targets share resources. A framework's Localizable.xcstrings lives in its own
+        // Modules/<Name>/Resources and reaches the target through the buildable folder — globbing
+        // one catalogue into every framework is what made a single new string rebuild the graph.
         var resources: ProjectDescription.ResourceFileElements?
-        switch product {
-        case .app:
+        if case .app = product {
             resources = .resources([.glob(pattern: .relativeToRoot("Shared/App/Resources/**"))])
-        case .framework, .staticFramework:
-            resources = .resources([.glob(pattern: .relativeToRoot("Shared/Framework/Resources/**"))])
-        default:
-            break
         }
 
         return .target(

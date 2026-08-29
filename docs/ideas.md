@@ -73,12 +73,12 @@ Surfaced during: `docs/superpowers/specs/2026-08-14-delete-document-design.md` a
 
 ---
 
-## One string catalog invalidates every module
+## One string catalog invalidates every module — done
 
-`Module+Targets.swift` gives every `.framework`/`.staticFramework` target
-`Shared/Framework/Resources/**` as a resource, so all ~30 of them embed the single
-`Localizable.xcstrings`. Changing one string changes every module's fingerprint, and Tuist's
-selective testing correctly concludes that everything changed.
+`Module+Targets.swift` used to give every `.framework`/`.staticFramework` target
+`Shared/Framework/Resources/**` as a resource, so all ~30 of them embedded the single
+`Localizable.xcstrings`. Changing one string changed every module's fingerprint, and Tuist's
+selective testing correctly concluded that everything changed.
 
 Measured on three runs from the same day:
 
@@ -88,29 +88,21 @@ Measured on three runs from the same day:
 | `fix_unresolved_filter_ids` | `DocumentsFeature` only | 222s |
 | `fix_has_any_tag` | `DocumentsFeature` + one string | 1711s |
 
-Since most feature PRs add a string, most PRs take the slow path.
+Since most feature PRs add a string, most PRs took the slow path.
 
-The obvious cheap fix does not work: moving the catalog into one shared module changes nothing,
-because every module would then depend on that module and the fan-out is identical. It has to
-actually split. Of 170 keys, **110 (64%) were used by exactly one module**, so per-module catalogs
-would not duplicate much — but the 56 genuinely shared ones (`cancel`, `close`, `save`, `name`,
-`title`, `url`, `tags`, `deleteConfirmation`, …) need a home.
+The catalogue is now split per module, one `Modules/<Name>/Resources/Localizable.xcstrings` each.
+The worry that killed earlier attempts — that the 56 shared keys would need hand-written `public`
+accessors, because Xcode's generated symbols are `internal` to whichever target compiles the
+catalogue — turned out to be avoidable: a shared key is simply **copied** into each module that
+uses it. Duplication measured 1.30x (434 key-copies for 333 unique keys), which buys back the whole
+fan-out without giving up symbol generation for a single string.
 
-That split was measured when the catalog held 170 keys; it now holds 206, so the proportions need
-re-deriving before they are quoted at anyone.
+The earlier estimate was also pessimistic. Re-derived with a matcher that understands positional
+arguments (`Label(.edit, systemImage:)`) as well as labelled ones, **283 of 333 keys (84%) are used
+by exactly one module**, not 64%. The old figure missed `Label(…)` call sites, which
+is the same gap that made `edit` and `Tag` look dead below.
 
-The catch is why the current design exists at all: there are no hand-written
-`LocalizedStringResource` extensions and Tuist's synthesizers are off, so `.cancel` comes from
-Xcode's built-in string catalog symbol generation — and those symbols are `internal` to whichever
-target compiles the catalog. Attaching the catalog everywhere is *how* every module can say
-`.cancel`. Sharing a subset means hand-written `public` accessors for those 56 keys, losing
-auto-generation for exactly the strings a translator is most likely to touch.
-
-Worth re-measuring first: #139 stopped the XCUITest targets running on every PR, which should take
-a lot out of the slow path. If a string-change run lands somewhere tolerable, this may not be worth
-its cost.
-
-Surfaced during: the CI runtime investigation, 2026-08-15.
+Surfaced during: the CI runtime investigation, 2026-08-15. Done 2026-08-29.
 
 ---
 
@@ -130,19 +122,30 @@ Surfaced during: the CI runtime investigation, 2026-08-15.
 
 ## Small localization loose ends
 
-Two things noticed while working on the tag filter, neither urgent:
+Noticed while working on the tag filter, and re-checked during the per-module catalogue split:
 
 - The tag rule picker reads **All | Any | Assigned | Not assigned** in English but
   **Alle | Alle | Zugewiesen | Nicht zugewiesen** in German, because `any` is translated `"Alle"`,
   identical to `all`. It predates the fourth segment added in #133, and the string also drives the
   correspondent, document type and storage path fields, so it was left alone rather than changed
-  underneath them.
-- Four keys have no detected usage and may be dead: `edit`, `makeDefault`,
-  `SavedViewsFeature_formHasFieldErrors`, `Tag`. Detection accounted for Xcode's key→symbol
-  transform (`asnType.equals` → `asnTypeEquals`), so these are more likely genuine than the rest,
-  but worth confirming by hand before deleting.
+  underneath them. Still open, and it is the one German string worth fixing: the same two words are
+  also the AND/OR picker in `CustomFieldQueryCardView`, where `Text(.all).tag(.and)` and
+  `Text(.any).tag(.or)` render as two identical options. `"Beliebig"` reads correctly in both
+  places. Changing it re-records the German snapshot references that show either segment.
+- **The dead-key list was wrong about two of the four.** `edit` and `Tag` are both live —
+  `Label(.edit, systemImage:)` in `DocumentDetailView` and `DocumentRowView`, `String(localized:
+  .tag)` in `TagFormSection` — and the earlier detection missed them because it only understood
+  labelled arguments, not a leading-dot resource in first position. `makeDefault` and
+  `SavedViewsFeature_formHasFieldErrors` were genuinely dead and are gone, together with `back`,
+  `host` and `customFieldQueryUnknownOption`, which the same re-check turned up.
+- Two more one-English-word-two-German-words pairs, both cosmetic: `owner` is *Besitzer* while
+  `sortFieldOwner` is *Eigentümer*, and `retry` is *Erneut versuchen* while `retryDownload` is
+  *Nochmal versuchen*.
+- `customFieldQueryOperatorContains` and `customFieldQueryOperatorIcontains` are both "Contains" /
+  "Enthält", so the case-sensitive and case-insensitive operators are indistinguishable in the
+  picker in both languages. This one needs wording, not just unification.
 
-Surfaced during: #133 and the string catalog analysis.
+Surfaced during: #133, the string catalog analysis, and the catalogue split on 2026-08-29.
 
 ---
 
