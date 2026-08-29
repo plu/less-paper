@@ -49,29 +49,11 @@ struct DocumentDetailView: View {
                     } label: {
                         Label(.preview, systemImage: "eye")
                     }
-
-                    ShareLink(item: url) {
-                        Label(.share, systemImage: "square.and.arrow.up")
-                    }
-
-                    viewerMenu()
-                } else {
-                    viewerMenu()
                 }
 
-                // Outside the download branch: a link to the document is worth sharing whether or
-                // not its file has come down yet.
-                if let url = DeepLink.appURL(server: store.server, route: .documentDetail(store.document.id)) {
-                    ShareLink(item: url) {
-                        Label(.shareAppLink, systemImage: "candybarphone")
-                    }
-                }
+                shareMenu()
 
-                if let url = DeepLink.webURL(server: store.server, route: .documentDetail(store.document.id)) {
-                    ShareLink(item: url) {
-                        Label(.shareWebLink, systemImage: "globe")
-                    }
-                }
+                viewerMenu()
             } label: {
                 Label(.moreActions, systemImage: "ellipsis.circle")
             }
@@ -93,6 +75,19 @@ struct DocumentDetailView: View {
     @ViewBuilder
     private func viewerMenu() -> some View {
         DocumentViewerMenu { send(.viewButtonTapped($0)) }
+    }
+
+    @ViewBuilder
+    private func shareMenu() -> some View {
+        DocumentShareMenu(documentId: store.document.id, server: store.server) {
+            // Only once the file is here: detail has it downloaded already, so this shares it
+            // directly rather than asking for it again.
+            if let url = store.downloadedURL {
+                ShareLink(item: url) {
+                    Label(.document, systemImage: "doc")
+                }
+            }
+        }
     }
 
     @ViewBuilder

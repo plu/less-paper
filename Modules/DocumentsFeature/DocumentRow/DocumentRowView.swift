@@ -65,10 +65,14 @@ struct DocumentRowView: View {
             Label(.preview, systemImage: "eye")
         }
 
-        Button {
-            send(.shareButtonTapped)
-        } label: {
-            Label(.share, systemImage: "square.and.arrow.up")
+        DocumentShareMenu(documentId: store.document.id, server: store.server) {
+            // A row has no file yet, so this asks for one: the download runs and the share sheet
+            // follows it. The links below it need nothing downloaded.
+            Button {
+                send(.shareButtonTapped)
+            } label: {
+                Label(.document, systemImage: "doc")
+            }
         }
 
         DocumentViewerMenu { send(.viewButtonTapped($0)) }
