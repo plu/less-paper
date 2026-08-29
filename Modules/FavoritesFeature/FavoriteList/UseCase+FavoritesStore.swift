@@ -2,9 +2,13 @@ import ApiInterface
 import ComposableArchitecture
 import Foundation
 
-// The three fetches the document detail screen makes, answered from the favorite instead of the
-// server. Pointing the existing screen at these is what makes it readable with no connection
-// without a second implementation of it.
+// The five fetches the document detail screen makes on the way to displaying a document, answered
+// from the favorite instead of the server. Pointing the existing screen at these is what makes it
+// readable with no connection without a second implementation of it.
+//
+// Reads only. The writes that screen can make — updateDocument, createNote, deleteNote,
+// getNextArchiveSerialNumber, and the form picker's getDocuments — still go to the server, and are
+// gated elsewhere rather than answered here.
 
 extension DownloadDocumentUseCase {
 

@@ -52,6 +52,23 @@
         }
       }
     },
+    "noFavoritesFound": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Favoriten gefunden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No favorites found"
+          }
+        }
+      }
+    },
     "noFavoritesMessage": {
       "extractionState": "manual",
       "localizations": {

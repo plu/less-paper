@@ -45,6 +45,9 @@ public struct FavoriteListView: View {
     @Bindable
     public var store: StoreOf<FavoriteListReducer>
 
+    // Two different nothings: nothing favorited yet, which is worth explaining, and a search that
+    // matched none of what is here, which is not. Without the second a filtered-out list is a blank
+    // screen that looks like the favorites have gone.
     @ViewBuilder
     private func emptyListView() -> some View {
         if store.favorites.isEmpty {
@@ -55,6 +58,10 @@ public struct FavoriteListView: View {
                         .foregroundStyle(Color.m3OnSurface)
                         .multilineTextAlignment(.center)
                 }
+            }
+        } else if store.rows.isEmpty, !store.searchText.isEmpty {
+            ContentUnavailableView {
+                EmptyListView(systemImage: "magnifyingglass", title: .noFavoritesFound)
             }
         }
     }

@@ -46,6 +46,30 @@ struct FavoriteListViewTests {
         )
     }
 
+    // A search that matches nothing is not the same nothing as having no favorites, and the two
+    // states are one `else if` apart — which is what makes a reference worth having for each.
+    @Test
+    func testSnapshot_noSearchResults() async throws {
+        let server = Server.testValue(id: "snapshot-no-search-results")
+
+        @Shared(.favorites(server))
+        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(content: nil, id: 1, title: "Invoice"))
+        ]
+
+        let store = Store(
+            initialState: FavoriteListReducer.State(server: server),
+            reducer: { FavoriteListReducer() }
+        )
+        store.send(.binding(.set(\.searchText, "nothing matches this")))
+
+        assertSnapshot(
+            of: FavoriteListView(store: store),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "no-search-results"
+        )
+    }
+
     // The badge only shows on a favorite the last refresh could not find on the server, which is
     // the one row state no other reference covers.
     @Test

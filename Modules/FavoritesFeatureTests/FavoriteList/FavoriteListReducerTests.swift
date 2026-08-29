@@ -115,13 +115,19 @@ struct FavoriteListReducerTests {
         #expect(store.state.rows.map(\.id) == [1])
     }
 
-    // The detail screen is the network screen, run against the record. Every fetch it makes is
-    // counted here, not a chosen few: someone adding a call to that screen will not be thinking
-    // about this tab, and without this assertion their change compiles, passes every other test,
-    // and only fails once there is no connection.
+    // The detail screen is the network screen, run against the record. It opens the detail and each
+    // of the viewer's four sections, which between them reach the five read dependencies the Path
+    // overrides: downloadDocument, getDocument, getDocumentMetadata, getDocumentsByIds and getNotes.
     //
-    // It opens the detail and each of the viewer's four sections, which between them reach
-    // downloadDocument, getDocument, getNotes, getDocumentMetadata and getDocumentsByIds.
+    // What it catches: a new call site of any of those five, from anywhere the detail screen
+    // reaches, and — if the loop below is extended with it — a new viewer section.
+    //
+    // What it cannot catch, because there is no choke point to assert on: a *newly introduced*
+    // dependency. The count works by stubbing five named use cases, and a sixth would fall through
+    // to its own `testValue` — every use case in this codebase ships a working one rather than an
+    // unimplemented trap (`GetDocumentUseCase.testValue` returns `Document.testValue()`), so the new
+    // call would hand back fixture data, increment nothing, and leave this test green while the
+    // offline screen broke. Adding a dependency to the detail screen means adding it here too.
     @Test
     func test_theDetailScreenReadsFromTheStoreRatherThanTheNetwork() async throws {
         let server = Server.testValue(id: "detail-reads-from-the-store")
