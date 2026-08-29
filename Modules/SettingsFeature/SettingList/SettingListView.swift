@@ -116,7 +116,17 @@ public struct SettingListView: View {
                     .listRowBackground(Color.m3SurfaceContainer)
                 }
 
+                // A-Z by English title, matching the section above. German sorts differently and is
+                // left alone: reordering per locale would give the two languages different
+                // screenshots for no reader's benefit.
                 Section {
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.diagnosticsList(DiagnosticsListReducer.State())
+                    ) {
+                        Label(.diagnostics, systemImage: "stethoscope")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
                     Link(destination: Self.repositoryUrl) {
                         Label {
                             Text(.github)
@@ -128,23 +138,16 @@ public struct SettingListView: View {
                     .listRowBackground(Color.m3SurfaceContainer)
 
                     NavigationLink(
-                        state: SettingListReducer.Path.State.tipList(TipListReducer.State())
-                    ) {
-                        Label(.tips, systemImage: "heart")
-                    }
-                    .listRowBackground(Color.m3SurfaceContainer)
-
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.diagnosticsList(DiagnosticsListReducer.State())
-                    ) {
-                        Label(.diagnostics, systemImage: "stethoscope")
-                    }
-                    .listRowBackground(Color.m3SurfaceContainer)
-
-                    NavigationLink(
                         state: SettingListReducer.Path.State.licenseList(LicenseListReducer.State())
                     ) {
                         Label(.licenses, systemImage: "rosette")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.tipList(TipListReducer.State())
+                    ) {
+                        Label(.tips, systemImage: "cup.and.saucer")
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
                 } footer: {
