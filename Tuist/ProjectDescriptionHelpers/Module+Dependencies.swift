@@ -450,6 +450,7 @@ extension Module {
                 .target(.shareFeature),
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
+                .target(.tipsFeature),
                 .target(.trashFeature),
             ]
         case .settingsFeatureTests:

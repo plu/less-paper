@@ -14,6 +14,7 @@ import ServersFeature
 import ShareFeature
 import StoragePathsFeature
 import TagsFeature
+import TipsFeature
 import TrashFeature
 
 @Reducer
@@ -47,6 +48,7 @@ public struct SettingListReducer {
         case serverList(ServerListReducer)
         case storagePathList(StoragePathListReducer)
         case tagList(TagListReducer)
+        case tipList(TipListReducer)
         case trashList(TrashListReducer)
 
         @ReducerCaseIgnored

@@ -11,6 +11,7 @@ import ShareFeature
 import StoragePathsFeature
 import SwiftUI
 import TagsFeature
+import TipsFeature
 import TrashFeature
 import VisionKit
 
@@ -127,6 +128,13 @@ public struct SettingListView: View {
                     .listRowBackground(Color.m3SurfaceContainer)
 
                     NavigationLink(
+                        state: SettingListReducer.Path.State.tipList(TipListReducer.State())
+                    ) {
+                        Label(.tips, systemImage: "heart")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
+                    NavigationLink(
                         state: SettingListReducer.Path.State.diagnosticsList(DiagnosticsListReducer.State())
                     ) {
                         Label(.diagnostics, systemImage: "stethoscope")
@@ -179,6 +187,8 @@ public struct SettingListView: View {
                 TrashListView(store: store)
             case let .tagList(store):
                 TagListView(store: store)
+            case let .tipList(store):
+                TipListView(store: store)
             }
         }
         .documentImport(
