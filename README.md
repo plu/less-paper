@@ -17,10 +17,12 @@ A native iOS client for [paperless-ngx](https://github.com/paperless-ngx/paperle
 
 ## Status
 
-This is a complete rewrite of Less Paper, and it has not been released yet — what is on the App
-Store today is still the old app. It supports paperless-ngx 3.0.0 and older versions.
+This is a complete rewrite of Less Paper, and it is the app on the App Store today:
+<https://apps.apple.com/en/app/less-paper/id6464425056>. It supports paperless-ngx 3.0.0 and older
+versions.
 
-A public beta is available on TestFlight: <https://testflight.apple.com/join/3CM21m1n>
+Every push to `main` also ships a TestFlight build, and the beta is open to anyone who wants the
+next release early: <https://testflight.apple.com/join/3CM21m1n>
 
 ## Features
 
