@@ -26,6 +26,8 @@ struct SettingListViewTests {
         )
     }
 
+    // 2400pt is taller than the list is today, which is the whole point: a row added past it is
+    // clipped away silently and the reference still matches. Grow the height when the list grows.
     @Test
     func testSnapshot_fullList() async throws {
         assertSnapshot(

@@ -39,10 +39,10 @@ public struct SettingListReducer {
     @Reducer
     public enum Path {
         case correspondentList(CorrespondentListReducer)
-        case diagnosticsList(DiagnosticsListReducer)
-        case favoriteSettings(FavoriteSettingsReducer)
         case customFieldList(CustomFieldListReducer)
+        case diagnosticsList(DiagnosticsListReducer)
         case documentTypeList(DocumentTypeListReducer)
+        case favoriteSettings(FavoriteSettingsReducer)
         case licenseList(LicenseListReducer)
         case pdfPasswordList(PdfPasswordListReducer)
         case savedViewList(SavedViewListReducer)

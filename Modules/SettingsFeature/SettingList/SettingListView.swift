@@ -179,10 +179,10 @@ public struct SettingListView: View {
                 CustomFieldListView(store: store)
             case let .diagnosticsList(store):
                 DiagnosticsListView(store: store)
-            case let .favoriteSettings(store):
-                FavoriteSettingsView(store: store)
             case let .documentTypeList(store):
                 DocumentTypeListView(store: store)
+            case let .favoriteSettings(store):
+                FavoriteSettingsView(store: store)
             case let .license(license):
                 LicenseView(license: license)
             case let .licenseList(store):
@@ -195,12 +195,12 @@ public struct SettingListView: View {
                 ServerListView(store: store)
             case let .storagePathList(store):
                 StoragePathListView(store: store)
-            case let .trashList(store):
-                TrashListView(store: store)
             case let .tagList(store):
                 TagListView(store: store)
             case let .tipList(store):
                 TipListView(store: store)
+            case let .trashList(store):
+                TrashListView(store: store)
             }
         }
         .documentImport(
