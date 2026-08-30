@@ -62,7 +62,10 @@ header.hero p.tagline { font-size: 1.2rem; margin: 0 0 28px; color: #b9ddd9; }
 .badge:hover { background: rgba(255, 255, 255, 0.22); }
 .badge.primary:hover { background: #eaf5f3; }
 
-.shot { display: block; width: 100%; max-width: 100%; margin: 0 auto; }
+/* `height: auto` is not optional here. The img carries width and height attributes so the page
+   reserves the right space before the image loads, and without this the attribute height wins as
+   the used height — the image scales to the container's width and is stretched to 739px tall. */
+.shot { display: block; width: 100%; max-width: 100%; height: auto; margin: 0 auto; }
 
 main { padding: 56px 0 72px; }
 
