@@ -18,26 +18,28 @@ struct TagListViewTests {
     @Test
     func testSnapshot() async throws {
         assertSnapshot(
-            of: TagListView(
+            of: NavigationStack { TagListView(
                 store: Store(
                     initialState: .testValue(tags: .previewValue),
                     reducer: {
                         TagListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12))
         )
 
         assertSnapshot(
-            of: TagListView(
+            of: NavigationStack { TagListView(
                 store: Store(
                     initialState: .testValue(),
                     reducer: {
                         TagListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12)),
             named: "empty"
         )
@@ -48,14 +50,15 @@ struct TagListViewTests {
     @Test
     func testSnapshot_darkMode() async throws {
         assertSnapshot(
-            of: TagListView(
+            of: NavigationStack { TagListView(
                 store: Store(
                     initialState: .testValue(tags: .previewValue),
                     reducer: {
                         TagListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(
                 layout: .device(config: .iPhone12),
                 traits: .init(userInterfaceStyle: .dark)

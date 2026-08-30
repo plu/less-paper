@@ -14,7 +14,7 @@ public struct PdfPasswordListView: View {
     public var body: some View {
         List {
             ForEach(
-                store.scope(state: \.pdfPasswords, action: \.pdfPasswords),
+                store.scope(state: \.visiblePdfPasswords, action: \.pdfPasswords),
                 id: \.state.id
             ) { rowStore in
                 PdfPasswordRowView(store: rowStore)
@@ -26,6 +26,9 @@ public struct PdfPasswordListView: View {
         .navigationTitle(Text(.pdfPasswords))
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await send(.onRefresh).finish() }
+        // Pinned rather than left to its default: unpinned it is revealed by the first pull,
+        // so a pull-to-refresh has to travel through it before the refresh starts.
+        .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
         .task { await send(.onAppear).finish() }
         .overlay {
             if store.isLoaded, store.pdfPasswords.isEmpty {

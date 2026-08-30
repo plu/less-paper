@@ -7,11 +7,14 @@ public struct StoragePathListView: View {
 
     public var body: some View {
         List {
-            ForEach(Array(store.scope(state: \.storagePaths, action: \.storagePaths))) { store in
+            ForEach(Array(store.scope(state: \.visibleStoragePaths, action: \.storagePaths))) { store in
                 StoragePathRowView(store: store)
             }
         }
         .overlay(emptyListView())
+        // Pinned rather than left to its default: unpinned it is revealed by the first pull,
+        // so a pull-to-refresh has to travel through it before the refresh starts.
+        .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
         .background(Color.m3SurfaceContainerLowest)
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(.storagePaths)

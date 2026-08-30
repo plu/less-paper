@@ -31,7 +31,21 @@ public struct CustomFieldListReducer: Sendable {
     @ObservableState
     public struct State: Equatable {
 
+        var searchText = ""
+
         var customFields: IdentifiedArrayOf<CustomFieldRowReducer.State>
+
+        // Local only: the list is already in memory, so filtering it needs no request and works
+        // offline. localizedCaseInsensitiveContains rather than lowercased().contains, matching the
+        // filter sheets - the latter is wrong for locales whose case folding is not one-to-one.
+        var visibleCustomFields: IdentifiedArrayOf<CustomFieldRowReducer.State> {
+            guard !searchText.isEmpty else {
+                return customFields
+            }
+            return customFields.filter {
+                $0.customField.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
 
         @Presents
         var destination: Destination.State?

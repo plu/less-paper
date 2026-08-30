@@ -9,8 +9,21 @@ public struct TrashListReducer: Reducer, Sendable {
 
     @ObservableState
     public struct State: Equatable {
+        var searchText = ""
 
         var documents: IdentifiedArrayOf<Document> = []
+
+        // Local only: the list is already in memory, so filtering it needs no request and works
+        // offline. localizedCaseInsensitiveContains rather than lowercased().contains, matching the
+        // filter sheets - the latter is wrong for locales whose case folding is not one-to-one.
+        var visibleDocuments: IdentifiedArrayOf<Document> {
+            guard !searchText.isEmpty else {
+                return documents
+            }
+            return documents.filter {
+                $0.title.localizedCaseInsensitiveContains(searchText)
+            }
+        }
 
         var error: String?
 
@@ -37,7 +50,8 @@ public struct TrashListReducer: Reducer, Sendable {
         }
     }
 
-    public enum Action: ViewAction {
+    public enum Action: BindableAction, ViewAction {
+        case binding(BindingAction<State>)
         case documentsLoaded(Result<[Document], Error>)
         case operationFinished(ids: Set<Document.Id>, Result<Void, Error>)
         case view(View)
@@ -53,8 +67,12 @@ public struct TrashListReducer: Reducer, Sendable {
     }
 
     public var body: some ReducerOf<Self> {
+        BindingReducer()
+
         Reduce { state, action in
             switch action {
+            case .binding:
+                return .none
             case let .documentsLoaded(.success(documents)):
                 state.documents = IdentifiedArray(uniqueElements: documents)
                 state.error = nil

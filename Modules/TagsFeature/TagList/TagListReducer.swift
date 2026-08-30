@@ -38,7 +38,19 @@ public struct TagListReducer: Sendable {
 
         var isLoaded: Bool
 
+        var searchText = ""
+
         var tags: IdentifiedArrayOf<TagRowReducer.State>
+
+        // Local only: the list is already in memory, so filtering it needs no request and works
+        // offline. localizedCaseInsensitiveContains rather than lowercased().contains, matching the
+        // filter sheets - the latter is wrong for locales whose case folding is not one-to-one.
+        var visibleTags: IdentifiedArrayOf<TagRowReducer.State> {
+            guard !searchText.isEmpty else {
+                return tags
+            }
+            return tags.filter { $0.tag.name.localizedCaseInsensitiveContains(searchText) }
+        }
 
         public init(
             destination: Destination.State? = nil,

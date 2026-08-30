@@ -18,26 +18,28 @@ struct DocumentTypeListViewTests {
     @Test
     func testSnapshot() async throws {
         assertSnapshot(
-            of: DocumentTypeListView(
+            of: NavigationStack { DocumentTypeListView(
                 store: Store(
                     initialState: .testValue(documentTypes: .previewValue),
                     reducer: {
                         DocumentTypeListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12))
         )
 
         assertSnapshot(
-            of: DocumentTypeListView(
+            of: NavigationStack { DocumentTypeListView(
                 store: Store(
                     initialState: .testValue(),
                     reducer: {
                         DocumentTypeListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12)),
             named: "empty"
         )
@@ -48,14 +50,15 @@ struct DocumentTypeListViewTests {
     @Test
     func testSnapshot_darkMode() async throws {
         assertSnapshot(
-            of: DocumentTypeListView(
+            of: NavigationStack { DocumentTypeListView(
                 store: Store(
                     initialState: .testValue(documentTypes: .previewValue),
                     reducer: {
                         DocumentTypeListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(
                 layout: .device(config: .iPhone12),
                 traits: .init(userInterfaceStyle: .dark)

@@ -7,7 +7,8 @@ import SwiftSharing
 @Reducer
 public struct ServerListReducer: Sendable {
 
-    public enum Action: ViewAction {
+    public enum Action: BindableAction, ViewAction {
+        case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
         case getCredentialsResult(Credentials?, Server)
         case servers(IdentifiedActionOf<ServerRowReducer>)
@@ -28,8 +29,22 @@ public struct ServerListReducer: Sendable {
 
         @Presents
         var destination: Destination.State?
+        var searchText = ""
 
         var servers: IdentifiedArrayOf<ServerRowReducer.State> = []
+
+        // Local only: the list is already in memory, so filtering it needs no request and works
+        // offline. localizedCaseInsensitiveContains rather than lowercased().contains, matching the
+        // filter sheets - the latter is wrong for locales whose case folding is not one-to-one.
+        var visibleServers: IdentifiedArrayOf<ServerRowReducer.State> {
+            guard !searchText.isEmpty else {
+                return servers
+            }
+            return servers.filter {
+                $0.server.alias.localizedCaseInsensitiveContains(searchText)
+                    || $0.server.url.absoluteString.localizedCaseInsensitiveContains(searchText)
+            }
+        }
 
         public init(
             destination: Destination.State? = nil
@@ -46,6 +61,8 @@ public struct ServerListReducer: Sendable {
     }
 
     public var body: some ReducerOf<Self> {
+        BindingReducer()
+
         Reduce { state, action in
             switch action {
             case let .destination(.presented(.serverForm(.delegate(.serverSaved(server))))):
@@ -81,7 +98,7 @@ public struct ServerListReducer: Sendable {
                     state.destination = .serverForm(ServerFormReducer.State(input: .empty))
                     return .none
                 }
-            case .destination, .servers:
+            case .binding, .destination, .servers:
                 return .none
             }
         }

@@ -18,26 +18,28 @@ struct SavedViewListViewTests {
     @Test
     func testSnapshot() async throws {
         assertSnapshot(
-            of: SavedViewListView(
+            of: NavigationStack { SavedViewListView(
                 store: Store(
                     initialState: .testValue(savedViews: .previewValue),
                     reducer: {
                         SavedViewListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12))
         )
 
         assertSnapshot(
-            of: SavedViewListView(
+            of: NavigationStack { SavedViewListView(
                 store: Store(
                     initialState: .testValue(),
                     reducer: {
                         SavedViewListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12)),
             named: "empty"
         )
@@ -48,14 +50,15 @@ struct SavedViewListViewTests {
     @Test
     func testSnapshot_darkMode() async throws {
         assertSnapshot(
-            of: SavedViewListView(
+            of: NavigationStack { SavedViewListView(
                 store: Store(
                     initialState: .testValue(savedViews: .previewValue),
                     reducer: {
                         SavedViewListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(
                 layout: .device(config: .iPhone12),
                 traits: .init(userInterfaceStyle: .dark)

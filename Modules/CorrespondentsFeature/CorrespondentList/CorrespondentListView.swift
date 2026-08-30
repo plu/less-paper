@@ -7,11 +7,14 @@ public struct CorrespondentListView: View {
 
     public var body: some View {
         List {
-            ForEach(Array(store.scope(state: \.correspondents, action: \.correspondents))) { store in
+            ForEach(Array(store.scope(state: \.visibleCorrespondents, action: \.correspondents))) { store in
                 CorrespondentRowView(store: store)
             }
         }
         .overlay(emptyListView())
+        // Pinned rather than left to its default: unpinned it is revealed by the first pull,
+        // so a pull-to-refresh has to travel through it before the refresh starts.
+        .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
         .background(Color.m3SurfaceContainerLowest)
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(.correspondents)

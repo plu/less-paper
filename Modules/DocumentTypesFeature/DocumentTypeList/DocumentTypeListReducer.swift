@@ -33,7 +33,21 @@ public struct DocumentTypeListReducer: Sendable {
 
         let server: Server
 
+        var searchText = ""
+
         var documentTypes: IdentifiedArrayOf<DocumentTypeRowReducer.State>
+
+        // Local only: the list is already in memory, so filtering it needs no request and works
+        // offline. localizedCaseInsensitiveContains rather than lowercased().contains, matching the
+        // filter sheets - the latter is wrong for locales whose case folding is not one-to-one.
+        var visibleDocumentTypes: IdentifiedArrayOf<DocumentTypeRowReducer.State> {
+            guard !searchText.isEmpty else {
+                return documentTypes
+            }
+            return documentTypes.filter {
+                $0.documentType.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
 
         @Presents
         var destination: Destination.State?
