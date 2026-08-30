@@ -10,5 +10,5 @@ extension String {
         ].compactMap(\.self).joined(separator: ".")
         : "1"
 
-    static let marketingVersion = "3.0.1"
+    static let marketingVersion = "3.0.2"
 }
