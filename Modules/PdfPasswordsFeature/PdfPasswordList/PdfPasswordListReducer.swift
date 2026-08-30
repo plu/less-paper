@@ -6,7 +6,8 @@ import Foundation
 @Reducer
 public struct PdfPasswordListReducer: Sendable {
 
-    public enum Action: ViewAction {
+    public enum Action: BindableAction, ViewAction {
+        case binding(BindingAction<State>)
         case error(Error)
         case getPdfPasswordsResult([PdfPassword])
         case pdfPasswordDeleted(String)
@@ -23,8 +24,21 @@ public struct PdfPasswordListReducer: Sendable {
     public struct State: Equatable {
 
         var isLoaded: Bool
+        var searchText = ""
 
         var pdfPasswords: IdentifiedArrayOf<PdfPasswordRowReducer.State>
+
+        // Local only: the list is already in memory, so filtering it needs no request and works
+        // offline. localizedCaseInsensitiveContains rather than lowercased().contains, matching the
+        // filter sheets - the latter is wrong for locales whose case folding is not one-to-one.
+        var visiblePdfPasswords: IdentifiedArrayOf<PdfPasswordRowReducer.State> {
+            guard !searchText.isEmpty else {
+                return pdfPasswords
+            }
+            return pdfPasswords.filter {
+                $0.pdfPassword.filename.localizedCaseInsensitiveContains(searchText)
+            }
+        }
 
         public init(
             isLoaded: Bool = false,
@@ -36,6 +50,8 @@ public struct PdfPasswordListReducer: Sendable {
     }
 
     public var body: some ReducerOf<Self> {
+        BindingReducer()
+
         Reduce { state, action in
             switch action {
             case let .error(error):
@@ -56,7 +72,7 @@ public struct PdfPasswordListReducer: Sendable {
                 case .onAppear, .onRefresh:
                     return .runGetPdfPasswords()
                 }
-            case .pdfPasswords:
+            case .binding, .pdfPasswords:
                 return .none
             }
         }

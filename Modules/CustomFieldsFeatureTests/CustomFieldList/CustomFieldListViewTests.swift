@@ -18,26 +18,28 @@ struct CustomFieldListViewTests {
     @Test
     func testSnapshot() async throws {
         assertSnapshot(
-            of: CustomFieldListView(
+            of: NavigationStack { CustomFieldListView(
                 store: Store(
                     initialState: .testValue(customFields: .previewValue),
                     reducer: {
                         CustomFieldListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12))
         )
 
         assertSnapshot(
-            of: CustomFieldListView(
+            of: NavigationStack { CustomFieldListView(
                 store: Store(
                     initialState: .testValue(),
                     reducer: {
                         CustomFieldListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12)),
             named: "empty"
         )
@@ -48,14 +50,15 @@ struct CustomFieldListViewTests {
     @Test
     func testSnapshot_darkMode() async throws {
         assertSnapshot(
-            of: CustomFieldListView(
+            of: NavigationStack { CustomFieldListView(
                 store: Store(
                     initialState: .testValue(customFields: .previewValue),
                     reducer: {
                         CustomFieldListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(
                 layout: .device(config: .iPhone12),
                 traits: .init(userInterfaceStyle: .dark)

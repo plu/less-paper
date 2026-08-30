@@ -18,26 +18,28 @@ struct StoragePathListViewTests {
     @Test
     func testSnapshot() async throws {
         assertSnapshot(
-            of: StoragePathListView(
+            of: NavigationStack { StoragePathListView(
                 store: Store(
                     initialState: .testValue(storagePaths: .previewValue),
                     reducer: {
                         StoragePathListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12))
         )
 
         assertSnapshot(
-            of: StoragePathListView(
+            of: NavigationStack { StoragePathListView(
                 store: Store(
                     initialState: .testValue(),
                     reducer: {
                         StoragePathListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12)),
             named: "empty"
         )
@@ -48,14 +50,15 @@ struct StoragePathListViewTests {
     @Test
     func testSnapshot_darkMode() async throws {
         assertSnapshot(
-            of: StoragePathListView(
+            of: NavigationStack { StoragePathListView(
                 store: Store(
                     initialState: .testValue(storagePaths: .previewValue),
                     reducer: {
                         StoragePathListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(
                 layout: .device(config: .iPhone12),
                 traits: .init(userInterfaceStyle: .dark)

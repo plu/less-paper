@@ -33,7 +33,21 @@ public struct CorrespondentListReducer: Sendable {
 
         let server: Server
 
+        var searchText = ""
+
         var correspondents: IdentifiedArrayOf<CorrespondentRowReducer.State>
+
+        // Local only: the list is already in memory, so filtering it needs no request and works
+        // offline. localizedCaseInsensitiveContains rather than lowercased().contains, matching the
+        // filter sheets - the latter is wrong for locales whose case folding is not one-to-one.
+        var visibleCorrespondents: IdentifiedArrayOf<CorrespondentRowReducer.State> {
+            guard !searchText.isEmpty else {
+                return correspondents
+            }
+            return correspondents.filter {
+                $0.correspondent.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
 
         @Presents
         var destination: Destination.State?

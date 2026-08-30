@@ -7,11 +7,12 @@ public struct ServerListView: View {
 
     public var body: some View {
         List {
-            ForEach(Array(store.scope(state: \.servers, action: \.servers))) { store in
+            ForEach(Array(store.scope(state: \.visibleServers, action: \.servers))) { store in
                 ServerRowView(store: store)
             }
         }
         .overlay(emptyListView())
+        .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
         .background(Color.m3SurfaceContainerLowest)
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(.servers)

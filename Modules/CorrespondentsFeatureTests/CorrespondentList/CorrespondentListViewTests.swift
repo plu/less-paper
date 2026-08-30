@@ -18,26 +18,28 @@ struct CorrespondentListViewTests {
     @Test
     func testSnapshot() async throws {
         assertSnapshot(
-            of: CorrespondentListView(
+            of: NavigationStack { CorrespondentListView(
                 store: Store(
                     initialState: .testValue(correspondents: .previewValue),
                     reducer: {
                         CorrespondentListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12))
         )
 
         assertSnapshot(
-            of: CorrespondentListView(
+            of: NavigationStack { CorrespondentListView(
                 store: Store(
                     initialState: .testValue(),
                     reducer: {
                         CorrespondentListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(layout: .device(config: .iPhone12)),
             named: "empty"
         )
@@ -48,14 +50,15 @@ struct CorrespondentListViewTests {
     @Test
     func testSnapshot_darkMode() async throws {
         assertSnapshot(
-            of: CorrespondentListView(
+            of: NavigationStack { CorrespondentListView(
                 store: Store(
                     initialState: .testValue(correspondents: .previewValue),
                     reducer: {
                         CorrespondentListReducer()
                     }
                 )
-            ),
+            )
+            },
             as: .image(
                 layout: .device(config: .iPhone12),
                 traits: .init(userInterfaceStyle: .dark)

@@ -33,7 +33,22 @@ public struct StoragePathListReducer: Sendable {
 
         let server: Server
 
+        var searchText = ""
+
         var storagePaths: IdentifiedArrayOf<StoragePathRowReducer.State>
+
+        // Local only: the list is already in memory, so filtering it needs no request and works
+        // offline. localizedCaseInsensitiveContains rather than lowercased().contains, matching the
+        // filter sheets - the latter is wrong for locales whose case folding is not one-to-one.
+        var visibleStoragePaths: IdentifiedArrayOf<StoragePathRowReducer.State> {
+            guard !searchText.isEmpty else {
+                return storagePaths
+            }
+            return storagePaths.filter {
+                $0.storagePath.name.localizedCaseInsensitiveContains(searchText)
+                    || $0.storagePath.path.localizedCaseInsensitiveContains(searchText)
+            }
+        }
 
         @Presents
         var destination: Destination.State?
