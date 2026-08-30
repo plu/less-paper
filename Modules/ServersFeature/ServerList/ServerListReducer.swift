@@ -66,9 +66,10 @@ public struct ServerListReducer: Sendable {
             case let .servers(.element(id: id, action: .delegate(delegateAction))):
                 switch delegateAction {
                 case .deleteServer:
+                    let server = state.servers[id: id]?.server
                     state.servers.remove(id: id)
                     state.sync()
-                    return .none
+                    return .runDeleteFavorites(server: server)
                 case .editServer:
                     return .runGetCredentials(
                         server: state.servers[id: id]?.server
