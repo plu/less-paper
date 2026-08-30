@@ -18,6 +18,7 @@ rm -rf "$bundle"
 # not changed and reports success having run nothing - which is indistinguishable from a pass, and
 # has already produced a green run on main that executed zero tests.
 set +e
+TUIST_TOKEN="$(fnox get TUIST_TOKEN)" \
 tuist test -d "iPhone 17 Pro" --clean --no-selective-testing "$@" -T "$bundle" \
   -- -testLanguage en -testRegion DE
 test_exit_code=$?
