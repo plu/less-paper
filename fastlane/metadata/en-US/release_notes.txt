@@ -1,17 +1,10 @@
-Less Paper 3.0.2 is a major rewrite — the app has been rebuilt from the ground up.
+Documents you can read with no server in reach, and a few things that were asked for.
 
-• Rebuilt in SwiftUI, quicker to launch and to scroll
-• Favorites: keep documents on the device and read them offline
-• The full filter set from the web interface, including custom fields
-• Bulk edit, merge and delete across a selection
-• Saved views can be created, edited and reordered in the app
-• Import from the share sheet, password-protected PDFs included
-• Client certificates, custom headers and reverse-proxy setups
-• Single sign-on with the provider your server is configured with
-• Trash: restore a document you deleted, or empty it for good
-• On iPad the document opens in a column beside the list
-• A local error log you can read and share when something goes wrong
+• Favorites: keep chosen documents on the device — the PDF, its notes, metadata and custom fields — and read them offline. Pull to refresh and only the documents that actually changed are fetched again.
+• Open a document straight from a lesspaper:// link
+• A tip jar in Settings, for anyone who would like to support the app
+• A tidier Settings screen
 
 Works with paperless-ngx 3.0.0 and earlier.
 
-Because so much has changed, something that worked for you before may not yet. If you hit a problem, please open an issue at https://github.com/plu/less-paper/issues — it is the quickest way to get it fixed.
+If you hit a problem, please open an issue at https://github.com/plu/less-paper/issues — it is the quickest way to get it fixed.

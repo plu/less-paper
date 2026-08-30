@@ -1,17 +1,10 @@
-Less Paper 3.0.2 ist eine grundlegende Neuentwicklung – die App wurde von Grund auf neu gebaut.
+Dokumente lesen, auch wenn kein Server erreichbar ist – und ein paar Dinge, die gewünscht wurden.
 
-• Neu gebaut mit SwiftUI, startet und scrollt schneller
-• Favoriten: Dokumente auf dem Gerät behalten und offline lesen
-• Alle Filter der Weboberfläche, inklusive benutzerdefinierter Felder
-• Massenbearbeitung: gemeinsam ändern, zusammenführen, löschen
-• Gespeicherte Ansichten in der App anlegen, bearbeiten und sortieren
-• Import über das Teilen-Menü, auch passwortgeschützte PDFs
-• Client-Zertifikate, eigene Header und Reverse-Proxy-Setups
-• Single Sign-on bei dem Anbieter, für den dein Server eingerichtet ist
-• Papierkorb: Gelöschtes zurückholen oder endgültig leeren
-• Auf dem iPad steht das Dokument in einer Spalte neben der Liste
-• Ein lokales Fehlerprotokoll zum Lesen und Weitergeben, falls etwas schiefgeht
+• Favoriten: Ausgewählte Dokumente bleiben auf dem Gerät – das PDF, die Notizen, Metadaten und benutzerdefinierten Felder – und lassen sich offline lesen. Zum Aktualisieren ziehen: geladen wird nur, was sich wirklich geändert hat.
+• Dokumente direkt über einen lesspaper://-Link öffnen
+• Ein Trinkgeld-Bereich in den Einstellungen, für alle, die die App unterstützen möchten
+• Aufgeräumtere Einstellungen
 
 Funktioniert mit paperless-ngx 3.0.0 und älter.
 
-Weil sich so viel geändert hat, funktioniert vielleicht nicht mehr alles, was vorher lief. Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.
+Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.
