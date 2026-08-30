@@ -10,7 +10,7 @@ set -euo pipefail
 # is worse than one deliver leaves alone.
 cd "$MISE_PROJECT_ROOT"
 
-target="fastlane/metadata/review_information"
+target="${ASC_METADATA_PATH:-fastlane/metadata}/review_information"
 
 declare -a KEYS=(
   "ASC_REVIEW_DEMO_USER:demo_user"

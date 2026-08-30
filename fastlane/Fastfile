@@ -133,7 +133,9 @@ def metadata_options
     phased_release: true,
     # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
     force: true,
-    metadata_path: METADATA,
+    # Overridden by the release pipeline, which stages the listing from the build's own
+    # commit rather than from wherever main has got to. See mise/tasks/metadata/upload.
+    metadata_path: ENV.fetch("ASC_METADATA_PATH", METADATA),
     run_precheck_before_submit: false,
     skip_app_version_update: true,
     skip_binary_upload: true,

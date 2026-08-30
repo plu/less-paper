@@ -22,12 +22,19 @@ if [ -z "$version" ]; then
   exit 1
 fi
 
+# Read from the repository, written into whatever deliver will read. Those differ during a release,
+# which stages the rest of the listing from the build's own commit — and that commit may predate
+# these files entirely. The split is deliberate: the description belongs to the build, while the
+# notes for a version are curated here and are the same text wherever they are uploaded from.
+src="fastlane/metadata"
+dest="${ASC_METADATA_PATH:-$src}"
+
 wrote=0
-for dir in fastlane/metadata/*/; do
+for dir in "$dest"/*/; do
   locale="$(basename "$dir")"
   case "$locale" in review_information) continue ;; esac
 
-  notes="${dir}changelogs/${version}.txt"
+  notes="$src/$locale/changelogs/${version}.txt"
   if [ ! -f "$notes" ]; then
     echo "error: $notes is missing" >&2
     echo "       Apple requires What's New for every version; write it before releasing $version." >&2
