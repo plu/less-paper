@@ -1,3 +1,1 @@
-# Drives the Sponsor button on the repository page. GitHub reads this file only from the default
-# branch, so a change here has no effect until it is on main.
-github: [plu]
+github: plu
