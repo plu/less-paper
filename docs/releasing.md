@@ -23,3 +23,20 @@ Nothing bumps `marketingVersion` in
 `Tuist/ProjectDescriptionHelpers/Extensions/String+Extensions.swift`. Edit it by hand after a
 submission — otherwise every subsequent TestFlight build carries a version that has already been
 used and can never be submitted.
+
+## Release notes are per version
+
+`fastlane/metadata/<locale>/changelogs/<version>.txt` holds the What's New for one version, and
+those files are the committed copy. `release_notes.txt` is rendered from them at upload time by
+`metadata:release-notes` and is gitignored — it is only what deliver reads.
+
+Write the notes for the version you are about to ship before releasing it. `release:preflight`
+refuses a release whose version has no notes, and does it before anything has been written.
+
+The reason for the split: deliver reads one `release_notes.txt` per locale, so a single committed
+file has to serve every version in turn. Editing it to describe the next release silently rewrites
+what the release currently in review says it contains — which has happened. A file per version
+cannot.
+
+`metadata:upload` picks the version from `ASC_APP_VERSION` when the release pipeline sets it, and
+otherwise from `marketingVersion`, so a manual upload describes the version in development.

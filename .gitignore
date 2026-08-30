@@ -97,3 +97,6 @@ Screenshots/Captures/screenshots.html
 # password, a phone number and an email address, and this repository is public. deliver reads it
 # from here when it is present and leaves it alone when it is not, so uploads still work without it.
 fastlane/metadata/review_information/
+# Rendered from changelogs/<version>.txt by metadata:release-notes; the changelogs are the
+# committed copy, this is only what deliver reads.
+fastlane/metadata/*/release_notes.txt

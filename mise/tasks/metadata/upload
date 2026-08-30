@@ -9,9 +9,11 @@ cd "$MISE_PROJECT_ROOT"
 bundle config set --local path vendor/bundle
 bundle check >/dev/null 2>&1 || bundle install
 
-# Writes the gitignored review information from fnox first, so an upload carries the demo account
-# and contact details without either ever being committed.
+# Both write gitignored files that deliver expects to find: the review information comes from fnox,
+# and the release notes are picked out of changelogs/ by version. Neither is committed in the shape
+# deliver reads.
 mise run metadata:review-info
+mise run metadata:release-notes
 
 ASC_KEY_ID="$ALTOOL_KEY_ID" \
 ASC_ISSUER_ID="$ALTOOL_ISSUER_ID" \
