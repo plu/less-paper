@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 #MISE description="Fill Tuist cache"
 set -euo pipefail
-tuist cache --external-only --configuration Debug
+tuist cache --cache-profile only-external --configuration Debug
