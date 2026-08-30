@@ -86,6 +86,23 @@
         }
       }
     },
+    "marketing.favorites": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wichtiges bleibt offline lesbar"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep what matters, even offline"
+          }
+        }
+      }
+    },
     "marketing.inbox": {
       "extractionState": "manual",
       "localizations": {

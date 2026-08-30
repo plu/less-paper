@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CAPTURES = ROOT / "Screenshots" / "Captures"
 SNAPFILE = ROOT / "fastlane" / "Snapfile"
 
-SCREENS = 7
+SCREENS = 8
 
 # "<device>-<NN>-<Screen>.png"
 NAME = re.compile(r"^(?P<device>.+)-(?P<number>\d{2})-(?P<screen>.+)$")

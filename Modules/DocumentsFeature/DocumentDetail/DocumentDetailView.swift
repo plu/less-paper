@@ -43,9 +43,9 @@ public struct DocumentDetailView: View {
             // Not disabled while the download is in flight: only Preview needs the PDF, so the
             // menu still carries Share and View before one has arrived.
             Menu {
-                // Anchored above its own divider rather than sorted in with the rest, for the same
-                // reason as the row's menu: the label changes with state, so ordering it by its
-                // initial would move it under the user's thumb as they used it.
+                // First rather than sorted in with the rest, for the same reason as the row's menu:
+                // the label changes with state, so ordering it by its initial would move it under
+                // the user's thumb as they used it.
                 //
                 // Saving a favorite means SaveFavoriteUseCase's own reads run too, and on a
                 // snapshot those are pinned to the record already on disk, not to this document —
@@ -61,8 +61,6 @@ public struct DocumentDetailView: View {
                         )
                     }
                     .disabled(store.isTogglingFavorite)
-
-                    Divider()
                 }
 
                 if store.downloadedURL != nil {

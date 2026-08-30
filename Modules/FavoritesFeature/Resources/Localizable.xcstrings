@@ -249,13 +249,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aus Favoriten entfernen"
+            "value": "Nicht mehr favorisieren"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remove from Favorites"
+            "value": "Unfavorite"
           }
         }
       }

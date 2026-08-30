@@ -53,10 +53,10 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func contextMenu() -> some View {
-        // Favorite cannot sit in the A-Z run below: its label flips between "Add to Favorites" and
-        // "Remove from Favorites" as the state it reports changes, so an alphabetical position would
-        // move it under the user's thumb between taps. Anchored at the top instead, above its own
-        // divider — the same reasoning that holds Delete below the one at the bottom.
+        // Favorite cannot sit in the A-Z run below: its label flips between "Favorite" and
+        // "Unfavorite" as the state it reports changes, so an alphabetical position would move it
+        // under the user's thumb between taps. Held first instead. No divider under it — it is one
+        // of the reversible actions, and a divider would imply it is set apart the way Delete is.
         Button {
             send(.favoriteButtonTapped)
         } label: {
@@ -65,8 +65,6 @@ struct DocumentRowView: View {
                 systemImage: store.isFavorited ? "heart.fill" : "heart"
             )
         }
-
-        Divider()
 
         Button {
             send(.editButtonTapped)

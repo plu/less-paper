@@ -76,6 +76,18 @@ final class SnapshotTests: XCTestCase {
         snapshot("06-Edit")
     }
 
+    // Waits on a row rather than the title: the list is seeded before launch, so the tab arrives
+    // populated, and a title would be satisfied by the empty state too.
+    func testFavorites() {
+        let app = launch()
+        XCTAssertTrue(tapTab(labels.favorites, in: app), "Could not open the Favorites tab")
+        XCTAssertTrue(
+            app.cells.firstMatch.waitForExistence(timeout: timeout),
+            "The Favorites tab listed nothing"
+        )
+        snapshot("08-Favorites")
+    }
+
     func testSettings() {
         let app = launch()
         XCTAssertTrue(tapTab(labels.settings, in: app), "Could not open the Settings tab")
