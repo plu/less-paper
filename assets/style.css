@@ -100,7 +100,9 @@ footer a { margin: 0 8px; }
 .doc { padding: 56px 0 72px; }
 .doc h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
 .doc .updated { color: var(--muted); font-size: 0.9rem; margin: 0 0 32px; }
-.doc h2 { font-size: 1.25rem; margin: 32px 0 10px; }
+/* Same 1.5rem as the landing page's sections: a heading should not change size because of which
+   page it is on. Only the margins differ, because a privacy policy has far more of them. */
+.doc h2 { font-size: 1.5rem; margin: 32px 0 10px; }
 .doc ul { padding-left: 22px; }
 .doc li { margin-bottom: 6px; }
 .doc .back { display: inline-block; margin-bottom: 28px; text-decoration: none; }
