@@ -199,7 +199,12 @@ struct DocumentRowReducerTests {
             }
         }
 
-        await store.send(.view(.favoriteButtonTapped))
+        await store.send(.view(.favoriteButtonTapped)) {
+            $0.isTogglingFavorite = true
+        }
+        await store.receive(\.favoriteToggleSucceeded) {
+            $0.isTogglingFavorite = false
+        }
 
         #expect(saved.value == 7)
     }
@@ -221,8 +226,39 @@ struct DocumentRowReducerTests {
             $0.removeFavorite.execute = { id, _ in removed.setValue(id) }
         }
 
-        await store.send(.view(.favoriteButtonTapped))
+        await store.send(.view(.favoriteButtonTapped)) {
+            $0.isTogglingFavorite = true
+        }
+        await store.receive(\.favoriteToggleSucceeded) {
+            $0.isTogglingFavorite = false
+        }
 
         #expect(removed.value == 7)
+    }
+
+    @Test
+    func test_favoriteButtonTapped_toastsOnFailure() async {
+        let server = Server.testValue()
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+        let toasts = LockIsolated<[Toast]>([])
+
+        let store = TestStore(
+            initialState: DocumentRowReducer.State(document: Shared(value: .testValue(id: 7)), server: server)
+        ) {
+            DocumentRowReducer()
+        } withDependencies: {
+            $0.saveFavorite.execute = { _, _, _ in throw ApiError.testValue() }
+            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
+        }
+
+        await store.send(.view(.favoriteButtonTapped)) {
+            $0.isTogglingFavorite = true
+        }
+        await store.receive(\.favoriteToggleFailed) {
+            $0.isTogglingFavorite = false
+        }
+
+        #expect(toasts.value == [.error("Something went wrong")])
     }
 }

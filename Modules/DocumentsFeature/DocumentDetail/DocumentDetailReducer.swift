@@ -10,6 +10,8 @@ public struct DocumentDetailReducer: Sendable {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
         case downloadResult(DownloadResult)
+        case favoriteToggleFailed(Error)
+        case favoriteToggleSucceeded
         case view(View)
 
         public enum View {
@@ -45,15 +47,17 @@ public struct DocumentDetailReducer: Sendable {
         @SharedReader
         var favorites: IdentifiedArrayOf<FavoriteDocument>
 
+        var isFavorited: Bool {
+            favorites[id: document.id] != nil
+        }
+
         // A favorite is a snapshot: it reads what was saved, and every user-initiated write the
         // detail path can otherwise reach — the edit form's save, its ASN lookup, its notes
         // composer and delete, its document picker — must stay unreachable, since none of those
         // dependencies are among the ones the Favorites tab overrides for reading.
-        var isOfflineSnapshot = false
+        let isOfflineSnapshot: Bool
 
-        var isFavorited: Bool {
-            favorites[id: document.id] != nil
-        }
+        var isTogglingFavorite = false
 
         var quickLookPreview: URL?
 
@@ -64,6 +68,7 @@ public struct DocumentDetailReducer: Sendable {
             document: Shared<Document>,
             downloadResult: DownloadResult? = nil,
             isOfflineSnapshot: Bool = false,
+            isTogglingFavorite: Bool = false,
             quickLookPreview: URL? = nil,
             server: Server
         ) {
@@ -72,6 +77,7 @@ public struct DocumentDetailReducer: Sendable {
             self.downloadResult = downloadResult
             self._favorites = SharedReader(wrappedValue: [], .favorites(server))
             self.isOfflineSnapshot = isOfflineSnapshot
+            self.isTogglingFavorite = isTogglingFavorite
             self.quickLookPreview = quickLookPreview
             self.server = server
         }
@@ -89,6 +95,12 @@ public struct DocumentDetailReducer: Sendable {
             case let .downloadResult(result):
                 state.downloadResult = result
                 return .none
+            case let .favoriteToggleFailed(error):
+                state.isTogglingFavorite = false
+                return .toast(error)
+            case .favoriteToggleSucceeded:
+                state.isTogglingFavorite = false
+                return .none
             case let .view(viewAction):
                 switch viewAction {
                 case .editDocumentButtonTapped:
@@ -104,6 +116,15 @@ public struct DocumentDetailReducer: Sendable {
                     ))
                     return .none
                 case .favoriteButtonTapped:
+                    // Saving means SaveFavoriteUseCase's own reads run too, and a snapshot has
+                    // those pinned to the record it already has — not to whatever this document
+                    // turns out to be. Unfavoriting is fine: RemoveFavoriteUseCase touches none of
+                    // the overridden dependencies. The view hides the button for the case this
+                    // guards, so this is the belt to that braces.
+                    guard !state.isOfflineSnapshot || state.isFavorited else {
+                        return .none
+                    }
+                    state.isTogglingFavorite = true
                     return .runToggleFavorite(
                         document: state.document,
                         isFavorited: state.isFavorited,

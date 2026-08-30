@@ -15,7 +15,7 @@ extension Effect where Action == DocumentDetailReducer.Action {
     }
 
     static func runToggleFavorite(document: Document, isFavorited: Bool, server: Server) -> Self {
-        .run { _ in
+        .run { send in
             if isFavorited {
                 @Dependency(\.removeFavorite.execute)
                 var removeFavorite
@@ -25,6 +25,9 @@ extension Effect where Action == DocumentDetailReducer.Action {
                 var saveFavorite
                 try await saveFavorite(document, server, .add)
             }
+            await send(.favoriteToggleSucceeded)
+        } catch: { error, send in
+            await send(.favoriteToggleFailed(error))
         }
         .cancellable(id: CancelID.toggleFavorite)
     }

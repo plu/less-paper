@@ -69,12 +69,12 @@ public struct DocumentViewerReducer: Sendable {
             }
         }
 
+        var isLoadingDocument = false
+
         // Carried only so a linked document opened from here inherits it: that document is a fresh
         // DocumentDetailReducer, not the one the Favorites tab already marked, and its own edit
         // form would otherwise reach the network same as any other document's.
         let isOfflineSnapshot: Bool
-
-        var isLoadingDocument = false
 
         var loadError: String?
 
