@@ -112,7 +112,7 @@ struct SaveFavoriteUseCaseTests {
             $0.getNotes.execute = { _, _ in [] }
             $0.getDocumentMetadata.execute = { _, _ in .testValue() }
             $0.downloadDocument.execute = { _, _ in
-                shared.withLock { $0.remove(id: 7) }
+                shared.withLock { _ = $0.remove(id: 7) }
                 return Data(repeating: 9, count: 64)
             }
             $0.favoritesStore.writePDF = { data, _, _ in data.count }

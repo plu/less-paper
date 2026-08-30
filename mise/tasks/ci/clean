@@ -2,3 +2,20 @@
 #MISE description="Clean workspace"
 set -eou pipefail
 git clean -ffdx -e Tuist/.build && git reset --hard HEAD
+
+# `git reset --hard` above is what makes this necessary, and leaving it out breaks the build in a
+# way that looks like a test bug rather than a checkout bug.
+#
+# actions/checkout sets the LFS smudge filter to *skip* — that is how it avoids downloading every
+# binary twice — and materialises the real files afterwards with its own `git lfs checkout`. The
+# reset then rewrites the working tree through that skip filter, so every LFS file it touches comes
+# back as a pointer: a few hundred bytes of text where a PNG should be.
+#
+# Only files the reset actually rewrites are hit, which is why this looks so much like flakiness.
+# A commit that changes no binaries is fine; a commit that adds or re-records some breaks exactly
+# those, and re-running the job passes because the second checkout has nothing left to rewrite.
+# Downstream it surfaces as `UIImage(data:)` returning nil, or a crash inside
+# swift-snapshot-testing's `Diffing.image` — never as anything that names LFS.
+#
+# `git lfs checkout` puts the real content back. It is a no-op when nothing is a pointer.
+git lfs checkout

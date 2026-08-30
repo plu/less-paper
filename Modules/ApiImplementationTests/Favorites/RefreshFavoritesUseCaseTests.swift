@@ -217,7 +217,7 @@ struct RefreshFavoritesUseCaseTests {
 
         _ = try await withDependencies {
             $0.getDocumentsByIds.execute = { _, _ in
-                shared.withLock { $0.remove(id: 7) }
+                shared.withLock { _ = $0.remove(id: 7) }
                 return [.testValue(id: 7)]
             }
         } operation: {

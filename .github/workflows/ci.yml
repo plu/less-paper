@@ -124,7 +124,9 @@ jobs:
           clean: false
           lfs: true
 
-      - run: git clean -ffdx -e Tuist/.build && git reset --hard HEAD
+      # Inline rather than `mise ci:clean`, because mise is installed by the step below this one.
+      # `git lfs checkout` is not optional after the reset — see mise/tasks/ci/clean for why.
+      - run: git clean -ffdx -e Tuist/.build && git reset --hard HEAD && git lfs checkout
 
       - name: mise
         uses: jdx/mise-action@v4
