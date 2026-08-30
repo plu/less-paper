@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#MISE description="Draft the release notes for the version in development from the git log"
+set -euo pipefail
+
+# A starting point, not the notes. main's history is squash merges with semantic titles, so the
+# feat: and fix: subjects since the last release are a reliable list of what changed - but the
+# shipped notes are curated prose in two languages, so the draft carries a DRAFT first line and
+# metadata:release-notes refuses to upload it until that line is gone.
+cd "$MISE_PROJECT_ROOT"
+
+version="$(sed -n 's/.*marketingVersion = "\(.*\)".*/\1/p' \
+  Tuist/ProjectDescriptionHelpers/Extensions/String+Extensions.swift)"
+
+# Creation order, the same choice release:tag makes: tags carry build numbers, so they do not sort
+# as versions.
+previous="$(git tag --sort=-creatordate | head -1)"
+if [ -z "$previous" ]; then
+  echo "error: no tag to diff against" >&2
+  exit 1
+fi
+
+bullets="$(git log --no-merges --pretty='%s' "$previous..HEAD" \
+  | sed -nE 's/^(feat|fix): /• /p')"
+
+if [ -z "$bullets" ]; then
+  echo "No feat: or fix: commits since $previous - nothing user-facing to draft for $version."
+  exit 0
+fi
+
+for locale in en-US de-DE; do
+  notes="fastlane/metadata/$locale/changelogs/$version.txt"
+  if [ -f "$notes" ]; then
+    echo "$notes exists - not overwriting; delete it to re-draft"
+    continue
+  fi
+  {
+    echo "DRAFT - rewrite before releasing. These are the raw commit subjects since $previous;"
+    echo "the shipped notes are curated prose (see 3.0.2.txt), and the German is written, not"
+    echo "translated. Releasing is refused while this line is here."
+    echo
+    echo "$bullets"
+  } > "$notes"
+  echo "drafted $notes"
+done

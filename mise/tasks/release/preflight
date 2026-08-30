@@ -36,6 +36,10 @@ for dir in fastlane/metadata/*/; do
     echo "       write the notes for $version before releasing it" >&2
     exit 1
   fi
+  if head -1 "$notes" | grep -q '^DRAFT'; then
+    echo "error: $notes is a release:notes draft - rewrite it before releasing $version" >&2
+    exit 1
+  fi
 done
 
 bundle config set --local path vendor/bundle

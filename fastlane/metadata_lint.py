@@ -72,6 +72,18 @@ def main():
 
         print(f"{locale.name}: checked {len(LIMITS)} fields, {len(changelogs)} changelogs")
 
+    # Every locale carries every version. A changelog written in one language and not the other is
+    # invisible until release day, when metadata:release-notes refuses the version - this turns
+    # that into a red pull request instead.
+    versions_by_locale = {
+        locale.name: {p.stem for p in (locale / "changelogs").glob("*.txt")}
+        for locale in locales()
+    }
+    every_version = set().union(*versions_by_locale.values()) if versions_by_locale else set()
+    for name, versions in sorted(versions_by_locale.items()):
+        for missing in sorted(every_version - versions):
+            problems.append(f"{name}/changelogs/{missing}.txt is missing - every locale needs every version")
+
     if problems:
         print()
         for problem in problems:
