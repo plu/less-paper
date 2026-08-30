@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
 #MISE description="Fill Tuist cache"
 set -euo pipefail
-tuist cache --cache-profile only-external --configuration Debug
+
+# `all-possible` rather than `only-external`: the external dependencies were already cached, but
+# every internal module was compiled from source on every run, which is the bulk of the work.
+#
+# Warming uploads to the remote cache by default, so this is also what makes the cache shared rather
+# than local to whichever machine happened to run it. That needs the server, which is why the step
+# is wrapped in `fnox exec -P ci` — unauthenticated, `tuist cache` fails rather than quietly warming
+# nothing.
+tuist cache --cache-profile all-possible --configuration Debug

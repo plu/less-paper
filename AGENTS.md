@@ -257,16 +257,16 @@ There is no `gh auth login` credential store on this machine and no git credenti
 tools authenticate with `GH_TOKEN`, a fine-grained PAT kept in the **global** fnox config at
 `~/.config/fnox/config.toml` — not in this repo's `fnox.toml`. The token is scoped to
 `plu/less-paper` alone (contents, issues and pull requests read-write; actions and checks read), so
-anything outside this repository — or an edit to a workflow file — comes back `403`.
+anything outside this repository comes back `403`. Pushing a change under `.github/workflows/` does
+work: the `workflow` scope restriction applies to classic OAuth tokens, not to a fine-grained PAT's
+contents write.
 
-`~/.zshrc` runs `eval "$(fnox activate zsh)"`, which is why `gh` just works in a terminal. **An
-agent's shell is not interactive, so that line never runs and `GH_TOKEN` is unset.** Wrap the call:
-
-```bash
-mise exec -- fnox exec -- gh pr create …
-```
-
-`fnox` itself is not on `PATH` without `mise exec --`.
+`~/.zshrc` sources `~/.env.sh`, which runs `eval "$(fnox activate zsh)"`. That hooks directory
+changes and exports every secret in fnox's **default** profile, which is why `gh` just works in a
+terminal — and, because an agent's shell here is initialised from the same profile, why `gh`,
+`fnox` and `$GH_TOKEN` are all available there too, unwrapped. Wrapping in
+`mise exec -- fnox exec --` is harmless and remains correct for a shell that was not initialised
+that way.
 
 `git push` needs more than the variable — git does not read `GH_TOKEN`, so it prompts for a
 username and hangs until it times out into GitHub's device flow. Hand it a credential helper for
@@ -283,6 +283,37 @@ GIT_TERMINAL_PROMPT=0 mise exec -- fnox exec -- git \
 When every call starts returning `403`, the PAT has expired. Re-mint it at
 <https://github.com/settings/personal-access-tokens> and store it with
 `cd ~ && fnox set --global GH_TOKEN`.
+
+## Tasks read secrets from the environment, never with `fnox get`
+
+No mise task calls `fnox get`. Every one reads a plain environment variable — `$ALTOOL_KEY_ID`,
+`$DISTRIBUTION_CERTIFICATE`, `$TUIST_TOKEN` — and something upstream is responsible for putting it
+there. Locally that is `fnox activate`'s directory hook, which exports the **default** profile on
+entering the repository. In CI it is an explicit wrapper on the workflow step:
+
+```yaml
+- run: fnox exec -P ci -- mise ci:test:unit
+```
+
+**Only steps that need something are wrapped.** `ci:clean`, `simulators:prepare`, `metadata:lint`,
+`release:resolve` and `release:tag` need no secret and invoke no `tuist`, so they stay bare and are
+handed no credentials. Every step that runs `tuist` is wrapped, whether or not it needs the token
+today: `tuist cache` talks to the server, and unauthenticated it fails rather than quietly warming
+nothing.
+
+**`TUIST_TOKEN` lives in the `ci` profile rather than the default one, and that placement is
+load-bearing.** Tuist reads `TUIST_TOKEN` from the environment for every server operation, so in the
+default profile it would sit in every shell opened in this repository and shadow the developer's own
+`tuist auth login` session. Profiles inherit the top-level `[secrets]`, so `-P ci` still carries the
+App Store Connect keys and the certificates — `fnox profiles` reports 16 secrets for `ci` against 15
+for `default`. Writing to it needs the profile named:
+
+```bash
+fnox set --write-profile ci TUIST_TOKEN
+```
+
+Any secret a tool picks up from the environment by itself belongs in a non-default profile for the
+same reason.
 
 ## A pull request title is a commit message
 
