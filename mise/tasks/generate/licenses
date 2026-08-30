@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #MISE description="Generate license markdown file"
 set -euo pipefail
-fnox exec -- license-plist --config-path $MISE_PROJECT_ROOT/.license-plist.yml
+license-plist --config-path $MISE_PROJECT_ROOT/.license-plist.yml
 cd Modules/LicensesFeature/Resources/licenses
 rm -f *.md
 awk '/^## .*/{ close(out); out=$2".md" } out!=""{print > out}' ../licenses.md

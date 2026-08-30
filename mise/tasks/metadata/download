@@ -16,15 +16,15 @@ bundle check >/dev/null 2>&1 || bundle install
 key="$(mktemp -t asc-key)"
 trap 'rm -f "$key"' EXIT
 
-mise exec -- fnox exec -- bash -c 'cat > "$1" <<JSON
+cat > "$key" <<JSON
 {
-  "key_id": "'"$(mise exec -- fnox get ALTOOL_KEY_ID)"'",
-  "issuer_id": "'"$(mise exec -- fnox get ALTOOL_ISSUER_ID)"'",
-  "key": "'"$(mise exec -- fnox get ALTOOL_AUTH_KEY)"'",
+  "key_id": "$ALTOOL_KEY_ID",
+  "issuer_id": "$ALTOOL_ISSUER_ID",
+  "key": "$ALTOOL_AUTH_KEY",
   "is_key_content_base64": true,
   "in_house": false
 }
-JSON' _ "$key"
+JSON
 
 # --force is not optional, and its absence is silent. download_metadata asks UI.confirm before
 # overwriting local metadata, and a non-interactive shell never answers - so it returns 0 having

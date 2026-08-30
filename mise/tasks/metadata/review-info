@@ -22,13 +22,14 @@ declare -a KEYS=(
   "ASC_REVIEW_NOTES:notes"
 )
 
-# A missing secret is not an error to fnox: `fnox get` exits 0, prints nothing, and warns on stderr.
-# So presence is judged on the value being non-empty - checking the exit code alone writes an empty
-# file and calls it a success.
+# The secrets arrive as environment variables - ambient from `fnox activate` locally, from
+# `fnox exec` in CI - and an unset one is indistinguishable from an empty one here. Presence is
+# judged on the value being non-empty, because writing an empty file hands Apple a blank field.
 present=()
 missing=()
 for pair in "${KEYS[@]}"; do
-  if [ -n "$(mise exec -- fnox get "${pair%%:*}" 2>/dev/null)" ]; then
+  key="${pair%%:*}"
+  if [ -n "${!key:-}" ]; then
     present+=("$pair")
   else
     missing+=("${pair%%:*}")
@@ -50,7 +51,8 @@ fi
 
 mkdir -p "$target"
 for pair in "${KEYS[@]}"; do
-  value="$(mise exec -- fnox get "${pair%%:*}" 2>/dev/null)"
+  key="${pair%%:*}"
+  value="${!key:-}"
   # Checked again rather than trusted: writing an empty file here would hand Apple a blank field.
   if [ -z "$value" ]; then
     echo "error: ${pair%%:*} became empty between the check and the write" >&2

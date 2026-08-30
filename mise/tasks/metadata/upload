@@ -13,7 +13,7 @@ bundle check >/dev/null 2>&1 || bundle install
 # and contact details without either ever being committed.
 mise run metadata:review-info
 
-ASC_KEY_ID="$(mise exec -- fnox get ALTOOL_KEY_ID)" \
-ASC_ISSUER_ID="$(mise exec -- fnox get ALTOOL_ISSUER_ID)" \
-ASC_AUTH_KEY="$(mise exec -- fnox get ALTOOL_AUTH_KEY)" \
+ASC_KEY_ID="$ALTOOL_KEY_ID" \
+ASC_ISSUER_ID="$ALTOOL_ISSUER_ID" \
+ASC_AUTH_KEY="$ALTOOL_AUTH_KEY" \
   bundle exec fastlane upload_metadata

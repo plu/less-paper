@@ -37,9 +37,9 @@ done
 bundle config set --local path vendor/bundle
 bundle check >/dev/null 2>&1 || bundle install
 
-ASC_KEY_ID="$(mise exec -- fnox get ALTOOL_KEY_ID)" \
-ASC_ISSUER_ID="$(mise exec -- fnox get ALTOOL_ISSUER_ID)" \
-ASC_AUTH_KEY="$(mise exec -- fnox get ALTOOL_AUTH_KEY)" \
+ASC_KEY_ID="$ALTOOL_KEY_ID" \
+ASC_ISSUER_ID="$ALTOOL_ISSUER_ID" \
+ASC_AUTH_KEY="$ALTOOL_AUTH_KEY" \
 ASC_APP_VERSION="$version" \
 ASC_BUILD_NUMBER="$build" \
   bundle exec fastlane verify_testflight_build

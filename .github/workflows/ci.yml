@@ -134,6 +134,6 @@ jobs:
           cache: false
           cache_save: false
 
-      - run: mise ci:build
+      - run: fnox exec -P ci -- mise ci:build
 
-      - run: mise ci:upload
+      - run: fnox exec -P ci -- mise ci:upload

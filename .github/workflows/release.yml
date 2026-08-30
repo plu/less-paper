@@ -69,13 +69,13 @@ jobs:
 
       # The last step that touches nothing. Everything below writes.
       - name: Preflight
-        run: mise run release:preflight ${{ inputs.build }}
+        run: fnox exec -P ci -- mise run release:preflight ${{ inputs.build }}
 
       # Creates the version in App Store Connect as well as uploading the text: nothing can attach
       # to a version that does not exist yet.
       - name: Upload the listing text and create the version
         if: inputs.dry_run != true
-        run: mise run metadata:upload
+        run: fnox exec -P ci -- mise run metadata:upload
         env:
           ASC_APP_VERSION: ${{ steps.resolve.outputs.version }}
 
@@ -85,10 +85,10 @@ jobs:
 
       - name: Upload the screenshots
         if: inputs.dry_run != true && inputs.skip_screenshots != true
-        run: mise run ci:screenshots:upload
+        run: fnox exec -P ci -- mise run ci:screenshots:upload
 
       - name: Submit for review
-        run: mise run release:submit ${{ inputs.build }}
+        run: fnox exec -P ci -- mise run release:submit ${{ inputs.build }}
 
       - name: Tag and release
         run: mise run release:tag ${{ inputs.build }}
