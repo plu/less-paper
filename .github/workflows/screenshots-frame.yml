@@ -78,7 +78,16 @@ jobs:
         run: |
           {
             echo "## Screenshots"
-            cat "$RUNNER_TEMP/table.md"
+            # `if: always()` means this also runs after a failed framing step, which never wrote a
+            # table. Under `set -euo pipefail` the missing file fails this step too, so the run
+            # reports a second, invented failure stacked on the real one.
+            if [ -f "$RUNNER_TEMP/table.md" ]; then
+              cat "$RUNNER_TEMP/table.md"
+            else
+              echo "_No table — the framing step did not get far enough to write one._"
+            fi
             echo
-            echo "The contact sheet and all 28 images are in this run's artifact."
+            # Counted, not stated. As a literal this went stale the moment a screen was added.
+            count=$(find fastlane/screenshots -name '*_framed.png' 2>/dev/null | wc -l | tr -d ' ')
+            echo "The contact sheet and all $count images are in this run's artifact."
           } >> "$GITHUB_STEP_SUMMARY"

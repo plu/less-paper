@@ -365,6 +365,36 @@ in Settings that reads, shares and clears it. Nothing leaves the device unless s
   lives in caches so the system can reclaim it. Diagnostics must never be why a document cannot be
   saved.
 
+## A green test run is not a green build
+
+`xcodebuild test` checks none of what `mise run ci:lint` checks, and CI runs both. **Run
+`mise run ci:lint` before pushing**, not just the schemes you touched.
+
+It is five steps under `set -eou pipefail`, so **the first failure hides every one after it**:
+
+| Step | Fixed by |
+|---|---|
+| `swiftformat --lint .` | `mise run format` |
+| `swiftlint --strict --quiet` | `mise run format` (it runs `--fix` first) |
+| `mise/scripts/attribute_blank_lines.py --check` | `mise run format` |
+| `tuist install` | — |
+| `tuist inspect dependencies --only implicit` | declaring the dependency by hand |
+
+The first three are mechanical: run the formatter and they go away. Note that SwiftLint's `--fix`
+makes real edits, not only whitespace — it rewrites `aspectRatio(contentMode: .fit)` to
+`scaledToFit()`, for instance — so run the tests for anything it touched rather than assuming a
+formatter cannot change behaviour.
+
+**The last step is the one tests cannot catch.** A target that uses a module it does not declare —
+reaching it transitively through one it does — compiles, links and passes every test. Only Tuist
+objects. It bites test targets hardest, because a dependency list written from a plan rather than
+from the imports the tests actually need looks right until this check runs. The fix is a line in
+`Module+Dependencies.swift`; the error names the target and the missing module.
+
+Because of the masking, a formatting failure and a dependency failure look identical from the CI
+summary: one red lint step. Fix the formatting, run it again, and expect a second failure rather
+than assuming you are done.
+
 ## Recording a snapshot reference means editing the scheme
 
 References live under `Snapshots/`, and `SNAPSHOT_RECORD` decides whether a run writes them. The

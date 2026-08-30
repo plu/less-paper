@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import Dependencies
 import DocumentsFeature
+import FavoritesFeature
 import SettingsFeature
 import SwiftUI
 
@@ -25,6 +26,12 @@ struct MainView: View {
             )
             .tabItem { Label(.documents, systemImage: "document.on.document.fill") }
             .tag(AppTab.documents)
+
+            FavoriteListView(
+                store: store.scope(state: \.favoriteList, action: \.favoriteList)
+            )
+            .tabItem { Label(.favorites, systemImage: "heart.fill") }
+            .tag(AppTab.favorites)
 
             SettingListView(
                 store: store.scope(

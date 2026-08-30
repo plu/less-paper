@@ -9,8 +9,8 @@ import UIKit
 // Renders every committed capture into a finished App Store image.
 //
 // A test that writes artefacts, which is the shape SNAPSHOT_RECORD already uses in this repository.
-// It is skipped unless asked for, so an ordinary test run does not spend seconds writing 28 PNGs
-// nobody asked it to.
+// It is skipped unless asked for, so an ordinary test run does not spend seconds writing a PNG per
+// screen, device and language that nobody asked it to.
 //
 // Asked for with a file rather than an environment variable: a TEST_RUNNER_-prefixed variable does
 // not reach the test process here, which is the same reason re-recording a snapshot means toggling
@@ -30,9 +30,10 @@ struct MarketingRenderAllTests {
     @Test(.enabled(if: MarketingRenderAllTests.isRequested))
     func test_renderEveryScreenshot() async throws {
         let root = URL.projectRoot
+        let locales = ["en-US", "de-DE"]
         var written = 0
 
-        for locale in ["en-US", "de-DE"] {
+        for locale in locales {
             for device in MarketingDevice.allCases {
                 for screen in MarketingScreen.allCases {
                     let name = "\(device.capturePrefix)-\(screen.fileStem)"
@@ -60,6 +61,9 @@ struct MarketingRenderAllTests {
             }
         }
 
-        #expect(written == 28)
+        // Derived rather than a literal. What this asserts is that every combination was written,
+        // not that there happen to be so many of them — as a hardcoded number it simply broke on
+        // the day a screen was added, which says nothing about whether the render worked.
+        #expect(written == locales.count * MarketingDevice.allCases.count * MarketingScreen.allCases.count)
     }
 }

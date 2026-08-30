@@ -6,8 +6,8 @@ import QuickLook
 import SwiftUI
 
 @ViewAction(for: DocumentDetailReducer.self)
-struct DocumentDetailView: View {
-    var body: some View {
+public struct DocumentDetailView: View {
+    public var body: some View {
         ZStack {
             switch store.downloadResult {
             case let .success(data, _):
@@ -43,6 +43,26 @@ struct DocumentDetailView: View {
             // Not disabled while the download is in flight: only Preview needs the PDF, so the
             // menu still carries Share and View before one has arrived.
             Menu {
+                // First rather than sorted in with the rest, for the same reason as the row's menu:
+                // the label changes with state, so ordering it by its initial would move it under
+                // the user's thumb as they used it.
+                //
+                // Saving a favorite means SaveFavoriteUseCase's own reads run too, and on a
+                // snapshot those are pinned to the record already on disk, not to this document —
+                // adding one from here would only fail. Unfavoriting stays offered: removal
+                // touches none of those reads.
+                if !store.isOfflineSnapshot || store.isFavorited {
+                    Button {
+                        send(.favoriteButtonTapped)
+                    } label: {
+                        Label(
+                            store.isFavorited ? .unfavorite : .favorite,
+                            systemImage: store.isFavorited ? "heart.fill" : "heart"
+                        )
+                    }
+                    .disabled(store.isTogglingFavorite)
+                }
+
                 if store.downloadedURL != nil {
                     Button {
                         send(.previewButtonTapped)
@@ -55,19 +75,33 @@ struct DocumentDetailView: View {
 
                 viewerMenu()
             } label: {
-                Label(.moreActions, systemImage: "ellipsis.circle")
+                // The menu dismisses on selection, so a spinner inside it would never be seen.
+                // The toolbar item itself carries the wait instead.
+                if store.isTogglingFavorite {
+                    ProgressView()
+                } else {
+                    Label(.moreActions, systemImage: "ellipsis.circle")
+                }
             }
 
-            Button(action: {
-                send(.editDocumentButtonTapped)
-            }) {
-                Label(.edit, systemImage: "square.and.pencil")
+            // A snapshot is read-only: its edit form is the only door to a network write this
+            // screen can otherwise reach, so it is not offered here at all.
+            if !store.isOfflineSnapshot {
+                Button(action: {
+                    send(.editDocumentButtonTapped)
+                }) {
+                    Label(.edit, systemImage: "square.and.pencil")
+                }
             }
         }
     }
 
+    public init(store: StoreOf<DocumentDetailReducer>) {
+        self.store = store
+    }
+
     @Bindable
-    var store: StoreOf<DocumentDetailReducer>
+    public var store: StoreOf<DocumentDetailReducer>
 
     @Environment(\.horizontalSizeClass)
     private var horizontalSizeClass

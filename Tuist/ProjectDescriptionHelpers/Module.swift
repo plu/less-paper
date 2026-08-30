@@ -44,6 +44,8 @@ public enum Module: String, CaseIterable {
     case diagnosticsFeatureTests = "DiagnosticsFeatureTests"
     case documentsFeature = "DocumentsFeature"
     case documentsFeatureTests = "DocumentsFeatureTests"
+    case favoritesFeature = "FavoritesFeature"
+    case favoritesFeatureTests = "FavoritesFeatureTests"
     case forwardAuthFeature = "ForwardAuthFeature"
     case forwardAuthFeatureTests = "ForwardAuthFeatureTests"
     case imageFeature = "ImageFeature"
@@ -137,6 +139,7 @@ extension Module {
              .diagnosticsFeature,
              .documentTypesFeature,
              .documentsFeature,
+             .favoritesFeature,
              .forwardAuthFeature,
              .imageFeature,
              .licensesFeature,
@@ -167,6 +170,7 @@ extension Module {
              .diagnosticsFeatureTests,
              .documentTypesFeatureTests,
              .documentsFeatureTests,
+             .favoritesFeatureTests,
              .forwardAuthFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
@@ -242,6 +246,7 @@ extension Module {
              .diagnosticsFeature,
              .documentTypesFeature,
              .documentsFeature,
+             .favoritesFeature,
              .forwardAuthFeature,
              .imageFeature,
              .licensesFeature,
@@ -271,6 +276,7 @@ extension Module {
              .diagnosticsFeatureTests,
              .documentTypesFeatureTests,
              .documentsFeatureTests,
+             .favoritesFeatureTests,
              .forwardAuthFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,

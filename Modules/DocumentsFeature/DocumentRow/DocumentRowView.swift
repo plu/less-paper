@@ -53,6 +53,19 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func contextMenu() -> some View {
+        // Favorite cannot sit in the A-Z run below: its label flips between "Favorite" and
+        // "Unfavorite" as the state it reports changes, so an alphabetical position would move it
+        // under the user's thumb between taps. Held first instead. No divider under it — it is one
+        // of the reversible actions, and a divider would imply it is set apart the way Delete is.
+        Button {
+            send(.favoriteButtonTapped)
+        } label: {
+            Label(
+                store.isFavorited ? .unfavorite : .favorite,
+                systemImage: store.isFavorited ? "heart.fill" : "heart"
+            )
+        }
+
         Button {
             send(.editButtonTapped)
         } label: {
@@ -91,59 +104,11 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func detailsView() -> some View {
-        VStack(alignment: .leading, spacing: .x3) {
-            AdaptiveStack(
-                horizontalSpacing: .x2,
-                verticalAlignment: .top
-            ) {
-                Text(store.correspondent)
-                    .font(.footnote)
-                    .fontWeight(.bold)
-                    .foregroundColor(.m3Primary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                if sizeCategory < .accessibilityMedium {
-                    Spacer(minLength: 0)
-                }
-                Text(DateFormatter.createdDate.string(from: store.document.created))
-                    .font(.footnote)
-                    .fontWeight(.medium)
-                    .foregroundColor(.m3Outline)
-                    .lineLimit(1)
-                    .padding(.trailing, .x2)
-            }
-            Text(store.document.title)
-                .fixedSize(horizontal: false, vertical: true)
-                .font(.body)
-                .foregroundColor(.m3OnSurface)
-                .lineLimit(store.titleLineLimit)
-                .multilineTextAlignment(.leading)
-            Spacer(minLength: 0)
-            Grid(alignment: .leading, horizontalSpacing: .x2) {
-                if let asn = store.document.archiveSerialNumber {
-                    GridRow {
-                        Image(systemName: "barcode").accessibilityHidden(true)
-                        Text(String(asn)).lineLimit(1)
-                    }
-                }
-                if let documentTypeName = store.documentType {
-                    GridRow {
-                        Image(systemName: "doc").accessibilityHidden(true)
-                        Text(documentTypeName).lineLimit(1)
-                    }
-                }
-                if let storagePathName = store.storagePath {
-                    GridRow {
-                        Image(systemName: "folder").accessibilityHidden(true)
-                        Text(storagePathName).lineLimit(1)
-                    }
-                }
-            }
-        }
-        .foregroundColor(.m3Outline)
-        .fontWeight(.medium)
-        .font(.footnote)
-        .padding(sizeCategory >= breakpoint ? .x4 : .x3)
+        DocumentRowContent(
+            document: store.document,
+            server: store.server,
+            titleLineLimit: store.titleLineLimit
+        )
     }
 
     @ViewBuilder
@@ -172,19 +137,7 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func tagsView() -> some View {
-        VStack(alignment: .trailing, spacing: .x2) {
-            ForEach(store.tags) { tag in
-                Text(tag.name)
-                    .capsule(
-                        backgroundColor: Color(hex: tag.color),
-                        font: .footnote,
-                        foregroundColor: Color(hex: tag.textColor)
-                    )
-            }
-        }
-        .frame(height: imageSize.height - .x4, alignment: .top)
-        .clipped()
-        .padding(.x3)
+        DocumentRowTags(tags: store.tags, height: imageSize.height)
     }
 
     private let breakpoint = ContentSizeCategory.extraLarge

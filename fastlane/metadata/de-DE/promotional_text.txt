@@ -1,1 +1,1 @@
-Version 3 ist eine komplette Neuentwicklung: alle Filter der Weboberfläche, Massenbearbeitung, Single Sign-on, Papierkorb und Import über das Teilen-Menü.
+Version 3 ist eine komplette Neuentwicklung: alle Filter der Weboberfläche, Massenbearbeitung, Offline-Favoriten, Single Sign-on und Import über das Teilen-Menü.

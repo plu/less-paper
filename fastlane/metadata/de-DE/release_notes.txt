@@ -1,6 +1,7 @@
 Less Paper 3.0.1 ist eine grundlegende Neuentwicklung – die App wurde von Grund auf neu gebaut.
 
 • Neu gebaut mit SwiftUI, startet und scrollt schneller
+• Favoriten: Dokumente auf dem Gerät behalten und offline lesen
 • Alle Filter der Weboberfläche, inklusive benutzerdefinierter Felder
 • Massenbearbeitung: gemeinsam ändern, zusammenführen, löschen
 • Gespeicherte Ansichten in der App anlegen, bearbeiten und sortieren

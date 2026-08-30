@@ -66,6 +66,21 @@ public extension SharedReaderKey where Self == InMemoryKey<IdentifiedArrayOf<Doc
     }
 }
 
+public extension SharedReaderKey
+    where Self == FileStorageKey<IdentifiedArrayOf<FavoriteDocument>>.Default {
+
+    static func favorites(_ server: Server) -> Self {
+        Self[
+            .fileStorage(
+                .applicationGroupDirectory.appending(component: "\(server.id)-favorites.json"),
+                decoder: .favoritesDecoder,
+                encoder: .favoritesEncoder
+            ),
+            default: []
+        ]
+    }
+}
+
 public extension SharedReaderKey where Self == FileStorageKey<IdentifiedArrayOf<Group>>.Default {
 
     static func groups(_ server: Server) -> Self {
@@ -203,7 +218,7 @@ public extension SharedReaderKey where Self == FileStorageKey<Int?>.Default {
     }
 }
 
-private extension URL {
+public extension URL {
     static var applicationGroupDirectory: URL {
         guard let applicationGroupDirectory = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: "group.com.plunien.app.Paperless")

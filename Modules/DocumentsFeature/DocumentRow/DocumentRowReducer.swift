@@ -13,6 +13,8 @@ public struct DocumentRowReducer: Sendable {
         case delegate(Delegate)
         case downloadFailed(Error)
         case downloadSucceeded(url: URL, intent: DownloadIntent)
+        case favoriteToggleFailed(Error)
+        case favoriteToggleSucceeded
         case view(View)
 
         public enum Delegate {
@@ -23,6 +25,7 @@ public struct DocumentRowReducer: Sendable {
         public enum View {
             case deleteButtonTapped
             case editButtonTapped
+            case favoriteButtonTapped
             case previewButtonTapped
             case rowTapped
             case shareButtonTapped
@@ -62,11 +65,20 @@ public struct DocumentRowReducer: Sendable {
 
         var downloadedURL: URL?
 
+        @SharedReader
+        var favorites: IdentifiedArrayOf<FavoriteDocument>
+
         var isBusy: Bool {
-            isDownloading || isUpdating
+            isDownloading || isTogglingFavorite || isUpdating
         }
 
         var isDownloading = false
+
+        var isFavorited: Bool {
+            favorites[id: document.id] != nil
+        }
+
+        var isTogglingFavorite = false
 
         var isUpdating = false
 
@@ -103,6 +115,7 @@ public struct DocumentRowReducer: Sendable {
             document: Shared<Document>,
             downloadedURL: URL? = nil,
             isDownloading: Bool = false,
+            isTogglingFavorite: Bool = false,
             isUpdating: Bool = false,
             quickLookPreview: URL? = nil,
             server: Server,
@@ -111,7 +124,9 @@ public struct DocumentRowReducer: Sendable {
             self.destination = destination
             self._document = document
             self.downloadedURL = downloadedURL
+            self._favorites = SharedReader(wrappedValue: [], .favorites(server))
             self.isDownloading = isDownloading
+            self.isTogglingFavorite = isTogglingFavorite
             self.isUpdating = isUpdating
             self.quickLookPreview = quickLookPreview
             self.server = server
@@ -134,6 +149,12 @@ public struct DocumentRowReducer: Sendable {
                 state.isDownloading = false
                 state.present(url: url, intent: intent)
                 return .none
+            case let .favoriteToggleFailed(error):
+                state.isTogglingFavorite = false
+                return .toast(error)
+            case .favoriteToggleSucceeded:
+                state.isTogglingFavorite = false
+                return .none
             case let .view(viewAction):
                 switch viewAction {
                 case .deleteButtonTapped:
@@ -144,6 +165,13 @@ public struct DocumentRowReducer: Sendable {
                         server: state.server
                     ))
                     return .none
+                case .favoriteButtonTapped:
+                    state.isTogglingFavorite = true
+                    return .runToggleFavorite(
+                        document: state.document,
+                        isFavorited: state.isFavorited,
+                        server: state.server
+                    )
                 case .previewButtonTapped:
                     return state.download(intent: .preview)
                 case .rowTapped:

@@ -6,6 +6,9 @@ Sämtliche Filter der Weboberfläche, inklusive benutzerdefinierter Felder: Tite
 BEARBEITEN, WO DU LIEST
 Korrigiere den Titel, weise einen anderen Korrespondenten zu, ergänze Tags, Notizen oder benutzerdefinierte Felder – direkt am Dokument. Markiere mehrere Dokumente und ändere sie gemeinsam, führe sie zusammen oder lösche sie in einem Schritt.
 
+LESEN, AUCH OHNE SERVER
+Markiere ein Dokument als Favorit, und es bleibt vollständig auf dem Gerät – das PDF, die Notizen, Metadaten und benutzerdefinierten Felder. Der Tab „Favoriten“ liest diese gespeicherten Kopien: im Flugzeug, im Keller oder überall dort, wo dein Server nicht erreichbar ist. Zum Aktualisieren ziehen – geladen wird nur, was sich wirklich geändert hat.
+
 DOKUMENTE HINEINBEKOMMEN
 Schicke alles von deinem Gerät über das Teilen-Menü nach paperless-ngx. Passwortgeschützte PDFs werden beim Import entsperrt, und das Passwort landet im Schlüsselbund – das nächste Dokument derselben Quelle öffnet sich dann ohne Nachfrage.
 

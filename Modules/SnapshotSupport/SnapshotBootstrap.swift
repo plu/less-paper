@@ -73,6 +73,24 @@ public extension DependencyValues {
             return data
         }
 
+        // A favorite row renders page one of the file the store wrote, so the screenshot needs a
+        // real PDF where that file would be. The same documents downloadDocument reads, addressed
+        // the same way — nothing is written to disk, the row simply reads the repository copy.
+        favoritesStore.pdfURL = { id, _ in
+            guard let document = documents.first(where: { $0.id == id }) else {
+                return URL(filePath: NSTemporaryDirectory())
+            }
+            return .snapshotDocument(named: document.title)
+        }
+
+        // Settings reports the space the favorites take. Summing the real files keeps that figure
+        // honest rather than photographing a zero.
+        favoritesStore.totalByteCount = { _ in
+            corpus.favoriteDocumentIds
+                .compactMap { id in documents.first { $0.id == id } }
+                .reduce(0) { $0 + Int.snapshotDocumentByteCount(named: $1.title) }
+        }
+
         getStatistics.execute = { _ in
             .testValue(
                 documentsInbox: corpus.inboxDocumentIds.count,
@@ -106,6 +124,9 @@ public func seedSnapshotSharedState(
     @Shared(.documentTypes(server))
     var documentTypes: IdentifiedArrayOf<DocumentType> = []
 
+    @Shared(.favorites(server))
+    var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+
     @Shared(.savedViews(server))
     var savedViews: IdentifiedArrayOf<SavedView> = []
 
@@ -127,11 +148,35 @@ public func seedSnapshotSharedState(
     $selectedServer.withLock { $0 = server }
     $correspondents.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.correspondents()) }
     $documentTypes.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.documentTypes(in: corpus)) }
+    $favorites.withLock { $0 = IdentifiedArray(uniqueElements: snapshotFavorites(in: corpus)) }
     $savedViews.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.savedViews()) }
     $storagePaths.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.storagePaths(in: corpus)) }
     $tags.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.tags(in: corpus)) }
     $inboxDocumentCount.withLock { $0 = corpus.inboxDocumentIds.count }
     $inboxTags.withLock { $0 = SnapshotFixtures.tags(in: corpus).filter(\.isInboxTag).map(\.id) }
+}
+
+// The records a real favoriting would have written, minus the download that wrote the file: the
+// PDF is already in the repository and `favoritesStore.pdfURL` points the row straight at it.
+//
+// `storedAt` is fixed rather than `Date()` because it keys the row's thumbnail render — a moving
+// value would re-render on every launch and give the capture something new to wait for.
+private func snapshotFavorites(
+    in corpus: SnapshotConfiguration.Corpus
+) -> [FavoriteDocument] {
+    let documents = SnapshotFixtures.documents()
+    return corpus.favoriteDocumentIds
+        .compactMap { id in documents.first { $0.id == id } }
+        .map { document in
+            FavoriteDocument(
+                document: document,
+                metadata: nil,
+                notes: [],
+                pdfByteCount: .snapshotDocumentByteCount(named: document.title),
+                storedAt: Date(timeIntervalSince1970: 1_756_290_271),
+                syncedModified: document.modified
+            )
+        }
 }
 
 struct SnapshotFixtureMissing: Error {}
@@ -153,6 +198,16 @@ private extension URL {
 
     static func snapshotDocument(named title: String) -> Self {
         .projectRoot.appending(path: "docker/data/\(title).pdf")
+    }
+}
+
+private extension Int {
+
+    // Attributes rather than reading the file: this only ever needs the size, and the two featured
+    // manuals are megabytes each.
+    static func snapshotDocumentByteCount(named title: String) -> Self {
+        let values = try? URL.snapshotDocument(named: title).resourceValues(forKeys: [.fileSizeKey])
+        return values?.fileSize ?? 0
     }
 }
 #endif

@@ -25,4 +25,22 @@ struct SettingListViewTests {
             as: .image(layout: .device(config: .iPhone12))
         )
     }
+
+    // 2400pt is taller than the list is today, which is the whole point: a row added past it is
+    // clipped away silently and the reference still matches. Grow the height when the list grows.
+    @Test
+    func testSnapshot_fullList() async throws {
+        assertSnapshot(
+            of: SettingListView(
+                store: Store(
+                    initialState: .testValue(),
+                    reducer: {
+                        SettingListReducer()
+                    }
+                )
+            ),
+            as: .image(layout: .fixed(width: 390, height: 2400)),
+            named: "full-list"
+        )
+    }
 }

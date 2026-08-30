@@ -35,6 +35,7 @@ extension Module {
                 .target(.certificatesFeature),
                 .target(.components),
                 .target(.documentsFeature),
+                .target(.favoritesFeature),
                 .target(.forwardAuthFeature),
                 .target(.serversFeature),
                 .target(.settingsFeature),
@@ -49,6 +50,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.appFeature),
                 .target(.components),
+                .target(.favoritesFeature),
                 .target(.serversFeature),
                 .target(.settingsFeature),
                 .target(.testSupport),
@@ -250,6 +252,28 @@ extension Module {
                 .target(.documentsFeature),
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
+                .target(.testSupport),
+            ]
+        case .favoritesFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .external(.sharing),
+                .external(.tagged),
+                .target(.apiInterface),
+                .target(.components),
+                .target(.documentsFeature),
+            ]
+        case .favoritesFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .external(.snapshotTesting),
+                .target(.apiInterface),
+                .target(.components),
+                .target(.documentsFeature),
+                .target(.favoritesFeature),
                 .target(.testSupport),
             ]
         case .forwardAuthFeature:
@@ -462,6 +486,7 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
                 .target(.apiInterface),
+                .target(.components),
                 .target(.pdfPasswordsFeature),
                 .target(.serversFeature),
                 .target(.settingsFeature),

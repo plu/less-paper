@@ -8,6 +8,7 @@ public enum MarketingScreen: String, CaseIterable, Sendable {
     case view
     case edit
     case settings
+    case favorites
 
     // Matches the names the capture writes, so the numbering that orders them on the store survives
     // the trip through the renderer.
@@ -27,12 +28,11 @@ public enum MarketingScreen: String, CaseIterable, Sendable {
             "06-Edit"
         case .settings:
             "07-Settings"
+        case .favorites:
+            "08-Favorites"
         }
     }
 
-    // From the shared string catalog rather than one of this module's own: Module+Targets attaches
-    // Shared/Framework/Resources to every framework and nothing else, so a catalog kept here would
-    // never be bundled.
     public var caption: LocalizedStringResource {
         switch self {
         case .inbox:
@@ -49,6 +49,8 @@ public enum MarketingScreen: String, CaseIterable, Sendable {
             .marketingEdit
         case .settings:
             .marketingSettings
+        case .favorites:
+            .marketingFavorites
         }
     }
 }
