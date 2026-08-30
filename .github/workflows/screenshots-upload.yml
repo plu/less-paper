@@ -48,7 +48,7 @@ jobs:
 
       - run: mise ci:clean
 
-      - run: mise ci:screenshots:frame
+      - run: fnox exec -P ci -- mise ci:screenshots:frame
 
       - name: Contact sheet
         run: |
