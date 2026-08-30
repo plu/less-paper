@@ -43,6 +43,28 @@ public struct DocumentDetailView: View {
             // Not disabled while the download is in flight: only Preview needs the PDF, so the
             // menu still carries Share and View before one has arrived.
             Menu {
+                // Anchored above its own divider rather than sorted in with the rest, for the same
+                // reason as the row's menu: the label changes with state, so ordering it by its
+                // initial would move it under the user's thumb as they used it.
+                //
+                // Saving a favorite means SaveFavoriteUseCase's own reads run too, and on a
+                // snapshot those are pinned to the record already on disk, not to this document —
+                // adding one from here would only fail. Unfavoriting stays offered: removal
+                // touches none of those reads.
+                if !store.isOfflineSnapshot || store.isFavorited {
+                    Button {
+                        send(.favoriteButtonTapped)
+                    } label: {
+                        Label(
+                            store.isFavorited ? .unfavorite : .favorite,
+                            systemImage: store.isFavorited ? "heart.fill" : "heart"
+                        )
+                    }
+                    .disabled(store.isTogglingFavorite)
+
+                    Divider()
+                }
+
                 if store.downloadedURL != nil {
                     Button {
                         send(.previewButtonTapped)
@@ -55,27 +77,13 @@ public struct DocumentDetailView: View {
 
                 viewerMenu()
             } label: {
-                Label(.moreActions, systemImage: "ellipsis.circle")
-            }
-
-            // Saving a favorite means SaveFavoriteUseCase's own reads run too, and on a snapshot
-            // those are pinned to the record already on disk, not to this document — adding one
-            // from here would only fail. Unfavoriting stays offered: removal touches none of those
-            // reads.
-            if !store.isOfflineSnapshot || store.isFavorited {
-                Button {
-                    send(.favoriteButtonTapped)
-                } label: {
-                    if store.isTogglingFavorite {
-                        ProgressView()
-                    } else {
-                        Label(
-                            store.isFavorited ? .unfavorite : .favorite,
-                            systemImage: store.isFavorited ? "heart.fill" : "heart"
-                        )
-                    }
+                // The menu dismisses on selection, so a spinner inside it would never be seen.
+                // The toolbar item itself carries the wait instead.
+                if store.isTogglingFavorite {
+                    ProgressView()
+                } else {
+                    Label(.moreActions, systemImage: "ellipsis.circle")
                 }
-                .disabled(store.isTogglingFavorite)
             }
 
             // A snapshot is read-only: its edit form is the only door to a network write this

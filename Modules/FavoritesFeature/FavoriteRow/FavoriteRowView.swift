@@ -47,17 +47,22 @@ struct FavoriteRowView: View {
 
     @ViewBuilder
     private func imageView() -> some View {
-        FavoriteThumbnail(url: pdfURL, size: imageSize, storedAt: store.favorite.storedAt)
-            .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
-            .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))
-            .overlay(alignment: .topTrailing) {
-                tagsView()
-            }
-            .overlay(alignment: .topLeading) {
-                unavailableBadge()
-            }
-            .padding(.top, sizeCategory >= breakpoint ? .x4 : .x0)
-            .padding(.horizontal, sizeCategory >= breakpoint ? .x4 : .x0)
+        FavoriteThumbnail(
+            url: pdfURL,
+            size: imageSize,
+            storedAt: store.favorite.storedAt,
+            renderedImage: renderedThumbnail
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))
+        .overlay(alignment: .topTrailing) {
+            tagsView()
+        }
+        .overlay(alignment: .topLeading) {
+            unavailableBadge()
+        }
+        .padding(.top, sizeCategory >= breakpoint ? .x4 : .x0)
+        .padding(.horizontal, sizeCategory >= breakpoint ? .x4 : .x0)
     }
 
     @ViewBuilder
@@ -79,6 +84,10 @@ struct FavoriteRowView: View {
     private var imageSize: CGSize {
         CGSize(width: 134 * scaleFactor, height: 190 * scaleFactor)
     }
+
+    // Nil in the app: the thumbnail renders itself. A snapshot cannot wait for that, so the
+    // reference that proves this row matches a document row hands the image in.
+    var renderedThumbnail: UIImage?
 
     private var pdfURL: URL {
         @Dependency(\.favoritesStore.pdfURL) var pdfURL

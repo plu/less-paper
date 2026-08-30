@@ -28,7 +28,10 @@ public struct FavoriteListView: View {
             .overlay(emptyListView())
             .refreshable { await send(.onRefresh).finish() }
             .scrollContentBackground(.hidden)
-            .searchable(text: $store.searchText)
+            // Pinned rather than hidden above the list. Left to its default the field is revealed
+            // by the first pull, so a pull-to-refresh has to travel through it before the refresh
+            // starts — which reads as the gesture barely working.
+            .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
             .task { await send(.onAppear).finish() }
         } destination: { store in
             switch store.case {
