@@ -23,6 +23,17 @@ extension Effect where Action == AppReducer.Action {
         )
     }
 
+    static func runRefreshFavorites(server: Server) -> Self {
+        @Dependency(\.refreshFavorites.execute) var refreshFavorites
+
+        // Silent by design: the user did not ask for this one, so neither success nor failure is
+        // surfaced. Only pull-to-refresh and "Redownload all" report.
+        return .run { _ in
+            _ = try? await refreshFavorites(false, server)
+        }
+        .cancellable(id: CancelID.refreshFavorites)
+    }
+
     static func runRefreshStatistics(server: Server) -> Self {
         @Dependency(\.getStatistics.execute)
         var getStatistics
@@ -69,6 +80,7 @@ extension Effect where Action == AppReducer.Action {
 
 private enum CancelID {
     case observeSelectedServerChanges
+    case refreshFavorites
     case refreshStatistics
     case updateCache
 }

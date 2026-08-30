@@ -40,6 +40,39 @@ struct AppReducerTests {
     }
 
     @Test
+    func test_didBecomeActive_refreshesFavorites() async {
+        let refreshed = LockIsolated(false)
+
+        let store = TestStore(initialState: AppReducer.State(main: .testValue())) {
+            AppReducer()
+        } withDependencies: {
+            $0.refreshFavorites.execute = { force, _ in
+                #expect(force == false)
+                refreshed.setValue(true)
+                return FavoriteRefreshResult()
+            }
+        }
+
+        await store.send(.didBecomeActive)
+        await store.finish()
+
+        #expect(refreshed.value)
+    }
+
+    // The automatic path is silent: a failure must not surface anything.
+    @Test
+    func test_didBecomeActive_swallowsARefreshFailure() async {
+        let store = TestStore(initialState: AppReducer.State(main: .testValue())) {
+            AppReducer()
+        } withDependencies: {
+            $0.refreshFavorites.execute = { _, _ in throw ApiError.testValue() }
+        }
+
+        await store.send(.didBecomeActive)
+        await store.finish()
+    }
+
+    @Test
     func test_didBecomeActive_withoutServer_doesNothing() async {
         let store = TestStore(
             initialState: AppReducer.State(),

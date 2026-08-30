@@ -122,10 +122,15 @@ public struct AppReducer {
                     return .none
                 }
                 return .runRefreshStatistics(server: server)
+                    .merge(with: .runRefreshFavorites(server: server))
             case .selectedServerChanged(let server):
                 if let server {
                     state.main = MainReducer.State(server: server)
+                    // A server resolving here is also what a cold launch looks like, and
+                    // didBecomeActive alone would miss that: SwiftUI's onChange(of: scenePhase)
+                    // never fires for the phase the app already launched into.
                     let updateCache = Effect<Action>.runUpdateCache(server: server)
+                        .merge(with: .runRefreshFavorites(server: server))
                     guard state.pendingLink != nil else {
                         return updateCache
                     }

@@ -35,6 +35,23 @@
         }
       }
     },
+    "favorites": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoriten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorites"
+          }
+        }
+      }
+    },
     "inbox": {
       "extractionState": "manual",
       "localizations": {
