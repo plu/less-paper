@@ -66,56 +66,6 @@ platform :ios do
   # finished processing it, or accepted it - and deliver's own error for a build it cannot find
   # names neither the version nor the build number, so it is worth failing here instead.
   desc "Fail unless the given build is on App Store Connect and finished processing"
-  # What testers read on the build in TestFlight; without it a build carries no notes at all. Set
-  # after altool has uploaded: the build takes a minute or two to appear in App Store Connect, so
-  # this polls for it, bounded rather than forever.
-  desc "Set the What to Test notes on a just-uploaded TestFlight build"
-  lane :testflight_notes do
-    connect_api_key
-
-    version = ENV.fetch("ASC_APP_VERSION")
-    number = ENV.fetch("ASC_BUILD_NUMBER")
-    notes = ENV.fetch("ASC_WHAT_TO_TEST")
-
-    # Apple's limit is 4000 bytes, not characters. byteslice can cut a UTF-8 sequence in half;
-    # scrub drops the fragment.
-    notes = notes.byteslice(0, 3996).scrub("") + "\n…" if notes.bytesize > 4000
-
-    app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
-    UI.user_error!("no app #{APP_IDENTIFIER} on App Store Connect") if app.nil?
-
-    # Same trap as verify_testflight_build below: a Build's own `version` is the build number,
-    # while the `version` filter means the marketing version.
-    build = nil
-    20.times do
-      build = Spaceship::ConnectAPI::Build.all(app_id: app.id, version: version)
-                                          .find { |candidate| candidate.version == number }
-      break if build
-
-      UI.message("build #{version} (#{number}) is not visible yet, waiting 30s")
-      sleep(30)
-    end
-    UI.user_error!("build #{version} (#{number}) did not appear within 10 minutes") if build.nil?
-
-    # The same English text for every locale: this is per-build tester information, not store copy.
-    localizations = build.get_beta_build_localizations
-    if localizations.empty?
-      Spaceship::ConnectAPI.post_beta_build_localizations(
-        build_id: build.id,
-        attributes: { locale: "en-US", whatsNew: notes }
-      )
-    else
-      localizations.each do |localization|
-        Spaceship::ConnectAPI.patch_beta_build_localizations(
-          localization_id: localization.id,
-          attributes: { whatsNew: notes }
-        )
-      end
-    end
-
-    UI.success("What to Test set on #{version} (#{number})")
-  end
-
   lane :verify_testflight_build do
     connect_api_key
 
