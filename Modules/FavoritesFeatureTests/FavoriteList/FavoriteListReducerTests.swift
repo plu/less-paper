@@ -168,6 +168,66 @@ struct FavoriteListReducerTests {
         #expect(store.state.rows.map(\.id) == [1])
     }
 
+    // Unfavoriting deletes the PDF the detail screen is reading, so the screen it leaves behind can
+    // re-fetch nothing and has no button left to undo with. It has to pop.
+    @Test
+    func test_unfavoritingFromTheDetailPopsBackToTheList() async throws {
+        let server = Server.testValue(id: "unfavorite-from-the-detail")
+
+        @Shared(.favorites(server))
+        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 1))
+        ]
+
+        let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
+            FavoriteListReducer()
+        } withDependencies: {
+            $0.removeFavorite.execute = { [shared = $favorites] id, _ in
+                shared.withLock { _ = $0.remove(id: id) }
+            }
+        }
+        store.exhaustivity = .off
+
+        let favorite = try #require(favorites[id: 1])
+        await store.send(.rows(.element(id: 1, action: .delegate(.open(favorite)))))
+        #expect(store.state.path.count == 1)
+
+        await store.send(.path(.element(
+            id: 0,
+            action: .documentDetail(.view(.favoriteButtonTapped))
+        )))
+        await store.receive(\.path[id: 0].documentDetail.favoriteToggleSucceeded)
+        await store.finish()
+
+        #expect(store.state.path.isEmpty)
+    }
+
+    // Removal can also arrive from somewhere the detail screen knows nothing about — a swipe on the
+    // row behind it, or "Remove all favorites" in Settings.
+    @Test
+    func test_aFavoriteRemovedElsewherePopsTheDetail() async throws {
+        let server = Server.testValue(id: "favorite-removed-elsewhere")
+
+        @Shared(.favorites(server))
+        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 1))
+        ]
+
+        let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
+            FavoriteListReducer()
+        }
+        store.exhaustivity = .off
+
+        let favorite = try #require(favorites[id: 1])
+        await store.send(.rows(.element(id: 1, action: .delegate(.open(favorite)))))
+        #expect(store.state.path.count == 1)
+
+        $favorites.withLock { $0.removeAll() }
+        await store.send(.favoritesChanged([]))
+
+        #expect(store.state.path.isEmpty)
+    }
+
     // The detail screen is the network screen, run against the record. It opens the detail and each
     // of the viewer's four sections, which between them reach the five read dependencies the Path
     // overrides: downloadDocument, getDocument, getDocumentMetadata, getDocumentsByIds and getNotes.

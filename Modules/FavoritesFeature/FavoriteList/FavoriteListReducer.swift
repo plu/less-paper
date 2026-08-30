@@ -107,6 +107,23 @@ public struct FavoriteListReducer: Sendable {
             })
         }
 
+        // The offline detail is a window onto a record: unfavoriting deletes the PDF, so the screen
+        // left behind can show its stored copy but nothing it re-fetches — the viewer's sections
+        // throw `.notStored` — and it has no favorite button left to undo with. It is popped
+        // wherever the removal came from, since the shared store is the one thing the detail's own
+        // heart, a swipe on the row and "Remove all favorites" in Settings all go through.
+        mutating func popDetailsOfRemovedFavorites() {
+            for (id, element) in zip(path.ids, path) {
+                guard case let .documentDetail(detail) = element,
+                      favorites[id: detail.document.id] == nil
+                else {
+                    continue
+                }
+                path.pop(from: id)
+                break
+            }
+        }
+
         private func displayed(_ favorite: FavoriteDocument) -> Document {
             documentCache[id: favorite.id] ?? favorite.document
         }
@@ -169,6 +186,14 @@ public struct FavoriteListReducer: Sendable {
         }
         .forEach(\.rows, action: \.rows) { FavoriteRowReducer() }
         .forEach(\.path, action: \.path)
+
+        // Last, and on every action rather than on the few that remove a favorite: the removal can
+        // arrive from the detail's own heart, from the observer, or from another tab, and this is
+        // the one place all of them are already past by the time it runs.
+        Reduce { state, _ in
+            state.popDetailsOfRemovedFavorites()
+            return .none
+        }
     }
 
     public init() {}

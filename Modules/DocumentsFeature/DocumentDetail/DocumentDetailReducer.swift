@@ -35,8 +35,11 @@ public struct DocumentDetailReducer: Sendable {
         @Presents
         var destination: Destination.State?
 
+        // Public because whoever owns the stack this screen is pushed onto has to be able to see
+        // which document it is showing: the Favorites tab pops it when that document stops being a
+        // favorite.
         @Shared
-        var document: Document
+        public var document: Document
 
         var downloadResult: DownloadResult?
 
