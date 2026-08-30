@@ -14,6 +14,21 @@ shift
 # leaving the previous bundle behind for anyone inspecting it afterwards.
 rm -rf "$bundle"
 
+# Reporting this run to the Tuist server, which is what makes test insights - durations over time,
+# flakiness, which targets dominate a run - exist at all. Without it `tuist test` behaves exactly as
+# before and reports nothing.
+#
+# The token is stored in fnox as TUIST_TOKEN, deliberately not under the name Tuist reads: `fnox
+# activate` hooks directory changes and exports every secret in the default profile, so a secret
+# named TUIST_CONFIG_TOKEN would sit in every shell opened in this repo and shadow the developer's
+# own `tuist auth login` session.
+#
+# Only in CI, and only if it decrypts. A checkout without the age key reports nothing and tests
+# exactly as before rather than failing, which is what a pull request from a fork needs.
+if [ -n "${CI:-}" ] && token=$(fnox get TUIST_TOKEN 2>/dev/null) && [ -n "$token" ]; then
+  export TUIST_CONFIG_TOKEN="$token"
+fi
+
 # --no-selective-testing is not optional. Without it Tuist skips any target whose fingerprint has
 # not changed and reports success having run nothing - which is indistinguishable from a pass, and
 # has already produced a green run on main that executed zero tests.
