@@ -47,7 +47,7 @@ struct FavoriteRowView: View {
 
     @ViewBuilder
     private func imageView() -> some View {
-        FavoriteThumbnail(url: pdfURL, size: imageSize)
+        FavoriteThumbnail(url: pdfURL, size: imageSize, storedAt: store.favorite.storedAt)
             .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
             .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))
             .overlay(alignment: .topTrailing) {
