@@ -1,4 +1,4 @@
-Less Paper 3.0.1 ist eine grundlegende Neuentwicklung – die App wurde von Grund auf neu gebaut.
+Less Paper 3.0.2 ist eine grundlegende Neuentwicklung – die App wurde von Grund auf neu gebaut.
 
 • Neu gebaut mit SwiftUI, startet und scrollt schneller
 • Favoriten: Dokumente auf dem Gerät behalten und offline lesen

@@ -1,4 +1,4 @@
-Less Paper 3.0.1 is a major rewrite — the app has been rebuilt from the ground up.
+Less Paper 3.0.2 is a major rewrite — the app has been rebuilt from the ground up.
 
 • Rebuilt in SwiftUI, quicker to launch and to scroll
 • Favorites: keep documents on the device and read them offline
