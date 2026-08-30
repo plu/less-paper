@@ -40,6 +40,7 @@ public struct SettingListReducer {
     public enum Path {
         case correspondentList(CorrespondentListReducer)
         case diagnosticsList(DiagnosticsListReducer)
+        case favoriteSettings(FavoriteSettingsReducer)
         case customFieldList(CustomFieldListReducer)
         case documentTypeList(DocumentTypeListReducer)
         case licenseList(LicenseListReducer)

@@ -69,6 +69,23 @@
         }
       }
     },
+    "favorites": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favoriten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorites"
+          }
+        }
+      }
+    },
     "github": {
       "extractionState": "manual",
       "localizations": {
@@ -133,6 +150,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "PDF passwords"
+          }
+        }
+      }
+    },
+    "redownloadAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle erneut laden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redownload all"
+          }
+        }
+      }
+    },
+    "removeAllFavorites": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle Favoriten entfernen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove all favorites"
           }
         }
       }
@@ -218,6 +269,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Storage paths"
+          }
+        }
+      }
+    },
+    "storageUsed": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Belegter Speicher"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Storage used"
           }
         }
       }

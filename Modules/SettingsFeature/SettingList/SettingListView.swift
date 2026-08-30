@@ -127,6 +127,13 @@ public struct SettingListView: View {
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.favoriteSettings(FavoriteSettingsReducer.State(server: store.server))
+                    ) {
+                        Label(.favorites, systemImage: "heart")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
                     Link(destination: Self.repositoryUrl) {
                         Label {
                             Text(.github)
@@ -172,6 +179,8 @@ public struct SettingListView: View {
                 CustomFieldListView(store: store)
             case let .diagnosticsList(store):
                 DiagnosticsListView(store: store)
+            case let .favoriteSettings(store):
+                FavoriteSettingsView(store: store)
             case let .documentTypeList(store):
                 DocumentTypeListView(store: store)
             case let .license(license):
