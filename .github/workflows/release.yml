@@ -78,6 +78,10 @@ jobs:
         run: fnox exec -P ci -- mise run metadata:upload
         env:
           ASC_APP_VERSION: ${{ steps.resolve.outputs.version }}
+          # The listing that describes this build, read from the commit that produced it. Without
+          # it the text comes from wherever main has got to, while the version comes from the
+          # commit — the same mismatch release:resolve exists to prevent.
+          ASC_METADATA_SHA: ${{ steps.resolve.outputs.sha }}
 
       - name: Frame the screenshots
         if: inputs.dry_run != true && inputs.skip_screenshots != true

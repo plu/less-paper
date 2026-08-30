@@ -21,15 +21,19 @@ fi
 # Text Apple would reject costs a round trip through review, so check the published limits first.
 mise run metadata:lint
 
-# The one listing field Apple requires for every new version. deliver would upload an empty file
-# without complaint and leave the review board to find it.
+# The one listing field Apple requires for every new version. Checked against the version being
+# submitted rather than against whatever release_notes.txt happens to hold: the notes are committed
+# per version under changelogs/, and the point of that is that releasing 3.0.2 cannot go out
+# describing 3.0.1. metadata:release-notes re-checks this at upload; failing here costs nothing and
+# happens before anything has been written.
 for dir in fastlane/metadata/*/; do
   name="$(basename "$dir")"
   [ "$name" = "review_information" ] && continue
 
-  notes="${dir}release_notes.txt"
+  notes="${dir}changelogs/${version}.txt"
   if [ ! -f "$notes" ] || [ -z "$(tr -d '[:space:]' < "$notes")" ]; then
-    echo "error: $notes is empty - Apple requires What's New for every version" >&2
+    echo "error: $notes is missing or empty - Apple requires What's New for every version" >&2
+    echo "       write the notes for $version before releasing it" >&2
     exit 1
   fi
 done

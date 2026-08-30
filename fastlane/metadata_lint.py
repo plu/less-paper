@@ -56,7 +56,21 @@ def main():
                     f"{locale.name}/{field}.txt is {len(text)} characters, limit is {limit}"
                 )
 
-        print(f"{locale.name}: checked {len(LIMITS)} fields")
+        # release_notes.txt is rendered from changelogs/<version>.txt at upload time and is not
+        # committed, so checking only that file would check nothing on a pull request. Every
+        # version's notes are held to the same limit instead.
+        changelogs = sorted((locale / "changelogs").glob("*.txt"))
+        for path in changelogs:
+            text = path.read_text(encoding="utf-8").strip()
+            if not text:
+                problems.append(f"{locale.name}/changelogs/{path.name} is empty")
+            elif len(text) > LIMITS["release_notes"]:
+                problems.append(
+                    f"{locale.name}/changelogs/{path.name} is {len(text)} characters, "
+                    f"limit is {LIMITS['release_notes']}"
+                )
+
+        print(f"{locale.name}: checked {len(LIMITS)} fields, {len(changelogs)} changelogs")
 
     if problems:
         print()

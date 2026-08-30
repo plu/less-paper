@@ -9,9 +9,32 @@ cd "$MISE_PROJECT_ROOT"
 bundle config set --local path vendor/bundle
 bundle check >/dev/null 2>&1 || bundle install
 
-# Writes the gitignored review information from fnox first, so an upload carries the demo account
-# and contact details without either ever being committed.
+# The listing is read from the commit the build was made from, not from the working tree, for the
+# same reason release:resolve reads marketingVersion that way: main has usually moved on, and the
+# description that ships with a build should be the one that described it.
+#
+# Without this the drift is real rather than theoretical. On 2026-08-30 main's description and
+# keywords advertised offline reading while 3.0.1, submitted two days earlier, had neither -
+# releasing that build would have told the store it could do something it could not.
+#
+# `git archive` is enough because the listing is text. It would not be for the captures, which are
+# LFS pointers in the object database; the screenshot lanes still read the working tree.
+if [ -n "${ASC_METADATA_SHA:-}" ]; then
+  stage="$(mktemp -d)"
+  trap 'rm -rf "$stage"' EXIT
+
+  git archive "$ASC_METADATA_SHA" fastlane/metadata | tar -x -C "$stage"
+  ASC_METADATA_PATH="$stage/fastlane/metadata"
+  export ASC_METADATA_PATH
+
+  echo "Listing staged from $ASC_METADATA_SHA"
+fi
+
+# Both write gitignored files that deliver expects to find, into whichever directory it will read:
+# the review information comes from fnox, and the release notes are picked out of changelogs/ by
+# version. Neither is committed in the shape deliver reads.
 mise run metadata:review-info
+mise run metadata:release-notes
 
 ASC_KEY_ID="$ALTOOL_KEY_ID" \
 ASC_ISSUER_ID="$ALTOOL_ISSUER_ID" \
