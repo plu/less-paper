@@ -58,6 +58,5 @@ fi
 gh release create "$tag" "${args[@]}"
 
 echo
-echo "Submitted $version. Nothing bumps marketingVersion automatically:"
-echo "edit Tuist/ProjectDescriptionHelpers/Extensions/String+Extensions.swift before the next"
-echo "build, or every new TestFlight build stays on a version that can never be submitted."
+echo "Submitted $version. release:bump runs next and moves main to the following patch;"
+echo "for a minor or major jump, edit marketingVersion by hand before the next build."

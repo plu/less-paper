@@ -9,18 +9,6 @@ on:
         description: The TestFlight build number to submit (the ci.yml run number)
         type: string
         required: true
-      dry_run:
-        description: Run every check and print what would happen, touching neither Apple nor GitHub
-        type: boolean
-        default: false
-      skip_screenshots:
-        description: Leave the screenshots on the listing alone
-        type: boolean
-        default: false
-      allow_off_main:
-        description: Allow a build from a TestFlight-labelled pull request
-        type: boolean
-        default: false
 
 # One release at a time, and never cancelled. Same reasoning as ci.yml's upload job: killing a
 # submission halfway is worse than waiting.
@@ -35,11 +23,12 @@ defaults:
   run:
     shell: /bin/bash --noprofile --norc -euo pipefail {0}
 
+# The tasks themselves still honour RELEASE_DRY_RUN and RELEASE_ALLOW_OFF_MAIN for local use -
+# `RELEASE_DRY_RUN=true mise run release:tag 141` remains the way to rehearse one. The workflow
+# no longer offers them: a dispatched release does the whole thing, every time, the same way.
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  RELEASE_ALLOW_OFF_MAIN: ${{ inputs.allow_off_main }}
-  RELEASE_DRY_RUN: ${{ inputs.dry_run }}
 
 jobs:
   release:
@@ -71,10 +60,10 @@ jobs:
       - name: Preflight
         run: fnox exec -P ci -- mise run release:preflight ${{ inputs.build }}
 
-      # Creates the version in App Store Connect as well as uploading the text: nothing can attach
-      # to a version that does not exist yet.
+      # Creates the version in App Store Connect when it does not exist yet - deliver is passed
+      # app_version with skip_app_version_update off - and uploads the text either way. Nothing
+      # can attach to a version that does not exist.
       - name: Upload the listing text and create the version
-        if: inputs.dry_run != true
         run: fnox exec -P ci -- mise run metadata:upload
         env:
           ASC_APP_VERSION: ${{ steps.resolve.outputs.version }}
@@ -84,11 +73,9 @@ jobs:
           ASC_METADATA_SHA: ${{ steps.resolve.outputs.sha }}
 
       - name: Frame the screenshots
-        if: inputs.dry_run != true && inputs.skip_screenshots != true
         run: fnox exec -P ci -- mise run ci:screenshots:frame
 
       - name: Upload the screenshots
-        if: inputs.dry_run != true && inputs.skip_screenshots != true
         run: fnox exec -P ci -- mise run ci:screenshots:upload
 
       - name: Submit for review
@@ -96,6 +83,11 @@ jobs:
 
       - name: Tag and release
         run: mise run release:tag ${{ inputs.build }}
+
+      # Last, so a failure here leaves everything above complete. Skips itself if main has moved
+      # past the released version already - a hand bump, or a deliberate minor or major jump.
+      - name: Bump the version on main
+        run: mise run release:bump ${{ inputs.build }}
 
       - name: Summary
         if: always()
@@ -110,5 +102,4 @@ jobs:
             echo "| Commit | ${{ steps.resolve.outputs.sha }} |"
             echo "| Branch | ${{ steps.resolve.outputs.branch }} |"
             echo "| Tag | ${{ steps.resolve.outputs.tag }} |"
-            echo "| Dry run | ${{ inputs.dry_run }} |"
           } >> "$GITHUB_STEP_SUMMARY"
