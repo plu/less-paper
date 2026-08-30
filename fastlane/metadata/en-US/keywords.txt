@@ -1,1 +1,1 @@
-paperless,ngx,dms,documents,archive,scan,ocr,pdf,selfhosted,homelab,filing,paperwork,sso
+paperless,ngx,dms,documents,archive,scan,ocr,pdf,selfhosted,homelab,filing,paperwork,sso,offline

@@ -1,6 +1,7 @@
 Less Paper 3.0.1 is a major rewrite — the app has been rebuilt from the ground up.
 
 • Rebuilt in SwiftUI, quicker to launch and to scroll
+• Favorites: keep documents on the device and read them offline
 • The full filter set from the web interface, including custom fields
 • Bulk edit, merge and delete across a selection
 • Saved views can be created, edited and reordered in the app
