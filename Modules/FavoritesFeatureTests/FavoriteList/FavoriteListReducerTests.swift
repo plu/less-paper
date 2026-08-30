@@ -1,6 +1,7 @@
 @testable import FavoritesFeature
 
 import ApiInterface
+import Components
 import ComposableArchitecture
 import DocumentsFeature
 import Foundation
@@ -33,9 +34,12 @@ struct FavoriteListReducerTests {
         #expect(store.state.rows.map(\.id) == [1])
     }
 
+    // The counters are the whole point of the use case returning a result: pull-to-refresh is a
+    // manual gesture, so it says what it did. The automatic refresh in AppFeature stays silent.
     @Test
     func test_refreshReportsItsResult() async {
         let server = Server.testValue(id: "refresh-reports-its-result")
+        let toasts = LockIsolated([Toast]())
 
         @Shared(.favorites(server))
         var favorites: IdentifiedArrayOf<FavoriteDocument> = [
@@ -46,10 +50,59 @@ struct FavoriteListReducerTests {
             FavoriteListReducer()
         } withDependencies: {
             $0.refreshFavorites.execute = { _, _ in FavoriteRefreshResult(updated: 1) }
+            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 
-        await store.send(.view(.onRefresh)) { $0.isRefreshing = true }
-        await store.receive(\.refreshResult) { $0.isRefreshing = false }
+        await store.send(.view(.onRefresh))
+        await store.receive(\.refreshResult)
+        await store.finish()
+
+        #expect(toasts.value == [.success("One favorite updated.")])
+    }
+
+    @Test
+    func test_refreshReportsFailuresAheadOfEverythingElse() async {
+        let server = Server.testValue(id: "refresh-reports-failures")
+        let toasts = LockIsolated([Toast]())
+
+        @Shared(.favorites(server))
+        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 1))
+        ]
+
+        let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
+            FavoriteListReducer()
+        } withDependencies: {
+            $0.refreshFavorites.execute = { _, _ in
+                FavoriteRefreshResult(failed: 2, unavailable: 1, updated: 3)
+            }
+            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
+        }
+
+        await store.send(.view(.onRefresh))
+        await store.receive(\.refreshResult)
+        await store.finish()
+
+        #expect(toasts.value == [.error("2 favorites could not be refreshed.")])
+    }
+
+    @Test
+    func test_refreshWithNothingToDoSaysSo() async {
+        let server = Server.testValue(id: "refresh-with-nothing-to-do")
+        let toasts = LockIsolated([Toast]())
+
+        let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
+            FavoriteListReducer()
+        } withDependencies: {
+            $0.refreshFavorites.execute = { _, _ in FavoriteRefreshResult() }
+            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
+        }
+
+        await store.send(.view(.onRefresh))
+        await store.receive(\.refreshResult)
+        await store.finish()
+
+        #expect(toasts.value == [.success("Favorites are up to date.")])
     }
 
     @Test

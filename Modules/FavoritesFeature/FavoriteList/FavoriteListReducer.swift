@@ -133,10 +133,12 @@ public struct FavoriteListReducer: Sendable {
                 return .none
             case let .refreshResult(result):
                 state.rebuildRows()
-                guard case let .failure(error) = result else {
-                    return .none
+                switch result {
+                case let .success(summary):
+                    return .toast(summary.toast)
+                case let .failure(error):
+                    return .toast(error)
                 }
-                return .toast(error)
             case let .rows(.element(id: id, action: .delegate(.open(favorite)))):
                 state.path.append(.documentDetail(DocumentDetailReducer.State(
                     // The row's own reference, so an edit made in the detail reaches the row
