@@ -322,17 +322,19 @@ struct DocumentsRepositoryTests {
         .tags(.integrationTests)
     )
     func test_getDocumentMetadata_decodesBothArchiveStates() async throws {
-        let listed = try await repository.getDocuments(
-            input: .testValue(),
-            server: .testValue()
-        ).results
+        // Asked for by name rather than sampled from a listing. Taking whichever document happened
+        // to come first let anything left behind by an earlier run select itself: a stray `test.pdf`
+        // holding plain text failed this on `originalMimeType`, which is not what it tests.
+        //
+        // Puky-Locked is password protected, so paperless cannot produce an archive version of it.
+        // That makes its missing archive a property of the file rather than of whether the instance
+        // has finished processing - the two differ, and only the first is safe to assert on.
+        // Ikea Vimle #1 archives normally. Both are PDFs, which the shared assertions below rely on.
+        let archivedDocument = try await seededDocument(titled: "Ikea Vimle #1")
+        let plainDocument = try await seededDocument(titled: "Puky-Locked")
 
-        // Chosen by whether the listing says they are archived rather than by taking the first ten
-        // documents and hoping. The list sorts by created descending, and the seed's newest ten are
-        // all generated filler PDFs with no archive version, so the sample only happened to contain
-        // an archived document while the instance had no created dates set.
-        let archivedDocument = try #require(listed.first { $0.archivedFileName != nil })
-        let plainDocument = try #require(listed.first { $0.archivedFileName == nil })
+        try #require(archivedDocument.archivedFileName != nil)
+        try #require(plainDocument.archivedFileName == nil)
 
         // The fixtures hold both kinds, and the archived one is the only place the archive fields
         // decode as anything but nil. Requiring one of each keeps a fixture change from quietly
@@ -787,6 +789,24 @@ struct DocumentsRepositoryTests {
         )
 
         return try await waitForDocument(title: title)
+    }
+
+    // Filtered by the server rather than searched for in a listing. The instance accumulates
+    // documents from earlier runs - it held 41 against the seed's 25 when this was written - so a
+    // seeded document is not guaranteed to be on the first page of anything.
+    //
+    // The title rule matches substrings, so "Puky" would also return "Puky-Locked". The equality
+    // check is what makes the name mean one document.
+    private func seededDocument(titled title: String) async throws -> Document {
+        let output = try await repository.getDocuments(
+            input: .testValue(filterRules: [.init(ruleType: .title, value: title)]),
+            server: .testValue()
+        )
+
+        return try #require(
+            output.results.first { $0.title == title },
+            "the seed defines \(title); re-seed with python3 docker/seed/seed.py --url <instance>"
+        )
     }
 
     private func waitForDocument(title: String) async throws -> Document.Id {
