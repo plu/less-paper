@@ -66,14 +66,13 @@ Both plausible, neither timed:
 
 - `mise/scripts/run_tests.sh` passes `--clean` to `tuist test`. `ci:clean` already runs
   `git clean -ffdx && git reset --hard`, so the workspace is pristine; `--clean` additionally
-  discards derived data on a runner where it would otherwise persist. The same invocation passes
-  `--no-selective-testing`, so nothing is skipped on the basis of what a branch touched — a
-  deliberate choice worth re-deciding rather than inheriting.
-- `ci:cache` runs `tuist cache --external-only`, so internal modules never come from the binary
-  cache and are compiled from source every run.
+  discards derived data on a runner where it would otherwise persist. Worth timing now that the
+  binary cache and selective testing both depend on what survives between runs.
 
-Surfaced during: the CI runtime investigation, 2026-08-15; paths re-checked 2026-08-30 after
-`ci:test` was split into `ci:test:unit` and `ci:test:ui`.
+The other two are settled: selective testing is on, and `ci:cache` warms `all-possible` rather
+than only the external dependencies.
+
+Surfaced during: the CI runtime investigation, 2026-08-15; re-checked 2026-08-30.
 
 ---
 
