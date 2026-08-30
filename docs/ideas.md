@@ -42,19 +42,6 @@ Surfaced during: `docs/superpowers/specs/2026-08-12-cross-tab-document-sync-desi
 
 ---
 
-## Surface the server-side trash
-
-Paperless-ngx moves deleted documents to a trash rather than destroying them, and exposes it over
-the API. The app deletes but never shows the trash, so a mistaken delete can only be undone from the
-web UI.
-
-Would need a list screen plus restore and empty-trash actions. Worth pairing with an undo affordance
-on the delete itself, which today is a confirmation popup and nothing more.
-
-Surfaced during: `docs/superpowers/specs/2026-08-14-delete-document-design.md`.
-
----
-
 ## `appStorage` does not use the app group
 
 The file-backed shared keys write into `.applicationGroupDirectory`, so the app and the share
@@ -73,96 +60,20 @@ Surfaced during: `docs/superpowers/specs/2026-08-14-delete-document-design.md` a
 
 ---
 
-## One string catalog invalidates every module — done
-
-`Module+Targets.swift` used to give every `.framework`/`.staticFramework` target
-`Shared/Framework/Resources/**` as a resource, so all ~30 of them embedded the single
-`Localizable.xcstrings`. Changing one string changed every module's fingerprint, and Tuist's
-selective testing correctly concluded that everything changed.
-
-Measured on three runs from the same day:
-
-| Branch | Touched | Duration |
-|---|---|---|
-| `ideas_cleanup` | docs only | 23s |
-| `fix_unresolved_filter_ids` | `DocumentsFeature` only | 222s |
-| `fix_has_any_tag` | `DocumentsFeature` + one string | 1711s |
-
-Since most feature PRs add a string, most PRs took the slow path.
-
-The catalogue is now split per module, one `Modules/<Name>/Resources/Localizable.xcstrings` each.
-The worry that killed earlier attempts — that the 56 shared keys would need hand-written `public`
-accessors, because Xcode's generated symbols are `internal` to whichever target compiles the
-catalogue — turned out to be avoidable: a shared key is simply **copied** into each module that
-uses it. Duplication measured 1.30x (434 key-copies for 333 unique keys), which buys back the whole
-fan-out without giving up symbol generation for a single string.
-
-The earlier estimate was also pessimistic. Re-derived with a matcher that understands positional
-arguments (`Label(.edit, systemImage:)`) as well as labelled ones, **283 of 333 keys (84%) are used
-by exactly one module**, not 64%. The old figure missed `Label(…)` call sites, which
-is the same gap that made `edit` and `Tag` look dead below.
-
-Surfaced during: the CI runtime investigation, 2026-08-15. Done 2026-08-29.
-
----
-
 ## Two unmeasured CI leads
 
-From the same investigation, both plausible and neither timed:
+Both plausible, neither timed:
 
-- `ci:test` passes `--clean` to `tuist test`. `ci:clean` already runs
+- `mise/scripts/run_tests.sh` passes `--clean` to `tuist test`. `ci:clean` already runs
   `git clean -ffdx && git reset --hard`, so the workspace is pristine; `--clean` additionally
-  discards derived data on a runner where it would otherwise persist.
+  discards derived data on a runner where it would otherwise persist. The same invocation passes
+  `--no-selective-testing`, so nothing is skipped on the basis of what a branch touched — a
+  deliberate choice worth re-deciding rather than inheriting.
 - `ci:cache` runs `tuist cache --external-only`, so internal modules never come from the binary
   cache and are compiled from source every run.
 
-Surfaced during: the CI runtime investigation, 2026-08-15.
-
----
-
-## Small localization loose ends — done
-
-Noticed while working on the tag filter, re-checked during the per-module catalogue split, and
-fixed with it. German wording was taken from the paperless-ngx web UI wherever it had a term for
-the same control, so the app and the web interface read the same to a German user.
-
-- The tag rule picker read **All | Any | Assigned | Not assigned** in English but
-  **Alle | Alle | …** in German, because `any` was translated `"Alle"`, identical to `all`. The same
-  pair is also the AND/OR picker in `CustomFieldQueryCardView` — `Text(.all).tag(.and)` beside
-  `Text(.any).tag(.or)`, two identical options. `any` is now **"Beliebig"**. paperless-ngx uses
-  *Einzelne* for its own query dropdown, which is deliberately **not** what was copied: `.any` also
-  backs six `Text(.any).capsule()` placeholders meaning "no filter set", where *Einzelne* would be
-  wrong and *Beliebig* is right. One word had to serve all seven sites.
-- `customFieldQueryOperatorContains` and `...Icontains` were both "Contains" / "Enthält", so the
-  case-sensitive and case-insensitive operators were indistinguishable. `icontains` is now
-  **"Contains (case insensitive)"** / **"Enthält (Groß-/Kleinschreibung irrelevant)"**, reusing the
-  app's own `caseInsensitive` phrasing. Note that paperless-ngx's German for its equivalent string
-  says *"beachte Groß- und Kleinschreibung"*, which states the opposite of what the operator does —
-  a bug on their side, so it was not copied.
-- `owner` was *Besitzer* while `sortFieldOwner` was *Eigentümer*. Both are now **"Eigentümer"**,
-  which is what paperless-ngx uses.
-- `retry` was *Erneut versuchen* while `retryDownload` was *Nochmal versuchen*. The deeper problem
-  was that `retryDownload` existed at all: five identical retry buttons, and only
-  `DocumentDetailView` used its own key. It now uses `.retry` like the other four, and the key is
-  gone.
-- `select` was *Selektieren*, an anglicism. Now **"Auswählen"**, per paperless-ngx. This also keeps
-  it properly distinct from `customFieldDataTypeSelect` (*Auswahl*, the data type).
-- The key `Tag` was renamed to `tag`; it was the last capitalised key. The generated symbol is
-  `.tag` either way, so nothing in Swift changed.
-- **The dead-key list was wrong about two of the four.** `edit` and `Tag` are both live —
-  `Label(.edit, systemImage:)` in `DocumentDetailView` and `DocumentRowView`, `String(localized:
-  .tag)` in `TagFormSection` — and the earlier detection missed them because it only understood
-  labelled arguments, not a leading-dot resource in first position. `makeDefault` and
-  `SavedViewsFeature_formHasFieldErrors` were genuinely dead and are gone, together with `back`,
-  `host` and `customFieldQueryUnknownOption`, which the same re-check turned up.
-
-Deliberately **not** aligned to paperless-ngx, having compared all 136 strings where the two share
-an English source: it agrees on 113. Of the rest, several of ours are better — paperless leaves
-*Created date* untranslated, and *Teilen* beats *Freigeben* for an iOS share sheet — and others are
-settled house style, such as *Benutzerdefiniertes Feld* over *Zusatzfeld* and *Passwort* over
-*Kennwort*. Those are choices, not defects, and were left alone.
-
-Surfaced during: #133 and the string catalog analysis. Done 2026-08-29.
+Surfaced during: the CI runtime investigation, 2026-08-15; paths re-checked 2026-08-30 after
+`ci:test` was split into `ci:test:unit` and `ci:test:ui`.
 
 ---
 
@@ -245,7 +156,8 @@ Surfaced during: #147, verified by instrumentation on 2026-08-16.
 ## The `ci` docker instance has drifted from the seed
 
 `mise run docker:start` brings up two paperless instances: `dev` on port 8000 and `ci` on port 9000.
-The XCUITest harness apps talk to `ci` (`PAPERLESS_TEST_URL` defaults to `http://localhost:9000`).
+The XCUITests talk to `ci`: `Module+InfoPlists.swift` puts `PAPERLESS_TEST_URL` in every target's
+Info.plist, defaulting to `http://localhost:9000`.
 
 Measured 2026-08-16, `ci` no longer matches `docker/seed/seed.json`:
 
@@ -262,30 +174,6 @@ Whether the fix is re-seeding `ci`, or making the harness apps point at `dev`, o
 to reconcile rather than assume, is the open question.
 
 Surfaced during: the bulk edit title end-to-end verification, 2026-08-16.
-
----
-
-## `testCreate` fails as the first XCUITest of a cold run
-
-Observed on three of the six app-test targets on 2026-08-22 — `TagsApp`, `DocumentTypesApp`,
-`SavedViewsApp` — always with the same shape:
-
-```
-Failed to tap "Add tag" Button: No matches found for first query match sequence:
-`Descendants matching type Button` -> `Elements matching predicate '"Add tag" IN identifiers'`
-```
-
-Every one of them passes when re-run alone with
-`-only-testing:TagsAppTests/TagsAppTests/testCreate`, and `CorrespondentsApp` and `StoragePathsApp`
-never failed at all. `testCreate` is alphabetically first, so it is the test that absorbs the very
-first `app.launch()` of a run — the toolbar button is queried before the list has finished its
-first layout.
-
-Unrelated to what the test asserts: `testCreate` runs with the list emptied, so no row view is even
-instantiated. A `waitForExistence` on the button before tapping would likely settle it, but the
-right fix may be in `UITestSupport` so every target gets it at once.
-
-Surfaced during: `docs/superpowers/specs/2026-08-22-confirmation-popup-migration-design.md`, 2026-08-22.
 
 ---
 
@@ -348,9 +236,10 @@ Surfaced during: #173, verified against the catalog 2026-08-22.
 
 ## Document detail cannot delete
 
-`DocumentDetailView`'s toolbar offers Preview, Share and View ▸, plus an Edit button. The row's
-context menu offers all of those **and Delete**. So the one screen dedicated to a single document is
-the one screen that cannot delete it — you have to go back to the list and long-press the row.
+`DocumentDetailView`'s toolbar is an ellipsis menu — Preview, Share and View ▸ — beside an Edit
+button. The row's context menu offers all of that **and Delete**. So the one screen dedicated to a
+single document is the one screen that cannot delete it — you have to go back to the list and
+long-press the row.
 
 It is not just a missing menu item. Delete today is a row concern:
 `DocumentRowReducer` confirms via `DocumentDeleteConfirmationPresenter`, then sends
