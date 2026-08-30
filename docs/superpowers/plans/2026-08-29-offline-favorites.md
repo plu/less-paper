@@ -1923,7 +1923,11 @@ static func runRefreshFavorites(server: Server) -> Self {
 }
 ```
 
-Merge it into `case .didBecomeActive` beside `.runRefreshStatistics(server:)`, and into `bootstrap`.
+Merge it into `case .didBecomeActive` beside `.runRefreshStatistics(server:)`, and into
+`case .selectedServerChanged`'s non-nil branch beside `runUpdateCache` — **not** `bootstrap`, which
+has no server in scope. A server resolving in `selectedServerChanged` is also what a cold launch
+looks like, and `didBecomeActive` alone misses it: `onChange(of: scenePhase)` never fires for the
+phase the app already launched into.
 
 - [ ] **Step 6: Run tests to verify they pass**
 
