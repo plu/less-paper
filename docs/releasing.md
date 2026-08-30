@@ -12,17 +12,19 @@ gh workflow run release.yml -f build=68
 
 It resolves the number back to the commit and marketing version that produced it, refuses if that
 run never uploaded a build or if the build is not `VALID` on App Store Connect, uploads the
-listing, submits for review, and tags the commit as `v3.0.1+68` with a GitHub release. Add
-`-f dry_run=true` to see all of that without doing any of it, and `-f skip_screenshots=true` to
-leave the images on the listing alone.
+listing and screenshots, submits for review, tags the commit as `v3.0.1+68` with a GitHub
+release, and bumps `marketingVersion` on main to the next patch. The build number is the only
+input; to rehearse a step without touching anything, the tasks honour `RELEASE_DRY_RUN` locally —
+`RELEASE_DRY_RUN=true mise run release:tag 68`.
 
 Apple holds the approved version in Pending Developer Release until you press Release in App Store
 Connect; it then rolls out over seven days.
 
-Nothing bumps `marketingVersion` in
-`Tuist/ProjectDescriptionHelpers/Extensions/String+Extensions.swift`. Edit it by hand after a
-submission — otherwise every subsequent TestFlight build carries a version that has already been
-used and can never be submitted.
+The pipeline bumps `marketingVersion` in
+`Tuist/ProjectDescriptionHelpers/Extensions/String+Extensions.swift` to the next patch as its last
+step, so a submission leaves main on a submittable version. It skips itself when main has already
+moved past the released version — which is how a deliberate minor or major jump is made: edit the
+constant by hand and the bump stays out of the way.
 
 ## Release notes are per version
 

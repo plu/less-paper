@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+#MISE description="Bump marketingVersion on main to the next patch after a release"
+#USAGE arg "<build>" help="The TestFlight build number that was just released"
+set -euo pipefail
+
+# Runs last in the release pipeline, once the submitted version is tagged. Every TestFlight build
+# after a submission carries a version Apple will not accept again, so leaving the bump to memory
+# meant every release ended with main in a broken state until someone remembered - which is exactly
+# what happened after 3.0.1 and again after 3.0.2.
+cd "$MISE_PROJECT_ROOT"
+
+eval "$(mise run release:resolve "$usage_build")"
+
+file="Tuist/ProjectDescriptionHelpers/Extensions/String+Extensions.swift"
+
+# Compared against origin/main rather than the checkout, and skipped when they differ: a hand bump
+# that already happened, or a deliberate jump to a minor or major, must not be second-guessed here.
+git fetch -q origin main
+current="$(git show origin/main:"$file" | sed -n 's/.*marketingVersion = "\(.*\)".*/\1/p')"
+
+if [ "$current" != "$version" ]; then
+  echo "main is on $current, the release was $version - nothing to bump"
+  exit 0
+fi
+
+IFS=. read -r major minor patch <<<"$version"
+next="$major.$minor.$((patch + 1))"
+
+if [ "${RELEASE_DRY_RUN:-}" = "true" ]; then
+  echo "dry run: would bump marketingVersion on main from $version to $next"
+  exit 0
+fi
+
+# A worktree on origin/main rather than the checkout itself: the release runs on the released
+# commit's ref, and main may have moved past it. The bump belongs on main's tip, whatever that is.
+worktree="$(mktemp -d)"
+trap 'git worktree remove --force "$worktree" 2>/dev/null || true' EXIT
+git worktree add -q --detach "$worktree" origin/main
+
+sed -i '' "s/marketingVersion = \"$version\"/marketingVersion = \"$next\"/" "$worktree/$file"
+
+if ! grep -q "marketingVersion = \"$next\"" "$worktree/$file"; then
+  echo "error: failed to rewrite marketingVersion in $file" >&2
+  exit 1
+fi
+
+git -C "$worktree" commit -qam "chore: bump the marketing version to $next"
+
+# The same credential shape release:tag documents: git does not read GH_TOKEN on its own, and an
+# HTTPS push from CI otherwise prompts for a username and hangs. A rejected push means main moved
+# between the fetch and now; re-running the task is safe, the guard above makes it idempotent.
+GIT_TERMINAL_PROMPT=0 git -C "$worktree" \
+  -c 'credential.helper=!f(){ echo username=x-access-token; echo "password=$GH_TOKEN"; };f' \
+  push origin HEAD:refs/heads/main
+
+echo "Bumped marketingVersion on main: $version -> $next"
