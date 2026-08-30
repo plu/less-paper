@@ -13,9 +13,13 @@ if [ ! -d "$framed" ]; then
   exit 1
 fi
 
+# Five of the eight, chosen to say what the app is in one image: what arrives, what is kept, what
+# is stored offline, how it is found, and what reading one looks like. Keep this in step with the
+# alt text in README.md and on the landing page, which names them.
 magick \
   "$framed/iPhone 17 Pro Max-01-Inbox_framed.png" \
   "$framed/iPhone 17 Pro Max-02-Documents_framed.png" \
+  "$framed/iPhone 17 Pro Max-08-Favorites_framed.png" \
   "$framed/iPhone 17 Pro Max-03-Search_framed.png" \
   "$framed/iPhone 17 Pro Max-05-View_framed.png" \
   -resize 340x -background none +append -depth 8 -strip \
