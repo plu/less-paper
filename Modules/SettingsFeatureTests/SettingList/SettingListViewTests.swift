@@ -25,4 +25,20 @@ struct SettingListViewTests {
             as: .image(layout: .device(config: .iPhone12))
         )
     }
+
+    @Test
+    func testSnapshot_fullList() async throws {
+        assertSnapshot(
+            of: SettingListView(
+                store: Store(
+                    initialState: .testValue(),
+                    reducer: {
+                        SettingListReducer()
+                    }
+                )
+            ),
+            as: .image(layout: .fixed(width: 390, height: 2400)),
+            named: "full-list"
+        )
+    }
 }
