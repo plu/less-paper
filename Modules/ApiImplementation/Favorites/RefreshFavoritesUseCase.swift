@@ -53,8 +53,14 @@ private extension RefreshFavoritesUseCase {
                 }
 
                 guard let document = fresh[favorite.id] else {
+                    // The flag is set either way; only the transition is counted. A favorite that
+                    // was already missing is not news, and reporting it again would put an error
+                    // toast ahead of "N favorites updated" on every manual refresh from here on —
+                    // the same stale complaint forever, and never a word about the real work.
+                    if !favorite.isUnavailable {
+                        unavailable += 1
+                    }
                     favorites[id: favorite.id]?.isUnavailable = true
-                    unavailable += 1
                     continue
                 }
 

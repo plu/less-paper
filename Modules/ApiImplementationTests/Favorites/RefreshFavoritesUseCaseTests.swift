@@ -134,6 +134,30 @@ struct RefreshFavoritesUseCaseTests {
         #expect(result.unavailable == 1)
     }
 
+    // The count is what the manual refresh reports, and it reports news: a favorite already badged
+    // stays badged and stays silent, or one deleted document would push an error toast ahead of
+    // every later "N favorites updated".
+    @Test
+    func test_aFavoriteAlreadyUnavailableIsNotCountedAgain() async throws {
+        let server = Self.server("already-unavailable")
+        defer { cleanUp(server) }
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+            .testValue(document: .testValue(id: 7), isUnavailable: true),
+            .testValue(document: .testValue(id: 8)),
+        ]
+
+        let result = try await withDependencies {
+            $0.getDocumentsByIds.execute = { _, _ in [] }
+        } operation: {
+            try await RefreshFavoritesUseCase.liveValue.execute(false, server)
+        }
+
+        #expect(result.unavailable == 1)
+        #expect($favorites.wrappedValue[id: 7]?.isUnavailable == true)
+        #expect($favorites.wrappedValue[id: 8]?.isUnavailable == true)
+    }
+
     // The one that matters most: a failed request knows nothing about what the server holds.
     // Marking on failure would badge every favorite the first time the app opens on a plane.
     @Test

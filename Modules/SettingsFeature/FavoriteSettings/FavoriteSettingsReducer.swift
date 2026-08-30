@@ -106,6 +106,9 @@ public struct FavoriteSettingsReducer: Sendable {
 
             case .view(.redownloadAllButtonTapped):
                 state.isWorking = true
+                // Deliberately not on `RefreshFavoritesCancelID.refresh`, unlike the tab's
+                // pull-to-refresh: this is a long user-initiated redownload of everything, and a
+                // foreground refresh arriving mid-run must not be allowed to kill it.
                 return .run { [server = state.server] send in
                     await send(.refreshResult(.success(try await refreshFavorites(true, server))))
                 } catch: { error, send in
