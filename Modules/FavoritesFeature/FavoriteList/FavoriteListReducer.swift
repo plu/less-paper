@@ -49,8 +49,6 @@ public struct FavoriteListReducer: Sendable {
     @ObservableState
     public struct State: Equatable {
 
-        var isRefreshing = false
-
         var path = StackState<Path.State>()
 
         // Stored rather than computed: `.forEach` scopes a child store out of stored state, and a
@@ -134,7 +132,6 @@ public struct FavoriteListReducer: Sendable {
                 state.rebuildRows()
                 return .none
             case let .refreshResult(result):
-                state.isRefreshing = false
                 state.rebuildRows()
                 guard case let .failure(error) = result else {
                     return .none
@@ -157,10 +154,11 @@ public struct FavoriteListReducer: Sendable {
                 case .onDisappear:
                     return .cancel(id: FavoriteListCancelID.observeFavorites)
                 case .onRefresh:
-                    guard !state.isRefreshing else {
-                        return .none
-                    }
-                    state.isRefreshing = true
+                    // Nothing guards against a second pull here, and nothing needs to: the effect
+                    // shares its cancel id with AppFeature's automatic refresh, so overlap is
+                    // settled by `cancelInFlight`. An in-flight flag would be worse than useless —
+                    // a cancelled effect delivers no result to clear it, and the list would be
+                    // locked out of pull-to-refresh for the rest of the session.
                     return .runRefreshFavorites(server: state.server)
                 }
             case .binding, .path, .rows:

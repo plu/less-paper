@@ -59,6 +59,33 @@ struct AppReducerTests {
         #expect(refreshed.value)
     }
 
+    // Backgrounding and foregrounding repeatedly must not stack refreshes: each one re-downloads
+    // the same PDFs and holds them whole in memory. Newest wins, so the second trigger runs and the
+    // first is cancelled where it stands.
+    @Test
+    func test_didBecomeActive_doesNotStackRefreshes() async {
+        let clock = TestClock()
+        let completed = LockIsolated(0)
+
+        let store = TestStore(initialState: AppReducer.State(main: .testValue())) {
+            AppReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.refreshFavorites.execute = { _, _ in
+                try await clock.sleep(for: .seconds(1))
+                completed.withValue { $0 += 1 }
+                return FavoriteRefreshResult()
+            }
+        }
+
+        await store.send(.didBecomeActive)
+        await store.send(.didBecomeActive)
+        await clock.advance(by: .seconds(1))
+        await store.finish()
+
+        #expect(completed.value == 1)
+    }
+
     // The automatic path is silent: a failure must not surface anything.
     @Test
     func test_didBecomeActive_swallowsARefreshFailure() async {

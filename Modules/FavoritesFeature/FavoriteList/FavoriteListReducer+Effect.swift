@@ -31,8 +31,10 @@ extension Effect where Action == FavoriteListReducer.Action {
         } catch: { error, send in
             await send(.refreshResult(.failure(error)))
         }
+        // Shared with AppFeature's automatic refresh, which runs over the same records and the same
+        // PDF paths: one identity is what keeps the two from downloading everything twice.
         .cancellable(
-            id: FavoriteListCancelID.refreshFavorites,
+            id: RefreshFavoritesCancelID.refresh,
             cancelInFlight: true
         )
     }
@@ -40,5 +42,4 @@ extension Effect where Action == FavoriteListReducer.Action {
 
 enum FavoriteListCancelID {
     case observeFavorites
-    case refreshFavorites
 }

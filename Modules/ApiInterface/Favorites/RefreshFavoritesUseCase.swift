@@ -42,3 +42,11 @@ public extension DependencyValues {
         set { self[RefreshFavoritesUseCase.self] = newValue }
     }
 }
+
+// One identity for every refresh, whichever module triggers it. Pull-to-refresh in the tab and the
+// launch and foreground refreshes in AppFeature walk the same records and write the same PDF paths,
+// so two of them at once means downloading everything twice. It lives beside the use case because
+// both modules already depend on it and neither can see the other's cancel ids.
+public enum RefreshFavoritesCancelID: Sendable {
+    case refresh
+}

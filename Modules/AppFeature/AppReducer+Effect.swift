@@ -31,7 +31,14 @@ extension Effect where Action == AppReducer.Action {
         return .run { _ in
             _ = try? await refreshFavorites(false, server)
         }
-        .cancellable(id: CancelID.refreshFavorites)
+        // Newest wins rather than first wins, and deliberately so: a launch, a foreground and a
+        // pull-to-refresh all walk the same records and write the same PDF paths, and the later
+        // trigger is the one with the fresher view of the world. Without this, backgrounding and
+        // foregrounding repeatedly stacks refreshes, each holding a whole PDF in memory.
+        .cancellable(
+            id: RefreshFavoritesCancelID.refresh,
+            cancelInFlight: true
+        )
     }
 
     static func runRefreshStatistics(server: Server) -> Self {
@@ -80,7 +87,6 @@ extension Effect where Action == AppReducer.Action {
 
 private enum CancelID {
     case observeSelectedServerChanges
-    case refreshFavorites
     case refreshStatistics
     case updateCache
 }
