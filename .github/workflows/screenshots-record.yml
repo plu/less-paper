@@ -47,7 +47,7 @@ jobs:
 
       - run: mise simulators:prepare
 
-      - run: mise ci:screenshots:capture
+      - run: fnox exec -P ci -- mise ci:screenshots:capture
 
       - name: Contact sheet
         if: always()

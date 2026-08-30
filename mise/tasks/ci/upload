@@ -2,17 +2,16 @@
 #MISE description="Upload LessPaper.ipa"
 set -euo pipefail
 
-AUTH_KEY_ID="$(fnox get ALTOOL_KEY_ID)"
-AUTH_KEY_ISSUER="$(fnox get ALTOOL_ISSUER_ID)"
+AUTH_KEY_ID="$ALTOOL_KEY_ID"
 
 TMP_DIR=/private$(mktemp -d)
 AUTH_KEY_PATH="$TMP_DIR/AuthKey_${AUTH_KEY_ID}.p8"
 
 trap "rm -rf $TMP_DIR" EXIT # Delete on exit
 
-fnox get ALTOOL_AUTH_KEY | base64 -d > "$AUTH_KEY_PATH"
+printf '%s' "$ALTOOL_AUTH_KEY" | base64 -d > "$AUTH_KEY_PATH"
 
-fnox exec -- xcrun altool --upload-app \
+xcrun altool --upload-app \
   --type ios \
   --file "build/LessPaper.ipa" \
   --p8-file-path "$AUTH_KEY_PATH" \

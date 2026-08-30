@@ -57,7 +57,7 @@ jobs:
 
       - name: Download the current listing
         if: inputs.action == 'download'
-        run: mise run metadata:download
+        run: fnox exec -P ci -- mise run metadata:download
 
       # Same shape as Record: a change to what the store shows arrives as a pull request.
       - name: Open a pull request with the downloaded listing
@@ -92,7 +92,7 @@ jobs:
       # metadata:upload writes the review information from fnox first; it is never committed.
       - name: Upload the listing
         if: inputs.action == 'upload'
-        run: mise run metadata:upload
+        run: fnox exec -P ci -- mise run metadata:upload
 
       - name: Summary
         if: always()

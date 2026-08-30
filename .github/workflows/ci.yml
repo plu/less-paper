@@ -52,11 +52,11 @@ jobs:
 
       - run: mise ci:clean
 
-      - run: mise ci:lint
+      - run: fnox exec -P ci -- mise ci:lint
 
       - run: mise simulators:prepare
 
-      - run: mise ci:test:unit
+      - run: fnox exec -P ci -- mise ci:test:unit
 
       - name: Upload test results
         if: failure()
@@ -67,7 +67,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - run: mise ci:cache
+      - run: fnox exec -P ci -- mise ci:cache
         if: github.ref == 'refs/heads/main'
 
   test_ui:
@@ -96,7 +96,7 @@ jobs:
 
       - run: mise simulators:prepare
 
-      - run: mise ci:test:ui
+      - run: fnox exec -P ci -- mise ci:test:ui
 
       # A failing XCUITest records the app's accessibility hierarchy and a video at the moment it
       # gave up. Without the bundle a UI failure reports only which assertion failed, which is
@@ -134,6 +134,6 @@ jobs:
           cache: false
           cache_save: false
 
-      - run: mise ci:build
+      - run: fnox exec -P ci -- mise ci:build
 
-      - run: mise ci:upload
+      - run: fnox exec -P ci -- mise ci:upload

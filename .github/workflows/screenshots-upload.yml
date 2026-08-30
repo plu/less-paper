@@ -48,7 +48,7 @@ jobs:
 
       - run: mise ci:clean
 
-      - run: mise ci:screenshots:frame
+      - run: fnox exec -P ci -- mise ci:screenshots:frame
 
       - name: Contact sheet
         run: |
@@ -68,7 +68,7 @@ jobs:
 
       - name: Upload to App Store Connect
         if: inputs.upload
-        run: mise ci:screenshots:upload
+        run: fnox exec -P ci -- mise ci:screenshots:upload
 
       - name: Summary
         if: always()
