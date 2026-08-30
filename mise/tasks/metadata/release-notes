@@ -48,6 +48,12 @@ for dir in "$dest"/*/; do
     exit 1
   fi
 
+  # release:notes drafts carry this first line so they can sit on main without ever shipping.
+  if head -1 "$notes" | grep -q '^DRAFT'; then
+    echo "error: $notes is still a draft - rewrite it before releasing $version" >&2
+    exit 1
+  fi
+
   cp "$notes" "${dir}release_notes.txt"
   wrote=$((wrote + 1))
 done

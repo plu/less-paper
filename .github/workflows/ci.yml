@@ -137,3 +137,11 @@ jobs:
       - run: fnox exec -P ci -- mise ci:build
 
       - run: fnox exec -P ci -- mise ci:upload
+
+      # Testers otherwise get a build with no notes at all. The task waits for the build to appear
+      # in App Store Connect, which usually takes a minute or two after altool finishes.
+      - name: TestFlight What to Test
+        run: fnox exec -P ci -- mise run ci:testflight-notes
+        env:
+          PUSH_BEFORE: ${{ github.event.before }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
