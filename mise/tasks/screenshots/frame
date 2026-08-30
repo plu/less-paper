@@ -12,4 +12,8 @@ MARKER="$MISE_PROJECT_ROOT/.marketing-render"
 touch "$MARKER"
 trap 'rm -f "$MARKER"' EXIT
 
+# --no-selective-testing stays here even though CI now uses selective testing everywhere else.
+# This run is not a test, it is how the framed images are written: MarketingRenderAllTests
+# renders them as its artefact. Skipped because nothing changed, it would report success and
+# produce no images, and the framing step would go green having framed nothing.
 mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing
