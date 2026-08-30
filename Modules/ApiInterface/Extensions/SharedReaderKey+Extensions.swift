@@ -67,7 +67,7 @@ public extension SharedReaderKey where Self == InMemoryKey<IdentifiedArrayOf<Doc
 }
 
 public extension SharedReaderKey
-where Self == FileStorageKey<IdentifiedArrayOf<FavoriteDocument>>.Default {
+    where Self == FileStorageKey<IdentifiedArrayOf<FavoriteDocument>>.Default {
 
     static func favorites(_ server: Server) -> Self {
         Self[

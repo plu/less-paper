@@ -271,6 +271,8 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
                 .target(.apiInterface),
+                .target(.components),
+                .target(.documentsFeature),
                 .target(.favoritesFeature),
                 .target(.testSupport),
             ]
@@ -484,6 +486,7 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
                 .target(.apiInterface),
+                .target(.components),
                 .target(.pdfPasswordsFeature),
                 .target(.serversFeature),
                 .target(.settingsFeature),

@@ -100,7 +100,9 @@ private extension RefreshFavoritesUseCase {
             var failures = 0
 
             func addNext() {
-                guard let document = iterator.next() else { return }
+                guard let document = iterator.next() else {
+                    return
+                }
                 group.addTask {
                     do {
                         try await save(document, server, .refreshExisting)
@@ -114,7 +116,9 @@ private extension RefreshFavoritesUseCase {
             for _ in 0 ..< concurrency { addNext() }
 
             while let succeeded = await group.next() {
-                if !succeeded { failures += 1 }
+                if !succeeded {
+                    failures += 1
+                }
                 addNext()
             }
 

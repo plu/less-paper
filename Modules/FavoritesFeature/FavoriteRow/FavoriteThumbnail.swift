@@ -6,10 +6,10 @@ struct FavoriteThumbnail: View {
     var body: some View {
         Group {
             if let image {
-                Image(uiImage: image).resizable().aspectRatio(contentMode: .fit)
+                Image(uiImage: image).resizable().scaledToFit()
             } else {
                 // Not rendered yet, or the file is gone or is not a PDF. The row lays out either way.
-                Image(systemName: "doc").resizable().aspectRatio(contentMode: .fit)
+                Image(systemName: "doc").resizable().scaledToFit()
             }
         }
         .task(id: FileVersion(url: url, storedAt: storedAt)) {
@@ -35,7 +35,9 @@ struct FavoriteThumbnail: View {
     // appearance, off the main actor, into @State.
     static func render(url: URL, size: CGSize) async -> UIImage? {
         await Task.detached(priority: .userInitiated) {
-            guard let page = PDFDocument(url: url)?.page(at: 0) else { return nil }
+            guard let page = PDFDocument(url: url)?.page(at: 0) else {
+                return nil
+            }
             return page.thumbnail(of: size, for: .mediaBox)
         }.value
     }
