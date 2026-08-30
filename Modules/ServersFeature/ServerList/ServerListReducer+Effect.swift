@@ -15,12 +15,17 @@ extension Effect where Action == ServerListReducer.Action {
         var deleteAllFavorites
 
         return .run { _ in
-            try await deleteAllFavorites(server)
-
-            // The record and the file are two different stores by design; a deleted server
-            // must not leave either behind, or its bytes outlive the server that explains them.
+            // The record and the file are two different stores by design; a deleted server must not
+            // leave either behind, or its bytes outlive the server that explains them.
+            //
+            // The records go first, as in RemoveFavoriteUseCase. Deleting the files first leaves a
+            // window in which a refresh's save, already past its download, still sees its record,
+            // writes its PDF and recreates the directory being cleared. Dropping the records first
+            // means that save fails its own membership check and cleans up after itself instead.
             @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
             $favorites.withLock { $0.removeAll() }
+
+            try await deleteAllFavorites(server)
         } catch: { _, _ in
         }
     }
