@@ -118,7 +118,7 @@ public struct FavoriteSettingsReducer: Sendable {
             case .view(.removeAllButtonTapped):
                 // `isWorking` is set by `removeConfirmed` rather than here, so declining the
                 // confirmation needs no action of its own to put the buttons back.
-                return .run { [server = state.server] send in
+                return .run { send in
                     guard await presentConfirmation(.removeAllFavorites, String(localized: .favorites)) else {
                         return
                     }
