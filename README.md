@@ -62,6 +62,8 @@ tuist install      # resolve Swift package dependencies
 tuist generate     # generate LessPaper.xcworkspace
 ```
 
+No Tuist account is needed. The project is connected to the [Tuist server](https://tuist.dev/plu/less-paper) for build insights and a shared binary cache, and `optionalAuthentication` in `Tuist.swift` means an unauthenticated clone simply goes without them rather than failing. Run `tuist auth login` to get them locally.
+
 ### A local paperless-ngx to develop against
 
 ```sh

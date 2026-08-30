@@ -8,6 +8,12 @@ let tuist = Tuist(
     project: .tuist(
         compatibleXcodeVersions: [
             .exact(Version(26, 5, 0)),
-        ]
+        ],
+        // Without this a handle makes every command require authentication, `tuist generate`
+        // included, and it fails outright rather than degrading. This is a public repository whose
+        // README tells a contributor to run `tuist generate`, so on a fresh clone that has to work
+        // without a Tuist account. With it, an authenticated run still gets insights and the
+        // binary cache; an unauthenticated one simply goes without.
+        generationOptions: .options(optionalAuthentication: true)
     )
 )
