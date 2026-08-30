@@ -12,7 +12,19 @@ trap 'rm -f "$notes"' EXIT
 
 # What users read on the App Store, then what actually changed in the code: the release is both the
 # user-facing note and the developer-facing changelog.
-cat fastlane/metadata/en-US/release_notes.txt > "$notes"
+#
+# Read from changelogs/, not from release_notes.txt. That file is generated now, and during a
+# release metadata:upload writes it into a staged copy of the listing rather than into the working
+# tree - so by the time this runs there is nothing here to read. This step comes after the
+# submission, so getting it wrong leaves a release submitted and untagged.
+release_notes="fastlane/metadata/en-US/changelogs/${version}.txt"
+
+if [ ! -f "$release_notes" ]; then
+  echo "error: $release_notes is missing - cannot describe the release" >&2
+  exit 1
+fi
+
+cat "$release_notes" > "$notes"
 
 # Tags carry the build number, so they do not sort as versions. Creation order is the only order
 # that means anything here.
