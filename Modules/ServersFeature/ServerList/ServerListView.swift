@@ -1,5 +1,6 @@
 import Components
 import ComposableArchitecture
+import DiagnosticsFeature
 import SwiftUI
 
 @ViewAction(for: ServerListReducer.self)
@@ -15,6 +16,14 @@ public struct ServerListView: View {
         .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
         .background(Color.m3SurfaceContainerLowest)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(
+            item: $store.scope(
+                state: \.destination?.diagnosticsList,
+                action: \.destination.diagnosticsList
+            )
+        ) { store in
+            DiagnosticsListView(store: store)
+        }
         .navigationTitle(.servers)
         .scrollContentBackground(.hidden)
         .sheet(
@@ -57,6 +66,17 @@ public struct ServerListView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.primary())
+
+                    // The only route to the log for someone with no server: Diagnostics otherwise
+                    // lives in Settings, which is inside the tabs a selected server builds. Adding
+                    // the first server is also where the log is most likely to be worth reading.
+                    Button {
+                        send(.diagnosticsButtonTapped)
+                    } label: {
+                        Label(.diagnostics, systemImage: "stethoscope")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.secondary())
                 }
             }
         }

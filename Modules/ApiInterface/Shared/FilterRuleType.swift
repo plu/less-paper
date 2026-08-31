@@ -1,5 +1,6 @@
 public enum FilterRuleType: Int, CaseIterable, Codable, Equatable, Identifiable, Hashable, Sendable {
     case title = 0
+    case simpleTitle = 48
     case content = 1
     case asn = 2
     case asnIsNull = 18
@@ -33,6 +34,7 @@ public enum FilterRuleType: Int, CaseIterable, Codable, Equatable, Identifiable,
     case modifiedBefore = 15
     case modifiedAfter = 16
     case titleContent = 19
+    case simpleText = 49
     case fulltextQuery = 20
     case fulltextMoreLike = 21
     case owner = 32
@@ -81,6 +83,8 @@ extension FilterRuleType {
         switch self {
         case .title:
             return "title__icontains"
+        case .simpleTitle:
+            return "title_search"
         case .content:
             return "content__icontains"
         case .asn:
@@ -147,6 +151,8 @@ extension FilterRuleType {
             return "modified__date__gt"
         case .titleContent:
             return "title_content"
+        case .simpleText:
+            return "text"
         case .fulltextQuery:
             return "query"
         case .fulltextMoreLike:

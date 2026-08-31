@@ -1,6 +1,7 @@
 import ApiInterface
 import Components
 import ComposableArchitecture
+import DiagnosticsFeature
 import Foundation
 import SwiftSharing
 
@@ -16,11 +17,13 @@ public struct ServerListReducer: Sendable {
 
         public enum View {
             case createServerButtonTapped
+            case diagnosticsButtonTapped
         }
     }
 
     @Reducer
     public enum Destination {
+        case diagnosticsList(DiagnosticsListReducer)
         case serverForm(ServerFormReducer)
     }
 
@@ -96,6 +99,9 @@ public struct ServerListReducer: Sendable {
                 switch viewAction {
                 case .createServerButtonTapped:
                     state.destination = .serverForm(ServerFormReducer.State(input: .empty))
+                    return .none
+                case .diagnosticsButtonTapped:
+                    state.destination = .diagnosticsList(DiagnosticsListReducer.State())
                     return .none
                 }
             case .binding, .destination, .servers:

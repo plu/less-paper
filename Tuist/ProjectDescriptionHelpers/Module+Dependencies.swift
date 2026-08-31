@@ -448,6 +448,7 @@ extension Module {
                 .external(.sharing),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.diagnosticsFeature),
             ]
         case .serversFeatureTests:
             [
