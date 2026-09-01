@@ -38,6 +38,7 @@ public enum Module: String, CaseIterable {
     case correspondentsFeatureTests = "CorrespondentsFeatureTests"
     case customFieldsFeature = "CustomFieldsFeature"
     case customFieldsFeatureTests = "CustomFieldsFeatureTests"
+    case designTokens = "DesignTokens"
     case documentTypesFeature = "DocumentTypesFeature"
     case documentTypesFeatureTests = "DocumentTypesFeatureTests"
     case diagnosticsFeature = "DiagnosticsFeature"
@@ -136,6 +137,7 @@ extension Module {
              .components,
              .correspondentsFeature,
              .customFieldsFeature,
+             .designTokens,
              .diagnosticsFeature,
              .documentTypesFeature,
              .documentsFeature,
@@ -243,6 +245,7 @@ extension Module {
              .components,
              .correspondentsFeature,
              .customFieldsFeature,
+             .designTokens,
              .diagnosticsFeature,
              .documentTypesFeature,
              .documentsFeature,

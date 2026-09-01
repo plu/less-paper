@@ -1,4 +1,5 @@
 import Components
+import DesignTokens
 import SwiftUI
 
 struct DocumentMetadataGroupView: View {
