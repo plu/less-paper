@@ -176,22 +176,32 @@ Surfaced during: the bulk edit title end-to-end verification, 2026-08-16.
 
 ---
 
-## `ServerRowReducerTests` cannot be run on its own
+## Audit the remaining test targets for bare `@Suite`
 
-```
-tuist test ServersFeature --no-selective-testing -- -only-testing:ServersFeatureTests/ServerRowReducerTests
-```
+A suite declared as a bare `@Suite` with no `.dependencies()` trait relies on some other suite in
+the same bundle having established `\.timeZone` before it runs, and fails alone with an issue at
+swift-dependencies' `TimeZone.swift:21` — the "blank TimeZone dependency" report. The coupling is
+invisible until the suite is run by itself, so CI stays green.
 
-fails `test_view_serverTapped_fillsCachesBeforeSelecting` with an issue recorded at
-swift-dependencies' `TimeZone.swift:22` — the "blank TimeZone dependency" report. The full
-`ServersFeature` suite passes, so CI is green and has always been green.
+The cause is a process-global capturing a test-scoped dependency: `JSONDecoder.apiDecoder` is a
+lazy `static let`, and `configureForApi` builds `DateFormatter`s that ApiInterface's
+`DateFormatter(dateFormat:)` initialises with `Dependency(\.timeZone)`. Whichever test touches the
+decoder first decides the time zone for the whole process. `JSONEncoder.apiEncoder` has the same
+exposure through `DateFormatter.createdDate`.
 
-The suite is declared as a bare `@Suite` with no `.dependencies()` trait, unlike e.g.
-`SavedViewRowViewTests`, so it is relying on some other suite in the same bundle having established
-`\.timeZone` before it runs. That coupling is invisible until the suite is run alone.
+**Done:** `ApiInterfaceTests` — all 56 suites run one at a time, the 30 that reported the issue now
+carry the trait. `ServersFeatureTests` — `ServerRowReducerTests`, the suite that surfaced this,
+plus a sweep of the other seven.
 
-Reproduced on unmodified `main` as well as on the migration branch, so it predates both. Worth
-auditing which other suites are bare `@Suite` and depending on a neighbour for their dependencies.
+**Left:** every other test target. `ApiImplementationTests` has the same profile — 10 of 55 files
+carry the trait — and is the obvious next one. The sweep is a `test-without-building` run per
+suite, grepping for `TimeZone.swift`, which is slow but reliable; static analysis is not, because
+suites reach the decoder indirectly.
+
+The structural fix would be to stop those globals resolving `\.timeZone` eagerly. That is not just
+a refactor: the API's `"yyyy-MM-dd"` format is the one with no offset of its own, so pinning it
+changes which instant a bare date maps to, and DocumentsFeature's display formatter does not pin a
+zone. Both sides have to move together or dates shift by a day outside GMT.
 
 Surfaced during: `docs/superpowers/specs/2026-08-22-confirmation-popup-migration-design.md`, 2026-08-22.
 

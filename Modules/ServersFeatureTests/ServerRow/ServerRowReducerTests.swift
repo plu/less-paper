@@ -5,9 +5,12 @@ import ComposableArchitecture
 import Foundation
 import SwiftSharing
 import Testing
+import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .dependencies()
+)
 struct ServerRowReducerTests {
 
     @Test
