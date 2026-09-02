@@ -1,0 +1,9 @@
+Server, die sich nicht hinzufügen ließen, verschwundene benutzerdefinierte Felder und Suche an mehr Stellen.
+
+• Behoben: Ein Server ließ sich mitunter gar nicht hinzufügen – die App meldete nur, dass die Daten nicht gelesen werden konnten. Eine gespeicherte Ansicht ohne Sortierfeld genügte dafür, ebenso eine gespeicherte Ansicht mit einem Filter, den die App nicht kannte.
+• Behoben: Ein einziges benutzerdefiniertes Feld mit einer ungewöhnlichen Auswahloption ließ alle benutzerdefinierten Felder verschwinden.
+• Gespeicherte Ansichten mit den Filtern „Einfache Titelsuche“ und „Einfache Textsuche“ funktionieren jetzt.
+• Die Listen in den Einstellungen lassen sich durchsuchen: Korrespondenten, benutzerdefinierte Felder, Dokumenttypen, PDF-Passwörter, gespeicherte Ansichten, Speicherpfade, Tags und Papierkorb.
+• Die Diagnose ist jetzt schon erreichbar, bevor ein Server hinzugefügt wurde – so lässt sich auch ein Problem auf dem allerersten Bildschirm melden.
+
+Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.
