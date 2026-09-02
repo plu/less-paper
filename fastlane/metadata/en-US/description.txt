@@ -18,6 +18,6 @@ Connect as many servers as you like and switch between them. Sign in with a pass
 KEEP THE ARCHIVE TIDY
 Create, rename and delete tags, correspondents, document types and storage paths, and set ownership and permissions on any document. Restore anything you deleted from the trash, or empty it for good.
 
-Works with paperless-ngx 3.0.0 and earlier. Universal: iPhone and iPad — on iPad the document opens in a column beside the list rather than covering it.
+Needs a paperless-ngx server offering REST API version 8 or newer. Universal: iPhone and iPad — on iPad the document opens in a column beside the list rather than covering it.
 
 Less Paper is open source. Issues and feature requests are welcome at https://github.com/plu/less-paper

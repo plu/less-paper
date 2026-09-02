@@ -18,6 +18,6 @@ Verbinde so viele Server, wie du möchtest, und wechsle zwischen ihnen. Melde di
 DAS ARCHIV IN ORDNUNG HALTEN
 Lege Tags, Korrespondenten, Dokumenttypen und Speicherpfade an, benenne sie um oder lösche sie – und setze Besitzer und Berechtigungen für jedes Dokument. Gelöschtes holst du aus dem Papierkorb zurück – oder leerst ihn endgültig.
 
-Funktioniert mit paperless-ngx 3.0.0 und älter. Universal: iPhone und iPad – auf dem iPad steht das Dokument in einer Spalte neben der Liste, statt sie zu verdecken.
+Benötigt einen paperless-ngx-Server mit REST-API-Version 8 oder neuer. Universal: iPhone und iPad – auf dem iPad steht das Dokument in einer Spalte neben der Liste, statt sie zu verdecken.
 
 Less Paper ist Open Source. Fehlerberichte und Wünsche gerne unter https://github.com/plu/less-paper
