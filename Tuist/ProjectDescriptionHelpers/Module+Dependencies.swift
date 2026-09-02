@@ -137,6 +137,7 @@ extension Module {
                 .external(.x509),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
             ]
         case .certificatesFeatureTests:
             [
@@ -154,6 +155,7 @@ extension Module {
                 .external(.dependencies),
                 .external(.issueReporting),
                 .external(.swiftMessages),
+                .target(.designTokens),
             ]
         case .componentsTests:
             [
@@ -170,6 +172,7 @@ extension Module {
                 .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.permissionsFeature),
             ]
         case .correspondentsFeatureTests:
@@ -180,6 +183,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.correspondentsFeature),
+                .target(.designTokens),
                 .target(.testSupport),
             ]
         case .customFieldsFeature:
@@ -190,6 +194,7 @@ extension Module {
                 .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
             ]
         case .customFieldsFeatureTests:
             [
@@ -209,6 +214,7 @@ extension Module {
                 .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.permissionsFeature),
             ]
         case .documentTypesFeatureTests:
@@ -218,6 +224,7 @@ extension Module {
                 .external(.snapshotTesting),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.documentTypesFeature),
                 .target(.testSupport),
             ]
@@ -231,6 +238,7 @@ extension Module {
                 .target(.components),
                 .target(.correspondentsFeature),
                 .target(.customFieldsFeature),
+                .target(.designTokens),
                 .target(.documentTypesFeature),
                 .target(.imageFeature),
                 .target(.permissionsFeature),
@@ -245,9 +253,10 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
                 .target(.apiInterface),
-                .target(.customFieldsFeature),
                 .target(.components),
                 .target(.correspondentsFeature),
+                .target(.customFieldsFeature),
+                .target(.designTokens),
                 .target(.documentTypesFeature),
                 .target(.documentsFeature),
                 .target(.storagePathsFeature),
@@ -263,6 +272,7 @@ extension Module {
                 .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.documentsFeature),
             ]
         case .favoritesFeatureTests:
@@ -303,6 +313,7 @@ extension Module {
                 .external(.nukeUI),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
             ]
         case .imageFeatureTests:
             [
@@ -323,12 +334,15 @@ extension Module {
                 .target(.logging),
                 .target(.testSupport),
             ]
+        case .designTokens:
+            []
         case .diagnosticsFeature:
             [
                 .external(.composableArchitecture),
                 .external(.dependencies),
                 .external(.dependenciesMacros),
                 .target(.components),
+                .target(.designTokens),
                 .target(.logging),
             ]
         case .diagnosticsFeatureTests:
@@ -347,6 +361,7 @@ extension Module {
                 .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
             ]
         case .trashFeatureTests:
             [
@@ -364,6 +379,7 @@ extension Module {
                 .external(.dependenciesMacros),
                 .external(.markdownUI),
                 .target(.components),
+                .target(.designTokens),
             ]
         case .licensesFeatureTests:
             [
@@ -392,6 +408,7 @@ extension Module {
                 .external(.dependenciesMacros),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
             ]
         case .pdfPasswordsFeatureTests:
             [
@@ -410,6 +427,7 @@ extension Module {
                 .external(.dependenciesMacros),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
             ]
         case .permissionsFeatureTests:
             [
@@ -417,6 +435,7 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
                 .target(.apiInterface),
+                .target(.designTokens),
                 .target(.permissionsFeature),
                 .target(.testSupport),
             ]
@@ -428,6 +447,7 @@ extension Module {
                 .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.permissionsFeature),
             ]
         case .savedViewsFeatureTests:
@@ -437,6 +457,7 @@ extension Module {
                 .external(.snapshotTesting),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.savedViewsFeature),
                 .target(.testSupport),
             ]
@@ -448,6 +469,7 @@ extension Module {
                 .external(.sharing),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.diagnosticsFeature),
             ]
         case .serversFeatureTests:
@@ -457,6 +479,7 @@ extension Module {
                 .external(.snapshotTesting),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.serversFeature),
                 .target(.testSupport),
             ]
@@ -467,9 +490,10 @@ extension Module {
                 .external(.dependenciesMacros),
                 .target(.apiInterface),
                 .target(.components),
-                .target(.diagnosticsFeature),
                 .target(.correspondentsFeature),
                 .target(.customFieldsFeature),
+                .target(.designTokens),
+                .target(.diagnosticsFeature),
                 .target(.documentTypesFeature),
                 .target(.licensesFeature),
                 .target(.pdfPasswordsFeature),
@@ -528,10 +552,11 @@ extension Module {
                 .target(.certificatesFeature),
                 .target(.components),
                 .target(.correspondentsFeature),
+                .target(.designTokens),
                 .target(.documentTypesFeature),
+                .target(.logging),
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
-                .target(.logging),
             ]
         case .shareFeatureTests:
             [
@@ -566,6 +591,7 @@ extension Module {
                 .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.permissionsFeature),
             ]
         case .storagePathsFeatureTests:
@@ -575,6 +601,7 @@ extension Module {
                 .external(.snapshotTesting),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.storagePathsFeature),
                 .target(.testSupport),
             ]
@@ -586,6 +613,7 @@ extension Module {
                 .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.permissionsFeature),
             ]
         case .tagsFeatureTests:
@@ -595,6 +623,7 @@ extension Module {
                 .external(.snapshotTesting),
                 .target(.apiInterface),
                 .target(.components),
+                .target(.designTokens),
                 .target(.tagsFeature),
                 .target(.testSupport),
             ]
@@ -609,6 +638,7 @@ extension Module {
                 .external(.dependencies),
                 .external(.dependenciesMacros),
                 .target(.components),
+                .target(.designTokens),
                 .target(.logging),
             ]
         case .tipsFeatureTests:

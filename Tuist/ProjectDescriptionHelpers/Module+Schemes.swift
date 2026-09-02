@@ -90,6 +90,7 @@ public extension Module {
              .components,
              .correspondentsFeature,
              .customFieldsFeature,
+             .designTokens,
              .diagnosticsFeature,
              .documentTypesFeature,
              .documentsFeature,
