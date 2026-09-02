@@ -350,7 +350,12 @@ is a diff someone can review rather than a form with no history.
 |---|---|
 | `mise run metadata:lint` | checks every field against Apple's published limits — no API call |
 | `mise run metadata:download` | overwrites the local files with what the store currently shows |
+| `mise run metadata:release-notes` | renders the gitignored `release_notes.txt` from `changelogs/<version>.txt`, and refuses a `release:notes` draft |
 | `mise run metadata:upload` | rewrites the listing text; screenshots and binary untouched |
+
+The What's New is committed **per version** under `changelogs/`, never as `release_notes.txt` —
+editing one shared file rewrites what the release currently in review says it contains, which has
+happened. See [docs/releasing.md](docs/releasing.md).
 
 **`fnox set KEY -d "description"` with piped stdin silently discards the value.** It stores the
 description, prints `✓ Set secret`, and leaves the entry with no `value` field — after which
