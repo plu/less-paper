@@ -3,8 +3,11 @@
 import CustomDump
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .dependencies()
+)
 struct SaveDocumentTypeInputTests {
     @Test
     func encode() async throws {
