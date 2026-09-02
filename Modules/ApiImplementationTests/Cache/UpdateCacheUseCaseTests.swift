@@ -73,4 +73,32 @@ struct UpdateCacheUseCaseTests {
         #expect(getTagsCalled.value == true)
         #expect(getUsersCalled.value == true)
     }
+
+    // A paperless account without view_user and view_group answers 403 on /api/users/ and
+    // /api/groups/ while everything else succeeds, and adding the server ran this use case - so one
+    // permission gap made the server unaddable. Reproduced against a live 3.0.5 instance.
+    @Test
+    func executeSurvivesUsersAndGroupsBeingForbidden() async throws {
+        let server = Server.testValue()
+        let forbidden = ApiError(errors: ["You do not have permission to perform this action."])
+        let getTagsCalled = LockIsolated(false)
+
+        try await withDependencies {
+            $0.getCorrespondents.execute = { _ in [.testValue()] }
+            $0.getCurrentUser.execute = { _ in .testValue() }
+            $0.getDocumentTypes.execute = { _ in [.testValue()] }
+            $0.getGroups.execute = { _ in throw forbidden }
+            $0.getSavedViews.execute = { _ in [.testValue()] }
+            $0.getStoragePaths.execute = { _ in [.testValue()] }
+            $0.getTags.execute = { _ in
+                getTagsCalled.setValue(true)
+                return [.testValue()]
+            }
+            $0.getUsers.execute = { _ in throw forbidden }
+        } operation: {
+            try await UpdateCacheUseCase.liveValue.execute(server)
+        }
+
+        #expect(getTagsCalled.value == true)
+    }
 }

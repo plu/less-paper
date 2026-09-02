@@ -2,6 +2,7 @@ import ApiInterface
 import Dependencies
 import DependenciesMacros
 import Foundation
+import Logging
 
 extension UpdateCacheUseCase: @retroactive DependencyKey {
     public static let liveValue = Self(
@@ -58,11 +59,34 @@ private extension UpdateCacheUseCase {
         _ = try await customFields
         _ = try await documentTypes
         _ = try await currentUser
-        _ = try await groups
         _ = try await savedViews
         _ = try await statistics
         _ = try await storagePaths
         _ = try await tags
-        _ = try await users
+
+        // Users and groups are the owner and permission pickers, and nothing else. A paperless
+        // account without view_user and view_group answers 403 for both while every other endpoint
+        // above succeeds - and because adding a server runs this, that one permission gap used to
+        // make the server unaddable (#51). Someone who cannot read the user list cannot meaningfully
+        // assign an owner either, so an empty picker is the honest outcome, and it is a great deal
+        // better than an app that cannot be reached at all.
+        //
+        // Not narrowed to 403: ApiError carries the body, not the status. Narrowing it would mean
+        // widening ApiError, and there is little to buy - a server that is down or unreachable fails
+        // the eight awaits above, so what reaches here is a failure specific to these two endpoints.
+        @Dependency(\.log)
+        var log
+
+        do {
+            _ = try await groups
+        } catch {
+            log.warning("groups unavailable, permission pickers will be empty: \(error.localizedDescription)", category: .api)
+        }
+
+        do {
+            _ = try await users
+        } catch {
+            log.warning("users unavailable, owner and permission pickers will be empty: \(error.localizedDescription)", category: .api)
+        }
     }
 }
