@@ -470,6 +470,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.designTokens),
+                .target(.diagnosticsFeature),
             ]
         case .serversFeatureTests:
             [

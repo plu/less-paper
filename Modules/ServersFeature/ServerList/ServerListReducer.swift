@@ -1,6 +1,7 @@
 import ApiInterface
 import Components
 import ComposableArchitecture
+import DiagnosticsFeature
 import Foundation
 import SwiftSharing
 
@@ -16,11 +17,13 @@ public struct ServerListReducer: Sendable {
 
         public enum View {
             case createServerButtonTapped
+            case diagnosticsButtonTapped
         }
     }
 
     @Reducer
     public enum Destination {
+        case diagnosticsList(DiagnosticsListReducer)
         case serverForm(ServerFormReducer)
     }
 
@@ -29,22 +32,8 @@ public struct ServerListReducer: Sendable {
 
         @Presents
         var destination: Destination.State?
-        var searchText = ""
 
         var servers: IdentifiedArrayOf<ServerRowReducer.State> = []
-
-        // Local only: the list is already in memory, so filtering it needs no request and works
-        // offline. localizedCaseInsensitiveContains rather than lowercased().contains, matching the
-        // filter sheets - the latter is wrong for locales whose case folding is not one-to-one.
-        var visibleServers: IdentifiedArrayOf<ServerRowReducer.State> {
-            guard !searchText.isEmpty else {
-                return servers
-            }
-            return servers.filter {
-                $0.server.alias.localizedCaseInsensitiveContains(searchText)
-                    || $0.server.url.absoluteString.localizedCaseInsensitiveContains(searchText)
-            }
-        }
 
         public init(
             destination: Destination.State? = nil
@@ -96,6 +85,9 @@ public struct ServerListReducer: Sendable {
                 switch viewAction {
                 case .createServerButtonTapped:
                     state.destination = .serverForm(ServerFormReducer.State(input: .empty))
+                    return .none
+                case .diagnosticsButtonTapped:
+                    state.destination = .diagnosticsList(DiagnosticsListReducer.State())
                     return .none
                 }
             case .binding, .destination, .servers:

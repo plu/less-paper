@@ -120,6 +120,23 @@
         }
       }
     },
+    "diagnostics": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnose"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostics"
+          }
+        }
+      }
+    },
     "editServer": {
       "extractionState": "manual",
       "localizations": {

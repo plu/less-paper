@@ -53,13 +53,21 @@ public extension SavedView {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        filterRules = try container.decode([FilterRule].self, forKey: .filterRules)
+        // A rule type from a newer paperless than this app knows about would otherwise fail the
+        // whole decode, and with it the cache update that adding a server runs - the app cannot
+        // be reached at all to report it. The dropped rule widens what the view matches, which
+        // is at least visible. Note it is dropped on write too, so saving such a view here
+        // removes the rule on the server.
+        filterRules = try container.decode([MaybeDecodable<FilterRule>].self, forKey: .filterRules)
+            .compactMap(\.wrapped)
         id = try container.decode(Id.self, forKey: .id)
         name = try container.decode(String.self, forKey: .name)
         owner = try container.decodeIfPresent(User.Id.self, forKey: .owner)
         showInSidebar = try container.decodeIfPresent(Bool.self, forKey: .showInSidebar) ?? false
         showOnDashboard = try container.decodeIfPresent(Bool.self, forKey: .showOnDashboard) ?? false
-        sortField = try container.decode(SortField.self, forKey: .sortField)
+        // paperless-ngx stores sort_field as nullable, so a view saved without one arrives as
+        // null - the same fallback the enum already applies to a field name it does not know.
+        sortField = try container.decodeIfPresent(SortField.self, forKey: .sortField) ?? .created
         sortDirection = try container.decode(Bool.self, forKey: .sortReverse) ? .descending : .ascending
         userCanChange = try container.decode(Bool.self, forKey: .userCanChange)
     }
