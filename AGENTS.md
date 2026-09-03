@@ -431,6 +431,33 @@ Because of the masking, a formatting failure and a dependency failure look ident
 summary: one red lint step. Fix the formatting, run it again, and expect a second failure rather
 than assuming you are done.
 
+## The simulator is declared once, and `simulators:prepare` creates it
+
+`TEST_SIMULATOR` and `TEST_SIMULATOR_OS` in `mise.toml` are the only place the device is named.
+`mise/scripts/run_tests.sh` and `mise/tasks/screenshots/frame` pass both to `tuist test` as `-d`
+and `-o`; `mise/tasks/simulators/prepare` creates that exact pairing when it is missing, along with
+the two App Store sizes from `fastlane/Snapfile`. Adding a device the repository drives by name
+means adding it to `required_devices` there too — Tuist and fastlane both resolve by exact name and
+neither creates anything.
+
+**The iOS version is pinned, and it tracks `Tuist.swift`'s `compatibleXcodeVersions`.** Xcode 26.5
+ships iOS 26.5, so an Xcode bump is two edits, not one. The pin is not tidiness: the snapshot
+references were recorded on this runtime, and a machine carrying a second iOS would otherwise let
+xcodebuild choose — turning every view test red for a reason nobody would look for in a device
+list.
+
+Two failures are deliberate rather than papered over. A missing **runtime** and a missing **device
+type** both stop the run and print what is available, because the alternative is rendering
+snapshots and App Store captures at the wrong size and going green doing it. `xcodebuild
+-downloadPlatform iOS` fixes the first; the second means the runner's Xcode is older than the
+repository expects.
+
+Before this existed, a runner that had just taken an Xcode upgrade failed with `Could not find a
+suitable device for iOS, device name iPhone 17 Pro` — the upgrade installs a new runtime and leaves
+the old devices behind on the old one. `simctl delete unavailable` at the top of the task is what
+clears those, and it matters beyond tidiness: an orphaned device keeps its name while being
+unbootable, which is enough for a by-name lookup to find it and fail.
+
 ## Recording a snapshot reference means editing the scheme
 
 References live under `Snapshots/`, and `SNAPSHOT_RECORD` decides whether a run writes them. The

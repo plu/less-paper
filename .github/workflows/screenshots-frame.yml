@@ -51,6 +51,10 @@ jobs:
 
       - run: mise ci:clean
 
+      # The render is an XCTest, so it still needs a destination even though it never launches the
+      # app.
+      - run: mise simulators:prepare
+
       - run: fnox exec -P ci -- mise ci:screenshots:frame
 
       - name: Contact sheet
