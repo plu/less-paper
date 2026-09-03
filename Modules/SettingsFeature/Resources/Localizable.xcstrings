@@ -294,6 +294,23 @@
         }
       }
     },
+    "rate": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Less Paper bewerten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rate Less Paper"
+          }
+        }
+      }
+    },
     "redownloadAll": {
       "extractionState": "manual",
       "localizations": {

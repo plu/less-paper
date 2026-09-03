@@ -152,6 +152,16 @@ public struct SettingListView: View {
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
+                    Link(destination: Self.reviewUrl) {
+                        Label {
+                            Text(.rate)
+                                .foregroundStyle(Color.m3OnSurface)
+                        } icon: {
+                            Image(systemName: "star")
+                        }
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
                     NavigationLink(
                         state: SettingListReducer.Path.State.tipList(TipListReducer.State())
                     ) {
@@ -215,6 +225,16 @@ public struct SettingListView: View {
 
     @Bindable
     public var store: StoreOf<SettingListReducer>
+
+    // Opens the App Store rather than asking StoreKit for the review prompt. That prompt is
+    // rate-limited and silent - iOS shows it at most three times a year and says nothing when it
+    // declines - so a row that appears to do nothing is the ordinary outcome rather than the rare
+    // one. It also shares its four-month cooldown with the ask that follows an import or a tip, and
+    // tapping here must not spend that.
+    //
+    // `action=write-review` is what opens the review sheet; without it the link lands on the
+    // description page.
+    static let reviewUrl = URL(string: "https://apps.apple.com/app/id6464425056?action=write-review")!
 
     private static let repositoryUrl = URL(string: "https://github.com/plu/less-paper")!
 }
