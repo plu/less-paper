@@ -278,4 +278,26 @@ struct DocumentImportReducerTests {
 
         #expect(shareState.input == .files([testURL]))
     }
+
+    // Getting paper in is what the app is for, so a finished import is the moment worth asking on.
+    // It lives here rather than in the share screen itself because the share extension runs that
+    // screen too, and an extension has no scene to ask in.
+    @Test
+    func shareExtensionImported_asksForAReview() async throws {
+        let moments = LockIsolated<[ReviewMoment]>([])
+        var initialState = DocumentImportReducer.State()
+        initialState.destination = .shareExtension(.testValue())
+
+        let store = TestStore(initialState: initialState) {
+            DocumentImportReducer()
+        } withDependencies: {
+            $0.continuousClock = ImmediateClock()
+            $0.reviewPrompt.record = { moment in moments.withValue { $0.append(moment) } }
+        }
+
+        await store.send(.destination(.presented(.shareExtension(.delegate(.imported)))))
+        await store.finish()
+
+        #expect(moments.value == [.documentImported])
+    }
 }

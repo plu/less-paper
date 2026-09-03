@@ -154,12 +154,15 @@ extension Module {
                 .external(.composableArchitecture),
                 .external(.dependencies),
                 .external(.issueReporting),
+                .external(.sharing),
                 .external(.swiftMessages),
                 .target(.designTokens),
             ]
         case .componentsTests:
             [
+                .external(.composableArchitecture),
                 .external(.dependenciesTestSupport),
+                .external(.sharing),
                 .external(.snapshotTesting),
                 .target(.components),
                 .target(.testSupport),

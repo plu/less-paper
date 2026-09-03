@@ -82,7 +82,8 @@ public struct TipListReducer: Sendable {
                 case .pending:
                     return .toast(Toast.success(String(localized: .tipPending)))
                 case .success:
-                    return .toast(Toast.success(String(localized: .tipThankYou)))
+                    return Effect.toast(Toast.success(String(localized: .tipThankYou)))
+                        .merge(with: .requestReview(.tipReceived))
                 case .unverified:
                     return .toast(Toast.error(String(localized: .tipFailed)))
                 }
