@@ -7,6 +7,10 @@ on:
   pull_request:
     branches:
       - main
+    # Naming any type replaces the default list, so the three defaults are respelled here. `labeled`
+    # is the addition: without it the TestFlight and UITests conditions below are only ever read
+    # from events that already happened, so labelling an open pull request does nothing.
+    types: [opened, synchronize, reopened, labeled]
 
 # One self-hosted runner, so everything queues. A push while an earlier run is still going makes
 # that run pointless - it is testing a commit that has been replaced.
@@ -33,6 +37,10 @@ env:
 
 jobs:
   test_unit:
+    # Every label reaches this workflow now, but only the two that gate a job below deserve a run.
+    # One guard is enough for all three jobs: test_ui and upload need this one, and a job whose
+    # dependency was skipped is skipped too. A push carries no `action`, so main is unaffected.
+    if: github.event.action != 'labeled' || github.event.label.name == 'TestFlight' || github.event.label.name == 'UITests'
     name: Unit Tests
     runs-on: [self-hosted, macOS]
     timeout-minutes: 60
