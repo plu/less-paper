@@ -2,6 +2,64 @@
 #MISE description="Prepare Simulators with custom settings"
 set -eou pipefail
 
+: "${TEST_SIMULATOR:?not set - it comes from mise.toml, so run this through mise}"
+: "${TEST_SIMULATOR_OS:?not set - it comes from mise.toml, so run this through mise}"
+
+# Every simulator this repository asks for by name. Tuist and fastlane both resolve these by exact
+# name, and neither creates one that is missing - so a runner that has just taken an Xcode upgrade,
+# which installs a new runtime and leaves the old devices behind on the old one, fails with
+# "Could not find a suitable device for iOS, device name iPhone 17 Pro".
+required_devices=(
+    "$TEST_SIMULATOR"
+    # The two App Store sizes from fastlane/Snapfile. Prepared here as well, because this task is
+    # shared with the screenshot workflow and a capture that runs for an hour should not fall over
+    # on a missing device at the end of it.
+    "iPhone 17 Pro Max"
+    "iPad Pro 13-inch (M5)"
+)
+
+# A device whose runtime is gone keeps its name while being unbootable, which is enough for a
+# by-name lookup to resolve to it and then fail. Removing them first also means the check below
+# cannot match one.
+xcrun simctl delete unavailable
+
+runtime=$(xcrun simctl list runtimes -j | jq -r --arg version "$TEST_SIMULATOR_OS" '
+    [.runtimes[] | select(.isAvailable and .platform == "iOS" and .version == $version) | .identifier] | first // ""
+')
+
+if [ -z "$runtime" ]; then
+    echo "iOS $TEST_SIMULATOR_OS is not installed. Available iOS runtimes:" >&2
+    xcrun simctl list runtimes -j \
+        | jq -r '.runtimes[] | select(.isAvailable and .platform == "iOS") | "  \(.name)"' >&2
+    echo "Install it with: xcodebuild -downloadPlatform iOS" >&2
+    exit 1
+fi
+
+for name in "${required_devices[@]}"; do
+    if xcrun simctl list devices -j | jq -e --arg runtime "$runtime" --arg name "$name" '
+        (.devices[$runtime] // []) | any(.name == $name and .isAvailable)
+    ' >/dev/null; then
+        continue
+    fi
+
+    device_type=$(xcrun simctl list devicetypes -j | jq -r --arg name "$name" '
+        [.devicetypes[] | select(.name == $name) | .identifier] | first // ""
+    ')
+
+    # No fallback to a near-enough device on purpose. The snapshot tests and the App Store captures
+    # are both sized by the device they run on, so a substitute would record wrong images and go
+    # green doing it.
+    if [ -z "$device_type" ]; then
+        echo "Xcode has no simulator type named \"$name\". Available iPhone and iPad types:" >&2
+        xcrun simctl list devicetypes -j \
+            | jq -r '.devicetypes[] | select(.productFamily == "iPhone" or .productFamily == "iPad") | "  \(.name)"' >&2
+        exit 1
+    fi
+
+    echo "Creating simulator \"$name\" on iOS $TEST_SIMULATOR_OS"
+    xcrun simctl create "$name" "$device_type" "$runtime" >/dev/null
+done
+
 for udid in $(xcrun simctl list devices -j | jq -r '.devices | values[] | flatten | .[].udid'); do
     declare -a files=(
         "$HOME/Library/Developer/CoreSimulator/Devices/$udid/data/Containers/Shared/SystemGroup/systemgroup.com.apple.configurationprofiles/Library/ConfigurationProfiles/UserSettings.plist"

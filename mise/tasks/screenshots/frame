@@ -16,4 +16,4 @@ trap 'rm -f "$MARKER"' EXIT
 # This run is not a test, it is how the framed images are written: MarketingRenderAllTests
 # renders them as its artefact. Skipped because nothing changed, it would report success and
 # produce no images, and the framing step would go green having framed nothing.
-mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing
+mise exec -- tuist test MarketingKit -d "$TEST_SIMULATOR" -o "$TEST_SIMULATOR_OS" --no-selective-testing

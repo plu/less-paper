@@ -8,6 +8,9 @@ set -euo pipefail
 bundle="$1"
 shift
 
+: "${TEST_SIMULATOR:?not set - it comes from mise.toml, so run this through mise}"
+: "${TEST_SIMULATOR_OS:?not set - it comes from mise.toml, so run this through mise}"
+
 # xcodebuild refuses to write over an existing result bundle — "Existing file at
 # -resultBundlePath" — and errors out before running a single test. In CI `ci:clean` has already
 # removed the last one, but locally the second run of a task would otherwise fail while still
@@ -23,7 +26,10 @@ rm -rf "$bundle"
 # longer silent: the server records what was selected, and a run that tested nothing now says so
 # here instead of printing an empty summary.
 set +e
-tuist test -d "iPhone 17 Pro" --clean "$@" -T "$bundle" \
+# -o pins the runtime as well as the device. A machine can carry more than one iOS, and the name
+# alone would let xcodebuild pick whichever it liked - which the snapshot tests would notice and
+# nobody would think to check. `simulators:prepare` creates this exact pairing.
+tuist test -d "$TEST_SIMULATOR" -o "$TEST_SIMULATOR_OS" --clean "$@" -T "$bundle" \
   -- -testLanguage en -testRegion DE
 test_exit_code=$?
 set -e
