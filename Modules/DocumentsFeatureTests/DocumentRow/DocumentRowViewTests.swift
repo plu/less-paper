@@ -18,7 +18,7 @@ struct DocumentRowViewTests {
         assertSnapshot(
             of: VStack(alignment: .leading, spacing: 8) {
                 ForEach(ContentSizeCategory.allCases, id: \.self) { sizeCategory in
-                    Section(String(describing: sizeCategory)) {
+                    Section(sizeCategory.caption) {
                         DocumentRowView(
                             store: Store(
                                 initialState: DocumentRowReducer.State.testValue(),
@@ -176,5 +176,31 @@ struct DocumentRowViewTests {
             ).frame(width: 375).padding(),
             as: .image(layout: .sizeThatFits)
         )
+    }
+}
+
+private extension ContentSizeCategory {
+
+    // Spelled out rather than taken from String(describing:), which reflects the case name only
+    // while nothing in the process has made SwiftUI's own description visible. Linking StoreKit
+    // anywhere in this target's graph does exactly that, and every caption below silently becomes
+    // "XS", "S", "M" - so the reference stopped recording how the row renders and started
+    // recording which frameworks happened to be linked.
+    var caption: String {
+        switch self {
+        case .extraSmall: "extraSmall"
+        case .small: "small"
+        case .medium: "medium"
+        case .large: "large"
+        case .extraLarge: "extraLarge"
+        case .extraExtraLarge: "extraExtraLarge"
+        case .extraExtraExtraLarge: "extraExtraExtraLarge"
+        case .accessibilityMedium: "accessibilityMedium"
+        case .accessibilityLarge: "accessibilityLarge"
+        case .accessibilityExtraLarge: "accessibilityExtraLarge"
+        case .accessibilityExtraExtraLarge: "accessibilityExtraExtraLarge"
+        case .accessibilityExtraExtraExtraLarge: "accessibilityExtraExtraExtraLarge"
+        @unknown default: "unknown"
+        }
     }
 }
