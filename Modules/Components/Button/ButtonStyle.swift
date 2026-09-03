@@ -35,9 +35,9 @@ public struct ButtonStyle: SwiftUI.ButtonStyle {
                         .progressViewStyle(CircularProgressViewStyle())
                         .opacity(isLoading ? 1 : 0)
                         .tint(foregroundColor)
-                    #if os(macOS)
+                        #if os(macOS)
                         .controlSize(.small)
-                    #endif
+                        #endif
                 }
             }
             .font(Font.body.weight(.semibold))
