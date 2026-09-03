@@ -405,6 +405,14 @@ url = "https://nodejs.org/dist/v26.7.0/node-v26.7.0-win-x64.zip"
 version = "3.4.10"
 backend = "core:ruby"
 
+[tools.ruby."platforms.windows-x64"]
+checksum = "sha256:89e3c5e235ac88b9b7e8daaf639eaaab74d7c470667354f6bf0f7432f3191ebb"
+url = "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.4.10-1/rubyinstaller-3.4.10-1-x64.7z"
+
+[[tools.ruby]]
+version = "3.4.10"
+backend = "core:ruby"
+
 [tools.ruby.options]
 compile = "false"
 precompiled_url = "jdx/ruby"
@@ -438,17 +446,14 @@ provenance = "github-attestations"
 checksum = "sha256:ecee2d072a14f2d14347dd56dfd8fe5c3130abf5117bfaacbda0f4ef9cc429ec"
 url = "https://cache.ruby-lang.org/pub/ruby/3.4/ruby-3.4.10.tar.gz"
 
-[[tools.ruby]]
-version = "3.4.10"
-backend = "core:ruby"
-
-[tools.ruby."platforms.windows-x64"]
-checksum = "sha256:89e3c5e235ac88b9b7e8daaf639eaaab74d7c470667354f6bf0f7432f3191ebb"
-url = "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.4.10-1/rubyinstaller-3.4.10-1-x64.7z"
-
 [[tools."spm:mono0926/LicensePlist"]]
 version = "3.28.0"
 backend = "spm:mono0926/LicensePlist"
+
+[tools."spm:mono0926/LicensePlist"."platforms.macos-arm64"]
+checksum = "sha256:3e970cead9c34f5536ae5d455d91e924d8b9d7e33e5bcbf64b33b52cc29b7097"
+url = "https://github.com/mono0926/LicensePlist/releases/download/3.28.0/LicensePlistBinary-macos.artifactbundle.zip"
+url_api = "https://api.github.com/repos/mono0926/LicensePlist/releases/assets/492448776"
 
 [[tools.swiftlint]]
 version = "0.65.1"
