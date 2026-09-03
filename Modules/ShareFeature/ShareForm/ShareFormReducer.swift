@@ -23,8 +23,11 @@ public struct ShareFormReducer {
         case selectFile(Int)
         case view(View)
 
-        public enum Delegate {
-            case dismiss
+        public enum Delegate: Equatable {
+            // Carries whether anything was actually uploaded. Several files can be worked through
+            // in one sitting, and ending on a skip is the ordinary way to finish - so "the screen
+            // closed" and "a document arrived" are not the same event.
+            case dismiss(didImport: Bool)
         }
 
         public enum View {
@@ -70,6 +73,8 @@ public struct ShareFormReducer {
         var tags: IdentifiedArrayOf<Tag>
 
         var currentIndex = 0
+
+        var didImport = false
 
         var document: PDFDocument?
 
@@ -128,8 +133,9 @@ public struct ShareFormReducer {
             case let .error(error):
                 return .toast(error)
             case .fileImported:
+                state.didImport = true
                 guard state.hasMoreFiles else {
-                    return .send(.delegate(.dismiss))
+                    return .send(.delegate(.dismiss(didImport: true)))
                 }
                 return .send(.selectFile(state.currentIndex + 1))
             case let .selectFile(index):
@@ -184,7 +190,7 @@ public struct ShareFormReducer {
                     return .runAutoUnlock(url: state.files[state.currentIndex])
                 case .skipButtonTapped:
                     guard state.hasMoreFiles else {
-                        return .send(.delegate(.dismiss))
+                        return .send(.delegate(.dismiss(didImport: state.didImport)))
                     }
                     return .send(.selectFile(state.currentIndex + 1))
                 case .unlockButtonTapped:

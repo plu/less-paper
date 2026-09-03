@@ -167,4 +167,37 @@ struct ShareExtensionReducerTests {
 
         #expect(dismissed.value == true)
     }
+
+    // The app wraps this screen and the share extension does not, so anything that only the app
+    // can act on - asking for a review, here - has to leave as a delegate rather than be done in
+    // place.
+    @Test
+    func shareFormDismissed_afterAnImport_tellsTheParent() async throws {
+        let store = TestStore(initialState: Self.dismissableState()) {
+            ShareExtensionReducer()
+        }
+
+        await store.send(.shareForm(.delegate(.dismiss(didImport: true))))
+        await store.receive(\.delegate, .imported)
+    }
+
+    @Test
+    func shareFormDismissed_withoutAnImport_tellsTheParentNothing() async throws {
+        let store = TestStore(initialState: Self.dismissableState()) {
+            ShareExtensionReducer()
+        }
+
+        await store.send(.shareForm(.delegate(.dismiss(didImport: false))))
+    }
+
+    // An extension context dismisses itself, which keeps the TCA dismiss effect - and the
+    // "dismissed something that was never presented" warning it raises in a store with no parent -
+    // out of the way of what these two are asserting.
+    private static func dismissableState() -> ShareExtensionReducer.State {
+        var state = ShareExtensionReducer.State.testValue(
+            input: .extensionContext(TestExtensionContext.testValue())
+        )
+        state.shareForm = .testValue()
+        return state
+    }
 }

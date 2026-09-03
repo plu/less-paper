@@ -119,6 +119,9 @@ struct TipListReducerTests {
             initialState: TipListReducer.State(),
             reducer: { TipListReducer() },
             withDependencies: {
+                // A tip also asks for a review, and that waits a beat for the StoreKit sheet to go
+                // away before it does.
+                $0.continuousClock = ImmediateClock()
                 $0.tipJar.purchase = { tip in
                     purchased.withValue { $0.append(tip) }
                     return .success
@@ -232,5 +235,51 @@ struct TipListReducerTests {
 
         #expect(logged.value == [.tips])
         #expect(toasts.value == [.error(String(localized: .tipProductUnavailable))])
+    }
+
+    // Money given for nothing in return is the one unambiguous "I like this" the app can observe.
+    // It is asked for here rather than from the tip observer in AppReducer, which also fires at
+    // launch when StoreKit redelivers an old transaction - putting the prompt in front of someone
+    // who has just opened the app and done nothing.
+    @Test
+    func purchaseSucceeded_asksForAReview() async {
+        let moments = LockIsolated<[ReviewMoment]>([])
+
+        let store = TestStore(
+            initialState: TipListReducer.State(purchasingTip: .small),
+            reducer: { TipListReducer() },
+            withDependencies: {
+                $0.continuousClock = ImmediateClock()
+                $0.reviewPrompt.record = { moment in moments.withValue { $0.append(moment) } }
+                $0.toastPresenter.present = { _ in }
+            }
+        )
+
+        await store.send(.purchaseResult(.success)) {
+            $0.purchasingTip = nil
+        }
+        await store.finish()
+
+        #expect(moments.value == [.tipReceived])
+    }
+
+    @Test
+    func purchaseCancelled_asksForNothing() async {
+        let moments = LockIsolated<[ReviewMoment]>([])
+
+        let store = TestStore(
+            initialState: TipListReducer.State(purchasingTip: .small),
+            reducer: { TipListReducer() },
+            withDependencies: {
+                $0.reviewPrompt.record = { moment in moments.withValue { $0.append(moment) } }
+            }
+        )
+
+        await store.send(.purchaseResult(.cancelled)) {
+            $0.purchasingTip = nil
+        }
+        await store.finish()
+
+        #expect(moments.value.isEmpty)
     }
 }

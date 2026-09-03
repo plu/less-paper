@@ -1,3 +1,4 @@
+import Components
 import ComposableArchitecture
 import Foundation
 
@@ -38,6 +39,11 @@ public struct DocumentImportReducer {
         BindingReducer()
         Reduce { state, action in
             switch action {
+            // Getting paper in is what the app is for, so a finished import is the moment worth
+            // asking on. It is caught here rather than in the share screen itself because the share
+            // extension runs that screen too, and this wrapper is only ever the app.
+            case .destination(.presented(.shareExtension(.delegate(.imported)))):
+                return .requestReview(.documentImported)
             case let .view(viewAction):
                 switch viewAction {
                 case let .fileImporterResult(result):

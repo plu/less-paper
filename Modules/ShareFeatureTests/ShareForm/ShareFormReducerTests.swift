@@ -215,7 +215,7 @@ struct ShareFormReducerTests {
             $0.isImporting = false
         }
         await store.receive(\.fileImported)
-        await store.receive(\.delegate, .dismiss)
+        await store.receive(\.delegate, .dismiss(didImport: true))
 
         #expect(createDocumentInput.value.map(\.title) == [
             "Puky",
@@ -261,9 +261,35 @@ struct ShareFormReducerTests {
         }
 
         await store.send(.view(.skipButtonTapped))
-        await store.receive(\.delegate, .dismiss)
+        await store.receive(\.delegate, .dismiss(didImport: false))
 
         #expect(createDocumentCalled.value == false)
+    }
+
+    // Skipping the last of several files is still a session that imported something, and the
+    // dismissal has to say so - the review prompt hangs off this flag, and a run that ends on a
+    // skip is the ordinary way to finish a multi-file import.
+    @Test
+    func skipButtonTapped_afterAnImport_reportsTheImport() async throws {
+        let store = TestStore(initialState: ShareFormReducer.State.testValue(
+            files: [
+                .testPDF(named: "Puky.pdf"),
+                .testPDF(named: "TonieBox.pdf"),
+            ]
+        )) {
+            ShareFormReducer()
+        } withDependencies: {
+            $0.createDocument.execute = { _, _ in }
+        }
+
+        await store.withExhaustivity(.off(showSkippedAssertions: false)) {
+            await store.send(.view(.importButtonTapped))
+            await store.receive(\.fileImported)
+            await store.receive(\.selectFile)
+        }
+
+        await store.send(.view(.skipButtonTapped))
+        await store.receive(\.delegate, .dismiss(didImport: true))
     }
 
     @Test

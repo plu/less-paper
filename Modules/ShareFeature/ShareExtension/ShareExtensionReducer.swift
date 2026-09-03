@@ -15,10 +15,19 @@ public struct ShareExtensionReducer {
     public enum Action: ViewAction, BindableAction {
         case binding(BindingAction<State>)
         case certificateApproval(CertificateApprovalReducer.Action)
+        case delegate(Delegate)
         case error(Error)
         case filesLoaded([URL])
         case shareForm(ShareFormReducer.Action)
         case view(View)
+
+        @CasePathable
+        public enum Delegate: Equatable {
+            // This screen runs in the share extension as well as in the app, and an extension has
+            // no scene to show a review prompt in. Anything only the app can act on leaves as a
+            // delegate rather than being done here.
+            case imported
+        }
 
         public enum View {
             case dismiss
@@ -71,14 +80,14 @@ public struct ShareExtensionReducer {
                     )
                 }
                 return .none
-            case let .shareForm(.delegate(delegateAction)):
-                switch delegateAction {
-                case .dismiss:
-                    if state.input.dismiss() {
-                        return .none
-                    }
-                    return .dismiss()
+            case let .shareForm(.delegate(.dismiss(didImport))):
+                // Called exactly once: an extension context completes its request here, and asking
+                // twice would complete it twice.
+                let dismiss: Effect<Action> = state.input.dismiss() ? .none : .dismiss()
+                guard didImport else {
+                    return dismiss
                 }
+                return .send(.delegate(.imported)).merge(with: dismiss)
             case let .view(viewAction):
                 switch viewAction {
                 case .dismiss:
@@ -104,7 +113,7 @@ public struct ShareExtensionReducer {
                         return .runLoadItems(files: files)
                     }
                 }
-            case .binding, .certificateApproval, .shareForm:
+            case .binding, .certificateApproval, .delegate, .shareForm:
                 return .none
             }
         }
