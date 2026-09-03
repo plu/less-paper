@@ -64,3 +64,8 @@ tuist xcodebuild archive clean -archivePath $TMP_DIR/LessPaper.xcarchive -worksp
 xcodebuild -exportArchive -archivePath $TMP_DIR/LessPaper.xcarchive -exportOptionsPlist $EXPORT_OPTIONS_PLIST_PATH -exportPath $TMP_DIR
 mkdir -p build
 cp $TMP_DIR/LessPaper.ipa build/LessPaper.ipa
+
+# Telemetry, not a gate: an unreachable Tuist server or an unauthenticated local run must not fail
+# a build that has already produced the ipa. Build insights need nothing here - tuist xcodebuild
+# archive uploads its own build run.
+tuist inspect bundle build/LessPaper.ipa || echo "warning: bundle inspection failed"
