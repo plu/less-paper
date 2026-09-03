@@ -1,5 +1,21 @@
 import ProjectDescription
 
+// Xcode is the only build entry point that reports nothing on its own: `tuist xcodebuild archive`
+// in ci:build uploads its own build run, so this post-action skips CI to avoid counting that build
+// twice. `mise x` rather than the shims: a shim resolves the version from the working directory,
+// which here is not the repository, and it fails outright when a tool is installed twice.
+private func inspectBuildPostAction(target: TargetReference) -> ExecutionAction {
+    .executionAction(
+        title: "Inspect build",
+        scriptText: """
+        if [ "${CI:-}" = "true" ]; then exit 0; fi
+
+        "$HOME/.local/bin/mise" x -C "$SRCROOT" -- tuist inspect build || echo "warning: build insights upload failed"
+        """,
+        target: target
+    )
+}
+
 private extension [String: EnvironmentVariable] {
 
     // Matches SnapshotConfiguration.environmentKey. Tuist cannot see the app's modules, so the two
@@ -31,7 +47,9 @@ public extension Module {
                 .scheme(
                     name: "Less Paper",
                     buildAction: .buildAction(
-                        targets: [.target(self)]
+                        targets: [.target(self)],
+                        postActions: [inspectBuildPostAction(target: .target(self))],
+                        runPostActionsOnFailure: true
                     ),
                     testAction: .targets(
                         Module.allTestableTargets + [
@@ -59,7 +77,9 @@ public extension Module {
                 .scheme(
                     name: "Snapshots",
                     buildAction: .buildAction(
-                        targets: [.target(.app)]
+                        targets: [.target(.app)],
+                        postActions: [inspectBuildPostAction(target: .target(.app))],
+                        runPostActionsOnFailure: true
                     ),
                     testAction: .targets(
                         [.testableTarget(target: .target(self))],
@@ -78,7 +98,9 @@ public extension Module {
                 .scheme(
                     name: "ShareExtension",
                     buildAction: .buildAction(
-                        targets: [.target(self)]
+                        targets: [.target(self)],
+                        postActions: [inspectBuildPostAction(target: .target(self))],
+                        runPostActionsOnFailure: true
                     ),
                     runAction: .runAction(executable: .target(.app))
                 )
@@ -114,7 +136,9 @@ public extension Module {
                 .scheme(
                     name: rawValue,
                     buildAction: .buildAction(
-                        targets: [.target(self)]
+                        targets: [.target(self)],
+                        postActions: [inspectBuildPostAction(target: .target(self))],
+                        runPostActionsOnFailure: true
                     ),
                     testAction: .targets(
                         testableTargets,
@@ -133,7 +157,9 @@ public extension Module {
                 .scheme(
                     name: rawValue,
                     buildAction: .buildAction(
-                        targets: [.target(self)]
+                        targets: [.target(self)],
+                        postActions: [inspectBuildPostAction(target: .target(self))],
+                        runPostActionsOnFailure: true
                     ),
                     testAction: .targets(
                         featureAppTestTargets,
