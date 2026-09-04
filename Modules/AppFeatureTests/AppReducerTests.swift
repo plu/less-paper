@@ -4,6 +4,8 @@ import ApiInterface
 import ComposableArchitecture
 import Foundation
 import IdentifiedCollections
+import ImageFeature
+import Logging
 import ServersFeature
 import SettingsFeature
 import SwiftSharing
@@ -130,6 +132,8 @@ struct AppReducerTests {
         )
         let bootstrap = await store.send(.bootstrap)
 
+        await store.receive(\.logLaunchContext)
+
         await store.receive(\.selectedServerChanged, server1) {
             $0.main = MainReducer.State(server: server1)
         }
@@ -153,6 +157,79 @@ struct AppReducerTests {
         await store.receive(\.selectedServerChanged, nil) {
             $0.main = nil
         }
+
+        await bootstrap.cancel()
+    }
+
+    // .bootstrap merges runSelectedServerObserver() and runTipObserver(), both never-ending
+    // observation effects, so this sends .logLaunchContext directly rather than .bootstrap and
+    // awaiting store.finish() - which would hang forever waiting on those.
+    @Test
+    func test_bootstrap_logsTheLaunchContext() async {
+        let messages = LockIsolated<[String]>([])
+
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.log.record = { message, _, _ in
+                    messages.withValue { $0.append(message) }
+                }
+                $0.deviceContext = .testValue
+                $0.imageCacheUsage.read = { StorageUsage(bytes: 42_100_000, fileCount: 318) }
+                $0.storageUsage.measure = { _ in StorageUsage(bytes: 1_200_000, fileCount: 14) }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.logLaunchContext)
+        await store.finish()
+
+        #expect(messages.value.contains("LessPaper 1.0.0 (1) · iOS 26.0 · iPhone17,2 · en_US · debug"))
+    }
+
+    @Test
+    func test_bootstrap_logsCacheSizes() async {
+        let messages = LockIsolated<[String]>([])
+
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.log.record = { message, _, _ in
+                    messages.withValue { $0.append(message) }
+                }
+                $0.imageCacheUsage.read = { StorageUsage(bytes: 42_100_000, fileCount: 318) }
+                $0.storageUsage.measure = { _ in StorageUsage(bytes: 1_200_000, fileCount: 14) }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.logLaunchContext)
+        await store.finish()
+
+        #expect(messages.value.contains { $0.hasPrefix("caches: images 42.1 MB / 318 files · app group ") })
+    }
+
+    // The two tests above cover runLogLaunchContext() in isolation, so this only confirms
+    // .bootstrap really does trigger it. It never awaits store.finish(): .bootstrap also merges
+    // the never-ending selected-server and tip observers, and finish() would wait on those forever.
+    @Test
+    func test_bootstrap_sendsLogLaunchContext() async {
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                // bootstrap also starts the tip observer, and an unstubbed TipJar.updates reports
+                // an "Unimplemented" issue the moment it is called.
+                $0.tipJar.updates = { AsyncStream { $0.finish() } }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        let bootstrap = await store.send(.bootstrap)
+
+        await store.receive(\.logLaunchContext)
 
         await bootstrap.cancel()
     }

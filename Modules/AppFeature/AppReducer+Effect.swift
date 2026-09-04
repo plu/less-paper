@@ -1,6 +1,8 @@
 import ApiInterface
 import ComposableArchitecture
 import Foundation
+import ImageFeature
+import Logging
 import SwiftSharing
 import TipsFeature
 
@@ -67,6 +69,40 @@ extension Effect where Action == AppReducer.Action {
             for await tip in updates() {
                 await send(.tipReceived(tip))
             }
+        }
+    }
+
+    // Two lines, written detached: measuring walks the caches directory and a launch must not wait
+    // on it. Nothing downstream depends on the result, so there is nothing to send back.
+    static func runLogLaunchContext() -> Self {
+        @Dependency(\.deviceContext)
+        var deviceContext
+
+        @Dependency(\.imageCacheUsage)
+        var imageCacheUsage
+
+        @Dependency(\.log)
+        var log
+
+        @Dependency(\.storageUsage)
+        var storageUsage
+
+        return .run { _ in
+            log.info(deviceContext.launchLine(), category: .app)
+
+            let images = await imageCacheUsage.read()
+            let appGroup = storageUsage.measure([.applicationGroupDirectory])
+            let logFiles = storageUsage.measure(await log.fileURLs())
+
+            log.info(
+                [
+                    "caches: images \(images.formatted())",
+                    "app group \(appGroup.formatted())",
+                    "log \(logFiles.formattedBytes())",
+                ]
+                .joined(separator: " · "),
+                category: .app
+            )
         }
     }
 

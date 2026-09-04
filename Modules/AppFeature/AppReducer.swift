@@ -28,6 +28,7 @@ public struct AppReducer {
         case certificateApproval(CertificateApprovalReducer.Action)
         case didBecomeActive
         case forwardAuth(ForwardAuthReducer.Action)
+        case logLaunchContext
         case main(MainReducer.Action)
         case openURL(URL)
         case selectedServerChanged(Server?)
@@ -117,12 +118,15 @@ public struct AppReducer {
                         await send(.forwardAuth(.bootstrap))
                     })
                     .merge(with: .runTipObserver())
+                    .merge(with: .send(.logLaunchContext))
             case .didBecomeActive:
                 guard let server = state.main?.server else {
                     return .none
                 }
                 return .runRefreshStatistics(server: server)
                     .merge(with: .runRefreshFavorites(server: server))
+            case .logLaunchContext:
+                return .runLogLaunchContext()
             case .selectedServerChanged(let server):
                 if let server {
                     state.main = MainReducer.State(server: server)
