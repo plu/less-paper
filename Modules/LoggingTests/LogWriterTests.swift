@@ -135,6 +135,43 @@ struct LogWriterTests {
         #expect(await second.entries().count == 10)
     }
 
+    // A failed trim must not be trusted as a successful one: appending to the already-open file
+    // still succeeds when the directory is read-only, but the atomic rewrite the trim needs (which
+    // creates a temp file in that directory) does not - this is what forces the desync in the first
+    // place. Restoring permissions afterwards proves the writer recounts from disk and re-enforces
+    // the cap rather than staying wedged above it.
+    @Test
+    func test_record_recoversAfterATrimFails() async {
+        let directory = Self.temporaryDirectory()
+        let writer = LogWriter(directory: directory, maximumLines: 10)
+
+        for index in 1 ... 11 {
+            await writer.record("line \(index)", level: .info, category: .api)
+        }
+
+        Self.setDirectoryWritable(directory, false)
+        await writer.record("line 12", level: .info, category: .api)
+        Self.setDirectoryWritable(directory, true)
+
+        // The trim above the threshold failed, so the untrimmed file is still on disk.
+        #expect(await writer.entries().count == 12)
+
+        // lineCount was reset to nil on the failed trim, so this write recounts from disk instead
+        // of trusting the stale count, and the cap is re-enforced.
+        await writer.record("line 13", level: .info, category: .api)
+        let entries = await writer.entries()
+
+        #expect(entries.count == 10)
+        #expect(entries.first?.message == "line 13")
+    }
+
+    private static func setDirectoryWritable(_ directory: URL, _ writable: Bool) {
+        try? FileManager.default.setAttributes(
+            [.posixPermissions: writable ? 0o700 : 0o500],
+            ofItemAtPath: directory.path()
+        )
+    }
+
     private static func temporaryDirectory() -> URL {
         URL.temporaryDirectory.appending(path: "LogWriterTests-\(UUID().uuidString)")
     }

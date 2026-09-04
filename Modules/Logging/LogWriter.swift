@@ -1,11 +1,11 @@
 import Foundation
 import OSLog
 
-/// Owns the log file.
-///
-/// An actor because writes arrive from every feature and from the networking layer at once.
-/// Serialising through the actor is what makes that safe without a lock, and it is also where
-/// trimming lives, so no caller has to know the file has a line cap.
+// Owns the log file.
+//
+// An actor because writes arrive from every feature and from the networking layer at once.
+// Serialising through the actor is what makes that safe without a lock, and it is also where
+// trimming lives, so no caller has to know the file has a line cap.
 public actor LogWriter {
 
     public static let shared = LogWriter()
@@ -118,8 +118,15 @@ public actor LogWriter {
         }
 
         let kept = contents(of: currentURL).suffix(maximumLines)
-        try? kept.joined(separator: "\n").appending("\n").write(to: currentURL, atomically: true, encoding: .utf8)
-        lineCount = kept.count
+        do {
+            try kept.joined(separator: "\n").appending("\n").write(to: currentURL, atomically: true, encoding: .utf8)
+            lineCount = kept.count
+        } catch {
+            // The file still holds the untrimmed content, so the count that describes it is gone.
+            // Recounting on the next write costs one read and is what stops a failed trim from
+            // disabling the cap for the rest of the process.
+            lineCount = nil
+        }
     }
 
     private func contents(of url: URL) -> [String] {
