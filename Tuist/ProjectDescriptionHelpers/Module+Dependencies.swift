@@ -142,6 +142,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.designTokens),
+                .target(.logging),
             ]
         case .certificatesFeatureTests:
             [
@@ -151,6 +152,7 @@ extension Module {
                 .external(.x509),
                 .target(.apiInterface),
                 .target(.certificatesFeature),
+                .target(.logging),
                 .target(.testSupport),
             ]
         case .components:
