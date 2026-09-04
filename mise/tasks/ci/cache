@@ -8,7 +8,8 @@ set -euo pipefail
 #
 # `--cache-profile` is not passed: the profile lives in Tuist.swift, which `tuist generate` reads
 # too. It is `only-external` there — warming this repository's own modules as well was tried and
-# reverted, because a cached TestSupport breaks every snapshot test. Tuist.swift says why.
+# reverted, because ApiInterface's URL.projectRoot bakes in a compile-time #filePath. Tuist.swift
+# says why.
 # `--configuration Debug` is simply gone: it changed the hash even though Debug is already the
 # default configuration, so passing it turned all 72 external targets into misses.
 #

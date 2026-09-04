@@ -15,9 +15,10 @@ import TestSupport
 struct TipListViewTests {
 
     private static let products = [
-        TipProduct(displayName: "Small tip", displayPrice: "€5.00", tip: .small),
-        TipProduct(displayName: "Medium tip", displayPrice: "€10.00", tip: .medium),
-        TipProduct(displayName: "Large tip", displayPrice: "€25.00", tip: .large),
+        TipProduct(displayName: "Tiny tip", displayPrice: "€1.00", price: 1, tip: .tiny),
+        TipProduct(displayName: "Small tip", displayPrice: "€5.00", price: 5, tip: .small),
+        TipProduct(displayName: "Medium tip", displayPrice: "€10.00", price: 10, tip: .medium),
+        TipProduct(displayName: "Large tip", displayPrice: "€25.00", price: 25, tip: .large),
     ]
 
     @Test
