@@ -27,27 +27,43 @@ public struct UISettings: Codable, Equatable, Sendable {
         }
     }
 
-    public struct User: Codable, Equatable, Sendable {
-
-        public let id: ApiInterface.User.Id
-
-        public init(
-            id: ApiInterface.User.Id
-        ) {
-            self.id = id
-        }
-    }
-
     public let settings: Settings
 
     public let user: User
 
+    // Optional, and the optionality is load-bearing: nil means the server did not send the key - an
+    // older paperless - while [] means it sent an empty list. contains() answers false for every
+    // permission on an empty array, so collapsing the two would hide every control in the app for
+    // anyone on an older server.
+    public let permissions: [Permission]?
+
     public init(
         settings: Settings,
-        user: User
+        user: User,
+        permissions: [Permission]? = nil
     ) {
         self.settings = settings
         self.user = user
+        self.permissions = permissions
+    }
+}
+
+public extension UISettings {
+
+    private enum CodingKeys: String, CodingKey {
+        case permissions, settings, user
+    }
+
+    // @SkipUnknownValues wraps [T], not [T]?, so it cannot carry the nil/empty distinction above.
+    // Decoding by hand here, with the same MaybeDecodable the wrapper uses, keeps that distinction
+    // while still skipping permission codenames this enum does not know.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        settings = try container.decode(Settings.self, forKey: .settings)
+        user = try container.decode(User.self, forKey: .user)
+        permissions = try container
+            .decodeIfPresent([MaybeDecodable<Permission>].self, forKey: .permissions)?
+            .compactMap(\.wrapped)
     }
 }
 
@@ -101,11 +117,13 @@ public extension UISettings {
 
     static func testValue(
         settings: UISettings.Settings = .testValue(),
-        user: UISettings.User = .testValue()
+        user: ApiInterface.User = .testValue(),
+        permissions: [Permission]? = nil
     ) -> Self {
         .init(
             settings: settings,
-            user: user
+            user: user,
+            permissions: permissions
         )
     }
 }
@@ -132,17 +150,6 @@ public extension UISettings.Settings.SavedViews {
         .init(
             dashboardViewsVisibleIds: dashboardViewsVisibleIds,
             sidebarViewsVisibleIds: sidebarViewsVisibleIds
-        )
-    }
-}
-
-public extension UISettings.User {
-
-    static func testValue(
-        id: ApiInterface.User.Id = 1
-    ) -> Self {
-        .init(
-            id: id
         )
     }
 }
