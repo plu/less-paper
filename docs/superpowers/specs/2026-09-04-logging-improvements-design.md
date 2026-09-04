@@ -33,6 +33,19 @@ A user sending that file to a stranger is handing over the address of their docu
 earlier spec listed this under Risks — "a server hostname can identify a person" — and accepted it.
 This reverses that decision.
 
+**The leak was broader than one call site.** Found during the final review of this branch, after the
+OIDC line had been closed: `String(describing:)` on a bridged `URLError` renders the underlying
+`NSError`, and its `userInfo` carries `NSErrorFailingURLStringKey` — the full failing address,
+hostname and all. `LogClient.error(_ error:category:)` appends exactly that description to every
+error it records, so any request that fails at the URLSession layer writes the hostname without a
+call site ever naming it. That is reachable from the main app, not just the extension: the next-ASN
+fetch in `ShareFormReducer` logs a raw `URLError`, and `DocumentImportReducer` presents that form
+from `DocumentsFeature` and `SettingsFeature`. Redaction therefore moved down to the chokepoint —
+`LogWriter.record` runs a new `LogRedaction.redact(message:)` over every line it writes, stripping
+any `scheme://host[:port]` sequence and keeping the path — so no call site, present or future, can
+escape it. The first version of this spec said "the only work is bringing the last call site under
+it"; that was wrong, and the decision below has been rewritten rather than left standing.
+
 **It is close to empty when nothing has failed.** Only errors, warnings and API request lines get
 written. Nothing records what the app is, what it is running on, or that its ordinary work
 succeeded. A log in which the cache update silently never ran is indistinguishable from one in which
@@ -44,8 +57,9 @@ cannot be reached from the evidence.
 **No hostname reaches the log, ever.** Not redacted, not truncated, not hashed: absent. A hash still
 correlates two reports from the same server, and a "redacted" host in the middle of a sentence
 invites a later author to write the real one beside it. The rule is easier to keep than to qualify,
-and `LogRedaction` already implements it for URLs — the only work is bringing the last call site
-under it and adding a test that fails if another escapes.
+and `LogRedaction` implements it for URLs. Bringing the last call site under it is not sufficient on
+its own — see Context — so `LogWriter.record` redacts every message it writes, and the test that
+fails if another escapes lives at that boundary.
 
 **OIDC discovery logs its outcome, not its error.** What a support reader needs is whether single
 sign-on was offered:
@@ -163,7 +177,7 @@ app starts talking to a server — reached from adding a server and from selecti
 cold launch — and it already holds every count and a `log`:
 
 ```
-INFO  server  connected · API version 9 · auth: token
+INFO  server  connecting · API version 9 · auth: token
 INFO  server  cache updated in 1.8s · 34 tags · 12 correspondents · 8 document types · 5 saved views · 3 storage paths · 6 custom fields
 ```
 
@@ -172,6 +186,10 @@ token auth, and returning `nil` means remote-user mode, where a forward-auth pro
 no token exists. This does not distinguish a token obtained through OIDC from one obtained with a
 password — nothing records that today, and adding it means changing the `Server` model, which is out
 of scope here and noted below.
+
+"connecting", not "connected": the line is written before the first request, so that a server that
+never answers still leaves its API version and auth mode in the file. The completion line beside it
+is what marks success — a connecting line with nothing after it is the failure.
 
 The existing failure paths are untouched. The `groups` and `users` warnings stay as they are.
 

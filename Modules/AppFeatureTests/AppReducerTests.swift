@@ -12,6 +12,7 @@ import SwiftSharing
 import Testing
 import TestSupport
 import TipsFeature
+import UIKit
 
 @MainActor
 @Suite(
@@ -253,6 +254,48 @@ struct AppReducerTests {
         await store.receive(\.logLaunchContext)
 
         await bootstrap.cancel()
+    }
+
+    // The memory warning line only exists for the crash-adjacent case nobody is watching, which is
+    // exactly why it needs a test: if the observer stopped being started, nothing would ever say so.
+    //
+    // The notification is posted in a loop because nothing signals when the effect's AsyncSequence
+    // has begun observing, and a post that lands before it does is not delivered to anyone. Posting
+    // again is harmless - the assertion is that the line appears, not how many times. And the
+    // bootstrap task is cancelled rather than finished: .bootstrap merges never-ending observers,
+    // so store.finish() would wait on them forever.
+    @Test
+    func test_bootstrap_logsAMemoryWarning() async {
+        let messages = LockIsolated<[String]>([])
+
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.log.record = { message, _, _ in
+                    messages.withValue { $0.append(message) }
+                }
+                $0.deviceContext = .testValue
+                $0.imageCacheUsage.read = { .zero }
+                $0.storageUsage.measure = { _ in .zero }
+                $0.tipJar.updates = { AsyncStream { $0.finish() } }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        let bootstrap = await store.send(.bootstrap)
+
+        for _ in 1 ... 200 where !messages.value.contains("memory warning") {
+            NotificationCenter.default.post(
+                name: UIApplication.didReceiveMemoryWarningNotification,
+                object: nil
+            )
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+
+        await bootstrap.cancel()
+
+        #expect(messages.value.contains("memory warning"))
     }
 
     // Selecting a different server writes @Shared(.selectedServer), which makes this reducer

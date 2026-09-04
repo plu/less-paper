@@ -34,9 +34,13 @@ private extension UpdateCacheUseCase {
         // token obtained through OIDC from one obtained with a password - nothing records that.
         let token = try? await authenticationProvider.getToken(server: server)
 
+        // "connecting", not "connected": nothing has been asked of the server yet. The line stays
+        // ahead of the requests because the API version and the auth mode are exactly what a
+        // support reader wants when the connection is the thing that failed - and "cache updated"
+        // below is what marks success, so a connecting line with nothing after it reads correctly.
         log.info(
             [
-                "connected",
+                "connecting",
                 "API version \(apiVersion.map(String.init) ?? "unknown")",
                 "auth: \(token == nil ? "remote-user" : "token")",
             ]
@@ -120,7 +124,7 @@ private extension UpdateCacheUseCase {
 
         log.info(
             [
-                "cache updated in \(started.duration(to: clock.now).formatted(.units(allowed: [.seconds], fractionalPart: .show(length: 1))))",
+                "cache updated in \(Self.formatted(started.duration(to: clock.now)))",
                 Self.pluralised(tagsCount, "tag"),
                 Self.pluralised(correspondentsCount, "correspondent"),
                 Self.pluralised(documentTypesCount, "document type"),
@@ -130,6 +134,16 @@ private extension UpdateCacheUseCase {
             ]
             .joined(separator: " · "),
             category: .server
+        )
+    }
+
+    // en_US_POSIX for the same reason StorageUsage.formattedBytes() pins it: the file is read by
+    // whoever the user sends it to, and "1,8 Sek." on their side of a support thread is noise. The
+    // narrow width is what makes it "1.8s" rather than "1.8 sec".
+    static func formatted(_ duration: Duration) -> String {
+        duration.formatted(
+            .units(allowed: [.seconds], width: .narrow, fractionalPart: .show(length: 1))
+                .locale(Locale(identifier: "en_US_POSIX"))
         )
     }
 

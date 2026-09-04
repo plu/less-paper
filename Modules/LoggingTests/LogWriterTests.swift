@@ -172,6 +172,48 @@ struct LogWriterTests {
         )
     }
 
+    // The test the spec asked for and did not get: the guarantee is at this boundary, not at the
+    // call sites, so no future caller can escape it by composing a message nobody reviewed. The
+    // URLError shape is generated rather than pasted because it is Foundation's, not ours - printing
+    // a bridged URLError renders its userInfo, and that is where the failing address hides.
+    @Test
+    func test_record_stripsTheHostFromAnErrorNobodyRedacted() async throws {
+        let writer = LogWriter(directory: Self.temporaryDirectory())
+        let url = try #require(URL(string: "https://paperless.example.com/api/documents/next_asn/"))
+        let error = URLError(.cannotConnectToHost, userInfo: [NSURLErrorFailingURLErrorKey: url])
+        let described = String(describing: error)
+
+        // The premise: if Foundation ever stops printing the URL, this test would pass while
+        // asserting nothing.
+        try #require(described.contains("paperless.example.com"))
+
+        await writer.record(described, level: .error, category: .api)
+        let message = try #require(await writer.entries().first?.message)
+
+        #expect(!message.contains("paperless.example.com"))
+        #expect(message.contains("/api/documents/next_asn/"))
+    }
+
+    // The double space is the writer's column separator, so redaction must not invent one where a
+    // host sat between two spaces. Asserted through the round trip rather than on the redacted
+    // string, because the file is what a support reader actually gets.
+    @Test(arguments: [
+        "reached https://paperless.example.com now",
+        "reached https://paperless.internal:8000/api/tags/ now",
+        "no OIDC providers from https://docs.someones-surname.dev: offline",
+    ])
+    func test_record_roundTripsAfterRemovingAHost(written: String) async throws {
+        let writer = LogWriter(directory: Self.temporaryDirectory())
+
+        await writer.record(written, level: .info, category: .server)
+        let message = try #require(await writer.entries().first?.message)
+
+        #expect(!message.contains("paperless.example.com"))
+        #expect(!message.contains("paperless.internal"))
+        #expect(!message.contains("docs.someones-surname.dev"))
+        #expect(!message.contains("  "))
+    }
+
     private static func temporaryDirectory() -> URL {
         URL.temporaryDirectory.appending(path: "LogWriterTests-\(UUID().uuidString)")
     }

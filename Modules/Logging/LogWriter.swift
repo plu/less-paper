@@ -10,7 +10,12 @@ public actor LogWriter {
 
     public static let shared = LogWriter()
 
+    // Redacting here rather than at the call sites is the point: a hostname reaches the log through
+    // any message that happens to contain a URL, including error descriptions no caller composed,
+    // and this is the one place every one of them passes through.
     public func record(_ message: String, level: LogLevel, category: LogCategory, date: Date = Date()) {
+        let message = LogRedaction.redact(message: message)
+
         Logger(subsystem: subsystem, category: category.rawValue)
             .log(level: level.osLogType, "\(message, privacy: .public)")
 

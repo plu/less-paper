@@ -133,7 +133,7 @@ struct UpdateCacheUseCaseTests {
             try await UpdateCacheUseCase.liveValue.execute(Server.testValue())
         }
 
-        #expect(messages.value.contains { $0.hasPrefix("connected · API version ") })
+        #expect(messages.value.contains { $0.hasPrefix("connecting · API version ") })
         #expect(messages.value.contains { $0.hasSuffix(" · auth: token") })
     }
 
@@ -174,5 +174,9 @@ struct UpdateCacheUseCaseTests {
         #expect(summary.contains("1 tag"))
         #expect(summary.contains("1 correspondent"))
         #expect(summary.contains("1 saved view"))
+
+        // The duration is pinned to en_US_POSIX, so it is "0.0s" and never "0,0 Sek." - the file is
+        // read by whoever the user sends it to, not by the device that wrote it.
+        #expect(summary.contains(#/^cache updated in [0-9]+\.[0-9]s · /#))
     }
 }
