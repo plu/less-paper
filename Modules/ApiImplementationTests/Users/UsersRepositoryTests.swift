@@ -30,16 +30,6 @@ struct UsersRepositoryTests {
     }
 
     @Test
-    func getUser_returnsTestValue() async throws {
-        let output = try await repository.getUser(
-            input: .testValue(),
-            server: .testValue()
-        )
-
-        expectNoDifference(output, .testValue())
-    }
-
-    @Test
     func getUsers_returnsTestValue() async throws {
         let output = try await repository.getUsers(
             input: .testValue(),
@@ -76,9 +66,6 @@ struct UsersRepositoryTests {
         #expect(users.count == 2)
         #expect(users.next == nil)
         #expect(users.results.contains(user))
-
-        let sameUser = try await repository.getUser(input: .init(id: user.id), server: .testValue())
-        expectNoDifference(sameUser, user)
 
         var updateUserInput = SaveUserInput(
             email: "jane@doe.com",

@@ -17,11 +17,6 @@ struct UsersRepository: Sendable {
         _ server: Server
     ) async throws -> DeleteUserOutput
 
-    var getUser: @Sendable (
-        _ input: GetUserInput,
-        _ server: Server
-    ) async throws -> GetUserOutput
-
     var getUsers: @Sendable (
         _ input: GetUsersInput,
         _ server: Server
@@ -39,7 +34,6 @@ extension UsersRepository: TestDependencyKey {
     static let previewValue = Self(
         createUser: { _, _ in .testValue() },
         deleteUser: { _, _ in },
-        getUser: { _, _ in .testValue() },
         getUsers: { _, _ in .testValue() },
         updateUser: { _, _, _ in .testValue() }
     )
@@ -47,7 +41,6 @@ extension UsersRepository: TestDependencyKey {
     static let testValue = Self(
         createUser: { _, _ in .testValue() },
         deleteUser: { _, _ in },
-        getUser: { _, _ in .testValue() },
         getUsers: { _, _ in .testValue() },
         updateUser: { _, _, _ in .testValue() }
     )
@@ -65,7 +58,6 @@ extension UsersRepository: DependencyKey {
     static let liveValue = Self(
         createUser: createUser(input:server:),
         deleteUser: deleteUser(id:server:),
-        getUser: getUser(input:server:),
         getUsers: getUsers(input:server:),
         updateUser: updateUser(id:input:server:)
     )
@@ -96,19 +88,6 @@ private extension UsersRepository {
             .send(.init(
                 path: "/api/users/\(id)/",
                 method: .delete
-            ))
-            .value
-    }
-
-    static func getUser(
-        input: GetUserInput,
-        server: Server
-    ) async throws -> GetUserOutput {
-        try await APIClient
-            .client(server: server)
-            .send(.init(
-                path: "/api/users/\(input.id)/",
-                method: .get
             ))
             .value
     }
