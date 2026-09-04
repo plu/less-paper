@@ -5,7 +5,7 @@ import OSLog
 ///
 /// An actor because writes arrive from every feature and from the networking layer at once.
 /// Serialising through the actor is what makes that safe without a lock, and it is also where
-/// rotation lives, so no caller has to know the file has a size limit.
+/// trimming lives, so no caller has to know the file has a line cap.
 public actor LogWriter {
 
     public static let shared = LogWriter()
@@ -19,29 +19,27 @@ public actor LogWriter {
     }
 
     public func entries() -> [LogEntry] {
-        // Newest first, and the rotated file after the current one, so a read is in one order.
-        (contents(of: currentURL) + contents(of: rotatedURL))
+        contents(of: currentURL)
             .compactMap(Self.parse)
             .sorted { $0.date > $1.date }
     }
 
     public func fileURLs() -> [URL] {
-        [currentURL, rotatedURL].filter { fileManager.fileExists(atPath: $0.path()) }
+        [currentURL].filter { fileManager.fileExists(atPath: $0.path()) }
     }
 
     public func clear() {
-        for url in [currentURL, rotatedURL] {
-            try? fileManager.removeItem(at: url)
-        }
+        try? fileManager.removeItem(at: currentURL)
+        lineCount = nil
     }
 
     public init(
         directory: URL? = nil,
         fileManager: FileManager = .default,
-        maximumSize: Int = 1_048_576
+        maximumLines: Int = 10_000
     ) {
         self.fileManager = fileManager
-        self.maximumSize = maximumSize
+        self.maximumLines = maximumLines
         // Caches, as the old app used: the system may reclaim it under storage pressure, which is
         // the right trade for diagnostics. They must never be why a document cannot be saved.
         self.directory = directory ?? fileManager
@@ -85,11 +83,13 @@ public actor LogWriter {
 
     private let directory: URL
 
-    private let maximumSize: Int
+    private let maximumLines: Int
+
+    // Counted once from disk on the first write of a process, then tracked in memory. Recounting
+    // per write would mean reading the whole file to append one line.
+    private var lineCount: Int?
 
     private var currentURL: URL { directory.appending(path: "error.log") }
-
-    private var rotatedURL: URL { directory.appending(path: "error.1.log") }
 
     private func append(_ line: String) {
         guard let data = line.data(using: .utf8) else {
@@ -97,27 +97,29 @@ public actor LogWriter {
         }
 
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
-        rotateIfNeeded(adding: data.count)
 
-        guard let handle = try? FileHandle(forWritingTo: currentURL) else {
+        if let handle = try? FileHandle(forWritingTo: currentURL) {
+            defer { try? handle.close() }
+            _ = try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+        } else {
             try? data.write(to: currentURL)
-            return
         }
-        defer { try? handle.close() }
-        _ = try? handle.seekToEnd()
-        try? handle.write(contentsOf: data)
+
+        lineCount = (lineCount ?? contents(of: currentURL).count - 1) + 1
+        trimIfNeeded()
     }
 
-    /// Checked on write rather than on a timer, because a timer is a second thing that can be wrong.
-    private func rotateIfNeeded(adding bytes: Int) {
-        let attributes = try? fileManager.attributesOfItem(atPath: currentURL.path())
-        let size = (attributes?[.size] as? Int) ?? 0
-        guard size + bytes > maximumSize else {
+    // Above the cap plus a tenth, not at the cap: trimming on every write past 10,000 would mean
+    // rewriting the whole file for each line. The overshoot is bounded and the cap still holds.
+    private func trimIfNeeded() {
+        guard let count = lineCount, count > maximumLines + maximumLines / 10 else {
             return
         }
 
-        try? fileManager.removeItem(at: rotatedURL)
-        try? fileManager.moveItem(at: currentURL, to: rotatedURL)
+        let kept = contents(of: currentURL).suffix(maximumLines)
+        try? kept.joined(separator: "\n").appending("\n").write(to: currentURL, atomically: true, encoding: .utf8)
+        lineCount = kept.count
     }
 
     private func contents(of url: URL) -> [String] {
