@@ -30,48 +30,83 @@ project and is not designed here.
 
 The modelling is nearly complete and entirely unused. `Permission` is a 72-case `String` enum
 covering the whole matrix. `Permissions` models the object-level view/change × users/groups shape.
-`User` carries `userPermissions`, `inheritedPermissions`, `isSuperuser` and `isStaff`, both
-permission arrays already wrapped in `@SkipUnknownValues`.
+`User` carries `userPermissions`, `inheritedPermissions`, `isSuperuser` and `isStaff`.
 
-None of it gates anything. `userPermissions` appears in exactly three places: the model itself,
-`SaveUserInput` (the admin screen for editing *other* users), and a test fixture that grants
-`Permission.allCases`. There is no `hasPermission` helper anywhere. Every control in the app is shown
-to every user.
+None of it gates anything. There is no `hasPermission` helper anywhere, and every control in the app
+is shown to every user.
 
-### The acquisition problem
+### The bug, reproduced
 
 `GetCurrentUserUseCase` makes two requests: `/api/ui_settings/` to learn the current user's id, then
-`/api/users/<id>/` to fetch that user.
+`/api/users/<id>/` to fetch that user. `UserViewSet` uses `PaperlessObjectPermissions`, which falls
+back to Django model permissions — so the second request requires `view_user`.
 
-`UserViewSet` uses `PaperlessObjectPermissions`, which falls back to Django model permissions for a
-`User` object — so the second request requires `view_user`. That is precisely the permission a
-restricted user does not have, and it is the same gap that made servers unaddable in #51, which
-guarded `getGroups` and `getUsers` but not this call.
+Against the repository's own CI paperless instance, with a user granted `view_document` and
+`view_uisettings` but **not** `view_user`:
 
-In `UpdateCacheUseCase` the result is awaited unguarded:
+| Request | Status |
+|---|---|
+| `GET /api/ui_settings/` | `200` |
+| `GET /api/users/<their id>/` | `403` |
+
+That is exactly the pair `GetCurrentUserUseCase` issues, in that order. In `UpdateCacheUseCase` the
+result is awaited unguarded:
 
 ```swift
         _ = try await currentUser
 ```
 
-So for a user without `view_user`, the cache update most likely throws and adding a server fails
-outright. This has not been reproduced against a live restricted account — it is inference from the
-permission classes and the call site, and verifying it is the first task of the plan rather than an
-assumption the design rests on. The fix is correct either way.
+So the error propagates, the cache update fails, and **the server cannot be added at all**. This is
+the same gap that made servers unaddable in #51, which guarded `getGroups` and `getUsers` but not
+this call.
 
-The second request is also unnecessary. `/api/ui_settings/` already returns everything needed:
+A user with `view_document` alone gets `403` from `/api/ui_settings/` too, so that endpoint is not
+universally available either — which is what the fail-open decision below exists to handle.
 
-```typescript
-export interface UiSettings {
-  user: User
-  settings: Object
-  permissions: string[]
+### What `ui_settings` actually returns
+
+Captured from a live instance rather than read off the frontend's TypeScript types, which declare
+`user: User` and so read as though the full user is returned:
+
+```json
+{
+  "user": { "id": 40, "username": "permtest", "is_staff": false, "is_superuser": false, "groups": [] },
+  "settings": { },
+  "permissions": ["view_document", "view_uisettings"]
 }
 ```
 
-`user` is the full user object, matching the app's `User` model field for field, and `permissions`
-is the flattened effective set — direct plus group-inherited — which is exactly what the web UI
-checks against. The app decodes only `user.id` and discards both.
+`user` is a **reduced** five-field object. `permissions` is the flattened effective set — direct plus
+group-inherited — and is exactly what the web UI checks against. The app decodes only `user.id` and
+discards both.
+
+### The app's `User` is bigger than anything reads
+
+`ui_settings.user` omits `date_joined`, `email`, `first_name`, `last_name`, `is_active`,
+`is_mfa_enabled`, `user_permissions` and `inherited_permissions`, all of which are non-optional
+stored properties on `ApiInterface.User`. Rather than model two user shapes, `User` was audited
+against what actually reads it:
+
+| Field | Production reads |
+|---|---|
+| `dateJoined` | none anywhere, including tests |
+| `email`, `firstName`, `lastName`, `isMfaEnabled` | none — tests only |
+| `userPermissions`, `inheritedPermissions` | none — tests only |
+| `isActive` | none — every hit is `documentSelection.isActive`, an unrelated type |
+
+The one place reading those fields off a `User` is `SaveUserInput.init(user:)`, called from a single
+test. **There is no user-editing screen in this app**: `SaveUserInput`, `createUser`, `updateUser`
+and `deleteUser` are reached only from `UITestSupport` and `ApiTestSupport`, which provision users on
+a test server. Users are fetched to populate owner and permission pickers, which need `id` and
+`username`.
+
+### Which user endpoints survive
+
+| Endpoint | After this change |
+|---|---|
+| `GET /api/ui_settings/` | The sole source for the current user and their permissions |
+| `GET /api/users/` (list) | Still required — owner and permission pickers need *other* users, which `ui_settings` cannot describe. Already guarded in #51, so a restricted user gets an empty picker rather than a failure |
+| `GET /api/users/<id>/` (single) | **No production callers left.** Its only two were the use cases fixed here |
 
 ## Decisions
 
@@ -80,112 +115,150 @@ feature exists so the UI does not offer actions that will fail. Every edge case 
 against that sentence, and it is the reason the next decision is defensible.
 
 **When permissions cannot be determined, everything is shown.** Fail open. `/api/ui_settings/`
-requires `view_uisettings`, so a user can lack even this. Fail-closed would present an app with every
-control missing, which reads as broken software rather than as a permission boundary; fail-open
-reproduces today's behaviour exactly, so it is a strict non-regression and carries no security
-consequence given the sentence above.
+requires `view_uisettings`, and a user can lack even that — measured above. Fail-closed would present
+an app with every control missing, which reads as broken software rather than as a permission
+boundary; fail-open reproduces today's behaviour exactly, so it is a strict non-regression and
+carries no security consequence given the sentence above.
 
 **"Unknown" and "empty" are different states, and the type must say so.** The cached permission set is
-`[Permission]?`, not `[Permission]`. `nil` means never successfully read — fail open, show
-everything. `[]` means the server was read and genuinely returned nothing. Collapsing the two into an
-empty array is the trap this decision exists to avoid: `permissions.contains(x)` is `false` for every
-`x` on an empty array, so an older paperless that omits the key, or a first launch before the network
-answers, would hide every control in the app while looking like a deliberate permission boundary.
-`UISettings.permissions` is therefore decoded as optional — key absent yields `nil`, not `[]`.
+`[Permission]?`. `nil` means never successfully read — fail open, show everything. `[]` means the
+server was read and genuinely returned nothing. Collapsing the two is the trap this decision exists
+to avoid: `permissions.contains(x)` is `false` for every `x` on an empty array, so an older paperless
+that omits the key, or a first launch before the network answers, would hide every control while
+looking like a deliberate permission boundary. `UISettings.permissions` is decoded as optional — key
+absent yields `nil`, not `[]`.
+
+**`User` shrinks to the five fields `ui_settings` sends.** `{groups, id, isStaff, isSuperuser,
+username}`. One type then decodes both endpoints, `GetCurrentUserUseCase` becomes a single request,
+and there is no reduced twin, no partially-populated cache, and no ordering subtlety about which
+cache is written before which call can fail.
+
+The alternative — keep the wide `User` and add a small nested one for `ui_settings` — was rejected
+for buying two user types and a best-effort second fetch to preserve eight fields nothing reads.
+`/api/users/` still returns them; the model simply stops decoding them, so restoring one later is
+additive. This is deliberately removing modelled data on the grounds that nothing uses it, which is
+the right call today and a re-add if a screen ever shows an email address.
+
+**The single-user endpoint goes with it.** Once both call sites are fixed, `UsersRepository.getUser`
+has no production caller. It is deleted rather than left: dead code that requires a permission is
+worse than dead code, because the next person who reaches for it reintroduces the bug this design
+exists to fix. The list endpoint stays — pickers need it.
 
 **A refresh that fails leaves the last known set in place.** It does not clear the cache. Clearing
-would swing the whole UI on a transient network error — to ungated with `nil`, or to fully gated
-with `[]` — and a permission set that is one foreground stale is far better than a UI that flickers
+would swing the whole UI on a transient network error — to ungated with `nil`, or to fully gated with
+`[]` — and a permission set that is one foreground stale is far better than a UI that flickers
 between two shapes.
 
-**Take the user from `ui_settings` and delete the `/api/users/<id>/` call.** This is a deletion
-rather than an addition: it removes a request, removes the `view_user` dependency, and yields the
-effective permission list the second request never carried. The only consumer of the cached user —
-`PermissionsFormReducer`, which defaults the owner field — receives the same object either way.
-
 **Unknown permission strings are skipped, never fatal.** A newer paperless will send codenames this
-enum does not know. `@SkipUnknownValues` already exists for exactly this and is already applied to
-`User`'s two permission arrays; the new field uses it too. A permission the app cannot name is one it
-cannot gate on, which fails open, which is correct.
+enum does not know. `@SkipUnknownValues` already exists for exactly this. A permission the app cannot
+name is one it cannot gate on, which fails open, which is correct.
 
-**The effective set is used, not `userPermissions` merged with `inheritedPermissions`.** The server
-already flattens them; recomputing the union in the app is a second implementation of a rule the
-server owns, and it would drift the first time paperless changes how inheritance works.
-
-**Hiding, not disabling, is the convention for later projects.** No control changes in this project,
-but the decision is recorded here so the projects that do inherit it rather than relitigate it: a
-control the user cannot use is not rendered.
+**Hiding, not disabling, is the convention for later projects.** No control changes here, but the
+decision is recorded so the projects that do change controls inherit it rather than relitigate it.
 
 ## Changes
 
+### `Modules/ApiInterface/Users/User.swift`
+
+The struct becomes:
+
+```swift
+public struct User: Codable, Equatable, Hashable, Identifiable, Sendable {
+    public typealias Id = Tagged<User, Int>
+
+    public let groups: [Group.Id]
+    public let id: User.Id
+    public let isStaff: Bool
+    public let isSuperuser: Bool
+    public let username: String
+}
+```
+
+`Comparable` and `CustomStringConvertible` both key off `username` and are unchanged, as is the
+`User.Id.get(_:)` cache lookup. `testValue` loses the removed parameters.
+
+### `Modules/ApiInterface/Users/SaveUserInput.swift`
+
+`init(user:)` is deleted. It exists to seed an edit form from a fetched user, there is no edit form,
+and after the shrink it could not source four of its fields. Its single caller is a repository test
+that constructs the input directly instead.
+
+`SaveUserInput` itself keeps all its fields — it is the *input* to user creation, which
+`UITestSupport` genuinely uses.
+
+### `Modules/ApiImplementation/Users/UsersRepository.swift`
+
+`getUser` — the single-user fetch — is removed from the client, its live implementation, and its
+test values. `getUsers`, `createUser`, `updateUser` and `deleteUser` stay.
+
 ### `Modules/ApiInterface/UISettings/UISettings.swift`
 
-`UISettings.User` — currently a nested struct holding only `id` — is replaced by
-`ApiInterface.User`. `UISettings` gains:
+The nested `UISettings.User` struct and its `testValue` are deleted; `user` becomes
+`ApiInterface.User`, which now matches the payload. `UISettings` gains:
 
 ```swift
     @SkipUnknownValues
-    public var permissions: [Permission]
+    public var permissions: [Permission]?
 ```
 
 The nested `Settings` type and its `raw` dictionary are untouched.
 
-### `Modules/ApiImplementation/Users/GetCurrentUserUseCase.swift`
-
-The `usersRepository.getUser` call goes. The use case fetches `ui_settings`, caches
-`uiSettings.user`, and returns it. It also caches the permission set (below).
-
-`UsersRepository.getUser` itself stays — the admin user-editing screen still uses it, and that screen
-already requires `view_user` to have listed users at all.
-
 ### `Modules/ApiInterface/Extensions/SharedReaderKey+Extensions.swift`
 
-A new per-server key alongside `currentUser`:
-
-```swift
-    static func permissions(_ server: Server) -> Self { ... }
-```
-
-backed by `.fileStorage(.applicationGroupDirectory.appending(component: "\(server.id)-permissions.json"))`,
-defaulting to an empty array. Per-server because permissions are per-account, and cached so gating is
-correct at launch before the network answers, and offline.
+A new per-server key alongside `currentUser`, file-backed in the app group container and defaulting
+to `nil`. Per-server because permissions are per account, and cached so gating is correct at launch
+before the network answers, and offline.
 
 ### `Modules/ApiInterface/Permissions/PermissionsQuery.swift` (new)
 
-The single question the rest of the app will ask, as a `@DependencyClient` so it is overridable in
-tests:
+A `@DependencyClient` exposing the single question the rest of the app will ask:
 
 ```swift
     public var can: @Sendable (_ permission: Permission, _ server: Server) -> Bool = { _, _ in true }
 ```
 
-Its live implementation reads the cached user and permission set:
+Its live implementation reads the two caches:
 
 ```swift
-// Nothing read yet, so nothing to gate on. Gating is presentation, not enforcement - a user whose
-// permissions could not be read sees the app as it has always been, and the server still refuses
-// what it should. This branch is why the cache is optional rather than an empty array: contains()
-// on an empty array denies everything, which is the opposite answer to the same question.
+// Nothing read yet, so nothing to gate on. Gating is presentation, not enforcement - the server
+// still refuses what it should. This branch is why the cache is optional rather than an empty
+// array: contains() on an empty array denies everything, which is the opposite answer.
 guard let permissions else {
     return true
 }
 
-// Superuser first, matching the web UI: Django hands a superuser every permission anyway, but the
-// check is cheap and it keeps the rule true even if the server ever stops flattening them in.
+// Superuser first, matching the web UI. Django hands a superuser every permission anyway, so this
+// is belt and braces - and it stays true if that ever stops.
 return user?.isSuperuser == true || permissions.contains(permission)
 ```
 
-The default value is `true` for the same reason: a test that forgets to stub this sees an ungated
+The client's default is `true` for the same reason: a test that forgets to stub it sees an ungated
 app rather than a mysteriously empty one.
+
+### `Modules/ApiImplementation/Users/GetCurrentUserUseCase.swift`
+
+One request. It fetches `ui_settings`, caches `uiSettings.user` and `uiSettings.permissions`, and
+returns the user.
+
+### `Modules/ApiImplementation/ForwardAuth/GetForwardAuthIdentityUseCase.swift`
+
+The same two-call pair appears here, purely to read a username, and gets the same fix: one
+`ui_settings` request, then `settings.user.username`. This matters more than it looks — remote-user
+mode is how a reverse proxy signs someone in, and those deployments are where restricted accounts
+live.
+
+### `Modules/ApiImplementation/Cache/UpdateCacheUseCase.swift`
+
+`currentUser` moves into a `do`/`catch` beside the existing `groups` and `users` blocks, logging at
+warning level. After the fix above this path should no longer fail for a restricted user, but a
+failure to learn permissions must never stop someone using the app — the same principle, one layer
+down.
 
 ### `Modules/AppFeature/AppReducer.swift` and `AppReducer+Effect.swift`
 
-Permissions are fetched today only when the cache updates — on cold launch and when the selected
-server changes. An admin who revokes a permission while the app sits in the background is therefore
-invisible to it, possibly for days, and the app goes on offering actions the server will now refuse.
-
-`didBecomeActive` already refreshes statistics and favourites for the selected server; it gains a
-third effect on the same guard:
+Permissions are otherwise read only at cold launch and on a server switch, so an admin who revokes
+one while the app sits in the background stays invisible to it. `didBecomeActive` already refreshes
+statistics and favourites for the selected server; it gains a third effect on the same guard:
 
 ```swift
             case .didBecomeActive:
@@ -197,73 +270,59 @@ third effect on the same guard:
                     .merge(with: .runRefreshPermissions(server: server))
 ```
 
-`runRefreshPermissions` calls `getCurrentUser`, which writes both caches, and swallows any error
-after logging it at warning level. Two properties matter and are easy to get wrong:
-
-- **It never clears the cache on failure.** A foregrounding with no network keeps yesterday's
-  permissions rather than reverting to `nil` and ungating the whole app.
-- **It does not block anything.** No screen waits on it; the UI re-reads the cache when it changes.
-  A permission revoked server-side takes effect on the next foreground, not mid-gesture.
-
-This is also the only path that ever *narrows* what the user can do while the app is installed.
-Everything else about permissions widens or stays put, so it is the case worth being deliberate
-about.
-
-### `Modules/ApiImplementation/Cache/UpdateCacheUseCase.swift`
-
-`currentUser` moves into a `do`/`catch` beside the existing `groups` and `users` blocks, logging at
-warning level. A failure to learn who the user is must never stop them using the app — the same
-principle, applied to the call that fetches it.
+`runRefreshPermissions` calls `getCurrentUser` and swallows any error after logging it. It **never
+clears the cache on failure**, and **blocks nothing** — a permission revoked server-side takes effect
+on the next foreground, not mid-gesture. This is the only path that ever *narrows* what the user can
+do while the app is installed, so it is the case worth being deliberate about.
 
 ## Testing
 
-**`UISettings` decoding** against fixtures: the full shape decodes; an unrecognised permission string
-is skipped rather than throwing; an absent `permissions` key yields an empty array rather than a
-decode failure, because an older paperless may not send it.
+**`UISettings` decoding** against a fixture captured from the live instance: the real payload
+decodes, including the five-field user; an unrecognised permission string is skipped rather than
+throwing; an absent `permissions` key yields `nil` rather than `[]`.
 
-**`PermissionsQuery.can`** for five cases: a superuser without the permission returns `true`; a
-non-superuser holding it returns `true`; a non-superuser lacking it returns `false`; a `nil` cache
-returns `true`; and an **empty but non-nil** cache returns `false`.
+**`PermissionsQuery.can`** for five cases: a superuser without the permission → `true`; a
+non-superuser holding it → `true`; a non-superuser lacking it → `false`; a `nil` cache → `true`; an
+**empty but non-nil** cache → `false`. The last two are one character apart in the type and opposite
+in meaning; a reader who has not seen this document will find the `nil` branch redundant and delete
+it, at which point every control disappears for anyone whose paperless omits the key. Both tests
+exist so that deletion fails.
 
-The last two are the point. They are one character apart in the type and opposite in meaning, and a
-reader who has not seen this document will find the `nil` branch redundant and delete it — at which
-point every control in the app disappears for anyone whose paperless omits the key. Both tests exist
-so that deletion fails.
+**`GetCurrentUserUseCase`** asserts it issues **one** request. After `getUser` is deleted this is
+enforced by the compiler as well, but the test states the intent for anyone who adds a second call
+later.
 
-**`GetCurrentUserUseCase`** asserts it issues **one** request. Not that it returns the right user —
-that it does not call `getUser`. The `view_user` dependency is invisible in behaviour until it meets
-a restricted account, so the test has to assert the absence of the call rather than the presence of a
-result.
+**`UpdateCacheUseCase`** asserts a throwing `getCurrentUser` no longer fails the update, mirroring the
+existing tests for forbidden groups and users.
 
-**`UpdateCacheUseCase`** asserts a throwing `getCurrentUser` no longer fails the update, mirroring
-the existing tests for forbidden groups and users.
-
-**`AppReducer.didBecomeActive`** asserts it refreshes permissions for the selected server, that it
-does nothing when no server is selected, and — the one that protects the rule above — that a throwing
+**`AppReducer.didBecomeActive`** asserts it refreshes permissions for the selected server, does
+nothing when no server is selected, and — the one that protects the rule above — that a throwing
 refresh leaves the cached set unchanged rather than clearing it.
+
+**Existing `UserTests`** lose the assertions for removed fields. What remains must still cover
+decoding a real `/api/users/` list payload, which carries the extra fields the model now ignores —
+that is the test proving the shrink did not break the endpoint that still uses this type.
 
 ## Out of scope
 
 - **Gating any control.** No button, section or tab changes. This project ends with the question
   answerable; the answering is Projects 2 and 3.
 - **Object-level permissions** — `user_can_change`, `owner`, `full_perms`. Documented in Context so
-  the next design starts from research rather than repeating it, but nothing here touches them.
-- **Making `/api/ui_settings/` optional.** It is already required for the app to function and this
-  changes nothing about that; a user lacking `view_uisettings` is no worse off than today.
-- **Editing one's own permissions.** The admin screens are unchanged.
+  the next design starts from research rather than repeating it.
+- **Making `/api/ui_settings/` optional.** It is already required for the app to function; a user
+  lacking `view_uisettings` is no worse off than today.
+- **A user-editing screen.** None exists, and this does not add one.
 
 ## Risks
 
+**Removing fields is a bet that nothing needs them.** The audit covers this repository at this
+commit. If a future screen shows an email address or MFA status, the field comes back — additive,
+since `/api/users/` still sends it. The bet is worth taking because the alternative cost is two user
+types on every screen that touches one.
+
 **Fail-open means a restricted user still sees actions that will fail**, exactly as today, until
-Projects 2 and 3 land. That is the accepted cost of not shipping an app that looks broken, and it is
-a non-regression rather than a new problem.
+Projects 2 and 3 land. That is the accepted cost of not shipping an app that looks broken.
 
-**Dropping the second request changes what `currentUser` contains** if `ui_settings` ever serialises
-a user differently from `UserViewSet`. Both are the same `User` serializer today. Mitigated by the
-decoding tests using a fixture captured from `ui_settings` rather than one hand-written to match the
-old call.
-
-**The bug this fixes is inferred, not observed.** If a restricted user turns out to fetch
-`/api/users/<id>/` for themselves without `view_user`, the fix is still right — one request instead
-of two, and the effective permission list — but its framing as a bug fix would be wrong. The plan
-verifies this first.
+**`ui_settings` could gain or lose fields on a paperless upgrade.** The decoding test uses a captured
+payload, so an upgrade that changes the shape fails a test rather than a launch. The five fields kept
+are the ones the web UI itself depends on, which makes them the least likely to move.
