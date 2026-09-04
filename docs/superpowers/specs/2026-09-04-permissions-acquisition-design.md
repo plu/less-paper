@@ -85,6 +85,19 @@ control missing, which reads as broken software rather than as a permission boun
 reproduces today's behaviour exactly, so it is a strict non-regression and carries no security
 consequence given the sentence above.
 
+**"Unknown" and "empty" are different states, and the type must say so.** The cached permission set is
+`[Permission]?`, not `[Permission]`. `nil` means never successfully read — fail open, show
+everything. `[]` means the server was read and genuinely returned nothing. Collapsing the two into an
+empty array is the trap this decision exists to avoid: `permissions.contains(x)` is `false` for every
+`x` on an empty array, so an older paperless that omits the key, or a first launch before the network
+answers, would hide every control in the app while looking like a deliberate permission boundary.
+`UISettings.permissions` is therefore decoded as optional — key absent yields `nil`, not `[]`.
+
+**A refresh that fails leaves the last known set in place.** It does not clear the cache. Clearing
+would swing the whole UI on a transient network error — to ungated with `nil`, or to fully gated
+with `[]` — and a permission set that is one foreground stale is far better than a UI that flickers
+between two shapes.
+
 **Take the user from `ui_settings` and delete the `/api/users/<id>/` call.** This is a deletion
 rather than an addition: it removes a request, removes the `view_user` dependency, and yields the
 effective permission list the second request never carried. The only consumer of the cached user —
@@ -149,16 +162,52 @@ tests:
 Its live implementation reads the cached user and permission set:
 
 ```swift
+// Nothing read yet, so nothing to gate on. Gating is presentation, not enforcement - a user whose
+// permissions could not be read sees the app as it has always been, and the server still refuses
+// what it should. This branch is why the cache is optional rather than an empty array: contains()
+// on an empty array denies everything, which is the opposite answer to the same question.
+guard let permissions else {
+    return true
+}
+
 // Superuser first, matching the web UI: Django hands a superuser every permission anyway, but the
 // check is cheap and it keeps the rule true even if the server ever stops flattening them in.
-//
-// True when nothing is cached. Gating is presentation, not enforcement - a user whose permissions
-// could not be read sees the app as it has always been, and the server still refuses what it should.
-user?.isSuperuser == true || permissions.contains(permission)
+return user?.isSuperuser == true || permissions.contains(permission)
 ```
 
 The default value is `true` for the same reason: a test that forgets to stub this sees an ungated
 app rather than a mysteriously empty one.
+
+### `Modules/AppFeature/AppReducer.swift` and `AppReducer+Effect.swift`
+
+Permissions are fetched today only when the cache updates — on cold launch and when the selected
+server changes. An admin who revokes a permission while the app sits in the background is therefore
+invisible to it, possibly for days, and the app goes on offering actions the server will now refuse.
+
+`didBecomeActive` already refreshes statistics and favourites for the selected server; it gains a
+third effect on the same guard:
+
+```swift
+            case .didBecomeActive:
+                guard let server = state.main?.server else {
+                    return .none
+                }
+                return .runRefreshStatistics(server: server)
+                    .merge(with: .runRefreshFavorites(server: server))
+                    .merge(with: .runRefreshPermissions(server: server))
+```
+
+`runRefreshPermissions` calls `getCurrentUser`, which writes both caches, and swallows any error
+after logging it at warning level. Two properties matter and are easy to get wrong:
+
+- **It never clears the cache on failure.** A foregrounding with no network keeps yesterday's
+  permissions rather than reverting to `nil` and ungating the whole app.
+- **It does not block anything.** No screen waits on it; the UI re-reads the cache when it changes.
+  A permission revoked server-side takes effect on the next foreground, not mid-gesture.
+
+This is also the only path that ever *narrows* what the user can do while the app is installed.
+Everything else about permissions widens or stays put, so it is the case worth being deliberate
+about.
 
 ### `Modules/ApiImplementation/Cache/UpdateCacheUseCase.swift`
 
@@ -172,10 +221,14 @@ principle, applied to the call that fetches it.
 is skipped rather than throwing; an absent `permissions` key yields an empty array rather than a
 decode failure, because an older paperless may not send it.
 
-**`PermissionsQuery.can`** for four cases: a superuser without the permission returns `true`; a
-non-superuser holding it returns `true`; a non-superuser lacking it returns `false`; and no cached
-data at all returns `true`. The last is the fail-open rule, and it is the one most likely to be
-"fixed" by a later reader who has not read this document.
+**`PermissionsQuery.can`** for five cases: a superuser without the permission returns `true`; a
+non-superuser holding it returns `true`; a non-superuser lacking it returns `false`; a `nil` cache
+returns `true`; and an **empty but non-nil** cache returns `false`.
+
+The last two are the point. They are one character apart in the type and opposite in meaning, and a
+reader who has not seen this document will find the `nil` branch redundant and delete it — at which
+point every control in the app disappears for anyone whose paperless omits the key. Both tests exist
+so that deletion fails.
 
 **`GetCurrentUserUseCase`** asserts it issues **one** request. Not that it returns the right user —
 that it does not call `getUser`. The `view_user` dependency is invisible in behaviour until it meets
@@ -184,6 +237,10 @@ result.
 
 **`UpdateCacheUseCase`** asserts a throwing `getCurrentUser` no longer fails the update, mirroring
 the existing tests for forbidden groups and users.
+
+**`AppReducer.didBecomeActive`** asserts it refreshes permissions for the selected server, that it
+does nothing when no server is selected, and — the one that protects the rule above — that a throwing
+refresh leaves the cached set unchanged rather than clearing it.
 
 ## Out of scope
 
