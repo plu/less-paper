@@ -317,6 +317,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.designTokens),
+                .target(.logging),
             ]
         case .imageFeatureTests:
             [
@@ -324,6 +325,7 @@ extension Module {
                 .external(.nuke),
                 .external(.snapshotTesting),
                 .target(.imageFeature),
+                .target(.logging),
                 .target(.testSupport),
             ]
         case .logging:
