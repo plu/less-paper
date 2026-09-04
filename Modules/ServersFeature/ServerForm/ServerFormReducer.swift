@@ -2,6 +2,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import Logging
 import SwiftUI
 
 @Reducer
@@ -64,6 +65,11 @@ public struct ServerFormReducer: Sendable {
         /// which keypath a binding action happens to carry.
         var providersURL: URL?
 
+        // Distinct from `providers`, which is cleared to [] before every load: comparing against
+        // that would suppress the first "none" - the one worth having - while still logging later
+        // ones. nil means nothing has been logged for this form yet.
+        var lastLoggedProviderCount: Int?
+
         var section = ServerFormSection.form
 
         public init(
@@ -112,6 +118,10 @@ public struct ServerFormReducer: Sendable {
                 return .runSaveProviderToken(input: state.input, token: token)
             case let .providersLoaded(providers):
                 state.providers = providers
+                if state.lastLoggedProviderCount != providers.count {
+                    state.lastLoggedProviderCount = providers.count
+                    log.info(Self.discoveryMessage(count: providers.count), category: .server)
+                }
                 return .none
             case let .view(viewAction):
                 switch viewAction {
@@ -160,8 +170,19 @@ public struct ServerFormReducer: Sendable {
 
     public init() {}
 
+    static func discoveryMessage(count: Int) -> String {
+        switch count {
+        case 0: "OIDC discovery: none"
+        case 1: "OIDC discovery: 1 provider"
+        default: "OIDC discovery: \(count) providers"
+        }
+    }
+
     @Dependency(\.dismiss)
     private var dismiss
+
+    @Dependency(\.log)
+    private var log
 }
 
 extension ServerFormReducer.Destination.State: Equatable {}

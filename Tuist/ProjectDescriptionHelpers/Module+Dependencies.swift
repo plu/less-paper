@@ -474,6 +474,7 @@ extension Module {
                 .target(.components),
                 .target(.designTokens),
                 .target(.diagnosticsFeature),
+                .target(.logging),
             ]
         case .serversFeatureTests:
             [
@@ -483,6 +484,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.designTokens),
+                .target(.logging),
                 .target(.serversFeature),
                 .target(.testSupport),
             ]

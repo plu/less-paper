@@ -57,4 +57,17 @@ struct LogRedactionTests {
         #expect(redacted == ["Authorization", "Content-Type"])
         #expect(!redacted.joined().contains("abc123secret"))
     }
+
+    // The rule the OIDC line broke: a URL reaching the log through redact() never carries its host.
+    @Test(arguments: [
+        "https://paperless.example.com/api/documents/?page=2",
+        "http://paperless.internal:8000/api/tags/",
+        "https://docs.someones-surname.dev/api/auth/headless/app/v1/config",
+    ])
+    func test_redact_neverKeepsTheHost(address: String) throws {
+        let url = try #require(URL(string: address))
+        let host = try #require(url.host())
+
+        #expect(!LogRedaction.redact(url).contains(host))
+    }
 }
