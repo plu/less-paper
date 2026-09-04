@@ -15,10 +15,18 @@ let tuist = Tuist(
         // without a Tuist account. With it, an authenticated run still gets insights and the
         // binary cache; an unauthenticated one simply goes without.
         generationOptions: .options(optionalAuthentication: true),
-        // The profile has to live here rather than on `tuist cache`'s command line, because
-        // `tuist generate` reads it from this file and defaults to `.onlyExternal` otherwise. A
-        // warm that filtered targets differently from the generate that looks them up leaves the
-        // internal modules out of the cache entirely — nothing to find, however full the cache is.
-        cacheOptions: .options(profiles: .profiles(default: .allPossible))
+        // External dependencies only. `.allPossible` was tried and reverted: it also caches this
+        // repository's own modules, and a cached `TestSupport` breaks every snapshot test in the
+        // project. `snapshotDirectory(file:)` finds `Snapshots/` by walking up from `#filePath`,
+        // which is baked in when the module is compiled — a binary from the cache carries the path
+        // of whatever machine built it, so the walk runs to `/` and trips its own precondition. The
+        // test process crashes rather than failing an assertion, which reads as an unexplained
+        // xctest crash and not as a caching problem. Anything else that resolves a path from
+        // `#file` or `#filePath` at runtime has the same fault line.
+        //
+        // The profile still lives here rather than on `tuist cache`'s command line, because
+        // `tuist generate` reads it from this file: a warm that filtered targets differently from
+        // the generate that looks them up fills the cache with entries nobody ever finds.
+        cacheOptions: .options(profiles: .profiles(default: .onlyExternal))
     )
 )
