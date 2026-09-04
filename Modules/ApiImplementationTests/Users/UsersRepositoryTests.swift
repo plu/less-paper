@@ -93,15 +93,17 @@ struct UsersRepositoryTests {
             username: user.username
         )
         updateUserInput.firstName = "JANE"
+        updateUserInput.isStaff = true
         updateUserInput.userPermissions = Permission.allCases
         user = try await repository.updateUser(
             id: user.id,
             input: updateUserInput,
             server: .testValue()
         )
-        // firstName and userPermissions no longer decode onto User (see the shrink in Task 1), so the
-        // update can only be verified through the fields User still declares.
-        #expect(user.username == "jdoe")
+        // firstName and userPermissions no longer decode onto User after the shrink, so isStaff is
+        // what proves the PATCH was applied - it is mutated above and is one of the five fields User
+        // still declares. Asserting username here would pass without the request happening at all.
+        #expect(user.isStaff)
 
         try await deleteUser(user.id)
         users = try await getUsers()
