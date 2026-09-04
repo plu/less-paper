@@ -37,6 +37,8 @@ extension Module {
                 .target(.documentsFeature),
                 .target(.favoritesFeature),
                 .target(.forwardAuthFeature),
+                .target(.imageFeature),
+                .target(.logging),
                 .target(.serversFeature),
                 .target(.settingsFeature),
                 .target(.tipsFeature),
@@ -51,6 +53,8 @@ extension Module {
                 .target(.appFeature),
                 .target(.components),
                 .target(.favoritesFeature),
+                .target(.imageFeature),
+                .target(.logging),
                 .target(.serversFeature),
                 .target(.settingsFeature),
                 .target(.testSupport),
@@ -138,6 +142,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.designTokens),
+                .target(.logging),
             ]
         case .certificatesFeatureTests:
             [
@@ -147,6 +152,7 @@ extension Module {
                 .external(.x509),
                 .target(.apiInterface),
                 .target(.certificatesFeature),
+                .target(.logging),
                 .target(.testSupport),
             ]
         case .components:
@@ -317,6 +323,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.designTokens),
+                .target(.logging),
             ]
         case .imageFeatureTests:
             [
@@ -324,6 +331,7 @@ extension Module {
                 .external(.nuke),
                 .external(.snapshotTesting),
                 .target(.imageFeature),
+                .target(.logging),
                 .target(.testSupport),
             ]
         case .logging:
@@ -474,6 +482,7 @@ extension Module {
                 .target(.components),
                 .target(.designTokens),
                 .target(.diagnosticsFeature),
+                .target(.logging),
             ]
         case .serversFeatureTests:
             [
@@ -483,6 +492,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.designTokens),
+                .target(.logging),
                 .target(.serversFeature),
                 .target(.testSupport),
             ]
@@ -499,6 +509,7 @@ extension Module {
                 .target(.diagnosticsFeature),
                 .target(.documentTypesFeature),
                 .target(.licensesFeature),
+                .target(.logging),
                 .target(.pdfPasswordsFeature),
                 .target(.savedViewsFeature),
                 .target(.serversFeature),

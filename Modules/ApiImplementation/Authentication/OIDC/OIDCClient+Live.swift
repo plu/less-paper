@@ -1,7 +1,6 @@
 import ApiInterface
 import Dependencies
 import Foundation
-import Logging
 
 extension OIDCClient: @retroactive DependencyKey {
 
@@ -45,7 +44,11 @@ actor OIDCSession {
 
             return config.data.socialaccount.providers.compactMap(\.provider)
         } catch {
-            log.info("no OIDC providers from \(url.host() ?? "server"): \(error.localizedDescription)", category: .server)
+            // Deliberately silent. A server with no single sign-on, one that is not paperless, and
+            // one that cannot be reached are the same answer here, and the only line that could
+            // distinguish them is the one that used to carry the user's hostname. ServerFormReducer
+            // logs the outcome instead - from the one place that can tell discovery from the
+            // preflight this method also serves.
             return []
         }
     }
@@ -129,9 +132,6 @@ actor OIDCSession {
     init(session: URLSession = URLSession(configuration: .ephemeral)) {
         ephemeral = session
     }
-
-    @Dependency(\.log)
-    private var log
 
     @Dependency(\.webAuthentication)
     private var webAuthentication

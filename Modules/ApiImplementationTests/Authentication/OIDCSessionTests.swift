@@ -122,6 +122,27 @@ struct OIDCSessionTests {
         }
     }
 
+    // The hostname leak was this call site. A test that only checked the host was absent would pass
+    // against a line that still carried the error text, and the error text is what made the host
+    // look necessary. Nothing at all is the requirement.
+    @Test
+    func test_providers_writesNothingToTheLog() async throws {
+        let session = OIDCSession(session: OIDCStubProtocol.session())
+        let messages = LockIsolated<[String]>([])
+
+        try await withStub(.notFound) {
+            await withDependencies {
+                $0.log.record = { message, _, _ in
+                    messages.withValue { $0.append(message) }
+                }
+            } operation: {
+                _ = await session.providers(url: URL(string: "https://paperless.example.com")!)
+            }
+        }
+
+        #expect(messages.value.isEmpty)
+    }
+
     private func withStub(_ stub: OIDCStub, operation: () async throws -> Void) async throws {
         OIDCStubProtocol.current = stub
         defer { OIDCStubProtocol.current = nil }

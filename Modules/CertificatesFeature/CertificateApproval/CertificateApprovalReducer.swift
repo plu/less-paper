@@ -2,6 +2,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import Logging
 import SwiftSharing
 import SwiftUI
 import X509
@@ -44,6 +45,11 @@ public struct CertificateApprovalReducer: Sendable {
                             )
                         )
                     }
+
+                    // Written here rather than from ApproveCertificateUseCase, which also runs for
+                    // an already-trusted certificate on every later challenge and would log each
+                    // one. No hostname: the fact that matters is that trust was granted at all.
+                    log.info("self-signed certificate trusted", category: .server)
                 } else {
                     request.completion(.performDefaultHandling, nil)
                 }
@@ -123,4 +129,7 @@ public struct CertificateApprovalReducer: Sendable {
 
     @Dependency(\.approveCertificate.execute)
     private var approveCertificate
+
+    @Dependency(\.log)
+    private var log
 }

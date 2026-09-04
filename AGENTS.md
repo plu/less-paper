@@ -393,13 +393,23 @@ in Settings that reads, shares and clears it. Nothing leaves the device unless s
   which reads the current process and nothing else. A relaunch leaves an empty log, and a relaunch is
   what people do after the app misbehaves. Every line still goes to `os_log` for Xcode and Console;
   the file is what gets shared.
-- **Bodies are never written.** One line per API request — method, redacted path, status, response
-  size — plus errors and warnings. `LogRedaction` strips credential-shaped query values and never
-  writes a header value. Its tests are the ones that matter: a denylist with no test is a rule that
-  silently stops working.
-- **The file is capped at 1 MB with one rotation**, checked on write rather than on a timer, and it
-  lives in caches so the system can reclaim it. Diagnostics must never be why a document cannot be
-  saved.
+- **No hostname is ever written to the log.** Not redacted, not truncated, not hashed: absent. A
+  user sending this file to support is sending it to a stranger, and the address of their document
+  archive identifies them. URLs reach the log only through `LogRedaction`, which keeps the path and
+  the harmless query values and drops the host — and `LogWriter.record` runs
+  `LogRedaction.redact(message:)` over every line it writes, so a message that carries a URL nobody
+  passed through `redact(_ url:)` is caught anyway. That last part is not belt and braces: printing
+  a bridged `URLError` renders its `userInfo`, which holds the full failing URL, so an error
+  description no call site composed will otherwise leak one.
+- **Bodies are never written.** One line per *failed* API request — method, redacted path, status,
+  response size — plus errors and warnings. Successful requests are not recorded: a working app
+  makes hundreds of them and they bury the lines that matter. `LogRedaction` strips
+  credential-shaped query values and never writes a header value. Its tests are the ones that
+  matter: a denylist with no test is a rule that silently stops working.
+- **The file is capped at 10,000 lines**, one file with no rotation, trimmed on write rather than on
+  a timer — and above the cap plus a tenth, so appending a line past the cap does not rewrite the
+  whole file. It lives in caches so the system can reclaim it. Diagnostics must never be why a
+  document cannot be saved.
 
 ## A green test run is not a green build
 
