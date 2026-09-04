@@ -62,6 +62,54 @@ struct AppReducerTests {
         #expect(refreshed.value)
     }
 
+    @Test
+    func test_didBecomeActive_refreshesPermissions() async {
+        let serversReceived = LockIsolated<[Server]>([])
+        let server = Server.testValue()
+
+        let store = TestStore(
+            initialState: AppReducer.State(main: MainReducer.State(server: server)),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.getCurrentUser.execute = { server in
+                    serversReceived.withValue { $0.append(server) }
+                    return .testValue()
+                }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.didBecomeActive)
+        await store.finish()
+
+        #expect(serversReceived.value == [server])
+    }
+
+    // A transient failure must leave the last known permissions in place. Clearing them would swing
+    // the whole UI on a dropped connection - to ungated with nil, or fully gated with [].
+    @Test
+    func test_didBecomeActive_keepsCachedPermissionsWhenTheRefreshFails() async {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+        $permissions.withLock { $0 = [.viewDocument] }
+
+        let store = TestStore(
+            initialState: AppReducer.State(main: MainReducer.State(server: server)),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.getCurrentUser.execute = { _ in throw ApiError(errors: ["nope"]) }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.didBecomeActive)
+        await store.finish()
+
+        #expect(permissions == [.viewDocument])
+    }
+
     // Backgrounding and foregrounding repeatedly must not stack refreshes: each one re-downloads
     // the same PDFs and holds them whole in memory. Newest wins, so the second trigger runs and the
     // first is cancelled where it stands.

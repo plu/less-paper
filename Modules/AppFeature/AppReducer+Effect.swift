@@ -59,6 +59,24 @@ extension Effect where Action == AppReducer.Action {
         )
     }
 
+    // Permissions are otherwise read only at cold launch and on a server switch, so a permission
+    // revoked while the app was backgrounded would stay invisible to it. The failure is swallowed
+    // deliberately: the cache keeps its last value rather than being cleared, because clearing
+    // swings the whole UI on a dropped connection.
+    static func runRefreshPermissions(server: Server) -> Self {
+        @Dependency(\.getCurrentUser.execute)
+        var getCurrentUser
+
+        @Dependency(\.log)
+        var log
+
+        return .run { _ in
+            _ = try await getCurrentUser(server)
+        } catch: { error, _ in
+            log.warning("permissions refresh failed: \(error.localizedDescription)", category: .api)
+        }
+    }
+
     // For the whole life of the app, not the life of the tip screen: a purchase approved through
     // Ask to Buy arrives long after that screen is gone, and TipJar has already finished the
     // transaction by the time it reaches here.
