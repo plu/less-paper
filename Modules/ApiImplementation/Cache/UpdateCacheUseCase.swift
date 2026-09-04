@@ -94,11 +94,18 @@ private extension UpdateCacheUseCase {
         let correspondentsCount = try await correspondents.count
         let customFieldsCount = try await customFields.count
         let documentTypesCount = try await documentTypes.count
-        _ = try await currentUser
         let savedViewsCount = try await savedViews.count
         _ = try await statistics
         let storagePathsCount = try await storagePaths.count
         let tagsCount = try await tags.count
+
+        // Reading your own permissions can 403 on a server that has not granted view_uisettings.
+        // Losing them costs gating, which is presentation - it must never cost the app.
+        do {
+            _ = try await currentUser
+        } catch {
+            log.warning("current user unavailable, permissions unknown: \(error.localizedDescription)", category: .api)
+        }
 
         // Users and groups are the owner and permission pickers, and nothing else. A paperless
         // account without view_user and view_group answers 403 for both while every other endpoint
