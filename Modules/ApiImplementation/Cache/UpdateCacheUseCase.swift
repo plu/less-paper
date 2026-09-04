@@ -3,6 +3,7 @@ import Dependencies
 import DependenciesMacros
 import Foundation
 import Logging
+import SwiftSharing
 
 extension UpdateCacheUseCase: @retroactive DependencyKey {
     public static let liveValue = Self(
@@ -14,6 +15,37 @@ private extension UpdateCacheUseCase {
     static func execute(
         server: Server
     ) async throws {
+        @Dependency(\.authenticationProvider)
+        var authenticationProvider
+
+        @Dependency(\.log)
+        var log
+
+        // Concrete, not @Dependency(\.continuousClock): typed as `any Clock<Duration>`, calling
+        // .duration(to:) on its existential .now fights the type checker. Nothing asserts on the
+        // elapsed value, so injectability buys nothing here.
+        let clock = ContinuousClock()
+
+        @Shared(.apiVersion(server))
+        var apiVersion: Int?
+
+        // Derived, not stored: a token means token auth, and its absence means remote-user mode,
+        // where a forward-auth proxy authenticates and no token exists. This does not distinguish a
+        // token obtained through OIDC from one obtained with a password - nothing records that.
+        let token = try? await authenticationProvider.getToken(server: server)
+
+        log.info(
+            [
+                "connected",
+                "API version \(apiVersion.map(String.init) ?? "unknown")",
+                "auth: \(token == nil ? "remote-user" : "token")",
+            ]
+            .joined(separator: " · "),
+            category: .server
+        )
+
+        let started = clock.now
+
         @Dependency(\.getCorrespondents.execute)
         var getCorrespondents
 
@@ -55,14 +87,14 @@ private extension UpdateCacheUseCase {
         async let tags = try await getTags(server)
         async let users = try await getUsers(server)
 
-        _ = try await correspondents
-        _ = try await customFields
-        _ = try await documentTypes
+        let correspondentsCount = try await correspondents.count
+        let customFieldsCount = try await customFields.count
+        let documentTypesCount = try await documentTypes.count
         _ = try await currentUser
-        _ = try await savedViews
+        let savedViewsCount = try await savedViews.count
         _ = try await statistics
-        _ = try await storagePaths
-        _ = try await tags
+        let storagePathsCount = try await storagePaths.count
+        let tagsCount = try await tags.count
 
         // Users and groups are the owner and permission pickers, and nothing else. A paperless
         // account without view_user and view_group answers 403 for both while every other endpoint
@@ -74,9 +106,6 @@ private extension UpdateCacheUseCase {
         // Not narrowed to 403: ApiError carries the body, not the status. Narrowing it would mean
         // widening ApiError, and there is little to buy - a server that is down or unreachable fails
         // the eight awaits above, so what reaches here is a failure specific to these two endpoints.
-        @Dependency(\.log)
-        var log
-
         do {
             _ = try await groups
         } catch {
@@ -88,5 +117,23 @@ private extension UpdateCacheUseCase {
         } catch {
             log.warning("users unavailable, owner and permission pickers will be empty: \(error.localizedDescription)", category: .api)
         }
+
+        log.info(
+            [
+                "cache updated in \(started.duration(to: clock.now).formatted(.units(allowed: [.seconds], fractionalPart: .show(length: 1))))",
+                Self.pluralised(tagsCount, "tag"),
+                Self.pluralised(correspondentsCount, "correspondent"),
+                Self.pluralised(documentTypesCount, "document type"),
+                Self.pluralised(savedViewsCount, "saved view"),
+                Self.pluralised(storagePathsCount, "storage path"),
+                Self.pluralised(customFieldsCount, "custom field"),
+            ]
+            .joined(separator: " · "),
+            category: .server
+        )
+    }
+
+    static func pluralised(_ count: Int, _ noun: String) -> String {
+        "\(count) \(noun)\(count == 1 ? "" : "s")"
     }
 }

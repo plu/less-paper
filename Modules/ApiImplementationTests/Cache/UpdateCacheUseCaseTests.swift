@@ -7,6 +7,23 @@ import Testing
 @Suite
 struct UpdateCacheUseCaseTests {
 
+    // UpdateCacheUseCase awaits every one of these, so a test that omits one fails on an
+    // unimplemented dependency rather than on what it meant to assert.
+    private static func cachingStubs(
+        count: Int = 1
+    ) -> (inout DependencyValues) -> Void {
+        { values in
+            values.getCorrespondents.execute = { _ in Array(repeating: .testValue(), count: count) }
+            values.getCurrentUser.execute = { _ in .testValue() }
+            values.getDocumentTypes.execute = { _ in Array(repeating: .testValue(), count: count) }
+            values.getGroups.execute = { _ in Array(repeating: .testValue(), count: count) }
+            values.getSavedViews.execute = { _ in Array(repeating: .testValue(), count: count) }
+            values.getStoragePaths.execute = { _ in Array(repeating: .testValue(), count: count) }
+            values.getTags.execute = { _ in Array(repeating: .testValue(), count: count) }
+            values.getUsers.execute = { _ in Array(repeating: .testValue(), count: count) }
+        }
+    }
+
     @Test
     func executeCallsAllCachingOperationsWithCorrectServer() async throws {
         let server = Server.testValue()
@@ -100,5 +117,62 @@ struct UpdateCacheUseCaseTests {
         }
 
         #expect(getTagsCalled.value == true)
+    }
+
+    @Test
+    func test_execute_logsTheConnectionShape() async throws {
+        let messages = LockIsolated<[String]>([])
+
+        try await withDependencies {
+            Self.cachingStubs()(&$0)
+            $0.authenticationProvider.getToken = { _ in "a-token" }
+            $0.log.record = { message, _, _ in
+                messages.withValue { $0.append(message) }
+            }
+        } operation: {
+            try await UpdateCacheUseCase.liveValue.execute(Server.testValue())
+        }
+
+        #expect(messages.value.contains { $0.hasPrefix("connected · API version ") })
+        #expect(messages.value.contains { $0.hasSuffix(" · auth: token") })
+    }
+
+    // Remote-user mode has no token: a forward-auth proxy authenticates and paperless takes the
+    // injected identity. The line has to say so rather than fail.
+    @Test
+    func test_execute_reportsRemoteUserWhenThereIsNoToken() async throws {
+        let messages = LockIsolated<[String]>([])
+
+        try await withDependencies {
+            Self.cachingStubs()(&$0)
+            $0.authenticationProvider.getToken = { _ in nil }
+            $0.log.record = { message, _, _ in
+                messages.withValue { $0.append(message) }
+            }
+        } operation: {
+            try await UpdateCacheUseCase.liveValue.execute(Server.testValue())
+        }
+
+        #expect(messages.value.contains { $0.hasSuffix(" · auth: remote-user") })
+    }
+
+    @Test
+    func test_execute_logsWhatItCached() async throws {
+        let messages = LockIsolated<[String]>([])
+
+        try await withDependencies {
+            Self.cachingStubs(count: 1)(&$0)
+            $0.log.record = { message, _, _ in
+                messages.withValue { $0.append(message) }
+            }
+        } operation: {
+            try await UpdateCacheUseCase.liveValue.execute(Server.testValue())
+        }
+
+        let summary = try #require(messages.value.first { $0.hasPrefix("cache updated in ") })
+
+        #expect(summary.contains("1 tag"))
+        #expect(summary.contains("1 correspondent"))
+        #expect(summary.contains("1 saved view"))
     }
 }
