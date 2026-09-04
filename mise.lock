@@ -3,39 +3,39 @@
 lockfile_version = 1
 
 [[tools."aqua:tuist"]]
-version = "4.205.0"
+version = "4.206.0"
 backend = "aqua:tuist"
-specifiers = ["4.205.0"]
+specifiers = ["4.206.0"]
 
 [tools."aqua:tuist"."platforms.linux-arm64"]
-checksum = "sha256:95ac8c72179b5d8bd4d09d1409a1d1d4e8ff0dee5973af7f1390026fd0e37e81"
-url = "https://github.com/tuist/tuist/releases/download/4.205.0/tuist-linux-aarch64.tar.gz"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/520684832"
+checksum = "sha256:40e1100103b83c7eec3f575e32b8a0a2bd9bb0a36bb6057dc8f79544eed19d36"
+url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist-linux-aarch64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681748"
 
 [tools."aqua:tuist"."platforms.linux-arm64-musl"]
-checksum = "sha256:95ac8c72179b5d8bd4d09d1409a1d1d4e8ff0dee5973af7f1390026fd0e37e81"
-url = "https://github.com/tuist/tuist/releases/download/4.205.0/tuist-linux-aarch64.tar.gz"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/520684832"
+checksum = "sha256:40e1100103b83c7eec3f575e32b8a0a2bd9bb0a36bb6057dc8f79544eed19d36"
+url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist-linux-aarch64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681748"
 
 [tools."aqua:tuist"."platforms.linux-x64"]
-checksum = "sha256:8c498a0474c2876f14c7a9816401dc1ccb2ae7f868b991f473f35c2507c7b1fc"
-url = "https://github.com/tuist/tuist/releases/download/4.205.0/tuist-linux-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/520684831"
+checksum = "sha256:c014356ce188f8f53021c0d0eb810c7d60e526766ec9d7175de898883e16256e"
+url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681751"
 
 [tools."aqua:tuist"."platforms.linux-x64-musl"]
-checksum = "sha256:8c498a0474c2876f14c7a9816401dc1ccb2ae7f868b991f473f35c2507c7b1fc"
-url = "https://github.com/tuist/tuist/releases/download/4.205.0/tuist-linux-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/520684831"
+checksum = "sha256:c014356ce188f8f53021c0d0eb810c7d60e526766ec9d7175de898883e16256e"
+url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681751"
 
 [tools."aqua:tuist"."platforms.macos-arm64"]
-checksum = "sha256:f83c742c80112e6d61ee3d4a2fa888c813ad86b94a787b1fe7ab4d7386dcafd5"
-url = "https://github.com/tuist/tuist/releases/download/4.205.0/tuist.zip"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/520684830"
+checksum = "sha256:4214560b37dc99713968ed26ed109cad6c854d501216092724717fe6125f8561"
+url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist.zip"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681746"
 
 [tools."aqua:tuist"."platforms.macos-x64"]
-checksum = "sha256:f83c742c80112e6d61ee3d4a2fa888c813ad86b94a787b1fe7ab4d7386dcafd5"
-url = "https://github.com/tuist/tuist/releases/download/4.205.0/tuist.zip"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/520684830"
+checksum = "sha256:4214560b37dc99713968ed26ed109cad6c854d501216092724717fe6125f8561"
+url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist.zip"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681746"
 
 [[tools.git-lfs]]
 version = "3.8.0"
@@ -404,6 +404,7 @@ url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1-win-x64.zip"
 [[tools.ruby]]
 version = "3.4.10"
 backend = "core:ruby"
+specifiers = ["3.4.10"]
 
 [tools.ruby."platforms.windows-x64"]
 checksum = "sha256:89e3c5e235ac88b9b7e8daaf639eaaab74d7c470667354f6bf0f7432f3191ebb"
@@ -461,8 +462,3 @@ url_api = "https://api.github.com/repos/mono0926/LicensePlist/releases/assets/49
 version = "0.65.1"
 backend = "asdf:swiftlint"
 specifiers = ["0.65.1"]
-
-[[tools.tuist]]
-version = "4.206.0"
-backend = "asdf:tuist"
-specifiers = ["4.206.0"]

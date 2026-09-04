@@ -33,7 +33,6 @@ env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   TUIST_GITHUB_RUN_NUMBER: ${{ github.run_number }}
-  TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
 
 jobs:
   test_unit:
@@ -64,7 +63,12 @@ jobs:
 
       - run: mise simulators:prepare
 
+      # Scoped to this step rather than the workflow, because it lands in every module's Info.plist
+      # and so in every module's cache hash. At workflow level it also reached `ci:cache` below,
+      # which warmed the whole graph under a hash no developer's `tuist generate` ever asks for.
       - run: fnox exec -P ci -- mise ci:test:unit
+        env:
+          TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
 
       - name: Upload test results
         if: failure()
@@ -104,7 +108,10 @@ jobs:
 
       - run: mise simulators:prepare
 
+      # See the note on ci:test:unit for why this is not workflow-level.
       - run: fnox exec -P ci -- mise ci:test:ui
+        env:
+          TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
 
       # A failing XCUITest records the app's accessibility hierarchy and a video at the moment it
       # gave up. Without the bundle a UI failure reports only which assertion failed, which is

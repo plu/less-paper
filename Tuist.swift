@@ -14,6 +14,11 @@ let tuist = Tuist(
         // README tells a contributor to run `tuist generate`, so on a fresh clone that has to work
         // without a Tuist account. With it, an authenticated run still gets insights and the
         // binary cache; an unauthenticated one simply goes without.
-        generationOptions: .options(optionalAuthentication: true)
+        generationOptions: .options(optionalAuthentication: true),
+        // The profile has to live here rather than on `tuist cache`'s command line, because
+        // `tuist generate` reads it from this file and defaults to `.onlyExternal` otherwise. A
+        // warm that filtered targets differently from the generate that looks them up leaves the
+        // internal modules out of the cache entirely — nothing to find, however full the cache is.
+        cacheOptions: .options(profiles: .profiles(default: .allPossible))
     )
 )
