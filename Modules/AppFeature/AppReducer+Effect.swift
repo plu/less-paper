@@ -1,8 +1,11 @@
 import ApiInterface
 import ComposableArchitecture
 import Foundation
+import ImageFeature
+import Logging
 import SwiftSharing
 import TipsFeature
+import UIKit
 
 extension Effect where Action == AppReducer.Action {
 
@@ -66,6 +69,56 @@ extension Effect where Action == AppReducer.Action {
         return .run { send in
             for await tip in updates() {
                 await send(.tipReceived(tip))
+            }
+        }
+    }
+
+    // Two lines, written detached: measuring walks the caches directory and a launch must not wait
+    // on it. Nothing downstream depends on the result, so there is nothing to send back.
+    static func runLogLaunchContext() -> Self {
+        @Dependency(\.deviceContext)
+        var deviceContext
+
+        @Dependency(\.imageCacheUsage)
+        var imageCacheUsage
+
+        @Dependency(\.log)
+        var log
+
+        @Dependency(\.storageUsage)
+        var storageUsage
+
+        return .run { _ in
+            log.info(deviceContext.launchLine(), category: .app)
+
+            let images = await imageCacheUsage.read()
+            let appGroup = storageUsage.measure([.applicationGroupDirectory])
+            let logFiles = storageUsage.measure(await log.fileURLs())
+
+            log.info(
+                [
+                    "caches: images \(images.formatted())",
+                    "app group \(appGroup.formatted())",
+                    "log \(logFiles.formattedBytes())",
+                ]
+                .joined(separator: " · "),
+                category: .app
+            )
+        }
+    }
+
+    // A background termination and a crash look identical from the user's side, and a memory
+    // warning shortly before the log ends is the difference.
+    static func runMemoryWarningObserver() -> Self {
+        @Dependency(\.log)
+        var log
+
+        return .run { _ in
+            let warnings = NotificationCenter.default.notifications(
+                named: await UIApplication.didReceiveMemoryWarningNotification
+            )
+            for await _ in warnings {
+                log.warning("memory warning", category: .app)
             }
         }
     }

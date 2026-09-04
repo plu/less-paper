@@ -4,6 +4,7 @@ import ApiInterface
 import AsyncAlgorithms
 import ComposableArchitecture
 import Foundation
+import Logging
 import SwiftUI
 import Testing
 import TestSupport
@@ -164,6 +165,46 @@ struct CertificateApprovalReducerTests {
         #expect(completed.value == ["presented", "first", "second"])
 
         await bootstrap.cancel()
+    }
+
+    @Test
+    func test_certificateApprovalResponse_logsAnApproval() async {
+        let messages = LockIsolated<[String]>([])
+        let request = CertificateApprovalRequest.testValue()
+
+        let store = TestStore(initialState: CertificateApprovalReducer.State()) {
+            CertificateApprovalReducer()
+        } withDependencies: {
+            $0.approveCertificate.execute = { _ in true }
+            $0.log.record = { message, _, _ in
+                messages.withValue { $0.append(message) }
+            }
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.certificateApprovalResponse(request, true))
+
+        #expect(messages.value == ["self-signed certificate trusted"])
+    }
+
+    @Test
+    func test_certificateApprovalResponse_logsNothingWhenDeclined() async {
+        let messages = LockIsolated<[String]>([])
+        // approveCertificate's testValue answers false, which is the declined path.
+        let request = CertificateApprovalRequest.testValue()
+
+        let store = TestStore(initialState: CertificateApprovalReducer.State()) {
+            CertificateApprovalReducer()
+        } withDependencies: {
+            $0.log.record = { message, _, _ in
+                messages.withValue { $0.append(message) }
+            }
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.certificateApprovalResponse(request, false))
+
+        #expect(messages.value.isEmpty)
     }
 }
 

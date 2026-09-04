@@ -5,6 +5,7 @@ import Foundation
 /// An enum rather than a string, so a typo cannot invent a category that appears in exactly one
 /// user's log and matches nothing when you go looking for it.
 public enum LogCategory: String, CaseIterable, Sendable {
+    case app
     case api
     case documents
     case server

@@ -21,10 +21,17 @@ public struct AppView: View {
             }
         }
         .onChange(of: scenePhase) { _, newPhase in
-            guard newPhase == .active else {
-                return
+            switch newPhase {
+            case .active:
+                store.send(.lifecyclePhaseChanged(.active))
+                store.send(.didBecomeActive)
+            case .background:
+                store.send(.lifecyclePhaseChanged(.background))
+            case .inactive:
+                store.send(.lifecyclePhaseChanged(.inactive))
+            @unknown default:
+                break
             }
-            store.send(.didBecomeActive)
         }
         .onOpenURL { url in
             store.send(.openURL(url))

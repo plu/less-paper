@@ -1,6 +1,7 @@
 import Dependencies
 import DependenciesMacros
 import Foundation
+import Logging
 
 @DependencyClient
 struct GetAppVersionUseCase: Sendable {
@@ -21,11 +22,11 @@ extension GetAppVersionUseCase: DependencyKey {
 
 private extension GetAppVersionUseCase {
     static func execute() -> String {
-        [
-            Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
-            Bundle.main.infoDictionary?["CFBundleVersion"] as? String
-        ]
-        .compactMap(\.self).joined(separator: "-")
+        @Dependency(\.deviceContext)
+        var deviceContext
+
+        return [deviceContext.appVersion(), deviceContext.appBuild()]
+            .joined(separator: "-")
     }
 }
 

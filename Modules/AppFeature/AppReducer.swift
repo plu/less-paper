@@ -5,6 +5,7 @@ import Components
 import ComposableArchitecture
 import ForwardAuthFeature
 import Foundation
+import Logging
 import ServersFeature
 import TipsFeature
 
@@ -18,6 +19,14 @@ struct PendingDeepLink: Equatable {
     let server: Server
 }
 
+// Mirrors SwiftUI's ScenePhase rather than using it, so the reducer and its tests do not depend on
+// SwiftUI. AppView does the mapping.
+public enum AppLifecyclePhase: String, Sendable {
+    case active
+    case background
+    case inactive
+}
+
 @Reducer
 public struct AppReducer {
 
@@ -28,6 +37,8 @@ public struct AppReducer {
         case certificateApproval(CertificateApprovalReducer.Action)
         case didBecomeActive
         case forwardAuth(ForwardAuthReducer.Action)
+        case lifecyclePhaseChanged(AppLifecyclePhase)
+        case logLaunchContext
         case main(MainReducer.Action)
         case openURL(URL)
         case selectedServerChanged(Server?)
@@ -117,12 +128,19 @@ public struct AppReducer {
                         await send(.forwardAuth(.bootstrap))
                     })
                     .merge(with: .runTipObserver())
+                    .merge(with: .send(.logLaunchContext))
+                    .merge(with: .runMemoryWarningObserver())
             case .didBecomeActive:
                 guard let server = state.main?.server else {
                     return .none
                 }
                 return .runRefreshStatistics(server: server)
                     .merge(with: .runRefreshFavorites(server: server))
+            case let .lifecyclePhaseChanged(phase):
+                log.info("scene phase: \(phase.rawValue)", category: .app)
+                return .none
+            case .logLaunchContext:
+                return .runLogLaunchContext()
             case .selectedServerChanged(let server):
                 if let server {
                     state.main = MainReducer.State(server: server)
@@ -152,4 +170,7 @@ public struct AppReducer {
     }
 
     public init() {}
+
+    @Dependency(\.log)
+    private var log
 }

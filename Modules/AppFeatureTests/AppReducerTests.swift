@@ -4,12 +4,15 @@ import ApiInterface
 import ComposableArchitecture
 import Foundation
 import IdentifiedCollections
+import ImageFeature
+import Logging
 import ServersFeature
 import SettingsFeature
 import SwiftSharing
 import Testing
 import TestSupport
 import TipsFeature
+import UIKit
 
 @MainActor
 @Suite(
@@ -110,6 +113,27 @@ struct AppReducerTests {
     }
 
     @Test
+    func test_lifecyclePhaseChanged_logsTheTransition() async {
+        let messages = LockIsolated<[String]>([])
+
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.log.record = { message, _, _ in
+                    messages.withValue { $0.append(message) }
+                }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.lifecyclePhaseChanged(.background))
+        await store.send(.lifecyclePhaseChanged(.active))
+
+        #expect(messages.value == ["scene phase: background", "scene phase: active"])
+    }
+
+    @Test
     func test_bootstrap() async {
         let updateCacheServer = LockIsolated<Server?>(nil)
         let server1 = Server.testValue(alias: "Server 1", id: "1")
@@ -129,6 +153,8 @@ struct AppReducerTests {
             }
         )
         let bootstrap = await store.send(.bootstrap)
+
+        await store.receive(\.logLaunchContext)
 
         await store.receive(\.selectedServerChanged, server1) {
             $0.main = MainReducer.State(server: server1)
@@ -155,6 +181,121 @@ struct AppReducerTests {
         }
 
         await bootstrap.cancel()
+    }
+
+    // .bootstrap merges runSelectedServerObserver() and runTipObserver(), both never-ending
+    // observation effects, so this sends .logLaunchContext directly rather than .bootstrap and
+    // awaiting store.finish() - which would hang forever waiting on those.
+    @Test
+    func test_bootstrap_logsTheLaunchContext() async {
+        let messages = LockIsolated<[String]>([])
+
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.log.record = { message, _, _ in
+                    messages.withValue { $0.append(message) }
+                }
+                $0.deviceContext = .testValue
+                $0.imageCacheUsage.read = { StorageUsage(bytes: 42_100_000, fileCount: 318) }
+                $0.storageUsage.measure = { _ in StorageUsage(bytes: 1_200_000, fileCount: 14) }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.logLaunchContext)
+        await store.finish()
+
+        #expect(messages.value.contains("LessPaper 1.0.0 (1) · iOS 26.0 · iPhone17,2 · en_US · debug"))
+    }
+
+    @Test
+    func test_bootstrap_logsCacheSizes() async {
+        let messages = LockIsolated<[String]>([])
+
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.log.record = { message, _, _ in
+                    messages.withValue { $0.append(message) }
+                }
+                $0.imageCacheUsage.read = { StorageUsage(bytes: 42_100_000, fileCount: 318) }
+                $0.storageUsage.measure = { _ in StorageUsage(bytes: 1_200_000, fileCount: 14) }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.logLaunchContext)
+        await store.finish()
+
+        #expect(messages.value.contains { $0.hasPrefix("caches: images 42.1 MB / 318 files · app group ") })
+    }
+
+    // The two tests above cover runLogLaunchContext() in isolation, so this only confirms
+    // .bootstrap really does trigger it. It never awaits store.finish(): .bootstrap also merges
+    // the never-ending selected-server and tip observers, and finish() would wait on those forever.
+    @Test
+    func test_bootstrap_sendsLogLaunchContext() async {
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                // bootstrap also starts the tip observer, and an unstubbed TipJar.updates reports
+                // an "Unimplemented" issue the moment it is called.
+                $0.tipJar.updates = { AsyncStream { $0.finish() } }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        let bootstrap = await store.send(.bootstrap)
+
+        await store.receive(\.logLaunchContext)
+
+        await bootstrap.cancel()
+    }
+
+    // The memory warning line only exists for the crash-adjacent case nobody is watching, which is
+    // exactly why it needs a test: if the observer stopped being started, nothing would ever say so.
+    //
+    // The notification is posted in a loop because nothing signals when the effect's AsyncSequence
+    // has begun observing, and a post that lands before it does is not delivered to anyone. Posting
+    // again is harmless - the assertion is that the line appears, not how many times. And the
+    // bootstrap task is cancelled rather than finished: .bootstrap merges never-ending observers,
+    // so store.finish() would wait on them forever.
+    @Test
+    func test_bootstrap_logsAMemoryWarning() async {
+        let messages = LockIsolated<[String]>([])
+
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.log.record = { message, _, _ in
+                    messages.withValue { $0.append(message) }
+                }
+                $0.deviceContext = .testValue
+                $0.imageCacheUsage.read = { .zero }
+                $0.storageUsage.measure = { _ in .zero }
+                $0.tipJar.updates = { AsyncStream { $0.finish() } }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        let bootstrap = await store.send(.bootstrap)
+
+        for _ in 1 ... 200 where !messages.value.contains("memory warning") {
+            NotificationCenter.default.post(
+                name: UIApplication.didReceiveMemoryWarningNotification,
+                object: nil
+            )
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+
+        await bootstrap.cancel()
+
+        #expect(messages.value.contains("memory warning"))
     }
 
     // Selecting a different server writes @Shared(.selectedServer), which makes this reducer
