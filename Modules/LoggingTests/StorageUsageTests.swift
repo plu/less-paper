@@ -59,7 +59,7 @@ struct StorageUsageTests {
     func test_formatted_isStableAcrossLocales() {
         #expect(StorageUsage(bytes: 1_200_000, fileCount: 14).formatted() == "1.2 MB / 14 files")
         #expect(StorageUsage(bytes: 1_200_000, fileCount: 1).formatted() == "1.2 MB / 1 file")
-        #expect(StorageUsage(bytes: 0, fileCount: 0).formatted() == "Zero kB / 0 files")
+        #expect(StorageUsage(bytes: 0, fileCount: 0).formatted() == "0 bytes / 0 files")
     }
 
     private static func directory(withFiles files: [String: Int]) throws -> URL {

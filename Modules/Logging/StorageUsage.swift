@@ -21,11 +21,14 @@ public struct StorageUsage: Equatable, Sendable {
 
     public func formattedBytes() -> String {
         // en_US_POSIX so the separator and units cannot change with the reader's device: the file
-        // is read by whoever the user sends it to.
-        Int64(bytes).formatted(
-            .byteCount(style: .file)
-                .locale(Locale(identifier: "en_US_POSIX"))
-        )
+        // is read by whoever the user sends it to. spellsOutZero is turned off because the default
+        // "Zero kB" is the one value on the line that isn't numeral-first, which reads as a
+        // formatting bug and breaks grepping an otherwise consistent diagnostics file.
+        ByteCountFormatStyle(
+            style: .file,
+            spellsOutZero: false,
+            locale: Locale(identifier: "en_US_POSIX")
+        ).format(Int64(bytes))
     }
 }
 
