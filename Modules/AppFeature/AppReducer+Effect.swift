@@ -75,6 +75,10 @@ extension Effect where Action == AppReducer.Action {
         } catch: { error, _ in
             log.warning("permissions refresh failed: \(error.localizedDescription)", category: .api)
         }
+        .cancellable(
+            id: CancelID.refreshPermissions,
+            cancelInFlight: true
+        )
     }
 
     // For the whole life of the app, not the life of the tip screen: a purchase approved through
@@ -158,6 +162,7 @@ extension Effect where Action == AppReducer.Action {
 
 private enum CancelID {
     case observeSelectedServerChanges
+    case refreshPermissions
     case refreshStatistics
     case updateCache
 }

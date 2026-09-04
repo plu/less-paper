@@ -13,8 +13,13 @@ struct GetCurrentUserUseCaseTests {
     func execute() async throws {
         #expect(cache == nil)
 
+        let requests = LockIsolated(0)
+
         try await withDependencies {
-            $0.uiSettingsRepository.getUISettings = { _, _ in .testValue() }
+            $0.uiSettingsRepository.getUISettings = { _, _ in
+                requests.withValue { $0 += 1 }
+                return .testValue()
+            }
         } operation: {
             let useCase = GetCurrentUserUseCase.liveValue
 
@@ -26,6 +31,9 @@ struct GetCurrentUserUseCaseTests {
         }
 
         #expect(cache == .testValue())
+        // The endpoint that used to require a second round trip for permissions is gone; this pins
+        // that down so a future permissions source does not quietly bring a second call back.
+        #expect(requests.value == 1)
     }
 
     @Test
