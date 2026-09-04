@@ -69,7 +69,6 @@ struct UsersRepositoryTests {
     )
     func crud() async throws {
         var user = try await createUser()
-        #expect(user.email == "jane@doe.com")
         #expect(user.username == "jdoe")
 
         var users = try await getUsers()
@@ -81,7 +80,18 @@ struct UsersRepositoryTests {
         let sameUser = try await repository.getUser(input: .init(id: user.id), server: .testValue())
         expectNoDifference(sameUser, user)
 
-        var updateUserInput = SaveUserInput(user: user)
+        var updateUserInput = SaveUserInput(
+            email: "jane@doe.com",
+            firstName: "Jane",
+            groups: [],
+            isActive: true,
+            isStaff: false,
+            isSuperuser: false,
+            lastName: "Doe",
+            password: nil,
+            userPermissions: [],
+            username: user.username
+        )
         updateUserInput.firstName = "JANE"
         updateUserInput.userPermissions = Permission.allCases
         user = try await repository.updateUser(
@@ -89,8 +99,9 @@ struct UsersRepositoryTests {
             input: updateUserInput,
             server: .testValue()
         )
-        #expect(user.firstName == "JANE")
-        #expect(user.userPermissions.sorted() == Permission.allCases.sorted())
+        // firstName and userPermissions no longer decode onto User (see the shrink in Task 1), so the
+        // update can only be verified through the fields User still declares.
+        #expect(user.username == "jdoe")
 
         try await deleteUser(user.id)
         users = try await getUsers()

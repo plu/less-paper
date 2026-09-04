@@ -49,24 +49,6 @@ public struct SaveUserInput: Codable, Equatable, Sendable {
 
 public extension SaveUserInput {
 
-    init(user: User?) {
-        self.init(
-            email: user?.email ?? "",
-            firstName: user?.firstName ?? "",
-            groups: user?.groups ?? [],
-            isActive: user?.isActive ?? true,
-            isStaff: user?.isStaff ?? false,
-            isSuperuser: user?.isSuperuser ?? false,
-            lastName: user?.lastName ?? "",
-            password: nil,
-            userPermissions: user?.userPermissions ?? [],
-            username: user?.username ?? ""
-        )
-    }
-}
-
-public extension SaveUserInput {
-
     static func testValue(
         email: String = "jane@doe.com",
         firstName: String = "Jane",

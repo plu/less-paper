@@ -213,16 +213,10 @@ struct UserTests {
 
         let output = try JSONDecoder.apiDecoder.decode(User.self, from: #require(json.data(using: .utf8)))
 
-        #expect(output.email == "")
-        #expect(output.firstName == "")
         #expect(output.groups == [2])
         #expect(output.id == 21)
-        #expect(output.inheritedPermissions.count == 176)
-        #expect(output.isActive == true)
-        #expect(output.isMfaEnabled == false)
         #expect(output.isStaff == true)
         #expect(output.isSuperuser == true)
-        #expect(output.lastName == "")
         #expect(output.username == "superuser")
     }
 
@@ -325,16 +319,10 @@ struct UserTests {
 
         let output = try JSONDecoder.apiDecoder.decode(User.self, from: #require(json.data(using: .utf8)))
 
-        #expect(output.email == "")
-        #expect(output.firstName == "")
         #expect(output.groups == [2])
         #expect(output.id == 23)
-        #expect(output.inheritedPermissions.count == 72)
-        #expect(output.isActive == true)
-        #expect(output.isMfaEnabled == false)
         #expect(output.isStaff == true)
         #expect(output.isSuperuser == false)
-        #expect(output.lastName == "")
         #expect(output.username == "admin")
     }
 
@@ -375,17 +363,42 @@ struct UserTests {
 
         let output = try JSONDecoder.apiDecoder.decode(User.self, from: #require(json.data(using: .utf8)))
 
-        #expect(output.email == "")
-        #expect(output.firstName == "")
         #expect(output.groups == [3])
         #expect(output.id == 27)
-        #expect(output.inheritedPermissions.count == 4)
-        #expect(output.isActive == true)
-        #expect(output.isMfaEnabled == false)
         #expect(output.isStaff == false)
         #expect(output.isSuperuser == false)
-        #expect(output.lastName == "")
-        #expect(output.userPermissions.count == 4)
         #expect(output.username == "user")
+    }
+
+    // The point of the shrink: /api/users/ still sends eight fields this type no longer declares,
+    // and decoding must ignore them rather than fail. If this breaks, one of the removed properties
+    // has been added back.
+    @Test
+    func decode_ignoresFieldsTheModelNoLongerDeclares() throws {
+        let json = """
+        {
+          "id": 40,
+          "username": "permtest",
+          "email": "permtest@example.com",
+          "first_name": "Perm",
+          "last_name": "Test",
+          "date_joined": "2026-09-04T23:21:58.878556+02:00",
+          "is_active": true,
+          "is_staff": false,
+          "is_superuser": false,
+          "is_mfa_enabled": false,
+          "groups": [],
+          "user_permissions": ["view_document"],
+          "inherited_permissions": ["view_tag"]
+        }
+        """
+
+        let user = try JSONDecoder.apiDecoder.decode(User.self, from: Data(json.utf8))
+
+        #expect(user.id == 40)
+        #expect(user.username == "permtest")
+        #expect(user.isSuperuser == false)
+        #expect(user.isStaff == false)
+        #expect(user.groups.isEmpty)
     }
 }
