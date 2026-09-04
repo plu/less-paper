@@ -21,6 +21,9 @@ public func assertSnapshot<Value, Format>(
     timeout: TimeInterval = 5,
     fileID: StaticString = #fileID,
     file filePath: StaticString = #file,
+    // Distinct from `filePath` above, which is `#file` and so carries the module/file form that
+    // names the reference. This is the absolute path, and only the caller's is trustworthy.
+    sourcePath: StaticString = #filePath,
     testName: String = #function,
     line: UInt = #line,
     column: UInt = #column
@@ -30,7 +33,7 @@ public func assertSnapshot<Value, Format>(
         as: snapshotting,
         named: name,
         record: recording,
-        snapshotDirectory: snapshotDirectory(file: filePath),
+        snapshotDirectory: snapshotDirectory(fileID: filePath, sourcePath: sourcePath),
         timeout: timeout,
         fileID: fileID,
         file: filePath,
@@ -70,19 +73,30 @@ public extension Snapshotting where Value: SwiftUI.View, Format == UIImage {
     }
 }
 
-private func snapshotDirectory(file: StaticString) -> String {
+// Walks up from the calling test's own source path, never from this file's.
+//
+// `#filePath` is resolved when the module containing it is compiled, so using this file's would
+// bake in wherever TestSupport was built. Under Tuist's binary cache that is another machine
+// entirely: the walk then runs to `/` and trips the precondition below, crashing the test process
+// rather than failing an assertion — which reads as an unexplained xctest crash and sent a real
+// investigation looking at simulators and runtimes first. The caller is a test target, which is
+// compiled rather than restored, so its path is the one that can be trusted.
+private func snapshotDirectory(fileID: StaticString, sourcePath: StaticString) -> String {
     let fileManager = FileManager.default
-    var result = URL(fileURLWithPath: String(#filePath))
+    var result = URL(fileURLWithPath: String(sourcePath))
     repeat {
         result.deleteLastPathComponent()
         if fileManager.fileExists(atPath: result.appendingPathComponent("Snapshots").path()) {
             return result
                 .appendingPathComponent("Snapshots")
-                .appendingPathComponent(String(file))
+                .appendingPathComponent(String(fileID))
                 .deletingPathExtension()
                 .path()
         }
-        precondition(result.path() != "/", "Couldn't find a Snapshot directory")
+        precondition(
+            result.path() != "/",
+            "Couldn't find a Snapshots directory above \(String(sourcePath)). If that path is not on this machine, the calling module was restored from the binary cache rather than compiled."
+        )
     } while true
 }
 

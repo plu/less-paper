@@ -69,8 +69,10 @@ Both plausible, neither timed:
   discards derived data on a runner where it would otherwise persist. Worth timing now that the
   binary cache and selective testing both depend on what survives between runs.
 
-The other two are settled: selective testing is on, and `ci:cache` warms `all-possible` rather
-than only the external dependencies.
+The other two are settled: selective testing is on, and `ci:cache` warms only the external
+dependencies. Warming `all-possible` — the internal modules too — was tried in #60 and reverted:
+a binary-cached `TestSupport` resolves `#filePath` to the machine that built it, which crashes
+every snapshot test in the project. `Tuist.swift` carries the detail.
 
 Surfaced during: the CI runtime investigation, 2026-08-15; re-checked 2026-08-30.
 

@@ -6,7 +6,9 @@ set -euo pipefail
 # because the hash it uploads under is the hash that generate looks up — warm it under anything
 # else and the cache fills with entries nobody ever finds.
 #
-# `--cache-profile all-possible` moved into Tuist.swift, which `tuist generate` reads too.
+# `--cache-profile` is not passed: the profile lives in Tuist.swift, which `tuist generate` reads
+# too. It is `only-external` there — warming this repository's own modules as well was tried and
+# reverted, because a cached TestSupport breaks every snapshot test. Tuist.swift says why.
 # `--configuration Debug` is simply gone: it changed the hash even though Debug is already the
 # default configuration, so passing it turned all 72 external targets into misses.
 #
