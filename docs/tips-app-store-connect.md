@@ -1,17 +1,21 @@
 # The tips in App Store Connect
 
-Three consumables, **created on 2026-08-29** by a throwaway script (not committed) and verified
+Four consumables, **created on 2026-08-29** by a throwaway script (not committed) and verified
 afterwards by reading them back: each is `CONSUMABLE`, carries both localizations, and has a price
 schedule. **Product ids can never be renamed or reused**, so they are recorded here rather than left
 to be rediscovered.
 
 | Product id | Apple's internal id |
 |---|---|
+| `com.aptumtek.app.Paperless.tip.tiny` | TBC — read back from App Store Connect |
 | `com.aptumtek.app.Paperless.tip.small` | 6806529459 |
 | `com.aptumtek.app.Paperless.tip.medium` | 6806529928 |
 | `com.aptumtek.app.Paperless.tip.large` | 6806529936 |
 
-All three currently read `MISSING_METADATA`, which is expected and means only that the review
+The tiny product's internal id and German localization still need to be filled in from App Store
+Connect — nobody has read them back yet.
+
+All four currently read `MISSING_METADATA`, which is expected and means only that the review
 screenshot below has not been uploaded yet.
 
 ## Precondition: the Paid Apps agreement
@@ -25,6 +29,7 @@ check in Agreements, Tax and Banking.
 
 | Product id | en-US | de-DE | Price (base: Germany) |
 |---|---|---|---|
+| `com.aptumtek.app.Paperless.tip.tiny` | Tiny tip | TBC — read back from App Store Connect | €1 |
 | `com.aptumtek.app.Paperless.tip.small` | Small tip | Kleines Trinkgeld | €5 |
 | `com.aptumtek.app.Paperless.tip.medium` | Medium tip | Mittleres Trinkgeld | €10 |
 | `com.aptumtek.app.Paperless.tip.large` | Large tip | Großes Trinkgeld | €25 |
@@ -47,7 +52,7 @@ rather than an amount.
 ## What still has to be done by hand
 
 - **A review screenshot per product.** Apple requires one before a product can be submitted. A
-  capture of the tip screen (Settings → Tips) is enough; the same image serves all three.
+  capture of the tip screen (Settings → Tips) is enough; the same image serves all four.
 - **Submission for review.** Apple has historically required a first in-app purchase to be reviewed
   alongside an app version rather than on its own; newer App Store Connect flows may allow
   submitting products independently. Check which applies when submitting — it changes the release
@@ -66,5 +71,5 @@ GET for this key, so existing products have to be listed through `v1/apps/{id}/i
 ## Testing without them
 
 `Tuist/Tips.storekit` is wired into the "Less Paper" scheme's run action, so the simulator serves
-these three products locally and the purchase sheet works with no App Store Connect involvement at
+these four products locally and the purchase sheet works with no App Store Connect involvement at
 all. Purchases made against it are fake and cost nothing.
