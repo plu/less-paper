@@ -3,6 +3,21 @@
   "nonRenewingSubscriptions" : [],
   "products" : [
     {
+      "displayPrice" : "1.00",
+      "familyShareable" : false,
+      "internalID" : "A1000004",
+      "localizations" : [
+        {
+          "description" : "Supports development. Unlocks nothing.",
+          "displayName" : "Tiny tip",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.aptumtek.app.Paperless.tip.tiny",
+      "referenceName" : "Tiny tip",
+      "type" : "Consumable"
+    },
+    {
       "displayPrice" : "5.00",
       "familyShareable" : false,
       "internalID" : "A1000001",
