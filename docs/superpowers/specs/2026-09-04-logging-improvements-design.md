@@ -149,8 +149,12 @@ exactly as it is. A `UIApplication.didReceiveMemoryWarningNotification` observer
 warnings. Both are cheap and both explain reports that otherwise have no evidence at all: a
 termination in the background looks identical to a crash from the user's side.
 
-**Module dependencies.** `AppFeature` gains `.target(.logging)` and `.target(.imageFeature)` in
-`Module+Dependencies.swift`. Neither module depends on `AppFeature`, so no cycle.
+**Module dependencies.** In `Module+Dependencies.swift`, `AppFeature` gains `.target(.logging)` and
+`.target(.imageFeature)`; `ServersFeature` and `CertificatesFeature` each gain `.target(.logging)`.
+`ServersFeature` already reaches `Logging` transitively through `DiagnosticsFeature`, but a module
+that imports `Logging` should declare it — the transitive path exists to give Settings a Diagnostics
+screen and could disappear without warning. None of these modules is depended on by `Logging` or
+`ImageFeature`, so no cycle.
 
 ### `ApiImplementation`
 
@@ -159,7 +163,7 @@ app starts talking to a server — reached from adding a server and from selecti
 cold launch — and it already holds every count and a `log`:
 
 ```
-INFO  server  connected · API version 9 · auth: token · trusted certificate: yes
+INFO  server  connected · API version 9 · auth: token
 INFO  server  cache updated in 1.8s · 34 tags · 12 correspondents · 8 document types · 5 saved views · 3 storage paths · 6 custom fields
 ```
 
@@ -191,10 +195,19 @@ server that does offer providers produces one more line when the count changes.
 
 ### `CertificatesFeature`
 
-**`ApproveCertificateUseCase` logs an approval**, hostname-free: `INFO server self-signed
-certificate trusted`. The fact lives here, where the certificate is actually approved. Reading
-`trustedCertificates` from `UpdateCacheUseCase` instead would mean making a key that is deliberately
-internal to this module public, to answer a question this module can answer itself.
+**`CertificateApprovalReducer` logs an approval**, hostname-free:
+
+```
+INFO  server  self-signed certificate trusted
+```
+
+Written from `.certificateApprovalResponse` when the user approves, which is the moment the
+certificate is actually added to `trustedCertificates` — not from `ApproveCertificateUseCase`, which
+also runs for an already-trusted certificate on every subsequent challenge and would log on each
+one. The connect line above deliberately says nothing about certificates: reading
+`trustedCertificates` from `UpdateCacheUseCase` would mean making a key that is deliberately
+internal to `CertificatesFeature` public, to answer a question that module can answer itself, and
+the answer would be per-app rather than per-server anyway.
 
 ## Testing
 
