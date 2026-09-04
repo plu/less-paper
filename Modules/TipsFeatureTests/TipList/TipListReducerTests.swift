@@ -15,8 +15,8 @@ struct TipListReducerTests {
     @Test
     func onAppear_loadsTheProducts() async {
         let products = [
-            TipProduct(displayName: "Small tip", displayPrice: "€5.00", tip: .small),
-            TipProduct(displayName: "Medium tip", displayPrice: "€10.00", tip: .medium),
+            TipProduct(displayName: "Small tip", displayPrice: "€5.00", price: 5, tip: .small),
+            TipProduct(displayName: "Medium tip", displayPrice: "€10.00", price: 10, tip: .medium),
         ]
 
         let store = TestStore(

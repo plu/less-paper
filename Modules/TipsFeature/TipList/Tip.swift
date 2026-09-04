@@ -17,4 +17,7 @@ public enum Tip: String, CaseIterable, Equatable, Identifiable, Sendable {
     case large = "com.aptumtek.app.Paperless.tip.large"
 
     public var id: String { rawValue }
+
+    // Position in allCases, used to break a price tie into a fixed order.
+    var rank: Int { Self.allCases.firstIndex(of: self) ?? 0 }
 }
