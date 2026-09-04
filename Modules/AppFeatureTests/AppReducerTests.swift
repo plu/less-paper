@@ -112,6 +112,27 @@ struct AppReducerTests {
     }
 
     @Test
+    func test_lifecyclePhaseChanged_logsTheTransition() async {
+        let messages = LockIsolated<[String]>([])
+
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.log.record = { message, _, _ in
+                    messages.withValue { $0.append(message) }
+                }
+            }
+        )
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.lifecyclePhaseChanged(.background))
+        await store.send(.lifecyclePhaseChanged(.active))
+
+        #expect(messages.value == ["scene phase: background", "scene phase: active"])
+    }
+
+    @Test
     func test_bootstrap() async {
         let updateCacheServer = LockIsolated<Server?>(nil)
         let server1 = Server.testValue(alias: "Server 1", id: "1")

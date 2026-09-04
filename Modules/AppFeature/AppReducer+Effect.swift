@@ -5,6 +5,7 @@ import ImageFeature
 import Logging
 import SwiftSharing
 import TipsFeature
+import UIKit
 
 extension Effect where Action == AppReducer.Action {
 
@@ -103,6 +104,22 @@ extension Effect where Action == AppReducer.Action {
                 .joined(separator: " · "),
                 category: .app
             )
+        }
+    }
+
+    // A background termination and a crash look identical from the user's side, and a memory
+    // warning shortly before the log ends is the difference.
+    static func runMemoryWarningObserver() -> Self {
+        @Dependency(\.log)
+        var log
+
+        return .run { _ in
+            let warnings = NotificationCenter.default.notifications(
+                named: await UIApplication.didReceiveMemoryWarningNotification
+            )
+            for await _ in warnings {
+                log.warning("memory warning", category: .app)
+            }
         }
     }
 
