@@ -501,6 +501,7 @@ extension Module {
                 .target(.diagnosticsFeature),
                 .target(.documentTypesFeature),
                 .target(.licensesFeature),
+                .target(.logging),
                 .target(.pdfPasswordsFeature),
                 .target(.savedViewsFeature),
                 .target(.serversFeature),
