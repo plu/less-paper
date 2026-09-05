@@ -8,8 +8,8 @@ extension StoragePathRowReducer.State {
         server: Server = .testValue()
     ) -> Self {
         .init(
-            storagePath: storagePath,
-            server: server
+            server: server,
+            storagePath: storagePath
         )
     }
 }

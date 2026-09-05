@@ -4,6 +4,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 import TestSupport
 
@@ -167,5 +168,41 @@ struct TagListReducerTests {
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
         }
+    }
+
+    // The toolbar "+" is gated on .addTag, but this project's NavigationStack snapshots do not
+    // render nav-bar chrome, so no image can show its absence. This asserts the gate instead - and
+    // the third expectation is the one that catches gating tags on a neighbouring entity's
+    // permission, which would compile and look identical.
+    @Test
+    func listGatesOnTagPermissionsSpecifically() {
+        let server = Server.testValue()
+
+        @Shared(.currentUser(server))
+        var user: User?
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
+        $user.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewTag] }
+
+        let state = TagListReducer.State(server: server)
+
+        #expect(!state.canCreate)
+        #expect(state.permissions.can(.viewTag))
+        #expect(!state.permissions.can(.addCorrespondent))
+    }
+
+    // This restates ServerPermissionsTests.nilCacheAllowsEverything: with a nil cache, can
+    // returns true for any server, so this passes even if State wired ServerPermissions to a
+    // different Server entirely. The genuinely end-to-end fail-open evidence is the pre-existing,
+    // unseeded testSnapshot.empty.png in TagListViewTests - it renders every control with no
+    // cache seeded at all. This test only re-checks the rule.
+    @Test
+    func listAllowsEverythingWhenNothingHasBeenRead() {
+        let state = TagListReducer.State(server: .testValue())
+
+        #expect(state.canCreate)
     }
 }

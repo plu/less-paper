@@ -29,9 +29,28 @@ public struct TagRowReducer: Sendable {
 
         var isUpdating = false
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        var canEdit: Bool { permissions.can(.changeTag) }
+
+        var canDelete: Bool { permissions.can(.deleteTag) }
+
         let server: Server
 
         let tag: Tag
+
+        init(
+            isUpdating: Bool = false,
+            server: Server,
+            tag: Tag
+        ) {
+            self.isUpdating = isUpdating
+            self.server = server
+            self.tag = tag
+            permissions = ServerPermissions(server: server)
+        }
     }
 
     public var body: some ReducerOf<Self> {

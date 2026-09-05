@@ -13,8 +13,8 @@ extension SavedViewListReducer.State {
             savedViews: IdentifiedArray(
                 uniqueElements: savedViews.map {
                     SavedViewRowReducer.State(
-                        savedView: $0,
-                        server: server
+                        server: server,
+                        savedView: $0
                     )
                 }
             ),

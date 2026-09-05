@@ -147,6 +147,64 @@ struct UpdateCacheUseCaseTests {
         #expect(getTagsCalled.value == true)
     }
 
+    // The same bug as the two above, for the lists rather than the pickers. An account holding
+    // only view_document answers 403 on all six entity endpoints, and because adding a server runs
+    // this use case, the throw aborted the login after the token was already in the keychain - the
+    // account could not be added at all. Reproduced with the perm-none seed user.
+    @Test
+    func executeSurvivesEveryEntityListBeingForbidden() async throws {
+        let forbidden = ApiError(errors: ["You do not have permission to perform this action."])
+        let currentUserRead = LockIsolated(false)
+
+        try await withDependencies {
+            $0.getCorrespondents.execute = { _ in throw forbidden }
+            $0.getCustomFields.execute = { _ in throw forbidden }
+            $0.getDocumentTypes.execute = { _ in throw forbidden }
+            $0.getSavedViews.execute = { _ in throw forbidden }
+            $0.getStoragePaths.execute = { _ in throw forbidden }
+            $0.getTags.execute = { _ in throw forbidden }
+            $0.getGroups.execute = { _ in throw forbidden }
+            $0.getUsers.execute = { _ in throw forbidden }
+            $0.getCurrentUser.execute = { _ in
+                currentUserRead.setValue(true)
+                return .testValue()
+            }
+        } operation: {
+            try await UpdateCacheUseCase.liveValue.execute(Server.testValue())
+        }
+
+        // Not merely "it did not throw": the permissions still have to be read, because they are
+        // what the gating reads afterwards. A version that gave up on the first 403 would leave
+        // the app unable to gate anything.
+        #expect(currentUserRead.value == true)
+    }
+
+    // The partial gap, which is the commoner one: full rights over tags and nothing else. Every
+    // other list 403s while tags succeeds, so this catches a fix that only tolerates the
+    // all-or-nothing case.
+    @Test
+    func executeSurvivesAPartialEntityPermissionGap() async throws {
+        let forbidden = ApiError(errors: ["You do not have permission to perform this action."])
+        let tagsRead = LockIsolated(false)
+
+        try await withDependencies {
+            Self.cachingStubs()(&$0)
+            $0.getCorrespondents.execute = { _ in throw forbidden }
+            $0.getCustomFields.execute = { _ in throw forbidden }
+            $0.getDocumentTypes.execute = { _ in throw forbidden }
+            $0.getSavedViews.execute = { _ in throw forbidden }
+            $0.getStoragePaths.execute = { _ in throw forbidden }
+            $0.getTags.execute = { _ in
+                tagsRead.setValue(true)
+                return [.testValue()]
+            }
+        } operation: {
+            try await UpdateCacheUseCase.liveValue.execute(Server.testValue())
+        }
+
+        #expect(tagsRead.value == true)
+    }
+
     @Test
     func test_execute_logsTheConnectionShape() async throws {
         let messages = LockIsolated<[String]>([])

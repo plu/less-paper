@@ -8,8 +8,8 @@ extension SavedViewRowReducer.State {
         server: Server = .testValue()
     ) -> Self {
         .init(
-            savedView: savedView,
-            server: server
+            server: server,
+            savedView: savedView
         )
     }
 }

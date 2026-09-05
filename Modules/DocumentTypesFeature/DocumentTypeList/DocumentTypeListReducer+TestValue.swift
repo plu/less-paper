@@ -13,8 +13,8 @@ extension DocumentTypeListReducer.State {
             documentTypes: IdentifiedArray(
                 uniqueElements: documentTypes.map {
                     DocumentTypeRowReducer.State(
-                        documentType: $0,
-                        server: server
+                        server: server,
+                        documentType: $0
                     )
                 }
             ),

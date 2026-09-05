@@ -3,6 +3,7 @@
 import ApiInterface
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 
 @MainActor
@@ -50,5 +51,27 @@ struct DocumentTypeRowReducerTests {
 
         await store.send(.view(.editButtonTapped))
         await store.receive(\.delegate, .editDocumentType)
+    }
+
+    // A snapshot proves a control is absent; it cannot prove the absence was caused by the right
+    // permission. Gating document types on changeTag would compile and look identical.
+    @Test
+    func rowGatesOnDocumentTypePermissionsSpecifically() {
+        let server = Server.testValue()
+
+        @Shared(.currentUser(server))
+        var user: User?
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
+        $user.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.changeDocumentType] }
+
+        let state = DocumentTypeRowReducer.State(server: server, documentType: .testValue())
+
+        #expect(state.canEdit)
+        #expect(!state.canDelete)
+        #expect(!state.permissions.can(.changeTag))
     }
 }

@@ -54,6 +54,10 @@ public struct SavedViewListReducer: Sendable {
 
         var isLoaded: Bool
 
+        var permissions: ServerPermissions
+
+        var canCreate: Bool { permissions.can(.addSavedView) }
+
         public init(
             savedViews: IdentifiedArrayOf<SavedViewRowReducer.State> = [],
             destination: Destination.State? = nil,
@@ -64,6 +68,7 @@ public struct SavedViewListReducer: Sendable {
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 
@@ -74,7 +79,7 @@ public struct SavedViewListReducer: Sendable {
             switch action {
             case let .destination(.presented(.savedViewForm(.delegate(.savedViewSaved(savedView))))):
                 state.destination = nil
-                state.savedViews.updateOrAppend(SavedViewRowReducer.State(savedView: savedView, server: state.server))
+                state.savedViews.updateOrAppend(SavedViewRowReducer.State(server: state.server, savedView: savedView))
                 return .none
             case let .error(error):
                 return .toast(error)
@@ -82,8 +87,8 @@ public struct SavedViewListReducer: Sendable {
                 state.savedViews = IdentifiedArray(
                     uniqueElements: savedViews.map {
                         SavedViewRowReducer.State(
-                            savedView: $0,
-                            server: state.server
+                            server: state.server,
+                            savedView: $0
                         )
                     }
                 )

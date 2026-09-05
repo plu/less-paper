@@ -1,3 +1,4 @@
+import ApiInterface
 import Components
 import ComposableArchitecture
 import DesignTokens
@@ -29,10 +30,12 @@ public struct TagListView: View {
         }
         .task { await send(.onAppear).finish() }
         .toolbar {
-            Button(action: {
-                send(.createTagButtonTapped)
-            }) {
-                Label(.createTag, systemImage: "plus")
+            if store.canCreate {
+                Button(action: {
+                    send(.createTagButtonTapped)
+                }) {
+                    Label(.createTag, systemImage: "plus")
+                }
             }
         }
     }
@@ -52,13 +55,18 @@ public struct TagListView: View {
                     systemImage: "tag",
                     title: .noTagsFound
                 ) {
-                    Button {
-                        send(.createTagButtonTapped)
-                    } label: {
-                        Label(.createTag, systemImage: "plus.circle")
-                            .frame(maxWidth: .infinity)
+                    // No call to action for someone who cannot create tags: there is nothing there,
+                    // and they cannot change that. Saying why would explain a boundary this app is
+                    // not the one enforcing.
+                    if store.canCreate {
+                        Button {
+                            send(.createTagButtonTapped)
+                        } label: {
+                            Label(.createTag, systemImage: "plus.circle")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.primary())
                     }
-                    .buttonStyle(.primary())
                 }
             }
         }

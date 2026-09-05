@@ -41,21 +41,25 @@ struct TagRowView: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        Button {
-            send(.editButtonTapped)
-        } label: {
-            Image(systemName: "square.and.pencil")
+        if store.canEdit {
+            Button {
+                send(.editButtonTapped)
+            } label: {
+                Image(systemName: "square.and.pencil")
+            }
+            .accessibilityLabel(.editTag)
+            .tint(.m3Primary)
         }
-        .accessibilityLabel(.editTag)
-        .tint(.m3Primary)
 
-        Button {
-            send(.deleteButtonTapped)
-        } label: {
-            Image(systemName: "trash")
+        if store.canDelete {
+            Button {
+                send(.deleteButtonTapped)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .accessibilityLabel(.deleteTag)
+            .tint(.m3Error)
         }
-        .accessibilityLabel(.deleteTag)
-        .tint(.m3Error)
     }
 }
 

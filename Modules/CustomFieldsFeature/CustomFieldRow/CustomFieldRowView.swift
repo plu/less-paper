@@ -37,21 +37,25 @@ struct CustomFieldRowView: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        Button {
-            send(.editButtonTapped)
-        } label: {
-            Image(systemName: "square.and.pencil")
+        if store.canEdit {
+            Button {
+                send(.editButtonTapped)
+            } label: {
+                Image(systemName: "square.and.pencil")
+            }
+            .accessibilityLabel(.editCustomField)
+            .tint(.m3Primary)
         }
-        .accessibilityLabel(.editCustomField)
-        .tint(.m3Primary)
 
-        Button {
-            send(.deleteButtonTapped)
-        } label: {
-            Image(systemName: "trash")
+        if store.canDelete {
+            Button {
+                send(.deleteButtonTapped)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .accessibilityLabel(.deleteCustomField)
+            .tint(.m3Error)
         }
-        .accessibilityLabel(.deleteCustomField)
-        .tint(.m3Error)
     }
 }
 
@@ -60,8 +64,8 @@ struct CustomFieldRowView: View {
         CustomFieldRowView(
             store: Store(
                 initialState: CustomFieldRowReducer.State(
-                    customField: .testValue(),
-                    server: .testValue()
+                    server: .testValue(),
+                    customField: .testValue()
                 ),
                 reducer: {
                     CustomFieldRowReducer()

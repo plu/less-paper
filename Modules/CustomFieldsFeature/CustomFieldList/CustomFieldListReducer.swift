@@ -52,6 +52,10 @@ public struct CustomFieldListReducer: Sendable {
 
         var isLoaded: Bool
 
+        var permissions: ServerPermissions
+
+        var canCreate: Bool { permissions.can(.addCustomField) }
+
         let server: Server
 
         public init(
@@ -64,6 +68,7 @@ public struct CustomFieldListReducer: Sendable {
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 
@@ -91,7 +96,7 @@ public struct CustomFieldListReducer: Sendable {
                 }
             case let .destination(.presented(.customFieldForm(.delegate(.customFieldSaved(customField))))):
                 state.destination = nil
-                state.customFields.updateOrAppend(CustomFieldRowReducer.State(customField: customField, server: state.server))
+                state.customFields.updateOrAppend(CustomFieldRowReducer.State(server: state.server, customField: customField))
                 return .none
             case let .error(error):
                 return .toast(error)
@@ -99,8 +104,8 @@ public struct CustomFieldListReducer: Sendable {
                 state.customFields = IdentifiedArray(
                     uniqueElements: customFields.map {
                         CustomFieldRowReducer.State(
-                            customField: $0,
-                            server: state.server
+                            server: state.server,
+                            customField: $0
                         )
                     }
                 )

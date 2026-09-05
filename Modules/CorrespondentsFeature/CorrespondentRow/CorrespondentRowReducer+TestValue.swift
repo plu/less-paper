@@ -8,8 +8,8 @@ extension CorrespondentRowReducer.State {
         server: Server = .testValue()
     ) -> Self {
         .init(
-            correspondent: correspondent,
-            server: server
+            server: server,
+            correspondent: correspondent
         )
     }
 }

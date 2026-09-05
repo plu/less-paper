@@ -55,6 +55,10 @@ public struct StoragePathListReducer: Sendable {
 
         var isLoaded: Bool
 
+        var permissions: ServerPermissions
+
+        var canCreate: Bool { permissions.can(.addStoragePath) }
+
         public init(
             storagePaths: IdentifiedArrayOf<StoragePathRowReducer.State> = [],
             destination: Destination.State? = nil,
@@ -65,6 +69,7 @@ public struct StoragePathListReducer: Sendable {
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 
@@ -75,7 +80,7 @@ public struct StoragePathListReducer: Sendable {
             switch action {
             case let .destination(.presented(.storagePathForm(.delegate(.storagePathSaved(storagePath))))):
                 state.destination = nil
-                state.storagePaths.updateOrAppend(StoragePathRowReducer.State(storagePath: storagePath, server: state.server))
+                state.storagePaths.updateOrAppend(StoragePathRowReducer.State(server: state.server, storagePath: storagePath))
                 return .none
             case let .error(error):
                 return .toast(error)
@@ -83,8 +88,8 @@ public struct StoragePathListReducer: Sendable {
                 state.storagePaths = IdentifiedArray(
                     uniqueElements: storagePaths.map {
                         StoragePathRowReducer.State(
-                            storagePath: $0,
-                            server: state.server
+                            server: state.server,
+                            storagePath: $0
                         )
                     }
                 )

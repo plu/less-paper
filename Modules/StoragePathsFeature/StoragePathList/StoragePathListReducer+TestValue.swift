@@ -13,8 +13,8 @@ extension StoragePathListReducer.State {
             storagePaths: IdentifiedArray(
                 uniqueElements: storagePaths.map {
                     StoragePathRowReducer.State(
-                        storagePath: $0,
-                        server: server
+                        server: server,
+                        storagePath: $0
                     )
                 }
             ),

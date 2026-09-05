@@ -8,8 +8,8 @@ extension DocumentTypeRowReducer.State {
         server: Server = .testValue()
     ) -> Self {
         .init(
-            documentType: documentType,
-            server: server
+            server: server,
+            documentType: documentType
         )
     }
 }
