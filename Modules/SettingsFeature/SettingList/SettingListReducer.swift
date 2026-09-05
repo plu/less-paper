@@ -81,6 +81,8 @@ public struct SettingListReducer {
 
         var canViewTags: Bool { permissions.can(.viewTag) }
 
+        var canViewTrash: Bool { permissions.can(.deleteDocument) }
+
         let server: Server
 
         public init(

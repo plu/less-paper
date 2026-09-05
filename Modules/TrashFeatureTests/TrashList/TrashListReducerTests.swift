@@ -3,6 +3,7 @@
 import ApiInterface
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 import TestSupport
 
@@ -121,5 +122,43 @@ struct TrashListReducerTests {
         await store.receive(\.documentsLoaded) {
             $0.documents = [document]
         }
+    }
+
+    // Seeded explicitly, never left nil: a nil cache fails open and renders every control, which
+    // would make a "gated" assertion pass whether or not the gate works.
+    @Test
+    func trashActionsAreHiddenWithoutDeleteDocument() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument] }
+
+        let state = TrashListReducer.State(server: server)
+
+        #expect(!state.canModifyTrash)
+        // The neighbour check: gating trash on a document permission it does not need would
+        // compile and look identical.
+        #expect(!state.permissions.can(.changeDocument))
+    }
+
+    @Test
+    func trashActionsAreShownWithDeleteDocument() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .deleteDocument] }
+
+        #expect(TrashListReducer.State(server: server).canModifyTrash)
+    }
+
+    @Test
+    func trashActionsAreShownWhenNothingHasBeenRead() {
+        // Fail open. The end-to-end evidence for this is the existing unseeded snapshot, which
+        // renders every control; this only re-checks the rule.
+        #expect(TrashListReducer.State(server: .testValue()).canModifyTrash)
     }
 }

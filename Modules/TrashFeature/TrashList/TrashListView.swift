@@ -16,6 +16,7 @@ public struct TrashListView: View {
                 TrashRowView(
                     document: document,
                     isWorking: store.isWorkingOn.contains(document.id),
+                    canModify: store.canModifyTrash,
                     deleteForever: { send(.deleteForeverButtonTapped(document.id)) },
                     restore: { send(.restoreButtonTapped(document.id)) }
                 )
@@ -33,12 +34,14 @@ public struct TrashListView: View {
         .task { await send(.onAppear).finish() }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(role: .destructive) {
-                    send(.emptyTrashButtonTapped)
-                } label: {
-                    Label(.trashEmptyAll, systemImage: "trash.slash")
+                if store.canModifyTrash {
+                    Button(role: .destructive) {
+                        send(.emptyTrashButtonTapped)
+                    } label: {
+                        Label(.trashEmptyAll, systemImage: "trash.slash")
+                    }
+                    .disabled(store.documents.isEmpty)
                 }
-                .disabled(store.documents.isEmpty)
             }
         }
     }

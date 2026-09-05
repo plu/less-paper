@@ -48,8 +48,9 @@ struct SettingListViewTests {
 
     // Seeding the cache explicitly, never leaving it nil: a nil cache fails open and renders every
     // row, which would make a "gated" snapshot identical to an ungated one and prove nothing.
-    // PDF passwords and trash must still appear here - they have no server permission and must
-    // never be gated.
+    // PDF passwords must still appear here - it has no server permission and must never be gated.
+    // Trash is gated on delete_document, which viewTag does not grant, so it does not appear
+    // either - see testSnapshot_deleteDocumentOnly for the inverse case.
     @Test
     func testSnapshot_viewTagOnly() async throws {
         let server = seedPermissions([.viewTag])
@@ -70,6 +71,25 @@ struct SettingListViewTests {
     @Test
     func testSnapshot_noPermissions() async throws {
         let server = seedPermissions([])
+
+        assertSnapshot(
+            of: SettingListView(
+                store: Store(
+                    initialState: .testValue(server: server),
+                    reducer: {
+                        SettingListReducer()
+                    }
+                )
+            ),
+            as: .image(layout: .device(config: .iPhone12))
+        )
+    }
+
+    // Trash is gated on delete_document, not on any of the six entity permissions, so this is the
+    // inverse of testSnapshot_viewTagOnly: the entity rows are gone and trash is the one left.
+    @Test
+    func testSnapshot_deleteDocumentOnly() async throws {
+        let server = seedPermissions([.viewDocument, .deleteDocument])
 
         assertSnapshot(
             of: SettingListView(

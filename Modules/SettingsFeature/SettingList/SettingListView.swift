@@ -95,12 +95,14 @@ public struct SettingListView: View {
                         .listRowBackground(Color.m3SurfaceContainer)
                     }
 
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.trashList(TrashListReducer.State(server: store.server))
-                    ) {
-                        Label(.trash, systemImage: "trash")
+                    if store.canViewTrash {
+                        NavigationLink(
+                            state: SettingListReducer.Path.State.trashList(TrashListReducer.State(server: store.server))
+                        ) {
+                            Label(.trash, systemImage: "trash")
+                        }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
                 }
 
                 Section {
