@@ -115,8 +115,8 @@ SettingsFeature
 | Bulk delete | bottom toolbar | `delete_document` |
 | Edit | row context menu, detail | `change_document` |
 | Delete | row context menu | `delete_document` |
-| Notes section | detail | `view_note` |
-| Add note | notes | `add_note` |
+| Notes section entrance | the document detail toolbar's viewer menu | `view_note` |
+| Add note | the document form's note composer | `add_note` |
 | Delete note | notes | `delete_note` |
 | Create tag | document form, share form | `add_tag` |
 | Create correspondent | document form | `add_correspondent` |
@@ -154,16 +154,23 @@ catches a control gated on the wrong case, which is this project's central risk 
 the last one's.
 
 **Two assertions this project needs that Project 2 did not.** The Settings trash row and the notes
-section are *entrances*, so each gets a test that the destination is absent, not merely that a
-button inside it is. And selection mode gets a test for each half of its `or`: `change_document`
-alone and `delete_document` alone must both show it, because an `and` would pass a test that only
-ever grants both.
+section entrance are *entrances*, so each gets a test that the destination is absent, not merely
+that a button inside it is. The trash row gets that test as a snapshot, because it is a row in a
+rendered list. The notes entrance does not: it is an item inside the document detail toolbar's
+viewer menu, a nested dropdown this harness never expands, so no image can show it present or
+absent — the reducer test asserting `canViewNotes` is the only assertion this gate gets. And
+selection mode gets a test for each half of its `or`: `change_document` alone and `delete_document`
+alone must both show it, because an `and` would pass a test that only ever grants both.
 
 **Snapshots only where they discriminate.** Project 2 measured that this repo's
 `.image(layout: .device)` harness renders no nav-bar or toolbar chrome, and deleted five references
 that had come out byte-identical to their baselines. That finding applies unchanged to the document
-list's toolbar and the row context menu, so no snapshot is added for them. The notes section and
-the Settings trash row sit in the rendered body and do change the image, so those two get snapshots.
+list's toolbar, the row context menu, and the document detail toolbar's notes entrance, so none of
+those get a snapshot — a recorded reference for the notes entrance came back byte-identical to its
+ungated baseline, confirming the same finding rather than being an exception to it. The Settings
+trash row and the document form's note composer are what actually sit in a rendered body and change
+the image, so those two get snapshots: the composer's disappears along with its send button when
+`add_note` is missing, leaving the existing notes intact underneath it.
 
 ## Out of scope
 
