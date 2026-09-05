@@ -170,25 +170,25 @@
       "username": "perm-doc-reader",
       "actions": ["view"],
       "entities": ["document"],
-      "expect": "Documents visible. No import, no scan, no Select, no edit or delete swipe, no notes section."
+      "expect": "Documents visible. No import, no scan, no Select, no Edit or Delete in a row's context menu, and no Notes at any of its four entrances - the row's context menu, the detail toolbar's View menu, the viewer sheet's section menu and the edit form's section menu."
     },
     {
       "username": "perm-doc-editor",
       "actions": ["view", "change"],
       "entities": ["document"],
-      "expect": "Edit swipe and the bulk edit actions. No delete swipe, no bulk delete, no import, no scan. Select IS offered - it is gated on change OR delete."
+      "expect": "Edit in a row's context menu and the bulk edit actions. No Delete in that menu, no bulk delete, no import, no scan. Select IS offered - it is gated on change OR delete."
     },
     {
       "username": "perm-doc-deleter",
       "actions": ["view", "delete"],
       "entities": ["document"],
-      "expect": "Delete swipe, bulk delete, Trash row in Settings and its actions. No edit swipe, no bulk edit actions. Select IS offered. The mirror of perm-doc-editor: run the pair to prove edit and delete are not wired to each other's permission."
+      "expect": "Delete in a row's context menu, bulk delete, Trash row in Settings and its actions. No Edit in that menu, no bulk edit actions. Select IS offered. The mirror of perm-doc-editor: run the pair to prove edit and delete are not wired to each other's permission."
     },
     {
       "username": "perm-doc-creator",
       "actions": ["view", "add"],
       "entities": ["document"],
-      "expect": "Import, Scan and bulk Merge. No edit swipe, no delete swipe. Select is NOT offered - add_document is not one of its two permissions."
+      "expect": "Import, Scan, bulk Merge and the share sheet's Import button. No Edit or Delete in a row's context menu. Select is NOT offered - add_document is not one of its two permissions."
     },
     {
       "username": "perm-notes",
