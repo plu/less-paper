@@ -108,6 +108,10 @@ public struct ShareFormReducer {
 
         var canCreateStoragePath: Bool { permissions.can(.addStoragePath) }
 
+        // The import is a document upload, so it answers to add_document like the list toolbar's
+        // Import and the Settings row do — the share sheet is a third entrance to the same write.
+        var canImport: Bool { permissions.can(.addDocument) }
+
         public init(
             files: [URL],
             server: Server

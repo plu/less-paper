@@ -37,14 +37,16 @@ struct ShareFormView: View {
             .frame(maxWidth: .infinity)
             .disabled(store.isImporting)
 
-            Button {
-                send(.importButtonTapped)
-            } label: {
-                Text(.import)
-                    .frame(maxWidth: .infinity)
+            if store.canImport {
+                Button {
+                    send(.importButtonTapped)
+                } label: {
+                    Text(.import)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.primary(isLoading: $store.isImporting))
+                .disabled(store.isLocked)
             }
-            .buttonStyle(.primary(isLoading: $store.isImporting))
-            .disabled(store.isLocked)
         }
     }
 
