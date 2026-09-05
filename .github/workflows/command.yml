@@ -1,0 +1,82 @@
+name: Command
+
+# An escape hatch for the self-hosted runner: run one arbitrary command with the same tools and
+# secrets the other workflows get, without adding a workflow for it. Dispatch-only, so it is
+# already limited to people with write access, and it runs from the ref chosen in the UI.
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: The command to run, as a bash script
+        type: string
+        required: true
+
+# Shown in the runs list, so a dispatched run says what it did without opening it.
+run-name: ${{ inputs.command }}
+
+# One self-hosted runner, so this queues behind everything anyway. Never cancelled: a dispatched
+# command was asked for deliberately, and a second dispatch is a second thing to do, not a
+# replacement for the first.
+concurrency:
+  group: command
+  cancel-in-progress: false
+
+# As wide as ci.yml, so a dispatched command can use `gh` the way the tasks do.
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile --norc -euo pipefail {0}
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  TUIST_GITHUB_RUN_NUMBER: ${{ github.run_number }}
+
+jobs:
+  command:
+    name: Command
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          clean: false
+          lfs: true
+
+      - name: mise
+        uses: jdx/mise-action@v4
+        with:
+          cache: false
+          cache_save: false
+
+      - run: mise ci:clean
+
+      # Anything a task needs is a task away - `mise simulators:prepare && mise ci:test:unit` is a
+      # valid command - so there is nothing here but the workspace reset above.
+      #
+      # The command arrives as an environment variable rather than through `${{ }}`. Interpolating
+      # it into the script would break on the first quote or backtick in it, and would hand anyone
+      # who can dispatch the workflow a way to rewrite the rest of this step.
+      - name: Run
+        env:
+          COMMAND: ${{ inputs.command }}
+          TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
+        run: fnox exec -P ci -- bash --noprofile --norc -euo pipefail -c "$COMMAND"
+
+      - name: Summary
+        if: always()
+        env:
+          COMMAND: ${{ inputs.command }}
+        run: |
+          {
+            echo '## Command'
+            echo
+            echo '```bash'
+            echo "$COMMAND"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
