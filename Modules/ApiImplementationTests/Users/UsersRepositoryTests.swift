@@ -30,16 +30,6 @@ struct UsersRepositoryTests {
     }
 
     @Test
-    func getUser_returnsTestValue() async throws {
-        let output = try await repository.getUser(
-            input: .testValue(),
-            server: .testValue()
-        )
-
-        expectNoDifference(output, .testValue())
-    }
-
-    @Test
     func getUsers_returnsTestValue() async throws {
         let output = try await repository.getUsers(
             input: .testValue(),
@@ -69,7 +59,6 @@ struct UsersRepositoryTests {
     )
     func crud() async throws {
         var user = try await createUser()
-        #expect(user.email == "jane@doe.com")
         #expect(user.username == "jdoe")
 
         var users = try await getUsers()
@@ -78,19 +67,30 @@ struct UsersRepositoryTests {
         #expect(users.next == nil)
         #expect(users.results.contains(user))
 
-        let sameUser = try await repository.getUser(input: .init(id: user.id), server: .testValue())
-        expectNoDifference(sameUser, user)
-
-        var updateUserInput = SaveUserInput(user: user)
+        var updateUserInput = SaveUserInput(
+            email: "jane@doe.com",
+            firstName: "Jane",
+            groups: [],
+            isActive: true,
+            isStaff: false,
+            isSuperuser: false,
+            lastName: "Doe",
+            password: nil,
+            userPermissions: [],
+            username: user.username
+        )
         updateUserInput.firstName = "JANE"
+        updateUserInput.isStaff = true
         updateUserInput.userPermissions = Permission.allCases
         user = try await repository.updateUser(
             id: user.id,
             input: updateUserInput,
             server: .testValue()
         )
-        #expect(user.firstName == "JANE")
-        #expect(user.userPermissions.sorted() == Permission.allCases.sorted())
+        // firstName and userPermissions no longer decode onto User after the shrink, so isStaff is
+        // what proves the PATCH was applied - it is mutated above and is one of the five fields User
+        // still declares. Asserting username here would pass without the request happening at all.
+        #expect(user.isStaff)
 
         try await deleteUser(user.id)
         users = try await getUsers()

@@ -136,6 +136,7 @@ public struct AppReducer {
                 }
                 return .runRefreshStatistics(server: server)
                     .merge(with: .runRefreshFavorites(server: server))
+                    .merge(with: .runRefreshPermissions(server: server))
             case let .lifecyclePhaseChanged(phase):
                 log.info("scene phase: \(phase.rawValue)", category: .app)
                 return .none

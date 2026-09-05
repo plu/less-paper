@@ -14,9 +14,6 @@ private extension GetForwardAuthIdentityUseCase {
         @Dependency(\.uiSettingsRepository)
         var uiSettingsRepository
 
-        @Dependency(\.usersRepository)
-        var usersRepository
-
         do {
             // The probe has to ask as nobody. With a token attached, any healthy server answers
             // 200 and every *edit* of an ordinary server reads as remote-user mode - which then
@@ -30,11 +27,7 @@ private extension GetForwardAuthIdentityUseCase {
                     input: .init(),
                     server: server
                 )
-                let user = try await usersRepository.getUser(
-                    input: .init(id: settings.user.id),
-                    server: server
-                )
-                return user.username
+                return settings.user.username
             }
         } catch is ApiError {
             // A gate-only proxy passes the cookie-authenticated request through to paperless,

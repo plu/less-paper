@@ -18,24 +18,23 @@ private extension GetCurrentUserUseCase {
         @Shared(.currentUser(server))
         var cache: User?
 
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
         @Dependency(\.uiSettingsRepository)
         var uiSettingsRepository
 
-        @Dependency(\.usersRepository)
-        var usersRepository
-
+        // ui_settings carries the user and the flattened effective permission set. Fetching
+        // /api/users/<id>/ for the same data additionally requires view_user, which a restricted
+        // user does not have - so the second request cost a permission and bought nothing.
         let uiSettings = try await uiSettingsRepository.getUISettings(
             input: .init(),
             server: server
         )
 
-        let currentUser = try await usersRepository.getUser(
-            input: .init(id: uiSettings.user.id),
-            server: server
-        )
+        $cache.withLock { $0 = uiSettings.user }
+        $permissions.withLock { $0 = uiSettings.permissions }
 
-        $cache.withLock { $0 = currentUser }
-
-        return currentUser
+        return uiSettings.user
     }
 }

@@ -119,6 +119,34 @@ struct UpdateCacheUseCaseTests {
         #expect(getTagsCalled.value == true)
     }
 
+    // A user who cannot read their own permissions must still be able to use the app. Before this,
+    // the unguarded await meant a 403 here failed the whole cache update - and updateCache is what
+    // adding a server runs, so the server could not be added at all.
+    @Test
+    func executeSurvivesTheCurrentUserBeingForbidden() async throws {
+        let server = Server.testValue()
+        let forbidden = ApiError(errors: ["You do not have permission to perform this action."])
+        let getTagsCalled = LockIsolated(false)
+
+        try await withDependencies {
+            $0.getCorrespondents.execute = { _ in [.testValue()] }
+            $0.getCurrentUser.execute = { _ in throw forbidden }
+            $0.getDocumentTypes.execute = { _ in [.testValue()] }
+            $0.getGroups.execute = { _ in [.testValue()] }
+            $0.getSavedViews.execute = { _ in [.testValue()] }
+            $0.getStoragePaths.execute = { _ in [.testValue()] }
+            $0.getTags.execute = { _ in
+                getTagsCalled.setValue(true)
+                return [.testValue()]
+            }
+            $0.getUsers.execute = { _ in [.testValue()] }
+        } operation: {
+            try await UpdateCacheUseCase.liveValue.execute(server)
+        }
+
+        #expect(getTagsCalled.value == true)
+    }
+
     @Test
     func test_execute_logsTheConnectionShape() async throws {
         let messages = LockIsolated<[String]>([])

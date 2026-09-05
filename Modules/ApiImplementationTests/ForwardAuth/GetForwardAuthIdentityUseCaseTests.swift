@@ -17,11 +17,7 @@ struct GetForwardAuthIdentityUseCaseTests {
     func remoteUser_returnsTheUsername() async throws {
         let username = try await withDependencies {
             $0.uiSettingsRepository.getUISettings = { _, _ in
-                UISettings.testValue(user: .testValue(id: 42))
-            }
-            $0.usersRepository.getUser = { input, _ in
-                #expect(input.id == 42)
-                return User.testValue(id: 42, username: "authelia-user")
+                UISettings.testValue(user: .testValue(id: 42, username: "authelia-user"))
             }
         } operation: {
             try await GetForwardAuthIdentityUseCase.liveValue.execute(server: .testValue())
@@ -47,10 +43,7 @@ struct GetForwardAuthIdentityUseCaseTests {
                 let token = try await authenticationProvider.getToken(server: server)
                 tokenSeenByTheProbe.setValue(token)
 
-                return UISettings.testValue(user: .testValue(id: 42))
-            }
-            $0.usersRepository.getUser = { _, _ in
-                User.testValue(id: 42, username: "authelia-user")
+                return UISettings.testValue(user: .testValue(id: 42, username: "authelia-user"))
             }
         } operation: {
             try await GetForwardAuthIdentityUseCase.liveValue.execute(server: .testValue())
