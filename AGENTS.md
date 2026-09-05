@@ -49,8 +49,9 @@ works the same either way:
 Views without the macro — `DocumentBulkEditGenericValueView` is one, because it is generic — keep
 using `store.send(.view(…))`. Check for the annotation before copying a line between views.
 
-Builds are not warning-free by default, so a new warning is easy to miss. When touching a view,
-skim the build output for its file.
+A local build is warning-tolerant, so a new warning is easy to miss. When touching a view, skim the
+build output for its file — **on CI the same warning is an error**, see
+[Warnings are errors, but only on CI](#warnings-are-errors-but-only-on-ci).
 
 ## Confirmations use `ConfirmationPopupView`, never the system dialog
 
@@ -440,6 +441,35 @@ from the imports the tests actually need looks right until this check runs. The 
 Because of the masking, a formatting failure and a dependency failure look identical from the CI
 summary: one red lint step. Fix the formatting, run it again, and expect a second failure rather
 than assuming you are done.
+
+## Warnings are errors, but only on CI
+
+`SWIFT_TREAT_WARNINGS_AS_ERRORS` and `GCC_TREAT_WARNINGS_AS_ERRORS` are switched on by
+`SettingsDictionary.default` whenever `TUIST_WARNINGS_AS_ERRORS` is set, and `ci.yml` sets it on the
+three steps that compile: `ci:test:unit`, `ci:test:ui` and `ci:build`. Locally it is unset, because a
+build that goes red for an unused binding you are halfway through typing is worse than the warning.
+
+**So the way to reproduce a CI-only warning failure is to export the variable and regenerate**, not
+to look harder at a local build:
+
+```
+TUIST_WARNINGS_AS_ERRORS=true mise exec -- tuist generate --no-open
+```
+
+It is read at **generate** time, like `TUIST_PAPERLESS_TEST_URL` — a `tuist build` after a generate
+that did not carry it builds warning-tolerant, and regenerating without it puts you back.
+
+Three things about where it is applied, each deliberate:
+
+- **Project base settings, not an xcodebuild command-line override.** A `-- SWIFT_TREAT_WARNINGS_AS_ERRORS=YES`
+  passed through `tuist test` would reach the external package targets too, and a warning in
+  somebody else's source is not one this repository can fix.
+- **It changes every first-party target's fingerprint, and that is free.** `tuist cache` warms
+  `only-external` (Tuist.swift says why), so the shared cache never sees these settings; selective
+  testing compares CI runs against other CI runs, which all carry the flag.
+- **`ci:build` gets it as well, even though a failure there blocks a TestFlight upload.** It is the
+  only step that compiles Release, so a warning that appears only under optimisation has nowhere
+  else to be caught.
 
 ## The simulator is declared once, and `simulators:prepare` creates it
 
