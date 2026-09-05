@@ -137,7 +137,7 @@ extension Effect where Action == AppReducer.Action {
 
         return .run { _ in
             let warnings = NotificationCenter.default.notifications(
-                named: await UIApplication.didReceiveMemoryWarningNotification
+                named: UIApplication.didReceiveMemoryWarningNotification
             )
             for await _ in warnings {
                 log.warning("memory warning", category: .app)
