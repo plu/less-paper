@@ -30,21 +30,25 @@ struct CorrespondentRowView: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        Button {
-            send(.editButtonTapped)
-        } label: {
-            Image(systemName: "square.and.pencil")
+        if store.permissions.can(.changeCorrespondent) {
+            Button {
+                send(.editButtonTapped)
+            } label: {
+                Image(systemName: "square.and.pencil")
+            }
+            .accessibilityLabel(.editCorrespondent)
+            .tint(.m3Primary)
         }
-        .accessibilityLabel(.editCorrespondent)
-        .tint(.m3Primary)
 
-        Button {
-            send(.deleteButtonTapped)
-        } label: {
-            Image(systemName: "trash")
+        if store.permissions.can(.deleteCorrespondent) {
+            Button {
+                send(.deleteButtonTapped)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .accessibilityLabel(.deleteCorrespondent)
+            .tint(.m3Error)
         }
-        .accessibilityLabel(.deleteCorrespondent)
-        .tint(.m3Error)
     }
 }
 
@@ -53,8 +57,8 @@ struct CorrespondentRowView: View {
         CorrespondentRowView(
             store: Store(
                 initialState: CorrespondentRowReducer.State(
-                    correspondent: .testValue(),
-                    server: .testValue()
+                    server: .testValue(),
+                    correspondent: .testValue()
                 ),
                 reducer: {
                     CorrespondentRowReducer()

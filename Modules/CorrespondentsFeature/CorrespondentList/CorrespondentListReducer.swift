@@ -54,6 +54,8 @@ public struct CorrespondentListReducer: Sendable {
 
         var isLoaded: Bool
 
+        var permissions: ServerPermissions
+
         public init(
             correspondents: IdentifiedArrayOf<CorrespondentRowReducer.State> = [],
             destination: Destination.State? = nil,
@@ -64,6 +66,7 @@ public struct CorrespondentListReducer: Sendable {
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 
@@ -74,7 +77,7 @@ public struct CorrespondentListReducer: Sendable {
             switch action {
             case let .destination(.presented(.correspondentForm(.delegate(.correspondentSaved(correspondent))))):
                 state.destination = nil
-                state.correspondents.updateOrAppend(CorrespondentRowReducer.State(correspondent: correspondent, server: state.server))
+                state.correspondents.updateOrAppend(CorrespondentRowReducer.State(server: state.server, correspondent: correspondent))
                 return .none
             case let .error(error):
                 return .toast(error)
@@ -82,8 +85,8 @@ public struct CorrespondentListReducer: Sendable {
                 state.correspondents = IdentifiedArray(
                     uniqueElements: correspondents.map {
                         CorrespondentRowReducer.State(
-                            correspondent: $0,
-                            server: state.server
+                            server: state.server,
+                            correspondent: $0
                         )
                     }
                 )

@@ -29,10 +29,12 @@ public struct CorrespondentListView: View {
         }
         .task { await send(.onAppear).finish() }
         .toolbar {
-            Button(action: {
-                send(.createCorrespondentButtonTapped)
-            }) {
-                Label(.createCorrespondent, systemImage: "plus")
+            if store.permissions.can(.addCorrespondent) {
+                Button(action: {
+                    send(.createCorrespondentButtonTapped)
+                }) {
+                    Label(.createCorrespondent, systemImage: "plus")
+                }
             }
         }
     }
@@ -52,13 +54,18 @@ public struct CorrespondentListView: View {
                     systemImage: "person",
                     title: .noCorrespondentsFound
                 ) {
-                    Button {
-                        send(.createCorrespondentButtonTapped)
-                    } label: {
-                        Label(.createCorrespondent, systemImage: "plus.circle")
-                            .frame(maxWidth: .infinity)
+                    // No call to action for someone who cannot create correspondents: there is
+                    // nothing there, and they cannot change that. Saying why would explain a
+                    // boundary this app is not the one enforcing.
+                    if store.permissions.can(.addCorrespondent) {
+                        Button {
+                            send(.createCorrespondentButtonTapped)
+                        } label: {
+                            Label(.createCorrespondent, systemImage: "plus.circle")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.primary())
                     }
-                    .buttonStyle(.primary())
                 }
             }
         }

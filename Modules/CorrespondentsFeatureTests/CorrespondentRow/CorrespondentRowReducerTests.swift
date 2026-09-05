@@ -3,6 +3,7 @@
 import ApiInterface
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 
 @MainActor
@@ -50,5 +51,27 @@ struct CorrespondentRowReducerTests {
 
         await store.send(.view(.editButtonTapped))
         await store.receive(\.delegate, .editCorrespondent)
+    }
+
+    // A snapshot proves a control is absent; it cannot prove the absence was caused by the right
+    // permission. Gating correspondents on changeTag would compile and look identical.
+    @Test
+    func rowGatesOnCorrespondentPermissionsSpecifically() {
+        let server = Server.testValue()
+
+        @Shared(.currentUser(server))
+        var user: User?
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
+        $user.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.changeCorrespondent] }
+
+        let state = CorrespondentRowReducer.State(server: server, correspondent: .testValue())
+
+        #expect(state.permissions.can(.changeCorrespondent))
+        #expect(!state.permissions.can(.deleteCorrespondent))
+        #expect(!state.permissions.can(.changeTag))
     }
 }

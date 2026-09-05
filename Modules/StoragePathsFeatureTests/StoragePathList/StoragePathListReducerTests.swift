@@ -4,6 +4,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 
 @MainActor
@@ -158,8 +159,8 @@ struct StoragePathListReducerTests {
             $0.storagePaths = IdentifiedArray(
                 uniqueElements: getStoragePathsResult.map {
                     StoragePathRowReducer.State(
-                        storagePath: $0,
-                        server: .testValue()
+                        server: .testValue(),
+                        storagePath: $0
                     )
                 }
             )
@@ -167,5 +168,38 @@ struct StoragePathListReducerTests {
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
         }
+    }
+
+    // The toolbar "+" is gated on .addStoragePath, but this project's NavigationStack snapshots do
+    // not render nav-bar chrome, so no image can show its absence. This asserts the gate instead -
+    // and the third expectation is the one that catches gating storage paths on a neighbouring
+    // entity's permission, which would compile and look identical.
+    @Test
+    func listGatesOnStoragePathPermissionsSpecifically() {
+        let server = Server.testValue()
+
+        @Shared(.currentUser(server))
+        var user: User?
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
+        $user.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewStoragePath] }
+
+        let state = StoragePathListReducer.State(server: server)
+
+        #expect(!state.permissions.can(.addStoragePath))
+        #expect(state.permissions.can(.viewStoragePath))
+        #expect(!state.permissions.can(.addTag))
+    }
+
+    // Fail open: nothing read means nothing known, so every control shows. This is the state a user
+    // on a paperless that does not send the permissions key is in, and it must look like today.
+    @Test
+    func listAllowsEverythingWhenNothingHasBeenRead() {
+        let state = StoragePathListReducer.State(server: .testValue())
+
+        #expect(state.permissions.can(.addStoragePath))
     }
 }

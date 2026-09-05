@@ -13,8 +13,8 @@ extension CorrespondentListReducer.State {
             correspondents: IdentifiedArray(
                 uniqueElements: correspondents.map {
                     CorrespondentRowReducer.State(
-                        correspondent: $0,
-                        server: server
+                        server: server,
+                        correspondent: $0
                     )
                 }
             ),

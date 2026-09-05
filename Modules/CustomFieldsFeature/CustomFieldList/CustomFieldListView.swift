@@ -29,10 +29,12 @@ public struct CustomFieldListView: View {
         }
         .task { await send(.onAppear).finish() }
         .toolbar {
-            Button(action: {
-                send(.createCustomFieldButtonTapped)
-            }) {
-                Label(.createCustomField, systemImage: "plus")
+            if store.permissions.can(.addCustomField) {
+                Button(action: {
+                    send(.createCustomFieldButtonTapped)
+                }) {
+                    Label(.createCustomField, systemImage: "plus")
+                }
             }
         }
     }
@@ -52,13 +54,18 @@ public struct CustomFieldListView: View {
                     systemImage: "list.bullet.rectangle",
                     title: .noCustomFieldsFound
                 ) {
-                    Button {
-                        send(.createCustomFieldButtonTapped)
-                    } label: {
-                        Label(.createCustomField, systemImage: "plus.circle")
-                            .frame(maxWidth: .infinity)
+                    // No call to action for someone who cannot create custom fields: there is
+                    // nothing there, and they cannot change that. Saying why would explain a
+                    // boundary this app is not the one enforcing.
+                    if store.permissions.can(.addCustomField) {
+                        Button {
+                            send(.createCustomFieldButtonTapped)
+                        } label: {
+                            Label(.createCustomField, systemImage: "plus.circle")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.primary())
                     }
-                    .buttonStyle(.primary())
                 }
             }
         }

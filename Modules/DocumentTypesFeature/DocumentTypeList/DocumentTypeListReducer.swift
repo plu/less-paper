@@ -54,6 +54,8 @@ public struct DocumentTypeListReducer: Sendable {
 
         var isLoaded: Bool
 
+        var permissions: ServerPermissions
+
         public init(
             documentTypes: IdentifiedArrayOf<DocumentTypeRowReducer.State> = [],
             destination: Destination.State? = nil,
@@ -64,6 +66,7 @@ public struct DocumentTypeListReducer: Sendable {
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 
@@ -74,7 +77,7 @@ public struct DocumentTypeListReducer: Sendable {
             switch action {
             case let .destination(.presented(.documentTypeForm(.delegate(.documentTypeSaved(documentType))))):
                 state.destination = nil
-                state.documentTypes.updateOrAppend(DocumentTypeRowReducer.State(documentType: documentType, server: state.server))
+                state.documentTypes.updateOrAppend(DocumentTypeRowReducer.State(server: state.server, documentType: documentType))
                 return .none
             case let .error(error):
                 return .toast(error)
@@ -82,8 +85,8 @@ public struct DocumentTypeListReducer: Sendable {
                 state.documentTypes = IdentifiedArray(
                     uniqueElements: documentTypes.map {
                         DocumentTypeRowReducer.State(
-                            documentType: $0,
-                            server: state.server
+                            server: state.server,
+                            documentType: $0
                         )
                     }
                 )

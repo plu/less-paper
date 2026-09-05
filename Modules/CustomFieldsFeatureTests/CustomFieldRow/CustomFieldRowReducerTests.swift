@@ -4,6 +4,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 import TestSupport
 
@@ -15,8 +16,8 @@ struct CustomFieldRowReducerTests {
     func test_view_deleteButtonTapped_confirmed() async throws {
         let confirmationReceived = LockIsolated<String?>(nil)
         let store = TestStore(initialState: CustomFieldRowReducer.State(
-            customField: .testValue(name: "Status"),
-            server: .testValue()
+            server: .testValue(),
+            customField: .testValue(name: "Status")
         )) {
             CustomFieldRowReducer()
         } withDependencies: {
@@ -34,8 +35,8 @@ struct CustomFieldRowReducerTests {
     @Test
     func test_view_deleteButtonTapped_cancelled() async throws {
         let store = TestStore(initialState: CustomFieldRowReducer.State(
-            customField: .testValue(),
-            server: .testValue()
+            server: .testValue(),
+            customField: .testValue()
         )) {
             CustomFieldRowReducer()
         } withDependencies: {
@@ -48,13 +49,35 @@ struct CustomFieldRowReducerTests {
     @Test
     func test_view_editButtonTapped() async throws {
         let store = TestStore(initialState: CustomFieldRowReducer.State(
-            customField: .testValue(),
-            server: .testValue()
+            server: .testValue(),
+            customField: .testValue()
         )) {
             CustomFieldRowReducer()
         }
 
         await store.send(.view(.editButtonTapped))
         await store.receive(\.delegate, .editCustomField)
+    }
+
+    // A snapshot proves a control is absent; it cannot prove the absence was caused by the right
+    // permission. Gating custom fields on changeTag would compile and look identical.
+    @Test
+    func rowGatesOnCustomFieldPermissionsSpecifically() {
+        let server = Server.testValue()
+
+        @Shared(.currentUser(server))
+        var user: User?
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
+        $user.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.changeCustomfield] }
+
+        let state = CustomFieldRowReducer.State(server: server, customField: .testValue())
+
+        #expect(state.permissions.can(.changeCustomfield))
+        #expect(!state.permissions.can(.deleteCustomField))
+        #expect(!state.permissions.can(.changeTag))
     }
 }

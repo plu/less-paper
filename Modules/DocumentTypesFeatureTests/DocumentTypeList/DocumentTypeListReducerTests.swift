@@ -4,6 +4,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 
 @MainActor
@@ -158,8 +159,8 @@ struct DocumentTypeListReducerTests {
             $0.documentTypes = IdentifiedArray(
                 uniqueElements: getDocumentTypesResult.map {
                     DocumentTypeRowReducer.State(
-                        documentType: $0,
-                        server: .testValue()
+                        server: .testValue(),
+                        documentType: $0
                     )
                 }
             )
@@ -167,5 +168,38 @@ struct DocumentTypeListReducerTests {
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
         }
+    }
+
+    // The toolbar "+" is gated on .addDocumentType, but this project's NavigationStack snapshots do
+    // not render nav-bar chrome, so no image can show its absence. This asserts the gate instead -
+    // and the third expectation is the one that catches gating document types on a neighbouring
+    // entity's permission, which would compile and look identical.
+    @Test
+    func listGatesOnDocumentTypePermissionsSpecifically() {
+        let server = Server.testValue()
+
+        @Shared(.currentUser(server))
+        var user: User?
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
+        $user.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocumentType] }
+
+        let state = DocumentTypeListReducer.State(server: server)
+
+        #expect(!state.permissions.can(.addDocumentType))
+        #expect(state.permissions.can(.viewDocumentType))
+        #expect(!state.permissions.can(.addTag))
+    }
+
+    // Fail open: nothing read means nothing known, so every control shows. This is the state a user
+    // on a paperless that does not send the permissions key is in, and it must look like today.
+    @Test
+    func listAllowsEverythingWhenNothingHasBeenRead() {
+        let state = DocumentTypeListReducer.State(server: .testValue())
+
+        #expect(state.permissions.can(.addDocumentType))
     }
 }

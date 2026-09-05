@@ -31,7 +31,22 @@ public struct CorrespondentRowReducer: Sendable {
 
         var isUpdating = false
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
         let server: Server
+
+        init(
+            isUpdating: Bool = false,
+            server: Server,
+            correspondent: Correspondent
+        ) {
+            self.isUpdating = isUpdating
+            self.server = server
+            self.correspondent = correspondent
+            permissions = ServerPermissions(server: server)
+        }
     }
 
     public var body: some ReducerOf<Self> {

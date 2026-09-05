@@ -3,6 +3,7 @@
 import ApiInterface
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 
 @MainActor
@@ -50,5 +51,27 @@ struct StoragePathRowReducerTests {
 
         await store.send(.view(.editButtonTapped))
         await store.receive(\.delegate, .editStoragePath)
+    }
+
+    // A snapshot proves a control is absent; it cannot prove the absence was caused by the right
+    // permission. Gating storage paths on changeTag would compile and look identical.
+    @Test
+    func rowGatesOnStoragePathPermissionsSpecifically() {
+        let server = Server.testValue()
+
+        @Shared(.currentUser(server))
+        var user: User?
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
+        $user.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.changeStoragePath] }
+
+        let state = StoragePathRowReducer.State(server: server, storagePath: .testValue())
+
+        #expect(state.permissions.can(.changeStoragePath))
+        #expect(!state.permissions.can(.deleteStoragePath))
+        #expect(!state.permissions.can(.changeTag))
     }
 }
