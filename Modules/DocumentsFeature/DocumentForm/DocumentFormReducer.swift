@@ -130,6 +130,8 @@ public struct DocumentFormReducer: Sendable {
 
         var canCreateCustomField: Bool { permissions.can(.addCustomField) }
 
+        var canViewNotes: Bool { permissions.can(.viewNote) }
+
         init(
             destination: DocumentFormReducer.Destination.State? = nil,
             document: Shared<Document>,

@@ -90,6 +90,8 @@ public struct DocumentRowReducer: Sendable {
 
         var canDelete: Bool { permissions.can(.deleteDocument) }
 
+        var canViewNotes: Bool { permissions.can(.viewNote) }
+
         var quickLookPreview: URL?
 
         var shareItem: ShareItem?

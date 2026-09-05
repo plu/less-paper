@@ -91,7 +91,11 @@ struct DocumentRowView: View {
             }
         }
 
-        DocumentViewerMenu { send(.viewButtonTapped($0)) }
+        // Without view_note the endpoint answers 403, so Notes drops out here rather than opening
+        // onto a section with nothing to show.
+        DocumentViewerMenu(
+            sections: DocumentViewerSection.allCases.filter { $0 != .notes || store.canViewNotes }
+        ) { send(.viewButtonTapped($0)) }
 
         // The reversible actions are A-Z; Delete is held out below the divider rather than taking
         // whatever row its initial earns it — alphabetically that is the top, one mistap from the

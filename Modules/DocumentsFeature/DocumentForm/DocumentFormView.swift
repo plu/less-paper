@@ -74,7 +74,13 @@ struct DocumentFormView: View {
     private func sectionMenu() -> some View {
         Menu {
             Picker("", selection: $store.section) {
-                ForEach(DocumentFormSection.allCases, id: \.self) {
+                // Without view_note the endpoint answers 403, so Notes drops out here rather than
+                // opening onto a section with nothing to show. change_document gets a user into
+                // this form but says nothing about notes, so the form has to ask separately.
+                ForEach(
+                    DocumentFormSection.allCases.filter { $0 != .notes || store.canViewNotes },
+                    id: \.self
+                ) {
                     Text($0.description).tag($0)
                 }
             }

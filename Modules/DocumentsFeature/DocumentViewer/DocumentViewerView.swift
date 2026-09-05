@@ -85,7 +85,13 @@ struct DocumentViewerView: View {
     private func sectionMenu() -> some View {
         Menu {
             Picker("", selection: $store.section) {
-                ForEach(DocumentViewerSection.allCases, id: \.self) {
+                // Without view_note the endpoint answers 403, so Notes drops out here rather than
+                // opening onto a section with nothing to show. Gating the entrance one screen
+                // earlier is not enough: this picker is a second way into the same section.
+                ForEach(
+                    DocumentViewerSection.allCases.filter { $0 != .notes || store.canViewNotes },
+                    id: \.self
+                ) {
                     Text($0.localized).tag($0)
                 }
             }
