@@ -69,6 +69,10 @@ public struct SettingListReducer {
 
         var permissions: ServerPermissions
 
+        var canImport: Bool { permissions.can(.addDocument) }
+
+        var canScan: Bool { permissions.can(.addDocument) }
+
         var canViewCorrespondents: Bool { permissions.can(.viewCorrespondent) }
 
         var canViewCustomFields: Bool { permissions.can(.viewCustomField) }
