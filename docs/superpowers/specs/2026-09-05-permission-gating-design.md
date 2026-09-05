@@ -210,6 +210,16 @@ ungated one.
 all shows every control. That is the state a user on an older paperless is in, and it must look
 exactly like today.
 
+**As built:** only `TagsFeature` ended up with a gated snapshot pair
+(`testSnapshot_viewOnly_empty` next to `testSnapshot.empty`). The other five features do not have
+one. This repo's `.image(layout: .device)` harness renders no nav-bar or toolbar chrome, so a
+gated-state snapshot for the toolbar "+" and the swipe actions cannot show the difference a snapshot
+exists to show — copying the Tags pair to the other five features produced images byte-identical to
+their ungated baselines, and commit `ef427b4` removed them as non-discriminating rather than keep
+snapshots that pass regardless of the gate. The reducer-level `…GatesOn…PermissionsSpecifically`
+tests, plus the computed `canCreate` / `canEdit` / `canDelete` properties views now read directly,
+are what actually cover those sites instead.
+
 ## Out of scope
 
 - **`DocumentsFeature` and `TrashFeature`.** Import, scan, bulk edit, document delete, notes,
