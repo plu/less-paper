@@ -54,6 +54,8 @@ public struct CustomFieldListReducer: Sendable {
 
         var permissions: ServerPermissions
 
+        var canCreate: Bool { permissions.can(.addCustomField) }
+
         let server: Server
 
         public init(

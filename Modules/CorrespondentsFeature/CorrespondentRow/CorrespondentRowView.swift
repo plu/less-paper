@@ -30,7 +30,7 @@ struct CorrespondentRowView: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        if store.permissions.can(.changeCorrespondent) {
+        if store.canEdit {
             Button {
                 send(.editButtonTapped)
             } label: {
@@ -40,7 +40,7 @@ struct CorrespondentRowView: View {
             .tint(.m3Primary)
         }
 
-        if store.permissions.can(.deleteCorrespondent) {
+        if store.canDelete {
             Button {
                 send(.deleteButtonTapped)
             } label: {

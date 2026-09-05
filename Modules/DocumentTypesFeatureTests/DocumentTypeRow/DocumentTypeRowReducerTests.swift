@@ -70,8 +70,8 @@ struct DocumentTypeRowReducerTests {
 
         let state = DocumentTypeRowReducer.State(server: server, documentType: .testValue())
 
-        #expect(state.permissions.can(.changeDocumentType))
-        #expect(!state.permissions.can(.deleteDocumentType))
+        #expect(state.canEdit)
+        #expect(!state.canDelete)
         #expect(!state.permissions.can(.changeTag))
     }
 }

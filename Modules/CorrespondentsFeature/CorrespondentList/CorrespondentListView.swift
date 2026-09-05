@@ -29,7 +29,7 @@ public struct CorrespondentListView: View {
         }
         .task { await send(.onAppear).finish() }
         .toolbar {
-            if store.permissions.can(.addCorrespondent) {
+            if store.canCreate {
                 Button(action: {
                     send(.createCorrespondentButtonTapped)
                 }) {
@@ -57,7 +57,7 @@ public struct CorrespondentListView: View {
                     // No call to action for someone who cannot create correspondents: there is
                     // nothing there, and they cannot change that. Saying why would explain a
                     // boundary this app is not the one enforcing.
-                    if store.permissions.can(.addCorrespondent) {
+                    if store.canCreate {
                         Button {
                             send(.createCorrespondentButtonTapped)
                         } label: {

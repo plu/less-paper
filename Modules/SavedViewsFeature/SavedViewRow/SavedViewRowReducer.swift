@@ -35,6 +35,10 @@ public struct SavedViewRowReducer: Sendable {
         // files and arms two file watchers, and a computed property would do that on every render.
         var permissions: ServerPermissions
 
+        var canEdit: Bool { permissions.can(.changeSavedView) }
+
+        var canDelete: Bool { permissions.can(.deleteSavedView) }
+
         let server: Server
 
         init(

@@ -56,6 +56,8 @@ public struct SavedViewListReducer: Sendable {
 
         var permissions: ServerPermissions
 
+        var canCreate: Bool { permissions.can(.addSavedView) }
+
         public init(
             savedViews: IdentifiedArrayOf<SavedViewRowReducer.State> = [],
             destination: Destination.State? = nil,

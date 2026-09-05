@@ -37,7 +37,7 @@ struct CustomFieldRowView: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        if store.permissions.can(.changeCustomfield) {
+        if store.canEdit {
             Button {
                 send(.editButtonTapped)
             } label: {
@@ -47,7 +47,7 @@ struct CustomFieldRowView: View {
             .tint(.m3Primary)
         }
 
-        if store.permissions.can(.deleteCustomField) {
+        if store.canDelete {
             Button {
                 send(.deleteButtonTapped)
             } label: {

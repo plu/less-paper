@@ -76,8 +76,8 @@ struct CustomFieldRowReducerTests {
 
         let state = CustomFieldRowReducer.State(server: server, customField: .testValue())
 
-        #expect(state.permissions.can(.changeCustomfield))
-        #expect(!state.permissions.can(.deleteCustomField))
+        #expect(state.canEdit)
+        #expect(!state.canDelete)
         #expect(!state.permissions.can(.changeTag))
     }
 }

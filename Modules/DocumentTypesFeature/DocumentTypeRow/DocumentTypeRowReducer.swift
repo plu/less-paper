@@ -35,6 +35,10 @@ public struct DocumentTypeRowReducer: Sendable {
         // files and arms two file watchers, and a computed property would do that on every render.
         var permissions: ServerPermissions
 
+        var canEdit: Bool { permissions.can(.changeDocumentType) }
+
+        var canDelete: Bool { permissions.can(.deleteDocumentType) }
+
         let server: Server
 
         init(

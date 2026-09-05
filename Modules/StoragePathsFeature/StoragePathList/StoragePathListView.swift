@@ -29,7 +29,7 @@ public struct StoragePathListView: View {
         }
         .task { await send(.onAppear).finish() }
         .toolbar {
-            if store.permissions.can(.addStoragePath) {
+            if store.canCreate {
                 Button(action: {
                     send(.createStoragePathButtonTapped)
                 }) {
@@ -57,7 +57,7 @@ public struct StoragePathListView: View {
                     // No call to action for someone who cannot create storage paths: there is
                     // nothing there, and they cannot change that. Saying why would explain a
                     // boundary this app is not the one enforcing.
-                    if store.permissions.can(.addStoragePath) {
+                    if store.canCreate {
                         Button {
                             send(.createStoragePathButtonTapped)
                         } label: {

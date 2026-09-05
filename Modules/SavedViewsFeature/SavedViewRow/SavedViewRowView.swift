@@ -39,7 +39,7 @@ struct SavedViewRowView: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        if store.permissions.can(.changeSavedView) {
+        if store.canEdit {
             Button {
                 send(.editButtonTapped)
             } label: {
@@ -49,7 +49,7 @@ struct SavedViewRowView: View {
             .tint(.m3Primary)
         }
 
-        if store.permissions.can(.deleteSavedView) {
+        if store.canDelete {
             Button {
                 send(.deleteButtonTapped)
             } label: {

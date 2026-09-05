@@ -30,7 +30,7 @@ struct DocumentTypeRowView: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        if store.permissions.can(.changeDocumentType) {
+        if store.canEdit {
             Button {
                 send(.editButtonTapped)
             } label: {
@@ -40,7 +40,7 @@ struct DocumentTypeRowView: View {
             .tint(.m3Primary)
         }
 
-        if store.permissions.can(.deleteDocumentType) {
+        if store.canDelete {
             Button {
                 send(.deleteButtonTapped)
             } label: {

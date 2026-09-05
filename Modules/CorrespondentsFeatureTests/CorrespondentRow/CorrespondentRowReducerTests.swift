@@ -70,8 +70,8 @@ struct CorrespondentRowReducerTests {
 
         let state = CorrespondentRowReducer.State(server: server, correspondent: .testValue())
 
-        #expect(state.permissions.can(.changeCorrespondent))
-        #expect(!state.permissions.can(.deleteCorrespondent))
+        #expect(state.canEdit)
+        #expect(!state.canDelete)
         #expect(!state.permissions.can(.changeTag))
     }
 }

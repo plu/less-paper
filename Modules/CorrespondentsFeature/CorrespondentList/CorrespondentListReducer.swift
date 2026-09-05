@@ -56,6 +56,8 @@ public struct CorrespondentListReducer: Sendable {
 
         var permissions: ServerPermissions
 
+        var canCreate: Bool { permissions.can(.addCorrespondent) }
+
         public init(
             correspondents: IdentifiedArrayOf<CorrespondentRowReducer.State> = [],
             destination: Destination.State? = nil,

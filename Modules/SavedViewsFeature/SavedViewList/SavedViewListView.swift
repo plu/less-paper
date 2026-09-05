@@ -29,7 +29,7 @@ public struct SavedViewListView: View {
         }
         .task { await send(.onAppear).finish() }
         .toolbar {
-            if store.permissions.can(.addSavedView) {
+            if store.canCreate {
                 Button(action: {
                     send(.createSavedViewButtonTapped)
                 }) {
@@ -57,7 +57,7 @@ public struct SavedViewListView: View {
                     // No call to action for someone who cannot create saved views: there is
                     // nothing there, and they cannot change that. Saying why would explain a
                     // boundary this app is not the one enforcing.
-                    if store.permissions.can(.addSavedView) {
+                    if store.canCreate {
                         Button {
                             send(.createSavedViewButtonTapped)
                         } label: {

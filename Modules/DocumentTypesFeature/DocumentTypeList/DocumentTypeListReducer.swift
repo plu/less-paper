@@ -56,6 +56,8 @@ public struct DocumentTypeListReducer: Sendable {
 
         var permissions: ServerPermissions
 
+        var canCreate: Bool { permissions.can(.addDocumentType) }
+
         public init(
             documentTypes: IdentifiedArrayOf<DocumentTypeRowReducer.State> = [],
             destination: Destination.State? = nil,

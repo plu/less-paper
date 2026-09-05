@@ -35,6 +35,10 @@ public struct CorrespondentRowReducer: Sendable {
         // files and arms two file watchers, and a computed property would do that on every render.
         var permissions: ServerPermissions
 
+        var canEdit: Bool { permissions.can(.changeCorrespondent) }
+
+        var canDelete: Bool { permissions.can(.deleteCorrespondent) }
+
         let server: Server
 
         init(

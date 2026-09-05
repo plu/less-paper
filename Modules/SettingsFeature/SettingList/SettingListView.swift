@@ -34,7 +34,7 @@ public struct SettingListView: View {
                 }
 
                 Section {
-                    if store.permissions.can(.viewCorrespondent) {
+                    if store.canViewCorrespondents {
                         NavigationLink(
                             state: SettingListReducer.Path.State.correspondentList(CorrespondentListReducer.State(server: store.server))
                         ) {
@@ -43,7 +43,7 @@ public struct SettingListView: View {
                         .listRowBackground(Color.m3SurfaceContainer)
                     }
 
-                    if store.permissions.can(.viewCustomField) {
+                    if store.canViewCustomFields {
                         NavigationLink(
                             state: SettingListReducer.Path.State.customFieldList(CustomFieldListReducer.State(server: store.server))
                         ) {
@@ -52,7 +52,7 @@ public struct SettingListView: View {
                         .listRowBackground(Color.m3SurfaceContainer)
                     }
 
-                    if store.permissions.can(.viewDocumentType) {
+                    if store.canViewDocumentTypes {
                         NavigationLink(
                             state: SettingListReducer.Path.State.documentTypeList(DocumentTypeListReducer.State(server: store.server))
                         ) {
@@ -68,7 +68,7 @@ public struct SettingListView: View {
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
-                    if store.permissions.can(.viewSavedView) {
+                    if store.canViewSavedViews {
                         NavigationLink(
                             state: SettingListReducer.Path.State.savedViewList(SavedViewListReducer.State(server: store.server))
                         ) {
@@ -77,7 +77,7 @@ public struct SettingListView: View {
                         .listRowBackground(Color.m3SurfaceContainer)
                     }
 
-                    if store.permissions.can(.viewStoragePath) {
+                    if store.canViewStoragePaths {
                         NavigationLink(
                             state: SettingListReducer.Path.State.storagePathList(StoragePathListReducer.State(server: store.server))
                         ) {
@@ -86,7 +86,7 @@ public struct SettingListView: View {
                         .listRowBackground(Color.m3SurfaceContainer)
                     }
 
-                    if store.permissions.can(.viewTag) {
+                    if store.canViewTags {
                         NavigationLink(
                             state: SettingListReducer.Path.State.tagList(TagListReducer.State(server: store.server))
                         ) {

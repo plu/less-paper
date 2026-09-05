@@ -70,8 +70,8 @@ struct SavedViewRowReducerTests {
 
         let state = SavedViewRowReducer.State(server: server, savedView: .testValue())
 
-        #expect(state.permissions.can(.changeSavedView))
-        #expect(!state.permissions.can(.deleteSavedView))
+        #expect(state.canEdit)
+        #expect(!state.canDelete)
         #expect(!state.permissions.can(.changeTag))
     }
 }

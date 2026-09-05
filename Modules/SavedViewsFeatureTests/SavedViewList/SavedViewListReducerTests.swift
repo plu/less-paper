@@ -196,17 +196,20 @@ struct SavedViewListReducerTests {
 
         let state = SavedViewListReducer.State(server: server)
 
-        #expect(!state.permissions.can(.addSavedView))
+        #expect(!state.canCreate)
         #expect(state.permissions.can(.viewSavedView))
         #expect(!state.permissions.can(.addTag))
     }
 
-    // Fail open: nothing read means nothing known, so every control shows. This is the state a user
-    // on a paperless that does not send the permissions key is in, and it must look like today.
+    // This restates ServerPermissionsTests.nilCacheAllowsEverything: with a nil cache, can
+    // returns true for any server, so this passes even if State wired ServerPermissions to a
+    // different Server entirely. The genuinely end-to-end fail-open evidence is the pre-existing,
+    // unseeded testSnapshot.empty.png in SavedViewListViewTests - it renders every control with no
+    // cache seeded at all. This test only re-checks the rule.
     @Test
     func listAllowsEverythingWhenNothingHasBeenRead() {
         let state = SavedViewListReducer.State(server: .testValue())
 
-        #expect(state.permissions.can(.addSavedView))
+        #expect(state.canCreate)
     }
 }

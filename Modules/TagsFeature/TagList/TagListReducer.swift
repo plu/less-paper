@@ -40,6 +40,8 @@ public struct TagListReducer: Sendable {
 
         var permissions: ServerPermissions
 
+        var canCreate: Bool { permissions.can(.addTag) }
+
         var searchText = ""
 
         var tags: IdentifiedArrayOf<TagRowReducer.State>

@@ -77,8 +77,8 @@ struct TagRowReducerTests {
 
         let state = TagRowReducer.State(server: server, tag: .testValue())
 
-        #expect(state.permissions.can(.changeTag))
-        #expect(!state.permissions.can(.deleteTag))
+        #expect(state.canEdit)
+        #expect(!state.canDelete)
         #expect(!state.permissions.can(.changeCorrespondent))
     }
 }

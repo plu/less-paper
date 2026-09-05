@@ -70,8 +70,8 @@ struct StoragePathRowReducerTests {
 
         let state = StoragePathRowReducer.State(server: server, storagePath: .testValue())
 
-        #expect(state.permissions.can(.changeStoragePath))
-        #expect(!state.permissions.can(.deleteStoragePath))
+        #expect(state.canEdit)
+        #expect(!state.canDelete)
         #expect(!state.permissions.can(.changeTag))
     }
 }

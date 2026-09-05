@@ -57,6 +57,8 @@ public struct StoragePathListReducer: Sendable {
 
         var permissions: ServerPermissions
 
+        var canCreate: Bool { permissions.can(.addStoragePath) }
+
         public init(
             storagePaths: IdentifiedArrayOf<StoragePathRowReducer.State> = [],
             destination: Destination.State? = nil,

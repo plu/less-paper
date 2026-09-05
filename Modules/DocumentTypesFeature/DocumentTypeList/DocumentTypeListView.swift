@@ -29,7 +29,7 @@ public struct DocumentTypeListView: View {
         }
         .task { await send(.onAppear).finish() }
         .toolbar {
-            if store.permissions.can(.addDocumentType) {
+            if store.canCreate {
                 Button(action: {
                     send(.createDocumentTypeButtonTapped)
                 }) {
@@ -57,7 +57,7 @@ public struct DocumentTypeListView: View {
                     // No call to action for someone who cannot create document types: there is
                     // nothing there, and they cannot change that. Saying why would explain a
                     // boundary this app is not the one enforcing.
-                    if store.permissions.can(.addDocumentType) {
+                    if store.canCreate {
                         Button {
                             send(.createDocumentTypeButtonTapped)
                         } label: {
