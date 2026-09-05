@@ -67,6 +67,8 @@ public struct SettingListReducer {
 
         var path = StackState<Path.State>()
 
+        var permissions: ServerPermissions
+
         let server: Server
 
         public init(
@@ -74,6 +76,7 @@ public struct SettingListReducer {
         ) {
             self.appVersion = Dependency(\.getAppVersion.execute).wrappedValue()
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 
