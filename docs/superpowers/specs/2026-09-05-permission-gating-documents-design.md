@@ -88,7 +88,7 @@ ApiInterface
 DocumentsFeature
   DocumentListReducer.State      canImport, canScan, canSelect
   DocumentRowReducer.State       canEdit, canDelete
-  DocumentDetailReducer.State    canEdit, canDelete, canViewNotes
+  DocumentDetailReducer.State    canEdit, canViewNotes
   DocumentSelection…State        canBulkEdit, canBulkDelete, canMerge
   DocumentNotesReducer.State     canAddNote, canDeleteNote
   DocumentFormReducer.State      canCreateTag, canCreateCorrespondent, canCreateDocumentType,
@@ -114,7 +114,7 @@ SettingsFeature
 | Bulk merge | bottom toolbar | `add_document` |
 | Bulk delete | bottom toolbar | `delete_document` |
 | Edit | row context menu, detail | `change_document` |
-| Delete | row context menu, detail | `delete_document` |
+| Delete | row context menu | `delete_document` |
 | Notes section | detail | `view_note` |
 | Add note | notes | `add_note` |
 | Delete note | notes | `delete_note` |
