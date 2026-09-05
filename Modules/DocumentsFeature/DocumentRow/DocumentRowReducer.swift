@@ -82,6 +82,14 @@ public struct DocumentRowReducer: Sendable {
 
         var isUpdating = false
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        var canEdit: Bool { permissions.can(.changeDocument) }
+
+        var canDelete: Bool { permissions.can(.deleteDocument) }
+
         var quickLookPreview: URL?
 
         var shareItem: ShareItem?
@@ -131,6 +139,7 @@ public struct DocumentRowReducer: Sendable {
             self.quickLookPreview = quickLookPreview
             self.server = server
             self.shareItem = shareItem
+            permissions = ServerPermissions(server: server)
         }
     }
 

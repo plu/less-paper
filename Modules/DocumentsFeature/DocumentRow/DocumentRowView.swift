@@ -67,10 +67,12 @@ struct DocumentRowView: View {
             )
         }
 
-        Button {
-            send(.editButtonTapped)
-        } label: {
-            Label(.edit, systemImage: "square.and.pencil")
+        if store.canEdit {
+            Button {
+                send(.editButtonTapped)
+            } label: {
+                Label(.edit, systemImage: "square.and.pencil")
+            }
         }
 
         Button {
@@ -96,10 +98,12 @@ struct DocumentRowView: View {
         // rest. Same shape as the bulk edit overflow menu.
         Divider()
 
-        Button(role: .destructive) {
-            send(.deleteButtonTapped)
-        } label: {
-            Label(.delete, systemImage: "trash")
+        if store.canDelete {
+            Button(role: .destructive) {
+                send(.deleteButtonTapped)
+            } label: {
+                Label(.delete, systemImage: "trash")
+            }
         }
     }
 

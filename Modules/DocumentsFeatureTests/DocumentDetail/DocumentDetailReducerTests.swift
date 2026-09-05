@@ -60,6 +60,23 @@ struct DocumentDetailReducerTests {
     }
 
     @Test
+    func editAndDeleteFollowTheirOwnPermissions() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
+
+        let state = DocumentDetailReducer.State.testValue(server: server)
+
+        #expect(state.canEdit)
+        #expect(!state.canDelete)
+        // The neighbour check: gating a document control on a tag permission compiles.
+        #expect(!state.permissions.can(.changeTag))
+    }
+
+    @Test
     func test_view_favoriteButtonTapped_savesWhenNotYetFavorited() async throws {
         let server = Server.testValue()
         let saved = LockIsolated<Document.Id?>(nil)
