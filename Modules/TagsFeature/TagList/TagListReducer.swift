@@ -38,6 +38,8 @@ public struct TagListReducer: Sendable {
 
         var isLoaded: Bool
 
+        var permissions: ServerPermissions
+
         var searchText = ""
 
         var tags: IdentifiedArrayOf<TagRowReducer.State>
@@ -62,6 +64,7 @@ public struct TagListReducer: Sendable {
             self.isLoaded = isLoaded
             self.server = server
             self.tags = tags
+            permissions = ServerPermissions(server: server)
         }
     }
 

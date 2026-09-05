@@ -3,6 +3,7 @@
 import ApiInterface
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 
 @MainActor
@@ -56,5 +57,28 @@ struct TagRowReducerTests {
 
         await store.send(.view(.editButtonTapped))
         await store.receive(\.delegate, .editTag)
+    }
+
+    // A snapshot proves a control is absent; it cannot prove the absence was caused by the right
+    // permission. Gating tags on changeCorrespondent would compile, render identically in a
+    // "cannot edit" snapshot, and be wrong.
+    @Test
+    func rowGatesOnTagPermissionsSpecifically() {
+        let server = Server.testValue()
+
+        @Shared(.currentUser(server))
+        var user: User?
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
+        $user.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.changeTag] }
+
+        let state = TagRowReducer.State(server: server, tag: .testValue())
+
+        #expect(state.permissions.can(.changeTag))
+        #expect(!state.permissions.can(.deleteTag))
+        #expect(!state.permissions.can(.changeCorrespondent))
     }
 }
