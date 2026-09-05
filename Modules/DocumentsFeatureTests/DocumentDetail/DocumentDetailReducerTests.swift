@@ -76,6 +76,36 @@ struct DocumentDetailReducerTests {
     }
 
     @Test
+    func canViewNotesFollowsTheViewNotePermissionNotDocumentOnes() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        // Full rights over documents grant nothing over notes.
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument, .deleteDocument] }
+
+        let state = DocumentDetailReducer.State.testValue(server: server)
+
+        #expect(!state.canViewNotes)
+        #expect(state.canEdit)
+    }
+
+    @Test
+    func canViewNotesOpensWithViewNote() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewNote] }
+
+        let state = DocumentDetailReducer.State.testValue(server: server)
+
+        #expect(state.canViewNotes)
+    }
+
+    @Test
     func test_view_favoriteButtonTapped_savesWhenNotYetFavorited() async throws {
         let server = Server.testValue()
         let saved = LockIsolated<Document.Id?>(nil)

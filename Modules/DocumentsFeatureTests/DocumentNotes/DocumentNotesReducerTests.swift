@@ -315,4 +315,35 @@ struct DocumentNotesReducerTests {
         #expect(store.state.loadError == nil)
         #expect(toasts.value == [.error(TestError.someError.localizedDescription)])
     }
+
+    @Test
+    func noteGatesFollowNotePermissionsNotDocumentOnes() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument, .deleteDocument, .viewNote] }
+
+        let state = DocumentNotesReducer.State(documentId: 1, server: server)
+
+        // Full rights over documents grant nothing over notes.
+        #expect(!state.canAddNote)
+        #expect(!state.canDeleteNote)
+    }
+
+    @Test
+    func noteGatesOpenWithNotePermissions() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewNote, .addNote] }
+
+        let state = DocumentNotesReducer.State(documentId: 1, server: server)
+
+        #expect(state.canAddNote)
+        #expect(!state.canDeleteNote)
+    }
 }

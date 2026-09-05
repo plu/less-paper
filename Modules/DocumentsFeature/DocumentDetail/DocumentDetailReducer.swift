@@ -68,6 +68,10 @@ public struct DocumentDetailReducer: Sendable {
 
         var canEdit: Bool { permissions.can(.changeDocument) }
 
+        // The section, not a control inside it: without view_note the endpoint answers 403, so
+        // there is nothing to show and nothing that could be added.
+        var canViewNotes: Bool { permissions.can(.viewNote) }
+
         var quickLookPreview: URL?
 
         let server: Server

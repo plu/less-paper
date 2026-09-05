@@ -52,7 +52,12 @@ struct DocumentFormView: View {
             case .content, .customFields, .details:
                 buttons()
             case .notes:
-                DocumentNoteComposerView(store: notesStore)
+                // Existence, not enablement: canAddNote is the add_note permission, while the
+                // composer's own canCreate (draft non-empty, not saving) still governs whether the
+                // button inside it is enabled.
+                if store.notes.canAddNote {
+                    DocumentNoteComposerView(store: notesStore)
+                }
             }
         }
         .onAppear { send(.onAppear) }
