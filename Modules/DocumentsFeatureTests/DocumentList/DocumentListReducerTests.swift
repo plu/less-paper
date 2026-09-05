@@ -1289,6 +1289,23 @@ struct DocumentListReducerTests {
     }
 
     @Test
+    func importAndScanOpenWithAddDocumentAlone() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .addDocument] }
+
+        let state = DocumentListReducer.State(server: server)
+
+        #expect(state.canImport)
+        #expect(state.canScan)
+        // add_document is neither half of the selection gate.
+        #expect(!state.canSelect)
+    }
+
+    @Test
     func selectionIsOfferedWithChangeAlone() {
         let server = Server.testValue()
 

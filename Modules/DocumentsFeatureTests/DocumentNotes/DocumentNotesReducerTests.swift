@@ -346,4 +346,20 @@ struct DocumentNotesReducerTests {
         #expect(state.canAddNote)
         #expect(!state.canDeleteNote)
     }
+
+    @Test
+    func deletingANoteFollowsDeleteNoteAlone() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewNote, .deleteNote] }
+
+        let state = DocumentNotesReducer.State(documentId: 1, server: server)
+
+        // The mirror of the test above, so neither gate can be wired to the other's permission.
+        #expect(state.canDeleteNote)
+        #expect(!state.canAddNote)
+    }
 }
