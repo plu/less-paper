@@ -95,53 +95,61 @@ private struct DocumentListBottomToolbar: ViewModifier {
     @ViewBuilder
     private var selectActionsMenu: some View {
         HStack(spacing: .x5) {
-            Button {
-                send(.editCorrespondentButtonTapped)
-            } label: {
-                Label(.editCorrespondent, systemImage: "person")
-            }
+            if store.documentSelection.canBulkEdit {
+                Button {
+                    send(.editCorrespondentButtonTapped)
+                } label: {
+                    Label(.editCorrespondent, systemImage: "person")
+                }
 
-            Button {
-                send(.editDocumentTypeButtonTapped)
-            } label: {
-                Label(.editDocumentType, systemImage: "document.badge.gearshape")
-            }
+                Button {
+                    send(.editDocumentTypeButtonTapped)
+                } label: {
+                    Label(.editDocumentType, systemImage: "document.badge.gearshape")
+                }
 
-            Button {
-                send(.editStoragePathButtonTapped)
-            } label: {
-                Label(.editStoragePath, systemImage: "folder")
-            }
+                Button {
+                    send(.editStoragePathButtonTapped)
+                } label: {
+                    Label(.editStoragePath, systemImage: "folder")
+                }
 
-            Button {
-                send(.editTagsButtonTapped)
-            } label: {
-                Label(.editTags, systemImage: "tag")
+                Button {
+                    send(.editTagsButtonTapped)
+                } label: {
+                    Label(.editTags, systemImage: "tag")
+                }
             }
 
             // Delete is destructive, so it sits behind an overflow menu rather than one mistap
             // away from four reversible actions. Edit title joins it for a duller reason: a sixth
             // icon does not fit — six span 411pt on a 402pt iPhone 17 Pro, clipping at both ends.
             Menu {
-                Button {
-                    send(.editTitleButtonTapped)
-                } label: {
-                    Label(.editTitle, systemImage: "textformat")
+                if store.documentSelection.canBulkEdit {
+                    Button {
+                        send(.editTitleButtonTapped)
+                    } label: {
+                        Label(.editTitle, systemImage: "textformat")
+                    }
                 }
 
-                Button {
-                    send(.mergeSelectedButtonTapped)
-                } label: {
-                    Label(.mergeDocuments, systemImage: "arrow.trianglehead.merge")
+                if store.documentSelection.canMerge {
+                    Button {
+                        send(.mergeSelectedButtonTapped)
+                    } label: {
+                        Label(.mergeDocuments, systemImage: "arrow.trianglehead.merge")
+                    }
+                    .disabled(store.documentSelection.selectedDocuments.count < 2)
                 }
-                .disabled(store.documentSelection.selectedDocuments.count < 2)
 
-                Divider()
+                if store.documentSelection.canBulkDelete {
+                    Divider()
 
-                Button(role: .destructive) {
-                    send(.deleteSelectedButtonTapped)
-                } label: {
-                    Label(.deleteDocuments, systemImage: "trash")
+                    Button(role: .destructive) {
+                        send(.deleteSelectedButtonTapped)
+                    } label: {
+                        Label(.deleteDocuments, systemImage: "trash")
+                    }
                 }
             } label: {
                 Label(.moreActions, systemImage: "ellipsis.circle")

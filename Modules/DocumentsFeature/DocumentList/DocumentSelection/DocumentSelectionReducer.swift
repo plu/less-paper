@@ -33,9 +33,19 @@ public struct DocumentSelectionReducer: Sendable {
 
         let server: Server
 
+        var permissions: ServerPermissions
+
         var tabBarVisibility: Visibility {
             isActive ? .hidden : .automatic
         }
+
+        var canBulkEdit: Bool { permissions.can(.changeDocument) }
+
+        var canBulkDelete: Bool { permissions.can(.deleteDocument) }
+
+        // Merging produces a document that did not exist, so it is add rather than change: a user
+        // who may edit but not create should not be offered it.
+        var canMerge: Bool { permissions.can(.addDocument) }
 
         init(
             allLoadedDocuments: Set<Document.Id> = .init(),
@@ -49,6 +59,7 @@ public struct DocumentSelectionReducer: Sendable {
             self.isActive = isActive
             self.selectedDocuments = selectedDocuments
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 

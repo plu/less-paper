@@ -204,4 +204,36 @@ struct DocumentSelectionReducerTests {
 
         #expect(store.state.tabBarVisibility == .automatic)
     }
+
+    @Test
+    func bulkActionsFollowTheirOwnPermissions() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
+
+        let state = DocumentSelectionReducer.State(server: server)
+
+        #expect(state.canBulkEdit)
+        // change_document must not imply either of the other two.
+        #expect(!state.canBulkDelete)
+        #expect(!state.canMerge)
+    }
+
+    @Test
+    func bulkDeleteFollowsDeleteAlone() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .deleteDocument] }
+
+        let state = DocumentSelectionReducer.State(server: server)
+
+        #expect(state.canBulkDelete)
+        #expect(!state.canBulkEdit)
+    }
 }
