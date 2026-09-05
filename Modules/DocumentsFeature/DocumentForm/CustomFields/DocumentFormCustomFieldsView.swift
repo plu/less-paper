@@ -88,22 +88,26 @@ struct DocumentFormCustomFieldsView: View {
     // rows, where it is subordinate to them.
     @ViewBuilder
     private func addMenu(isProminent: Bool = false) -> some View {
-        Group {
-            if isProminent {
-                addMenuContent(systemImage: "plus.circle")
-                    .buttonStyle(.primary())
-            } else {
-                addMenuContent(systemImage: "plus")
-                    .buttonStyle(.secondary())
+        // Nothing at all rather than a control that opens onto nothing: with add_customfield
+        // withheld and every defined field already attached, the menu below has no items left.
+        if store.canCreateCustomField || !unattached.isEmpty {
+            Group {
+                if isProminent {
+                    addMenuContent(systemImage: "plus.circle")
+                        .buttonStyle(.primary())
+                } else {
+                    addMenuContent(systemImage: "plus")
+                        .buttonStyle(.secondary())
+                }
             }
-        }
-        .sheet(
-            item: $store.scope(
-                state: \.destination?.customFieldForm,
-                action: \.destination.customFieldForm
-            )
-        ) { store in
-            CustomFieldFormView(store: store)
+            .sheet(
+                item: $store.scope(
+                    state: \.destination?.customFieldForm,
+                    action: \.destination.customFieldForm
+                )
+            ) { store in
+                CustomFieldFormView(store: store)
+            }
         }
     }
 
