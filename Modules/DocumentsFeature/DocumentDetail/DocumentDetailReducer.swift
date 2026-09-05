@@ -68,8 +68,6 @@ public struct DocumentDetailReducer: Sendable {
 
         var canEdit: Bool { permissions.can(.changeDocument) }
 
-        var canDelete: Bool { permissions.can(.deleteDocument) }
-
         var quickLookPreview: URL?
 
         let server: Server

@@ -113,8 +113,8 @@ SettingsFeature
 | Bulk edit correspondent, document type, storage path, tags, title | bottom toolbar | `change_document` |
 | Bulk merge | bottom toolbar | `add_document` |
 | Bulk delete | bottom toolbar | `delete_document` |
-| Edit | row, detail | `change_document` |
-| Delete | row, detail | `delete_document` |
+| Edit | row context menu, detail | `change_document` |
+| Delete | row context menu, detail | `delete_document` |
 | Notes section | detail | `view_note` |
 | Add note | notes | `add_note` |
 | Delete note | notes | `delete_note` |
@@ -162,7 +162,7 @@ ever grants both.
 **Snapshots only where they discriminate.** Project 2 measured that this repo's
 `.image(layout: .device)` harness renders no nav-bar or toolbar chrome, and deleted five references
 that had come out byte-identical to their baselines. That finding applies unchanged to the document
-list's toolbar and the row swipe actions, so no snapshot is added for them. The notes section and
+list's toolbar and the row context menu, so no snapshot is added for them. The notes section and
 the Settings trash row sit in the rendered body and do change the image, so those two get snapshots.
 
 ## Out of scope

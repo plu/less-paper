@@ -60,7 +60,7 @@ struct DocumentDetailReducerTests {
     }
 
     @Test
-    func editAndDeleteFollowTheirOwnPermissions() {
+    func editFollowsTheChangeDocumentPermission() {
         let server = Server.testValue()
 
         @Shared(.permissions(server)) var permissions: [Permission]?
@@ -71,7 +71,6 @@ struct DocumentDetailReducerTests {
         let state = DocumentDetailReducer.State.testValue(server: server)
 
         #expect(state.canEdit)
-        #expect(!state.canDelete)
         // The neighbour check: gating a document control on a tag permission compiles.
         #expect(!state.permissions.can(.changeTag))
     }
