@@ -71,8 +71,8 @@ Both plausible, neither timed:
 
 The other two are settled: selective testing is on, and `ci:cache` warms only the external
 dependencies. Warming `all-possible` — the internal modules too — was tried in #60 and reverted:
-a binary-cached `TestSupport` resolves `#filePath` to the machine that built it, which crashes
-every snapshot test in the project. `Tuist.swift` carries the detail.
+`ApiInterface`'s `URL.projectRoot` resolves a bare `#filePath` at compile time, so a binary-cached
+`ApiInterface` would carry the path of whatever machine built it. `Tuist.swift` carries the detail.
 
 Surfaced during: the CI runtime investigation, 2026-08-15; re-checked 2026-08-30.
 
@@ -264,3 +264,18 @@ Worth deciding at the same time whether Edit should stay a toolbar button while 
 menu, or whether both belong in one place.
 
 Surfaced during: #173, 2026-08-22.
+
+---
+
+## `StoreKitConfigurationFileReference` only works from an interactive Xcode Run
+
+`Module+Schemes.swift` sets `storeKitConfigurationPath` (`Tuist/Tips.storekit`) only on the "Less
+Paper" scheme's `runAction` — the `LaunchAction` in the generated `.xcscheme`. Apple honours that
+setting only for an interactive Run from Xcode. Neither `tuist run` nor `simctl launch` triggers it,
+because both bypass the scheme's launch action the way Xcode's own Run button does not.
+
+So verifying the tip list (or anything else backed by the local StoreKit configuration) against
+real product data cannot be automated from a command line at all — not CI, not a local script. It
+needs a human pressing Run in Xcode.
+
+Surfaced during: `docs/superpowers/specs/2026-09-04-tiny-tip-design.md`, 2026-09-04.

@@ -13,23 +13,25 @@ extension TipJar: DependencyKey {
 
 private extension TipJar {
 
-    // Ordered by Tip.allCases rather than by what StoreKit returns: the ladder is the point, and
-    // StoreKit promises no order. A product missing from the answer - not yet approved, or pulled -
-    // is dropped rather than faked.
+    // Ordered by price rather than by what StoreKit returns, which promises no order at all. A
+    // product missing from the answer - not yet approved, or pulled - is dropped rather than faked.
     static func products() async throws -> [TipProduct] {
         let products = try await Product.products(for: Tip.allCases.map(\.rawValue))
 
-        return Tip.allCases.compactMap { tip in
-            guard let product = products.first(where: { $0.id == tip.rawValue }) else {
-                return nil
-            }
+        return Tip.allCases
+            .compactMap { tip -> TipProduct? in
+                guard let product = products.first(where: { $0.id == tip.rawValue }) else {
+                    return nil
+                }
 
-            return TipProduct(
-                displayName: product.displayName,
-                displayPrice: product.displayPrice,
-                tip: tip
-            )
-        }
+                return TipProduct(
+                    displayName: product.displayName,
+                    displayPrice: product.displayPrice,
+                    price: product.price,
+                    tip: tip
+                )
+            }
+            .sortedByPrice()
     }
 
     static func purchase(tip: Tip) async throws -> TipPurchaseResult {

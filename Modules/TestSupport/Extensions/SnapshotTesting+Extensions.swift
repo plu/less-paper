@@ -33,7 +33,7 @@ public func assertSnapshot<Value, Format>(
         as: snapshotting,
         named: name,
         record: recording,
-        snapshotDirectory: snapshotDirectory(fileID: filePath, sourcePath: sourcePath),
+        snapshotDirectory: snapshotDirectory(fileID: fileID, sourcePath: sourcePath),
         timeout: timeout,
         fileID: fileID,
         file: filePath,

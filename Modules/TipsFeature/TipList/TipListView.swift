@@ -33,7 +33,7 @@ public struct TipListView: View {
                             } label: {
                                 HStack {
                                     // The same Label-with-an-icon every row in Settings uses, and
-                                    // the same heart as the row that leads here: three sizes of
+                                    // the same heart as the row that leads here: four sizes of
                                     // one thing, told apart by their price rather than their icon.
                                     Label {
                                         Text(product.displayName)
