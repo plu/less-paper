@@ -34,26 +34,32 @@ public struct SettingListView: View {
                 }
 
                 Section {
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.correspondentList(CorrespondentListReducer.State(server: store.server))
-                    ) {
-                        Label(.correspondents, systemImage: "person")
+                    if store.canViewCorrespondents {
+                        NavigationLink(
+                            state: SettingListReducer.Path.State.correspondentList(CorrespondentListReducer.State(server: store.server))
+                        ) {
+                            Label(.correspondents, systemImage: "person")
+                        }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
 
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.customFieldList(CustomFieldListReducer.State(server: store.server))
-                    ) {
-                        Label(.customFields, systemImage: "list.bullet.rectangle")
+                    if store.canViewCustomFields {
+                        NavigationLink(
+                            state: SettingListReducer.Path.State.customFieldList(CustomFieldListReducer.State(server: store.server))
+                        ) {
+                            Label(.customFields, systemImage: "list.bullet.rectangle")
+                        }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
 
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.documentTypeList(DocumentTypeListReducer.State(server: store.server))
-                    ) {
-                        Label(.documentTypes, systemImage: "document.badge.gearshape")
+                    if store.canViewDocumentTypes {
+                        NavigationLink(
+                            state: SettingListReducer.Path.State.documentTypeList(DocumentTypeListReducer.State(server: store.server))
+                        ) {
+                            Label(.documentTypes, systemImage: "document.badge.gearshape")
+                        }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
 
                     NavigationLink(
                         state: SettingListReducer.Path.State.pdfPasswordList(PdfPasswordListReducer.State())
@@ -62,26 +68,32 @@ public struct SettingListView: View {
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.savedViewList(SavedViewListReducer.State(server: store.server))
-                    ) {
-                        Label(.savedViews, systemImage: "line.3.horizontal.decrease")
+                    if store.canViewSavedViews {
+                        NavigationLink(
+                            state: SettingListReducer.Path.State.savedViewList(SavedViewListReducer.State(server: store.server))
+                        ) {
+                            Label(.savedViews, systemImage: "line.3.horizontal.decrease")
+                        }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
 
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.storagePathList(StoragePathListReducer.State(server: store.server))
-                    ) {
-                        Label(.storagePaths, systemImage: "folder")
+                    if store.canViewStoragePaths {
+                        NavigationLink(
+                            state: SettingListReducer.Path.State.storagePathList(StoragePathListReducer.State(server: store.server))
+                        ) {
+                            Label(.storagePaths, systemImage: "folder")
+                        }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
 
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.tagList(TagListReducer.State(server: store.server))
-                    ) {
-                        Label(.tags, systemImage: "tag")
+                    if store.canViewTags {
+                        NavigationLink(
+                            state: SettingListReducer.Path.State.tagList(TagListReducer.State(server: store.server))
+                        ) {
+                            Label(.tags, systemImage: "tag")
+                        }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
 
                     NavigationLink(
                         state: SettingListReducer.Path.State.trashList(TrashListReducer.State(server: store.server))

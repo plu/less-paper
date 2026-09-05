@@ -29,10 +29,12 @@ public struct DocumentTypeListView: View {
         }
         .task { await send(.onAppear).finish() }
         .toolbar {
-            Button(action: {
-                send(.createDocumentTypeButtonTapped)
-            }) {
-                Label(.createDocumentType, systemImage: "plus")
+            if store.canCreate {
+                Button(action: {
+                    send(.createDocumentTypeButtonTapped)
+                }) {
+                    Label(.createDocumentType, systemImage: "plus")
+                }
             }
         }
     }
@@ -52,13 +54,18 @@ public struct DocumentTypeListView: View {
                     systemImage: "document.badge.gearshape",
                     title: .noDocumentTypesFound
                 ) {
-                    Button {
-                        send(.createDocumentTypeButtonTapped)
-                    } label: {
-                        Label(.createDocumentType, systemImage: "plus.circle")
-                            .frame(maxWidth: .infinity)
+                    // No call to action for someone who cannot create document types: there is
+                    // nothing there, and they cannot change that. Saying why would explain a
+                    // boundary this app is not the one enforcing.
+                    if store.canCreate {
+                        Button {
+                            send(.createDocumentTypeButtonTapped)
+                        } label: {
+                            Label(.createDocumentType, systemImage: "plus.circle")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.primary())
                     }
-                    .buttonStyle(.primary())
                 }
             }
         }

@@ -9,9 +9,9 @@ public extension CustomFieldRowReducer.State {
         server: Server = .testValue()
     ) -> Self {
         .init(
-            customField: customField,
             isUpdating: isUpdating,
-            server: server
+            server: server,
+            customField: customField
         )
     }
 }

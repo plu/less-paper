@@ -30,21 +30,25 @@ struct StoragePathRowView: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        Button {
-            send(.editButtonTapped)
-        } label: {
-            Image(systemName: "square.and.pencil")
+        if store.canEdit {
+            Button {
+                send(.editButtonTapped)
+            } label: {
+                Image(systemName: "square.and.pencil")
+            }
+            .accessibilityLabel(.editStoragePath)
+            .tint(.m3Primary)
         }
-        .accessibilityLabel(.editStoragePath)
-        .tint(.m3Primary)
 
-        Button {
-            send(.deleteButtonTapped)
-        } label: {
-            Image(systemName: "trash")
+        if store.canDelete {
+            Button {
+                send(.deleteButtonTapped)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .accessibilityLabel(.deleteStoragePath)
+            .tint(.m3Error)
         }
-        .accessibilityLabel(.deleteStoragePath)
-        .tint(.m3Error)
     }
 }
 
@@ -53,8 +57,8 @@ struct StoragePathRowView: View {
         StoragePathRowView(
             store: Store(
                 initialState: StoragePathRowReducer.State(
-                    storagePath: .testValue(),
-                    server: .testValue()
+                    server: .testValue(),
+                    storagePath: .testValue()
                 ),
                 reducer: {
                     StoragePathRowReducer()

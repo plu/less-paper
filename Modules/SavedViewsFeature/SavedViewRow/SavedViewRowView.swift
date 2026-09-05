@@ -39,21 +39,25 @@ struct SavedViewRowView: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        Button {
-            send(.editButtonTapped)
-        } label: {
-            Image(systemName: "square.and.pencil")
+        if store.canEdit {
+            Button {
+                send(.editButtonTapped)
+            } label: {
+                Image(systemName: "square.and.pencil")
+            }
+            .accessibilityLabel(.editSavedView)
+            .tint(.m3Primary)
         }
-        .accessibilityLabel(.editSavedView)
-        .tint(.m3Primary)
 
-        Button {
-            send(.deleteButtonTapped)
-        } label: {
-            Image(systemName: "trash")
+        if store.canDelete {
+            Button {
+                send(.deleteButtonTapped)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .accessibilityLabel(.deleteSavedView)
+            .tint(.m3Error)
         }
-        .accessibilityLabel(.deleteSavedView)
-        .tint(.m3Error)
     }
 }
 
@@ -62,8 +66,8 @@ struct SavedViewRowView: View {
         SavedViewRowView(
             store: Store(
                 initialState: SavedViewRowReducer.State(
-                    savedView: .testValue(),
-                    server: .testValue()
+                    server: .testValue(),
+                    savedView: .testValue()
                 ),
                 reducer: {
                     SavedViewRowReducer()

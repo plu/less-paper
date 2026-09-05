@@ -13,8 +13,8 @@ extension CustomFieldListReducer.State {
             customFields: IdentifiedArray(
                 uniqueElements: customFields.map {
                     CustomFieldRowReducer.State(
-                        customField: $0,
-                        server: server
+                        server: server,
+                        customField: $0
                     )
                 }
             ),

@@ -31,7 +31,26 @@ public struct DocumentTypeRowReducer: Sendable {
 
         var isUpdating = false
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        var canEdit: Bool { permissions.can(.changeDocumentType) }
+
+        var canDelete: Bool { permissions.can(.deleteDocumentType) }
+
         let server: Server
+
+        init(
+            isUpdating: Bool = false,
+            server: Server,
+            documentType: DocumentType
+        ) {
+            self.isUpdating = isUpdating
+            self.server = server
+            self.documentType = documentType
+            permissions = ServerPermissions(server: server)
+        }
     }
 
     public var body: some ReducerOf<Self> {

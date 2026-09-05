@@ -4,6 +4,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 import TestSupport
 
@@ -165,8 +166,8 @@ struct SavedViewListReducerTests {
             $0.savedViews = IdentifiedArray(
                 uniqueElements: getSavedViewsResult.map {
                     SavedViewRowReducer.State(
-                        savedView: $0,
-                        server: .testValue()
+                        server: .testValue(),
+                        savedView: $0
                     )
                 }
             )
@@ -174,5 +175,41 @@ struct SavedViewListReducerTests {
         await store.receive(\.binding, .set(\.isLoaded, true)) {
             $0.isLoaded = true
         }
+    }
+
+    // The toolbar "+" is gated on .addSavedView, but this project's NavigationStack snapshots do
+    // not render nav-bar chrome, so no image can show its absence. This asserts the gate instead -
+    // and the third expectation is the one that catches gating saved views on a neighbouring
+    // entity's permission, which would compile and look identical.
+    @Test
+    func listGatesOnSavedViewPermissionsSpecifically() {
+        let server = Server.testValue()
+
+        @Shared(.currentUser(server))
+        var user: User?
+
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+
+        $user.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewSavedView] }
+
+        let state = SavedViewListReducer.State(server: server)
+
+        #expect(!state.canCreate)
+        #expect(state.permissions.can(.viewSavedView))
+        #expect(!state.permissions.can(.addTag))
+    }
+
+    // This restates ServerPermissionsTests.nilCacheAllowsEverything: with a nil cache, can
+    // returns true for any server, so this passes even if State wired ServerPermissions to a
+    // different Server entirely. The genuinely end-to-end fail-open evidence is the pre-existing,
+    // unseeded testSnapshot.empty.png in SavedViewListViewTests - it renders every control with no
+    // cache seeded at all. This test only re-checks the rule.
+    @Test
+    func listAllowsEverythingWhenNothingHasBeenRead() {
+        let state = SavedViewListReducer.State(server: .testValue())
+
+        #expect(state.canCreate)
     }
 }

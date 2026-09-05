@@ -67,6 +67,20 @@ public struct SettingListReducer {
 
         var path = StackState<Path.State>()
 
+        var permissions: ServerPermissions
+
+        var canViewCorrespondents: Bool { permissions.can(.viewCorrespondent) }
+
+        var canViewCustomFields: Bool { permissions.can(.viewCustomField) }
+
+        var canViewDocumentTypes: Bool { permissions.can(.viewDocumentType) }
+
+        var canViewSavedViews: Bool { permissions.can(.viewSavedView) }
+
+        var canViewStoragePaths: Bool { permissions.can(.viewStoragePath) }
+
+        var canViewTags: Bool { permissions.can(.viewTag) }
+
         let server: Server
 
         public init(
@@ -74,6 +88,7 @@ public struct SettingListReducer {
         ) {
             self.appVersion = Dependency(\.getAppVersion.execute).wrappedValue()
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 
