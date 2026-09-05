@@ -70,60 +70,9 @@ struct TagListViewTests {
 
     // Seeding the cache explicitly, never leaving it nil: a nil cache fails open and renders every
     // control, which would make a "gated" snapshot identical to an ungated one and prove nothing.
-    @Test
-    func testSnapshot_viewOnly() async throws {
-        let server = seedPermissions([.viewTag])
-
-        assertSnapshot(
-            of: NavigationStack { TagListView(
-                store: Store(
-                    initialState: .testValue(server: server, tags: .previewValue),
-                    reducer: {
-                        TagListReducer()
-                    }
-                )
-            )
-            },
-            as: .image(layout: .device(config: .iPhone12))
-        )
-    }
-
-    @Test
-    func testSnapshot_viewAndChangeTag() async throws {
-        let server = seedPermissions([.viewTag, .changeTag])
-
-        assertSnapshot(
-            of: NavigationStack { TagListView(
-                store: Store(
-                    initialState: .testValue(server: server, tags: .previewValue),
-                    reducer: {
-                        TagListReducer()
-                    }
-                )
-            )
-            },
-            as: .image(layout: .device(config: .iPhone12))
-        )
-    }
-
-    @Test
-    func testSnapshot_viewAndDeleteTag() async throws {
-        let server = seedPermissions([.viewTag, .deleteTag])
-
-        assertSnapshot(
-            of: NavigationStack { TagListView(
-                store: Store(
-                    initialState: .testValue(server: server, tags: .previewValue),
-                    reducer: {
-                        TagListReducer()
-                    }
-                )
-            )
-            },
-            as: .image(layout: .device(config: .iPhone12))
-        )
-    }
-
+    // This is the one populated/empty pair where gating is actually visible: the create button
+    // lives in the view body, not the toolbar, which this project's NavigationStack snapshots do
+    // not render (see TagListReducerTests for the toolbar assertion instead).
     @Test
     func testSnapshot_viewOnly_empty() async throws {
         let server = seedPermissions([.viewTag])
@@ -132,25 +81,6 @@ struct TagListViewTests {
             of: NavigationStack { TagListView(
                 store: Store(
                     initialState: .testValue(server: server),
-                    reducer: {
-                        TagListReducer()
-                    }
-                )
-            )
-            },
-            as: .image(layout: .device(config: .iPhone12))
-        )
-    }
-
-    // Nothing read yet, so nothing to gate on: this should look exactly like `testSnapshot` above.
-    @Test
-    func testSnapshot_nilCache() async throws {
-        let server = seedPermissions(nil)
-
-        assertSnapshot(
-            of: NavigationStack { TagListView(
-                store: Store(
-                    initialState: .testValue(server: server, tags: .previewValue),
                     reducer: {
                         TagListReducer()
                     }
