@@ -20,7 +20,7 @@ public struct PermissionsQuery: Sendable {
 // swift-sharing's registry holds a Shared's underlying reference weakly, so a Shared built and
 // dropped inside `can` re-reads the file and re-arms two DispatchSources on every single call -
 // fine while nothing calls `can`, not fine once a view body does it every frame while scrolling.
-// Keeping one pair alive per server is what makes that cheap.
+// Keeping one ServerPermissions alive per server is what makes that cheap.
 //
 // This has to be a dependency, not a plain `static let`: a bare static dictionary keyed by
 // Server.ID would survive between @Test cases, but every existing test uses the same fixed
@@ -35,21 +35,17 @@ private final class PermissionsQueryCache: DependencyKey, @unchecked Sendable {
 
     static var testValue: PermissionsQueryCache { PermissionsQueryCache() }
 
-    private let pairs = LockIsolated<[Server.ID: (permissions: Shared<[Permission]?>, user: Shared<User?>)]>([:])
+    private let entries = LockIsolated<[Server.ID: ServerPermissions]>([:])
 
     // Locked because `can` is @Sendable and may be called concurrently.
-    func pair(for server: Server) -> (permissions: Shared<[Permission]?>, user: Shared<User?>) {
-        pairs.withValue { pairs in
-            if let pair = pairs[server.id] {
-                return pair
+    func serverPermissions(for server: Server) -> ServerPermissions {
+        entries.withValue { entries in
+            if let entry = entries[server.id] {
+                return entry
             }
-            @Shared(.permissions(server))
-            var permissions: [Permission]?
-            @Shared(.currentUser(server))
-            var user: User?
-            let pair = (permissions: $permissions, user: $user)
-            pairs[server.id] = pair
-            return pair
+            let entry = ServerPermissions(server: server)
+            entries[server.id] = entry
+            return entry
         }
     }
 }
@@ -61,19 +57,9 @@ extension PermissionsQuery: DependencyKey {
             @Dependency(PermissionsQueryCache.self)
             var cache
 
-            let pair = cache.pair(for: server)
-
-            // Nothing read yet, so nothing to gate on. Gating is presentation, not enforcement - the
-            // server still refuses what it should. This branch is why the cache is optional rather
-            // than an empty array: contains() on an empty array denies everything, which is the
-            // opposite answer to the same question.
-            guard let permissions = pair.permissions.wrappedValue else {
-                return true
-            }
-
-            // Superuser first, matching the web UI. Django hands a superuser every permission
-            // anyway, so this is belt and braces - and it stays true if that ever stops.
-            return pair.user.wrappedValue?.isSuperuser == true || permissions.contains(permission)
+            // The rule itself lives on ServerPermissions; this is the dependency-shaped door to it.
+            let serverPermissions = cache.serverPermissions(for: server)
+            return serverPermissions.can(permission)
         }
     )
 }
