@@ -14,6 +14,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+import permissions
+
 DEFAULT_URL = "http://localhost:8000"
 USERNAME = "admin"
 PASSWORD = "T0PS3CR3T!!123"
@@ -168,17 +170,29 @@ def ensure_entities(api, config):
     """
     ids = {}
     for kind, path in ENTITY_PATHS.items():
-        existing = {item["name"]: item["id"] for item in api.list_all(path)}
+        existing = {item["name"]: item for item in api.list_all(path)}
         ids[kind] = {}
         for entry in config[kind]:
             payload = {"name": entry} if isinstance(entry, str) else dict(entry)
             name = payload["name"]
-            if name in existing:
-                ids[kind][name] = existing[name]
+            current = existing.get(name)
+
+            if current is None:
+                # owner has to be sent explicitly: paperless defaults it to the requesting user,
+                # and an owned object is invisible to everyone else. These would all belong to the
+                # admin doing the seeding, and the permission scenario users would each see an
+                # empty list - with no error anywhere, because an empty list is a legitimate
+                # state, so it reads as "the gating hid everything" rather than as a broken
+                # fixture. Same rule the documents already follow, for the same reason.
+                created = api.request("POST", path, {**payload, "owner": None})
+                ids[kind][name] = created["id"]
+                print(f"  created {kind[:-1]}: {name}")
                 continue
-            created = api.request("POST", path, payload)
-            ids[kind][name] = created["id"]
-            print(f"  created {kind[:-1]}: {name}")
+
+            ids[kind][name] = current["id"]
+            if current.get("owner") is not None:
+                api.request("PATCH", f"{path}{current['id']}/", {"owner": None})
+                print(f"  released owner on {kind[:-1]}: {name}")
     return ids
 
 
@@ -208,9 +222,15 @@ RULE_REFERENCES = {
 
 def ensure_saved_views(api, config, entity_ids):
     """Create the saved views, resolving entity names in their filter rules."""
-    existing = {view["name"] for view in api.list_all("/api/saved_views/")}
+    existing = {view["name"]: view for view in api.list_all("/api/saved_views/")}
     for view in config["saved_views"]:
-        if view["name"] in existing:
+        current = existing.get(view["name"])
+        if current is not None:
+            # Unowned for the same reason as every other entity: an owned saved view is invisible
+            # to the permission scenario users, whose saved-view screen would then be empty.
+            if current.get("owner") is not None:
+                api.request("PATCH", f"/api/saved_views/{current['id']}/", {"owner": None})
+                print(f"  released owner on saved view: {view['name']}")
             continue
         rules = []
         for rule in view["filter_rules"]:
@@ -224,6 +244,7 @@ def ensure_saved_views(api, config, entity_ids):
             "sort_field": view["sort_field"],
             "sort_reverse": view["sort_reverse"],
             "filter_rules": rules,
+            "owner": None,
         })
         print(f"  created saved view: {view['name']}")
 
@@ -312,11 +333,21 @@ def verify(api, config):
             if item is None:
                 problems.append(f"{kind}: missing {expected['name']!r}")
                 continue
+            # Same rule as the documents above, and the one the permission scenario users depend
+            # on: an owned entity is invisible to everyone else, so their lists would come up
+            # empty and read as gating rather than as a broken fixture.
+            if item.get("owner") is not None:
+                problems.append(
+                    f"{kind}: {expected['name']!r} must stay unowned to be visible to the "
+                    f"permission scenario users, but is owned by {item['owner']}"
+                )
             for field, want in expected.items():
                 if field != "name" and item.get(field) != want:
                     problems.append(
                         f"{kind[:-1]} {expected['name']!r}: {field} is {item.get(field)!r}, expected {want!r}"
                     )
+
+    problems.extend(permissions.verify(api, config))
 
     views = {view["name"]: view for view in api.list_all("/api/saved_views/")}
     missing_views = sorted({view["name"] for view in config["saved_views"]} - views.keys())
@@ -357,6 +388,7 @@ def main():
             patch_documents(api, config, entity_ids, document_ids)
             ensure_saved_views(api, config, entity_ids)
             set_saved_view_visibility(api, config)
+            permissions.ensure_users(api, config)
 
         problems = verify(api, config)
     except SeedError as error:
@@ -370,6 +402,8 @@ def main():
         return 1
 
     print("Fixture OK")
+    if not args.verify:
+        permissions.print_scenarios(config)
     return 0
 
 

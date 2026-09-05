@@ -547,3 +547,31 @@ that it renders wherever the README is read.
 `Screenshots/contact_sheet.py` tiles a directory of screenshots into one image for a workflow's step
 summary. It needs Homebrew's ImageMagick (`brew install imagemagick`), which is not a mise tool
 because the only backends for it build from source.
+
+## `docker:seed` also seeds the permission scenario users
+
+The seed creates one user per global-permission scenario the app has to get right — `perm-none`,
+`perm-viewer`, `perm-editor`, `perm-deleter`, `perm-creator`, `perm-tags-only`, `perm-full`,
+`perm-superuser` — so a permission question can be answered by logging into the dev instance rather
+than by reading code. The matrix is `permission_users` in `docker/seed/seed.json`, one line of
+`expect` per user saying what should be visible; they all share `permission_password`. Re-running
+changes nothing, and `--verify` checks without writing.
+
+Two invariants `verify()` enforces rather than documents, because both fail silently:
+
+- **Everything the seed creates stays unowned.** paperless defaults `owner` to whoever creates an
+  object and hides owned objects from everyone else, so entities seeded by the admin are invisible
+  to every scenario user. Their lists then come up empty, which reads as *the gating hid
+  everything* rather than as a broken fixture. `ensure_entities` and `ensure_saved_views` send
+  `owner: null` explicitly and release any owner they find — the rule the documents already
+  followed, now applied to the entities too.
+- **Custom fields stay empty.** The empty-list *Create …* button is one of the gated affordances
+  and is only reachable on an empty list, so one entity type has to stay empty for it to be
+  testable. Custom fields draw the short straw because the corpus has no other use for them, and
+  because the six entity screens are copies of each other — what this one cannot show, the other
+  five can. Adding a `custom_fields` key to `seed.json` would quietly remove that coverage.
+
+`perm-superuser` does **not** isolate the `is_superuser` bypass in `ServerPermissions.can`.
+paperless expands a superuser's effective permissions into `ui_settings`, so that user arrives
+holding all 162 and the ordinary `contains()` check already answers true. The bypass is belt and
+braces against a server that stops doing that, and only the unit tests reach it.

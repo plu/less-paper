@@ -115,5 +115,56 @@
         { "rule_type": 9, "value": "2026-01-01" }
       ]
     }
+  ],
+
+  "permission_password": "T0PS3CR3T!!123",
+
+  "permission_baseline": ["view_document", "view_uisettings", "change_uisettings"],
+
+  "permission_entities": ["tag", "correspondent", "documenttype", "storagepath", "customfield", "savedview"],
+
+  "permission_users": [
+    {
+      "username": "perm-none",
+      "actions": [],
+      "expect": "The whole entity section in Settings is gone. Only PDF passwords and Trash remain."
+    },
+    {
+      "username": "perm-viewer",
+      "actions": ["view"],
+      "expect": "All six rows. Inside each: no toolbar +, no create button on the empty custom fields list, no swipe actions at all."
+    },
+    {
+      "username": "perm-editor",
+      "actions": ["view", "change"],
+      "expect": "All six rows. Edit swipe only - no delete swipe, no +."
+    },
+    {
+      "username": "perm-deleter",
+      "actions": ["view", "delete"],
+      "expect": "All six rows. Delete swipe only - no edit swipe, no +. The mirror of perm-editor: run the pair to prove edit and delete are not wired to each other's permission."
+    },
+    {
+      "username": "perm-creator",
+      "actions": ["view", "add"],
+      "expect": "All six rows. Toolbar + and the create button on the empty custom fields list, but no swipe actions."
+    },
+    {
+      "username": "perm-tags-only",
+      "actions": ["view", "add", "change", "delete"],
+      "entities": ["tag"],
+      "expect": "Tags is the only row in Settings, with every control inside it. The other five rows are hidden. Catches a feature gated on a neighbouring entity's permission."
+    },
+    {
+      "username": "perm-full",
+      "actions": ["view", "add", "change", "delete"],
+      "expect": "Everything visible - the app as it looked before any gating existed."
+    },
+    {
+      "username": "perm-superuser",
+      "actions": [],
+      "is_superuser": true,
+      "expect": "Everything visible. Note that this does NOT isolate the is_superuser bypass in ServerPermissions.can: paperless expands a superuser's effective permissions into ui_settings, so this user arrives holding all 162 and the ordinary contains() check already answers true. The bypass is belt and braces against a server that stops doing that, and only the unit tests reach it."
+    }
   ]
 }
