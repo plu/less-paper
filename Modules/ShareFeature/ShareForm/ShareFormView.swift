@@ -91,7 +91,7 @@ struct ShareFormView: View {
             options: store.correspondents.elements,
             selection: $store.input.correspondent,
             title: .correspondent,
-            onCreate: { send(.createCorrespondentButtonTapped) }
+            onCreate: store.canCreateCorrespondent ? { send(.createCorrespondentButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -109,7 +109,7 @@ struct ShareFormView: View {
             options: store.documentTypes.elements,
             selection: $store.input.documentType,
             title: .documentType,
-            onCreate: { send(.createDocumentTypeButtonTapped) }
+            onCreate: store.canCreateDocumentType ? { send(.createDocumentTypeButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -160,7 +160,7 @@ struct ShareFormView: View {
             options: store.storagePaths.elements,
             selection: $store.input.storagePath,
             title: .storagePath,
-            onCreate: { send(.createStoragePathButtonTapped) }
+            onCreate: store.canCreateStoragePath ? { send(.createStoragePathButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(

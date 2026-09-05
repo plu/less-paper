@@ -355,6 +355,24 @@ struct ShareFormReducerTests {
     }
 
     @Test
+    func createButtonsFollowEachEntityAddPermission() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.addTag] }
+
+        let state = ShareFormReducer.State.testValue(server: server)
+
+        #expect(state.canCreateTag)
+        // add_tag must not open any of the other three.
+        #expect(!state.canCreateCorrespondent)
+        #expect(!state.canCreateDocumentType)
+        #expect(!state.canCreateStoragePath)
+    }
+
+    @Test
     func theShareFormGateFollowsAServerSwitch() {
         // Two distinct servers: Server.testValue's id defaults to one fixed UUID string, and two
         // servers sharing an id would resolve to the same cache key and prove nothing.

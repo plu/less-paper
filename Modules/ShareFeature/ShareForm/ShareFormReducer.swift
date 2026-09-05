@@ -102,6 +102,12 @@ public struct ShareFormReducer {
 
         var canCreateTag: Bool { permissions.can(.addTag) }
 
+        var canCreateCorrespondent: Bool { permissions.can(.addCorrespondent) }
+
+        var canCreateDocumentType: Bool { permissions.can(.addDocumentType) }
+
+        var canCreateStoragePath: Bool { permissions.can(.addStoragePath) }
+
         public init(
             files: [URL],
             server: Server

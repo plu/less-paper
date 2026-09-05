@@ -119,9 +119,9 @@ SettingsFeature
 | Add note | the document form's note composer | `add_note` |
 | Delete note | notes | `delete_note` |
 | Create tag | document form, share form | `add_tag` |
-| Create correspondent | document form | `add_correspondent` |
-| Create document type | document form | `add_documenttype` |
-| Create storage path | document form | `add_storagepath` |
+| Create correspondent | document form, share form | `add_correspondent` |
+| Create document type | document form, share form | `add_documenttype` |
+| Create storage path | document form, share form | `add_storagepath` |
 | Create custom field | document form | `add_customfield` |
 | Restore, delete forever, empty trash | trash list and rows | `delete_document` |
 | Trash row | `SettingListView` | `delete_document` |
