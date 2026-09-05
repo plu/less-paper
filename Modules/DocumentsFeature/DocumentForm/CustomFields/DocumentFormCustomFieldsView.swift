@@ -12,13 +12,15 @@ struct DocumentFormCustomFieldsView: View {
                 systemImage: "list.bullet.rectangle",
                 title: .noCustomFieldsDefined
             ) {
-                Button {
-                    store.send(.view(.createCustomFieldButtonTapped))
-                } label: {
-                    Label(.newCustomField, systemImage: "plus.circle")
-                        .frame(maxWidth: .infinity)
+                if store.canCreateCustomField {
+                    Button {
+                        store.send(.view(.createCustomFieldButtonTapped))
+                    } label: {
+                        Label(.newCustomField, systemImage: "plus.circle")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.primary())
                 }
-                .buttonStyle(.primary())
             }
             .sheet(
                 item: $store.scope(
@@ -108,10 +110,12 @@ struct DocumentFormCustomFieldsView: View {
     @ViewBuilder
     private func addMenuContent(systemImage: String) -> some View {
         Menu {
-            Button {
-                store.send(.view(.createCustomFieldButtonTapped))
-            } label: {
-                Label(.newCustomField, systemImage: "plus")
+            if store.canCreateCustomField {
+                Button {
+                    store.send(.view(.createCustomFieldButtonTapped))
+                } label: {
+                    Label(.newCustomField, systemImage: "plus")
+                }
             }
 
             if !unattached.isEmpty {

@@ -339,4 +339,42 @@ struct ShareFormReducerTests {
             await store.receive(\.fileUnlocked)
         }
     }
+
+    @Test
+    func theShareFormGateFollowsTheAddTagPermission() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewTag] }
+
+        let state = ShareFormReducer.State.testValue(server: server)
+
+        #expect(!state.canCreateTag)
+    }
+
+    @Test
+    func theShareFormGateFollowsAServerSwitch() {
+        // Two distinct servers: Server.testValue's id defaults to one fixed UUID string, and two
+        // servers sharing an id would resolve to the same cache key and prove nothing.
+        let allowed = Server.testValue()
+        let denied = Server.testValue(id: "0BE4B0E2-4E0F-4E5E-9E1E-2C7C2F0A9B31")
+
+        @Shared(.permissions(allowed)) var allowedPermissions: [Permission]?
+        @Shared(.currentUser(allowed)) var allowedUser: User?
+        $allowedUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $allowedPermissions.withLock { $0 = [.addTag] }
+
+        @Shared(.permissions(denied)) var deniedPermissions: [Permission]?
+        @Shared(.currentUser(denied)) var deniedUser: User?
+        $deniedUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $deniedPermissions.withLock { $0 = [.viewTag] }
+
+        var state = ShareFormReducer.State(files: [], server: allowed)
+        #expect(state.canCreateTag)
+
+        state.server = denied
+        #expect(!state.canCreateTag)
+    }
 }

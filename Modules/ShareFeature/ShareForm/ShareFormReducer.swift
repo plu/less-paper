@@ -96,6 +96,12 @@ public struct ShareFormReducer {
 
         var server: Server { didSet { reset() } }
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        var canCreateTag: Bool { permissions.can(.addTag) }
+
         public init(
             files: [URL],
             server: Server
@@ -106,6 +112,7 @@ public struct ShareFormReducer {
             self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
             self._storagePaths = Shared(wrappedValue: [], .storagePaths(server))
             self._tags = Shared(wrappedValue: [], .tags(server))
+            permissions = ServerPermissions(server: server)
             selectFile(index: currentIndex)
         }
     }
@@ -226,6 +233,9 @@ extension ShareFormReducer.State {
         _documentTypes = Shared(wrappedValue: [], .documentTypes(server))
         _storagePaths = Shared(wrappedValue: [], .storagePaths(server))
         _tags = Shared(wrappedValue: [], .tags(server))
+        // Rebuilt for the same reason as the four above: a gate left pointing at the previous
+        // server would answer for the wrong account after a switch.
+        permissions = ServerPermissions(server: server)
     }
 
     mutating func selectNextFile(index: Int) {

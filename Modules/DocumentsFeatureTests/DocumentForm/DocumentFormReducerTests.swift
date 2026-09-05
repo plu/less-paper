@@ -511,4 +511,23 @@ struct DocumentFormReducerTests {
         #expect(store.state.content == full.content)
         #expect(store.state.isModified == false)
     }
+
+    @Test
+    func createButtonsFollowEachEntityAddPermission() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .addTag] }
+
+        let state = DocumentFormReducer.State.testValue(server: server)
+
+        #expect(state.canCreateTag)
+        // add_tag must not open any of the other four.
+        #expect(!state.canCreateCorrespondent)
+        #expect(!state.canCreateDocumentType)
+        #expect(!state.canCreateStoragePath)
+        #expect(!state.canCreateCustomField)
+    }
 }

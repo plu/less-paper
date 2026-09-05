@@ -179,7 +179,7 @@ struct DocumentFormView: View {
             options: store.correspondents.elements,
             selection: $store.input.correspondent,
             title: .correspondent,
-            onCreate: { send(.createCorrespondentButtonTapped) }
+            onCreate: store.canCreateCorrespondent ? { send(.createCorrespondentButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -197,7 +197,7 @@ struct DocumentFormView: View {
             options: store.documentTypes.elements,
             selection: $store.input.documentType,
             title: .documentType,
-            onCreate: { send(.createDocumentTypeButtonTapped) }
+            onCreate: store.canCreateDocumentType ? { send(.createDocumentTypeButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -215,7 +215,7 @@ struct DocumentFormView: View {
             options: store.storagePaths.elements,
             selection: $store.input.storagePath,
             title: .storagePath,
-            onCreate: { send(.createStoragePathButtonTapped) }
+            onCreate: store.canCreateStoragePath ? { send(.createStoragePathButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -233,7 +233,7 @@ struct DocumentFormView: View {
             options: store.tags.elements,
             selection: $store.input.tags,
             title: .tags,
-            onCreate: { send(.createTagButtonTapped) },
+            onCreate: store.canCreateTag ? { send(.createTagButtonTapped) } : nil,
             fieldItem: {
                 Text($0.description)
                     .capsule(

@@ -116,6 +116,20 @@ public struct DocumentFormReducer: Sendable {
         @Shared
         var tags: IdentifiedArrayOf<Tag>
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        var canCreateTag: Bool { permissions.can(.addTag) }
+
+        var canCreateCorrespondent: Bool { permissions.can(.addCorrespondent) }
+
+        var canCreateDocumentType: Bool { permissions.can(.addDocumentType) }
+
+        var canCreateStoragePath: Bool { permissions.can(.addStoragePath) }
+
+        var canCreateCustomField: Bool { permissions.can(.addCustomField) }
+
         init(
             destination: DocumentFormReducer.Destination.State? = nil,
             document: Shared<Document>,
@@ -137,6 +151,7 @@ public struct DocumentFormReducer: Sendable {
             self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
             self._storagePaths = Shared(wrappedValue: [], .storagePaths(server))
             self._tags = Shared(wrappedValue: [], .tags(server))
+            permissions = ServerPermissions(server: server)
         }
     }
 

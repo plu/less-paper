@@ -178,7 +178,7 @@ struct ShareFormView: View {
             options: store.tags.elements,
             selection: $store.input.tags,
             title: .tags,
-            onCreate: { send(.createTagButtonTapped) },
+            onCreate: store.canCreateTag ? { send(.createTagButtonTapped) } : nil,
             fieldItem: {
                 Text($0.description)
                     .capsule(
