@@ -46,6 +46,15 @@ struct ShareFormView: View {
                 }
                 .buttonStyle(.primary(isLoading: $store.isImporting))
                 .disabled(store.isLocked)
+            } else {
+                // Said here rather than by an absent button, because the server picker above is
+                // reachable and this is what tells the user to use it. It follows a switch on its
+                // own: reset() rebuilds permissions, so canImport re-answers for the new server.
+                Text(.importNotPermittedInfo(serverAlias: store.server.alias))
+                    .font(.footnote)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Color.m3Outline)
+                    .frame(maxWidth: .infinity)
             }
         }
     }

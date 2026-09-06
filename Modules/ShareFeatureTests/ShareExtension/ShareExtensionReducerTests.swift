@@ -32,11 +32,16 @@ struct ShareExtensionReducerTests {
     }
 
     // iOS opens the share sheet whatever this app thinks, so an account that cannot add documents
-    // gets the whole sheet replaced rather than a hidden button — the alternative is a sheet
-    // offering nothing but Skip.
+    // anywhere gets the whole sheet replaced rather than a hidden button — the alternative is a
+    // sheet offering nothing but Skip. "Anywhere" is the load-bearing word: see the multi-server
+    // test below, which is the case this blocked by mistake.
     @Test
     func test_view_onAppear_importNotPermitted() async throws {
         let server = Server.testValue(alias: "work")
+
+        // The single-server case: with nowhere else to switch to, the whole sheet is blocked.
+        @Shared(.servers)
+        var servers: IdentifiedArrayOf<Server> = [server]
 
         @Shared(.selectedServer)
         var selectedServer: Server? = server
@@ -60,6 +65,50 @@ struct ShareExtensionReducerTests {
 
         await store.send(.view(.onAppear)) {
             $0.error = .importNotPermitted(serverAlias: "work")
+        }
+    }
+
+    // The regression this pair exists for: blocking on the SELECTED server alone trapped a
+    // multi-server user, because the server picker lives inside the form the block replaces. With
+    // somewhere else to go, the sheet must render so they can go there.
+    @Test
+    func test_view_onAppear_importPermittedElsewhereDoesNotBlockTheSheet() async throws {
+        let denied = Server.testValue(alias: "work")
+        let allowed = Server.testValue(alias: "home", id: "0BE4B0E2-4E0F-4E5E-9E1E-2C7C2F0A9B31")
+
+        @Shared(.servers)
+        var servers: IdentifiedArrayOf<Server> = [denied, allowed]
+
+        @Shared(.selectedServer)
+        var selectedServer: Server? = denied
+
+        @Shared(.permissions(denied))
+        var deniedPermissions: [Permission]?
+
+        @Shared(.currentUser(denied))
+        var deniedUser: User?
+
+        @Shared(.permissions(allowed))
+        var allowedPermissions: [Permission]?
+
+        @Shared(.currentUser(allowed))
+        var allowedUser: User?
+
+        $deniedUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $deniedPermissions.withLock { $0 = [.viewDocument] }
+        $allowedUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $allowedPermissions.withLock { $0 = [.viewDocument, .addDocument] }
+
+        let store = TestStore(initialState: ShareExtensionReducer.State.testValue(
+            input: .extensionContext(nil)
+        )) {
+            ShareExtensionReducer()
+        }
+
+        // Reaches the missing-context branch, which is only possible because the sheet was not
+        // blocked — the user can open the form and switch to "home".
+        await store.send(.view(.onAppear)) {
+            $0.error = .importFailed(nil)
         }
     }
 

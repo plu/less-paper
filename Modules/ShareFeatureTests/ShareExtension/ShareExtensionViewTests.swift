@@ -42,6 +42,10 @@ struct ShareExtensionViewTests {
     func testSnapshot_importNotPermitted() async throws {
         let server = Server.testValue(alias: "work")
 
+        // The single-server case: with nowhere else to switch to, the whole sheet is blocked.
+        @Shared(.servers)
+        var servers: IdentifiedArrayOf<Server> = [server]
+
         @Shared(.selectedServer)
         var selectedServer: Server? = server
 
