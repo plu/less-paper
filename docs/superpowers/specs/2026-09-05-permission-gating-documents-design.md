@@ -188,7 +188,8 @@ the image, so those two get snapshots: the composer's disappears along with its 
 
 ## Out of scope
 
-- **Object-level permissions.** `user_can_change`, `owner`, `full_perms` — Project 3. A document
+- **Object-level permissions.** `user_can_change`, `owner`, `full_perms` — Project 3, with what we
+  already know written up in `docs/object-level-permissions.md`. A document
   the user may not change because of its owner still shows an edit button after this project.
 - **Enforcement.** Unchanged from Project 2: the server is the boundary.
 - **Explaining a hidden control.** No "you do not have permission" copy anywhere.

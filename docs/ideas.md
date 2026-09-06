@@ -9,6 +9,25 @@ is settled, a plan in `docs/superpowers/plans/`.
 
 ---
 
+## Object-level (row-level) permissions
+
+The third and last permissions project. The two shipped ones gate **global** permissions — "may
+this account ever do this" — while this one answers "may it do this **to this row**". A document the
+account may not change because of its owner still shows an edit button today.
+
+Two things make it unlike its predecessors: a bulk selection can be partly permitted, and the answer
+arrives inside each row's payload rather than from a server-scoped cache, so it cannot live in
+`ServerPermissions`.
+
+What we already established — the paperless ownership rules, several surprises that cost live-server
+probing, the fixture gaps, and the sweep method that found the last project's blind spots — is
+written up in [`docs/object-level-permissions.md`](object-level-permissions.md). Read that before
+designing anything.
+
+Surfaced during: `docs/superpowers/specs/2026-09-05-permission-gating-documents-design.md`.
+
+---
+
 ## Discover documents that *start* matching a tab's filter
 
 Cross-tab sync propagates document content but deliberately never changes a list's membership.
