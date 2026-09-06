@@ -18,6 +18,15 @@ if gh release list --limit 200 --json tagName --jq '.[].tagName' | grep -Fxq "$t
   exit 1
 fi
 
+# release:tag runs at the very end, after the submission that cannot be undone, and computes its
+# changelog from a commit range - which a shallow clone collapses to a single commit. Failing here
+# costs a re-run; failing there leaves a submitted version tagged with a changelog that is wrong.
+if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+  echo "error: shallow clone - release:tag would publish a truncated changelog" >&2
+  echo "       run \`git fetch --unshallow\` before releasing" >&2
+  exit 1
+fi
+
 # Text Apple would reject costs a round trip through review, so check the published limits first.
 mise run metadata:lint
 
@@ -51,5 +60,10 @@ ASC_AUTH_KEY="$ALTOOL_AUTH_KEY" \
 ASC_APP_VERSION="$version" \
 ASC_BUILD_NUMBER="$build" \
   bundle exec fastlane verify_testflight_build
+
+ASC_KEY_ID="$ALTOOL_KEY_ID" \
+ASC_ISSUER_ID="$ALTOOL_ISSUER_ID" \
+ASC_AUTH_KEY="$ALTOOL_AUTH_KEY" \
+  bundle exec fastlane verify_no_pending_iap
 
 echo "Preflight passed: $version ($build) is ready to submit as $tag"

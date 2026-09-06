@@ -1,3 +1,6 @@
+require "json"
+require "net/http"
+
 default_platform(:ios)
 
 # Anchored to this file: fastlane runs `sh` from the directory holding the Fastfile, so a path
@@ -88,6 +91,48 @@ platform :ios do
     end
 
     UI.success("build #{version} (#{number}) is VALID")
+  end
+
+  # App Store Connect attaches every in-app purchase sitting in READY_TO_SUBMIT to the next review
+  # submission by itself, and fastlane cannot manage items it did not add: deliver then dies with
+  # "A review submission already exists with items not managed by fastlane", which names neither the
+  # purchase nor its state and sends you hunting for an open submission that does not exist. This is
+  # the check that names it, and it runs while nothing has been written yet.
+  #
+  # Spaceship 2.238 models no in-app purchase type, and its tunes and testflight clients both point
+  # at Apple's private iris host, where this resource does not exist. So the documented endpoint is
+  # asked directly, with the token connect_api_key has already minted.
+  desc "Fail if an in-app purchase would be auto-attached to the next review submission"
+  lane :verify_no_pending_iap do
+    connect_api_key
+
+    app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+    UI.user_error!("no app #{APP_IDENTIFIER} on App Store Connect") if app.nil?
+
+    # 200 is the endpoint's largest page. An app with more purchases than that would need paging,
+    # and would be nothing like this one.
+    uri = URI("https://api.appstoreconnect.apple.com/v1/apps/#{app.id}/inAppPurchasesV2?limit=200")
+    response = Net::HTTP.get_response(uri, "Authorization" => "Bearer #{Spaceship::ConnectAPI.token.text}")
+
+    unless response.is_a?(Net::HTTPSuccess)
+      UI.user_error!("could not read the in-app purchases: HTTP #{response.code}")
+    end
+
+    pending = JSON.parse(response.body).fetch("data").select do |purchase|
+      purchase.dig("attributes", "state") == "READY_TO_SUBMIT"
+    end
+
+    unless pending.empty?
+      names = pending.map { |purchase| purchase.dig("attributes", "productId") }.join(", ")
+      UI.user_error!(
+        "waiting to be attached to the next submission: #{names}. App Store Connect will add " \
+        "#{pending.count == 1 ? 'it' : 'them'} on its own, and fastlane cannot then manage the " \
+        "submission. Either submit the version by hand this time, or move the purchase out of " \
+        "READY_TO_SUBMIT, then run this again."
+      )
+    end
+
+    UI.success("no in-app purchase is waiting to be attached")
   end
 
   # The binary is already on TestFlight and the listing has already been uploaded, so everything
