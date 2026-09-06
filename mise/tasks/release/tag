@@ -26,6 +26,15 @@ fi
 
 cat "$release_notes" > "$notes"
 
+# A shallow clone has no ancestry past its boundary, so the commit range below silently collapses
+# to the single commit at the tip and the release ships a one-line changelog that looks deliberate.
+# The 3.0.4 release went out that way, tagged through command.yml, which checks out at depth 1.
+if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+  echo "error: shallow clone - the changelog would be truncated to the tip commit" >&2
+  echo "       run \`git fetch --unshallow\`, or check out with fetch-depth: 0" >&2
+  exit 1
+fi
+
 # Tags carry the build number, so they do not sort as versions. Creation order is the only order
 # that means anything here.
 previous="$(git tag --sort=-creatordate | head -1)"
