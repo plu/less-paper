@@ -181,27 +181,27 @@ public struct ServerDetailView: View {
             .listRowBackground(Color.m3SurfaceContainer)
 
             LabeledContent(cachedLabel(.customFields)) {
-                Text(verbatim: String(store.customFields.count))
+                Text(verbatim: cachedCount(store.customFields.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
             LabeledContent(cachedLabel(.savedViews)) {
-                Text(verbatim: String(store.savedViews.count))
+                Text(verbatim: cachedCount(store.savedViews.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
             LabeledContent(cachedLabel(.users)) {
-                Text(verbatim: String(store.users.count))
+                Text(verbatim: cachedCount(store.users.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
             LabeledContent(cachedLabel(.groups)) {
-                Text(verbatim: String(store.groups.count))
+                Text(verbatim: cachedCount(store.groups.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
             LabeledContent(cachedLabel(.favorites)) {
-                Text(verbatim: String(favorites.count))
+                Text(verbatim: cachedCount(favorites.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
         } header: {
@@ -275,6 +275,23 @@ public struct ServerDetailView: View {
     // that a cache lagging behind a fresh statistic reads as staleness rather than as a bug.
     private func cachedLabel(_ title: LocalizedStringResource) -> String {
         "\(String(localized: title)) (\(String(localized: .cached)))"
+    }
+
+    // An empty @Shared array is ambiguous by construction - it defaults to [] whether nothing has
+    // ever been fetched or the server genuinely has none - so a bare count cannot tell the two
+    // apart on its own. This screen can: store.statistics is the signal that this screen's own
+    // refresh has completed successfully at least once (set only by .statisticsLoaded, which
+    // follows a successful updateCache + getStatistics chain), so it doubles as "the caches this
+    // refresh populates are now trustworthy". A non-zero count needs no such gate - if the cache
+    // holds items, at least that many exist regardless of whether a refresh has ever run.
+    private func cachedCount(_ count: Int) -> String {
+        guard count == 0 else {
+            return String(count)
+        }
+        guard store.statistics != nil else {
+            return String(localized: .unknownValue)
+        }
+        return "0"
     }
 }
 

@@ -144,6 +144,29 @@ struct ServerDetailViewTests {
         )
     }
 
+    // The other half of the "unknown, never 0" rule for cache-derived counts: once this screen's
+    // own refresh has succeeded, an empty cache is a known fact - the server genuinely has none -
+    // and must read 0 rather than Unknown forever. Every cache-derived array is left at its default
+    // [] on purpose; only statistics is set, which is the signal a refresh completed.
+    @Test
+    func testSnapshot_emptyCachesAfterSuccessfulRefresh() async throws {
+        let server = Server.testValue()
+
+        var state = ServerDetailReducer.State.testValue(server: server)
+        state.statistics = .testValue()
+
+        TestSupport.assertSnapshot(
+            of: NavigationStack {
+                ServerDetailView(
+                    store: Store(initialState: state) {
+                        ServerDetailReducer()
+                    }
+                )
+            },
+            as: .image(layout: .fixed(width: 390, height: 3600))
+        )
+    }
+
     @Test
     func testSnapshot_restricted() async throws {
         let server = Server.testValue()
