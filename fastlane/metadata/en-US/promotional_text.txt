@@ -1,1 +1,1 @@
-Version 3 is a complete rewrite: the full filter set from the web interface, bulk editing, offline favorites, single sign-on, and import from the share sheet.
+The app now follows your account's permissions — what you may not do is not shown. Plus offline favorites, the full filter set, single sign-on and share-sheet import.
