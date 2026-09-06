@@ -13,6 +13,20 @@ public struct PdfPasswordListView: View {
     }
 
     public var body: some View {
+        // Attached only when there is something to search. The field sits above the list and hides
+        // by scrolling out of view, so over an empty list it has nowhere to go and simply stays on
+        // screen - and a search field above nothing cannot do anything anyway.
+        //
+        // The searchText half is not belt and braces: a query matching nothing empties the list,
+        // and without it the field would vanish mid-search, taking the query with it.
+        if !store.visiblePdfPasswords.isEmpty || !store.searchText.isEmpty {
+            content.searchable(text: $store.searchText)
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         List {
             ForEach(
                 store.scope(state: \.visiblePdfPasswords, action: \.pdfPasswords),
@@ -27,12 +41,6 @@ public struct PdfPasswordListView: View {
         .navigationTitle(Text(.pdfPasswords))
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await send(.onRefresh).finish() }
-        // Left to its default so the field stays out of the way until pulled down. That costs
-        // something real and known: the first pull of a pull-to-refresh travels through the field
-        // before the refresh engages. These screens were pinned for exactly that reason and
-        // deliberately unpinned again — a row of every screen spent on a control most visits never
-        // use was the worse trade.
-        .searchable(text: $store.searchText)
         .task { await send(.onAppear).finish() }
         .overlay {
             if store.isLoaded, store.pdfPasswords.isEmpty {
