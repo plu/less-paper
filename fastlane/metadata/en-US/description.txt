@@ -13,7 +13,7 @@ GET DOCUMENTS IN
 Send anything on your device to paperless-ngx from the share sheet. Password-protected PDFs are unlocked on import, and the password is kept in the keychain so the next document from the same source opens without asking.
 
 BUILT FOR REAL SETUPS
-Connect as many servers as you like and switch between them. Sign in with a password, or with the single sign-on provider your server is configured with. Client certificates, custom HTTP headers and reverse proxies such as Authelia are all supported. When something does go wrong, a local error log — with anything credential-shaped redacted out of it — is there to read and share, and nothing leaves the device unless you send it.
+Connect as many servers as you like and switch between them. Sign in with a password, or with the single sign-on provider your server is configured with. Client certificates, custom HTTP headers and reverse proxies such as Authelia are all supported. A restricted account works too: the app follows your user's permissions and simply does not show what you may not do. When something does go wrong, a local error log — with anything credential-shaped redacted out of it — is there to read and share, and nothing leaves the device unless you send it.
 
 KEEP THE ARCHIVE TIDY
 Create, rename and delete tags, correspondents, document types and storage paths, and set ownership and permissions on any document. Restore anything you deleted from the trash, or empty it for good.

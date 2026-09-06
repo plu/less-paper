@@ -1,0 +1,9 @@
+Eine App, die sich nach den Berechtigungen deines Kontos richtet, ein kleineres Trinkgeld und ein Diagnoseprotokoll, das mehr sagt und weniger verrät.
+
+• Bedienelemente, für die dein Konto keine Berechtigung hat, werden jetzt ausgeblendet: Bearbeiten, Löschen, Import, Massenbearbeitung, Notizen, Papierkorb und die Auswahlfelder in Formularen erscheinen nur, wenn der Server sie auch erlauben würde.
+• Behoben: Ein eingeschränktes Konto konnte gar keinen Server hinzufügen, wenn ihm die Berechtigung fehlte, Benutzer zu lesen. Die App fragt den Server jetzt auf einem Weg nach deinen Berechtigungen, der jedem Konto offensteht.
+• Das Trinkgeld hat eine neue kleinste Stufe, und die Liste ist jetzt nach Preis sortiert.
+• Eine Zeile in den Einstellungen, um die App zu bewerten – und nach einem erfolgreichen Import oder einem Trinkgeld fragt die App gelegentlich von selbst nach einer Bewertung. Wie oft, begrenzt Apple.
+• Das Diagnoseprotokoll enthält keine Server-Hostnamen mehr und hält jetzt App-Version, Verbindungen und Cache-Aktualisierungen fest – ein geteiltes Protokoll erzählt, was passiert ist, ohne deinen Server zu verraten.
+
+Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.

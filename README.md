@@ -36,6 +36,7 @@ next release early: <https://testflight.apple.com/join/3CM21m1n>
 - **Import** — share sheet extension for getting documents in from anywhere on the device
 - **Password-protected PDFs** — unlock on import, with passwords remembered in the keychain
 - **Trash** — restore a document you deleted, or empty the trash for good
+- **Permission-aware** — controls your account has no permission to use stay hidden, and a restricted account can still add a server
 - **iPad layout** — the document opens in a second column beside the list, rather than pushing it aside
 - **Single sign-on** — sign in with an OIDC provider your server offers, through a system browser sheet
 - **Advanced authentication** — client certificates, custom HTTP headers, and reverse-proxy setups such as Authelia

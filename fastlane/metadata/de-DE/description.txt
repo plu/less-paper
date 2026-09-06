@@ -13,7 +13,7 @@ DOKUMENTE HINEINBEKOMMEN
 Schicke alles von deinem Gerät über das Teilen-Menü nach paperless-ngx. Passwortgeschützte PDFs werden beim Import entsperrt, und das Passwort landet im Schlüsselbund – das nächste Dokument derselben Quelle öffnet sich dann ohne Nachfrage.
 
 FÜR ECHTE SETUPS GEBAUT
-Verbinde so viele Server, wie du möchtest, und wechsle zwischen ihnen. Melde dich per Passwort an – oder per Single Sign-on bei dem Anbieter, für den dein Server eingerichtet ist. Client-Zertifikate, eigene HTTP-Header und Reverse Proxies wie Authelia werden unterstützt. Und wenn doch etwas schiefgeht: Ein lokales Fehlerprotokoll, aus dem alles Zugangsdatenähnliche geschwärzt ist, lässt sich lesen und weitergeben – es verlässt das Gerät nur, wenn du es verschickst.
+Verbinde so viele Server, wie du möchtest, und wechsle zwischen ihnen. Melde dich per Passwort an – oder per Single Sign-on bei dem Anbieter, für den dein Server eingerichtet ist. Client-Zertifikate, eigene HTTP-Header und Reverse Proxies wie Authelia werden unterstützt. Auch ein eingeschränktes Konto funktioniert: Die App richtet sich nach den Berechtigungen deines Benutzers und zeigt gar nicht erst an, was du nicht darfst. Und wenn doch etwas schiefgeht: Ein lokales Fehlerprotokoll, aus dem alles Zugangsdatenähnliche geschwärzt ist, lässt sich lesen und weitergeben – es verlässt das Gerät nur, wenn du es verschickst.
 
 DAS ARCHIV IN ORDNUNG HALTEN
 Lege Tags, Korrespondenten, Dokumenttypen und Speicherpfade an, benenne sie um oder lösche sie – und setze Besitzer und Berechtigungen für jedes Dokument. Gelöschtes holst du aus dem Papierkorb zurück – oder leerst ihn endgültig.
