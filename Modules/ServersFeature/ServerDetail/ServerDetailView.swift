@@ -8,6 +8,7 @@ public struct ServerDetailView: View {
 
     public var body: some View {
         List {
+            refreshFailedNote()
             serverSection()
             versionsSection()
             userSection()
@@ -33,6 +34,26 @@ public struct ServerDetailView: View {
     // cache no other part of it touches.
     @Shared
     private var favorites: IdentifiedArrayOf<FavoriteDocument>
+
+    // A failed refresh never replaces the screen and never clears a value - the last known numbers
+    // are still the best answer available - so it says so quietly and stays out of the way. Only
+    // the failure is rendered, not isRefreshing: onAppear fires on every appearance, and a spinner
+    // that comes and goes would make every recorded reference a race.
+    @ViewBuilder
+    private func refreshFailedNote() -> some View {
+        if store.refreshFailed {
+            Section {
+                Label {
+                    Text(.refreshFailedNote)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle")
+                }
+                .font(.footnote)
+                .foregroundStyle(Color.m3Outline)
+                .listRowBackground(Color.m3SurfaceContainer)
+            }
+        }
+    }
 
     @ViewBuilder
     private func serverSection() -> some View {

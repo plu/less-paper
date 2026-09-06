@@ -630,6 +630,23 @@
         }
       }
     },
+    "refreshFailedNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktualisierung fehlgeschlagen. Angezeigt werden die zuletzt bekannten Werte."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't refresh. Showing the last known values."
+          }
+        }
+      }
+    },
     "save": {
       "extractionState": "manual",
       "localizations": {

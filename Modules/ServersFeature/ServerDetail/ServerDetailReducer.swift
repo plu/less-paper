@@ -92,9 +92,17 @@ public struct ServerDetailReducer: Sendable {
                 // other, but a merge races them, and racing two effects that both fire on the same
                 // action makes the order state changes land in nondeterministic - which a TestStore
                 // in exhaustive mode cannot assert against.
+                //
+                // The keychain read goes first, and the order is the whole point. It takes
+                // milliseconds and touches no network; the refresh is ten parallel requests plus a
+                // statistics round trip. Behind that, the auth mode would read Unknown for a full
+                // URLSession timeout on an unreachable server - the one case this screen exists to
+                // diagnose, and the case where "which auth mode is this" is what a support reader
+                // needs first. Ahead of it, it resolves immediately and the refresh loses only the
+                // milliseconds, so this is as good as racing them and stays assertable.
                 return .concatenate(
-                    .runRefresh(server: state.server),
-                    .runLoadAuthMode(server: state.server)
+                    .runLoadAuthMode(server: state.server),
+                    .runRefresh(server: state.server)
                 )
             }
         }

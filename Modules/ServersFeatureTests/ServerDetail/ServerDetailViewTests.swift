@@ -274,4 +274,57 @@ struct ServerDetailViewTests {
             as: .image(layout: .fixed(width: 390, height: 3600))
         )
     }
+
+    // The failed refresh, which the spec says must cost nothing: the last known numbers stay, the
+    // screen is not replaced, and a quiet note says the values are the last ones known. Before this
+    // fixture existed, refreshFailed was set by the reducer, asserted by three reducer tests and
+    // rendered nowhere - a flag nobody renders is a flag no test defends.
+    //
+    // Driven by an EmptyReducer rather than the real one: onAppear clears refreshFailed by design,
+    // so a live reducer would race the capture and the note would be recorded or not depending on
+    // how fast the machine is. Nothing about the reducer is under test here.
+    //
+    // The user belongs to no group at all, which is the other half of the Groups row: an explicit
+    // None, distinct from the Unknown the restricted fixture pins for ids that cannot be resolved.
+    @Test
+    func testSnapshot_refreshFailed() async throws {
+        let server = Server.testValue()
+
+        @Shared(.apiVersion(server)) var apiVersion: Int?
+        $apiVersion.withLock { $0 = 9 }
+
+        @Shared(.paperlessVersion(server)) var paperlessVersion: String?
+        $paperlessVersion.withLock { $0 = "2.10.2" }
+
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock {
+            $0 = .testValue(groups: [], isStaff: false, isSuperuser: false, username: "admin")
+        }
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        $permissions.withLock { $0 = Permission.allCases }
+
+        @Shared(.customFields(server)) var customFields: IdentifiedArrayOf<CustomField>
+        $customFields.withLock { $0 = [.testValue()] }
+
+        @Shared(.users(server)) var users: IdentifiedArrayOf<User>
+        $users.withLock { $0 = [.testValue()] }
+
+        // statistics stays nil: the refresh that would have set it is the one that failed. The
+        // cached counts above survive it, which is the decision this fixture records.
+        var state = ServerDetailReducer.State.testValue(hasToken: true, server: server)
+        state.isRefreshing = false
+        state.refreshFailed = true
+
+        TestSupport.assertSnapshot(
+            of: NavigationStack {
+                ServerDetailView(
+                    store: Store(initialState: state) {
+                        EmptyReducer<ServerDetailReducer.State, ServerDetailReducer.Action>()
+                    }
+                )
+            },
+            as: .image(layout: .fixed(width: 390, height: 3600))
+        )
+    }
 }

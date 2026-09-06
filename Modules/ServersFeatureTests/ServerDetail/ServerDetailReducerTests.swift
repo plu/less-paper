@@ -25,12 +25,12 @@ struct ServerDetailReducerTests {
         await store.send(.view(.onAppear)) {
             $0.isRefreshing = true
         }
+        await store.receive(\.authModeLoaded) {
+            $0.hasToken = true
+        }
         await store.receive(\.statisticsLoaded) {
             $0.statistics = .testValue()
             $0.isRefreshing = false
-        }
-        await store.receive(\.authModeLoaded) {
-            $0.hasToken = true
         }
     }
 
@@ -50,12 +50,12 @@ struct ServerDetailReducerTests {
         await store.send(.view(.onAppear)) {
             $0.isRefreshing = true
         }
+        await store.receive(\.authModeLoaded) {
+            $0.hasToken = false
+        }
         await store.receive(\.statisticsLoaded) {
             $0.statistics = .testValue()
             $0.isRefreshing = false
-        }
-        await store.receive(\.authModeLoaded) {
-            $0.hasToken = false
         }
     }
 
@@ -77,14 +77,15 @@ struct ServerDetailReducerTests {
         await store.send(.view(.onAppear)) {
             $0.isRefreshing = true
         }
+        // Concatenated ahead of the refresh, and unaffected by whether it fails - the two effects
+        // have nothing to do with each other, and the auth mode is what a reader wants first when
+        // the connection is the thing that failed.
+        await store.receive(\.authModeLoaded) {
+            $0.hasToken = true
+        }
         await store.receive(\.refreshFailed) {
             $0.isRefreshing = false
             $0.refreshFailed = true
-        }
-        // Concatenated after the failed refresh, and unaffected by it - the two effects have
-        // nothing to do with each other.
-        await store.receive(\.authModeLoaded) {
-            $0.hasToken = true
         }
 
         #expect(store.state.tags.count == 1)
