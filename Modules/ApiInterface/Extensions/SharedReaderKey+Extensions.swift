@@ -229,6 +229,20 @@ public extension SharedReaderKey where Self == FileStorageKey<Int?>.Default {
     }
 }
 
+public extension SharedReaderKey where Self == FileStorageKey<String?>.Default {
+
+    static func paperlessVersion(_ server: Server) -> Self {
+        Self[
+            .fileStorage(
+                .applicationGroupDirectory.appending(component: "\(server.id)-paperless-version.json"),
+                decoder: .apiDecoder,
+                encoder: .apiEncoder
+            ),
+            default: nil
+        ]
+    }
+}
+
 public extension URL {
     static var applicationGroupDirectory: URL {
         guard let applicationGroupDirectory = FileManager.default

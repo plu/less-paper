@@ -21,11 +21,16 @@ private extension NegotiateApiVersionUseCase {
         @Shared(.apiVersion(server))
         var apiVersion: Int?
 
-        let negotiated = try ApiVersion.negotiated(
-            from: try await repository.getAdvertisedApiVersion(server: server)
-        )
+        @Shared(.paperlessVersion(server))
+        var paperlessVersion: String?
+
+        let versions = try await repository.getServerVersions(server: server)
+        let negotiated = try ApiVersion.negotiated(from: versions.apiVersion)
 
         $apiVersion.withLock { $0 = negotiated }
+        // Written even when nil: a server that stops sending the header should stop reporting a
+        // version rather than keep showing the last one it sent.
+        $paperlessVersion.withLock { $0 = versions.paperlessVersion }
 
         return negotiated
     }
