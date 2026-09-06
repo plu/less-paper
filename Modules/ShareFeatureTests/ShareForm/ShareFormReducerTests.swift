@@ -410,6 +410,55 @@ struct ShareFormReducerTests {
         #expect(!state.canCreateTag)
     }
 
+    // A picker is an input, not a rendering of payload data: without view_<entity> its endpoint
+    // answers 403, so it would offer an empty list the user cannot fill.
+    @Test
+    func pickersFollowEachEntityViewPermission() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .viewTag] }
+
+        let state = ShareFormReducer.State(files: [], server: server)
+
+        #expect(state.canViewTag)
+        // view_tag must not open any of the other three.
+        #expect(!state.canViewCorrespondent)
+        #expect(!state.canViewDocumentType)
+        #expect(!state.canViewStoragePath)
+    }
+
+    // The shape the perm-doc-importer seed user reproduces: able to import, able to list every
+    // entity, able to create none of them. The picker shows; the button inside it does not.
+    @Test
+    func aPickerFollowsViewRatherThanAdd() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .addDocument, .viewCorrespondent] }
+
+        let state = ShareFormReducer.State(files: [], server: server)
+
+        #expect(state.canImport)
+        #expect(state.canViewCorrespondent)
+        #expect(!state.canCreateCorrespondent)
+    }
+
+    @Test
+    func pickersAreShownWhenNothingHasBeenRead() {
+        // Fail open: an unread cache leaves the sheet exactly as it looks today.
+        let state = ShareFormReducer.State(files: [], server: .testValue())
+
+        #expect(state.canViewCorrespondent)
+        #expect(state.canViewDocumentType)
+        #expect(state.canViewStoragePath)
+        #expect(state.canViewTag)
+    }
+
     @Test
     func theShareFormGateFollowsAServerSwitch() {
         // Two distinct servers: Server.testValue's id defaults to one fixed UUID string, and two

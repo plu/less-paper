@@ -14,6 +14,31 @@ import TestSupport
 )
 struct ShareFormViewTests {
 
+    // The shape perm-doc-importer reproduces: able to import, able to list nothing. The pickers sit
+    // in the rendered body, so this image discriminates where toolbar chrome would not.
+    @Test
+    func testSnapshot_pickersHidden() async throws {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .addDocument] }
+
+        assertSnapshot(
+            of: ShareFormView(
+                store: Store(
+                    initialState: .testValue(server: server),
+                    reducer: {
+                        ShareFormReducer()
+                    }
+                )
+            ),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "pickersHidden"
+        )
+    }
+
     @Test
     func testSnapshot() async throws {
         assertSnapshot(

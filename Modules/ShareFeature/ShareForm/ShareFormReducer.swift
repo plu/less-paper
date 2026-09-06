@@ -108,6 +108,18 @@ public struct ShareFormReducer {
 
         var canCreateStoragePath: Bool { permissions.can(.addStoragePath) }
 
+        // A picker is an input, not a rendering of what a document already carries. Without
+        // view_<entity> its endpoint answers 403, so it offers an empty list the user cannot fill -
+        // a control that looks interactive and does nothing. These follow a server switch like
+        // every other gate here, because reset() rebuilds permissions.
+        var canViewCorrespondent: Bool { permissions.can(.viewCorrespondent) }
+
+        var canViewDocumentType: Bool { permissions.can(.viewDocumentType) }
+
+        var canViewStoragePath: Bool { permissions.can(.viewStoragePath) }
+
+        var canViewTag: Bool { permissions.can(.viewTag) }
+
         // The import is a document upload, so it answers to add_document like the list toolbar's
         // Import and the Settings row do — the share sheet is a third entrance to the same write.
         //

@@ -191,6 +191,13 @@
       "expect": "Import, Scan, bulk Merge and the share sheet's Import button. No Edit or Delete in a row's context menu. Select is NOT offered - add_document is not one of its two permissions."
     },
     {
+      "username": "perm-doc-importer",
+      "actions": ["view"],
+      "entities": ["correspondent", "documenttype", "storagepath", "tag", "customfield"],
+      "extra": ["add_document"],
+      "expect": "Can import. Every picker on the import and edit screens IS shown, and every create button inside them is absent. The pair to perm-doc-creator: that one has no entity permissions at all, so its pickers are hidden entirely."
+    },
+    {
       "username": "perm-notes",
       "actions": ["view", "add", "delete"],
       "entities": ["note"],

@@ -18,10 +18,15 @@ EMPTY_BY_DESIGN_PATH = "/api/custom_fields/"
 
 
 def permissions_for(user, config):
-    """Expand a user's actions x entities into Django permission codenames."""
+    """Expand a user's actions x entities into Django permission codenames.
+
+    `extra` names codenames the cross product cannot reach. A user who may import documents but
+    only read entities needs add_document beside view_<entity>, and actions x entities can only
+    apply every action to every entity - asking for "add" there would grant add_correspondent too.
+    """
     entities = user.get("entities", config["permission_entities"])
     granted = {f"{action}_{entity}" for action in user["actions"] for entity in entities}
-    return sorted(granted | set(config["permission_baseline"]))
+    return sorted(granted | set(config["permission_baseline"]) | set(user.get("extra", [])))
 
 
 def ensure_users(api, config):

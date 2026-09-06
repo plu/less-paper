@@ -71,10 +71,18 @@ struct ShareFormView: View {
                 imageView()
                 serverField()
                 TitleField(text: $store.input.title)
-                correspondentField()
-                documentTypeField()
-                tagsField()
-                storagePathField()
+                if store.canViewCorrespondent {
+                    correspondentField()
+                }
+                if store.canViewDocumentType {
+                    documentTypeField()
+                }
+                if store.canViewTag {
+                    tagsField()
+                }
+                if store.canViewStoragePath {
+                    storagePathField()
+                }
                 ASNField(
                     isLoading: $store.isLoadingNextArchiveSerialNumber,
                     text: $store.input.archiveSerialNumber,

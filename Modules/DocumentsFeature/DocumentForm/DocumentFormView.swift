@@ -76,9 +76,16 @@ struct DocumentFormView: View {
             Picker("", selection: $store.section) {
                 // Without view_note the endpoint answers 403, so Notes drops out here rather than
                 // opening onto a section with nothing to show. change_document gets a user into
-                // this form but says nothing about notes, so the form has to ask separately.
+                // this form but says nothing about notes, so the form has to ask separately. Custom
+                // fields answer to their own view_customfield the same way, for the same reason.
                 ForEach(
-                    DocumentFormSection.allCases.filter { $0 != .notes || store.canViewNotes },
+                    DocumentFormSection.allCases.filter { section in
+                        switch section {
+                        case .customFields: store.canViewCustomField
+                        case .notes: store.canViewNotes
+                        default: true
+                        }
+                    },
                     id: \.self
                 ) {
                     Text($0.description).tag($0)
@@ -105,10 +112,18 @@ struct DocumentFormView: View {
                 value: $store.input.createdDate,
                 suggestions: .constant([])
             )
-            correspondentField()
-            documentTypeField()
-            storagePathField()
-            tagsField()
+            if store.canViewCorrespondent {
+                correspondentField()
+            }
+            if store.canViewDocumentType {
+                documentTypeField()
+            }
+            if store.canViewStoragePath {
+                storagePathField()
+            }
+            if store.canViewTag {
+                tagsField()
+            }
         }
         .frame(maxWidth: .infinity)
     }
