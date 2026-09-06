@@ -8,32 +8,42 @@ import SwiftUI
 @ViewAction(for: FavoriteListReducer.self)
 public struct FavoriteListView: View {
 
+    private var list: some View {
+        List {
+            ForEach(store.scope(state: \.rows, action: \.rows)) { store in
+                FavoriteRowView(store: store)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .padding(.x3)
+            }
+        }
+        .background(Color.m3SurfaceContainerLowest)
+        .listStyle(.plain)
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(.favorites)
+        .onDisappear { send(.onDisappear) }
+        .overlay(emptyListView())
+        .refreshable { await send(.onRefresh).finish() }
+        .scrollContentBackground(.hidden)
+        .task { await send(.onAppear).finish() }
+    }
+
     // Its own NavigationStack rather than `Searchable`'s: the pushes are driven by the reducer's
     // StackState, and `Searchable` builds an unbound stack that a path binding cannot reach.
     public var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-            List {
-                ForEach(store.scope(state: \.rows, action: \.rows)) { store in
-                    FavoriteRowView(store: store)
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                        .padding(.x3)
-                }
+            // Attached only when there is something to search. The field sits above the list and
+            // hides by scrolling out of view, so over an empty list it has nowhere to go and simply
+            // stays on screen - and a search field above nothing cannot do anything anyway.
+            //
+            // The searchText half is not belt and braces: a query matching nothing empties the
+            // list, and without it the field would vanish mid-search, taking the query with it.
+            if !store.rows.isEmpty || !store.searchText.isEmpty {
+                list.searchable(text: $store.searchText)
+            } else {
+                list
             }
-            .background(Color.m3SurfaceContainerLowest)
-            .listStyle(.plain)
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle(.favorites)
-            .onDisappear { send(.onDisappear) }
-            .overlay(emptyListView())
-            .refreshable { await send(.onRefresh).finish() }
-            .scrollContentBackground(.hidden)
-            // Pinned rather than hidden above the list. Left to its default the field is revealed
-            // by the first pull, so a pull-to-refresh has to travel through it before the refresh
-            // starts — which reads as the gesture barely working.
-            .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
-            .task { await send(.onAppear).finish() }
         } destination: { store in
             switch store.case {
             case let .documentDetail(store):

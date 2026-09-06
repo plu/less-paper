@@ -65,7 +65,21 @@ public struct TagListReducer: Sendable {
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server
-            self.tags = tags
+            // Seeded from the cache updateCache already filled, so the first paint has rows.
+            // Without it these screens render an empty list and fill in when the fetch lands, which
+            // flashes and — because the search field sits above the list and needs somewhere to
+            // scroll into — leaves that field stranded on screen for the whole visit. An explicitly
+            // passed value still wins, so fixtures are unaffected.
+            if tags.isEmpty {
+                @Shared(.tags(server))
+                var cached
+
+                self.tags = IdentifiedArray(
+                    uniqueElements: cached.map { TagRowReducer.State(server: server, tag: $0) }
+                )
+            } else {
+                self.tags = tags
+            }
             permissions = ServerPermissions(server: server)
         }
     }

@@ -64,7 +64,21 @@ public struct CorrespondentListReducer: Sendable {
             isLoaded: Bool = false,
             server: Server
         ) {
-            self.correspondents = correspondents
+            // Seeded from the cache updateCache already filled, so the first paint has rows.
+            // Without it these screens render an empty list and fill in when the fetch lands, which
+            // flashes and — because the search field sits above the list and needs somewhere to
+            // scroll into — leaves that field stranded on screen for the whole visit. An explicitly
+            // passed value still wins, so fixtures are unaffected.
+            if correspondents.isEmpty {
+                @Shared(.correspondents(server))
+                var cached
+
+                self.correspondents = IdentifiedArray(
+                    uniqueElements: cached.map { CorrespondentRowReducer.State(server: server, correspondent: $0) }
+                )
+            } else {
+                self.correspondents = correspondents
+            }
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server

@@ -8,6 +8,20 @@ import SwiftUI
 public struct TrashListView: View {
 
     public var body: some View {
+        // Attached only when there is something to search. The field sits above the list and hides
+        // by scrolling out of view, so over an empty list it has nowhere to go and simply stays on
+        // screen - and a search field above nothing cannot do anything anyway.
+        //
+        // The searchText half is not belt and braces: a query matching nothing empties the list,
+        // and without it the field would vanish mid-search, taking the query with it.
+        if !store.visibleDocuments.isEmpty || !store.searchText.isEmpty {
+            content.searchable(text: $store.searchText)
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         // The list is always there, with the empty state over it rather than instead of it. A
         // ContentUnavailableView on its own does not scroll, so pull to refresh - the only way back
         // from an empty trash to a full one - would be unavailable exactly when it is wanted.
@@ -27,9 +41,6 @@ public struct TrashListView: View {
         .navigationTitle(.trash)
         .overlay(emptyView())
         .refreshable { await send(.onRefresh).finish() }
-        // Pinned rather than left to its default: unpinned it is revealed by the first pull,
-        // so a pull-to-refresh has to travel through it before the refresh starts.
-        .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
         .scrollContentBackground(.hidden)
         .task { await send(.onAppear).finish() }
         .toolbar {

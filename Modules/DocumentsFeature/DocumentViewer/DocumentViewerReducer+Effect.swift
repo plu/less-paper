@@ -13,6 +13,17 @@ extension Effect where Action == DocumentViewerReducer.Action {
         }
     }
 
+    // Failure is swallowed deliberately: the detail has already been dismissed by the time this
+    // runs, so there is no screen left to report onto, and the document simply stays. The list the
+    // user returns to re-reads it on its next fetch.
+    static func runDeleteDocument(id: Document.Id, server: Server) -> Self {
+        .run { _ in
+            @Dependency(\.deleteDocuments.execute)
+            var deleteDocuments
+            try? await deleteDocuments([id], server)
+        }
+    }
+
     static func runGetDocument(id: Document.Id, server: Server) -> Self {
         .run { send in
             @Dependency(\.getDocument.execute)

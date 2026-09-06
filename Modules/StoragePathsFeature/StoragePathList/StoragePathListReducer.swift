@@ -65,7 +65,21 @@ public struct StoragePathListReducer: Sendable {
             isLoaded: Bool = false,
             server: Server
         ) {
-            self.storagePaths = storagePaths
+            // Seeded from the cache updateCache already filled, so the first paint has rows.
+            // Without it these screens render an empty list and fill in when the fetch lands, which
+            // flashes and — because the search field sits above the list and needs somewhere to
+            // scroll into — leaves that field stranded on screen for the whole visit. An explicitly
+            // passed value still wins, so fixtures are unaffected.
+            if storagePaths.isEmpty {
+                @Shared(.storagePaths(server))
+                var cached
+
+                self.storagePaths = IdentifiedArray(
+                    uniqueElements: cached.map { StoragePathRowReducer.State(server: server, storagePath: $0) }
+                )
+            } else {
+                self.storagePaths = storagePaths
+            }
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server

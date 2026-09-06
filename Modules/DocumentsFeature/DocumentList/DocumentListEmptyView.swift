@@ -9,6 +9,16 @@ struct DocumentListEmptyView: View {
             ContentUnavailableView {
                 emptyListView()
             }
+        } else if store.documents.isEmpty {
+            // The first load, which used to render nothing at all: this view only spoke once
+            // isLoaded was true, so a slow fetch left the user looking at a blank screen with no
+            // way to tell it apart from an empty server. Both states live here so the next reader
+            // finds them in one place.
+            ZStack {
+                ProgressView()
+                    .controlSize(.large)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 

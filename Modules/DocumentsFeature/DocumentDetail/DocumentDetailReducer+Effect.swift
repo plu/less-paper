@@ -4,6 +4,22 @@ import Foundation
 
 extension Effect where Action == DocumentDetailReducer.Action {
 
+    // The same presenter and the same shape as the row's delete, so the two entrances to this
+    // action ask the question identically. Only the delegate differs: the row's parent owns a
+    // collection, and so does this screen's.
+    static func runConfirmDelete(documentTitle: String, id: Document.Id) -> Self {
+        @Dependency(\.documentDeleteConfirmation.present)
+        var presentConfirmation
+
+        return .run { send in
+            guard await presentConfirmation(documentTitle) else {
+                return
+            }
+            await send(.delegate(.deleteDocument(id)))
+        }
+        .cancellable(id: CancelID.confirmDelete)
+    }
+
     static func runDownloadDocument(document: Document, server: Server) -> Self {
         .run { send in
             let file = try await document.download(server: server)
@@ -34,6 +50,7 @@ extension Effect where Action == DocumentDetailReducer.Action {
 }
 
 private enum CancelID {
+    case confirmDelete
     case downloadDocument
     case toggleFavorite
 }

@@ -64,7 +64,21 @@ public struct SavedViewListReducer: Sendable {
             isLoaded: Bool = false,
             server: Server
         ) {
-            self.savedViews = savedViews
+            // Seeded from the cache updateCache already filled, so the first paint has rows.
+            // Without it these screens render an empty list and fill in when the fetch lands, which
+            // flashes and — because the search field sits above the list and needs somewhere to
+            // scroll into — leaves that field stranded on screen for the whole visit. An explicitly
+            // passed value still wins, so fixtures are unaffected.
+            if savedViews.isEmpty {
+                @Shared(.savedViews(server))
+                var cached
+
+                self.savedViews = IdentifiedArray(
+                    uniqueElements: cached.map { SavedViewRowReducer.State(server: server, savedView: $0) }
+                )
+            } else {
+                self.savedViews = savedViews
+            }
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server
