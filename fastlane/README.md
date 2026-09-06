@@ -47,6 +47,14 @@ Upload the framed screenshots to App Store Connect
 
 Fail unless the given build is on App Store Connect and finished processing
 
+### ios verify_no_pending_iap
+
+```sh
+[bundle exec] fastlane ios verify_no_pending_iap
+```
+
+Fail if an in-app purchase would be auto-attached to the next review submission
+
 ### ios submit_for_review
 
 ```sh
