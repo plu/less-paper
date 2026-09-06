@@ -40,6 +40,12 @@ struct ServerDetailViewTests {
     // test in this module asserts with (see TestSupport's `assertSnapshot`), rather than
     // ImageRenderer: this is the rasteriser the repo has already proven handles a List body, and
     // reusing it means the two images are captured exactly the way a recorded reference would be.
+    // Server.testValue()'s default URL comes from PAPERLESS_TEST_URL in the bundle's Info.plist,
+    // which is 192.168.64.1:8000 on a developer machine and localhost:9000 on CI - and this screen
+    // renders the URL, so references recorded with the default only match the machine that
+    // recorded them. Every fixture here pins it instead.
+    private static let fixtureURL = URL(string: "https://paperless.example.com")!
+
     @Test
     func twoDifferentSecretsRenderIdentically() async throws {
         func image(url: String, headerValue: String, token: String) async throws -> Data {
@@ -104,7 +110,8 @@ struct ServerDetailViewTests {
     @Test
     func testSnapshot_fullyPopulated() async throws {
         let server = Server.testValue(
-            headers: [HTTPHeader.testValue(name: "X-Api-Key", value: "SECRET-VALUE")]
+            headers: [HTTPHeader.testValue(name: "X-Api-Key", value: "SECRET-VALUE")],
+            url: Self.fixtureURL
         )
 
         @Shared(.apiVersion(server)) var apiVersion: Int?
@@ -180,7 +187,7 @@ struct ServerDetailViewTests {
     // for "never resolved anything".
     @Test
     func testSnapshot_neverFetched() async throws {
-        let server = Server.testValue()
+        let server = Server.testValue(url: Self.fixtureURL)
 
         let state = ServerDetailReducer.State.testValue(server: server)
 
@@ -203,7 +210,7 @@ struct ServerDetailViewTests {
     // reads 0 - it is a local store, so its emptiness is knowable without asking anyone.
     @Test
     func testSnapshot_emptyCachesReadUnknownExceptFavorites() async throws {
-        let server = Server.testValue()
+        let server = Server.testValue(url: Self.fixtureURL)
 
         var state = ServerDetailReducer.State.testValue(server: server)
         state.statistics = .testValue(
@@ -226,7 +233,7 @@ struct ServerDetailViewTests {
 
     @Test
     func testSnapshot_restricted() async throws {
-        let server = Server.testValue()
+        let server = Server.testValue(url: Self.fixtureURL)
 
         @Shared(.apiVersion(server)) var apiVersion: Int?
         $apiVersion.withLock { $0 = 9 }
@@ -307,7 +314,7 @@ struct ServerDetailViewTests {
     // None, distinct from the Unknown the restricted fixture pins for ids that cannot be resolved.
     @Test
     func testSnapshot_refreshFailed() async throws {
-        let server = Server.testValue()
+        let server = Server.testValue(url: Self.fixtureURL)
 
         @Shared(.apiVersion(server)) var apiVersion: Int?
         $apiVersion.withLock { $0 = 9 }

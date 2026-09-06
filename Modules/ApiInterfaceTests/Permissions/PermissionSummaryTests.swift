@@ -37,6 +37,22 @@ struct PermissionSummaryTests {
         #expect(summaries.map(\.type) == ["customfield", "documenttype"])
     }
 
+    // paperless really does repeat codenames: /api/ui_settings/ returns add_logentry,
+    // change_logentry, delete_logentry and view_logentry TWICE each. Without deduplication that one
+    // type rendered "add, add, change, change" and gave SwiftUI duplicate ForEach ids.
+    @Test
+    func repeatedCodenamesCollapseToOneAction() {
+        let summaries = PermissionSummary.grouped([
+            .addLogEntry,
+            .addLogEntry,
+            .viewLogEntry,
+            .viewLogEntry,
+        ])
+
+        #expect(summaries.count == 1)
+        #expect(summaries[0].actions == ["add", "view"])
+    }
+
     @Test
     func emptyInputProducesNoSummaries() {
         #expect(PermissionSummary.grouped([]).isEmpty)

@@ -10,7 +10,15 @@ extension Effect where Action == ServerDetailReducer.Action {
         @Dependency(\.getStatistics.execute)
         var getStatistics
 
+        @Dependency(\.negotiateApiVersion.execute)
+        var negotiateApiVersion
+
         return .run { send in
+            // Negotiated here, not only when a server is added: that is the only other caller, so
+            // a server configured before this screen existed - which is every server anyone has -
+            // would show its versions as Unknown forever. Tolerated separately because the versions
+            // are the least of what this screen shows, and losing them must not cost the counts.
+            _ = try? await negotiateApiVersion(server)
             try await updateCache(server)
             let statistics = try await getStatistics(server)
             await send(.statisticsLoaded(statistics))
