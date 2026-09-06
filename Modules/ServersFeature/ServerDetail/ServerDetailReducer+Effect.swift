@@ -19,8 +19,20 @@ extension Effect where Action == ServerDetailReducer.Action {
         }
         .cancellable(id: CancelID.refresh, cancelInFlight: true)
     }
+
+    static func runLoadAuthMode(server: Server) -> Self {
+        @Dependency(\.authenticationProvider.getToken)
+        var getToken
+
+        return .run { send in
+            let token = try? await getToken(server)
+            await send(.authModeLoaded(token != nil))
+        }
+        .cancellable(id: CancelID.loadAuthMode, cancelInFlight: true)
+    }
 }
 
 private enum CancelID {
+    case loadAuthMode
     case refresh
 }

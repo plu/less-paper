@@ -44,7 +44,7 @@ struct ServerDetailViewTests {
             )
 
             let uiImage = await withCheckedContinuation { continuation in
-                Snapshotting<AnyView, UIImage>.image(layout: .device(config: .iPhone12))
+                Snapshotting<AnyView, UIImage>.image(layout: .fixed(width: 390, height: 3600))
                     .snapshot(AnyView(view))
                     .run { continuation.resume(returning: $0) }
             }
@@ -105,7 +105,10 @@ struct ServerDetailViewTests {
         @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument>
         $favorites.withLock { $0 = [.testValue()] }
 
-        var state = ServerDetailReducer.State.testValue(server: server)
+        // hasToken: true renders the auth mode row as "token" rather than the "Unknown" every
+        // other fixture shows - a fixture has to seed this or the row's real values never get
+        // exercised, only its fallback.
+        var state = ServerDetailReducer.State.testValue(hasToken: true, server: server)
         state.statistics = .testValue()
 
         TestSupport.assertSnapshot(
@@ -116,12 +119,13 @@ struct ServerDetailViewTests {
                     }
                 )
             },
-            as: .image(layout: .device(config: .iPhone12))
+            as: .image(layout: .fixed(width: 390, height: 3600))
         )
     }
 
     // The case that catches a screen printing 0: nothing has ever been cached, so every
     // statistics-derived count must read "Unknown" rather than a number that looks real but isn't.
+    // hasToken stays nil here too, on purpose: this is the fixture for "never resolved anything".
     @Test
     func testSnapshot_neverFetched() async throws {
         let server = Server.testValue()
@@ -136,7 +140,7 @@ struct ServerDetailViewTests {
                     }
                 )
             },
-            as: .image(layout: .device(config: .iPhone12))
+            as: .image(layout: .fixed(width: 390, height: 3600))
         )
     }
 
@@ -183,7 +187,9 @@ struct ServerDetailViewTests {
 
         // Users and groups stay empty on purpose - the restriction under test.
 
-        var state = ServerDetailReducer.State.testValue(server: server)
+        // hasToken: false renders the auth mode row as "remote-user" - the other real value,
+        // alongside fullyPopulated's "token", so both non-Unknown outcomes are exercised somewhere.
+        var state = ServerDetailReducer.State.testValue(hasToken: false, server: server)
         state.statistics = .testValue()
 
         TestSupport.assertSnapshot(
@@ -194,7 +200,7 @@ struct ServerDetailViewTests {
                     }
                 )
             },
-            as: .image(layout: .device(config: .iPhone12))
+            as: .image(layout: .fixed(width: 390, height: 3600))
         )
     }
 }

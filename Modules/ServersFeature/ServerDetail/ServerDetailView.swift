@@ -1,6 +1,5 @@
 import ApiInterface
 import ComposableArchitecture
-import Dependencies
 import DesignTokens
 import SwiftUI
 
@@ -20,13 +19,6 @@ public struct ServerDetailView: View {
         .navigationTitle(.serverDetails)
         .scrollContentBackground(.hidden)
         .task { await send(.onAppear).finish() }
-        // A second, independent task: getToken is keychain-backed and has nothing to do with the
-        // reducer's own refresh, and folding it into that effect would make ServerDetailReducer
-        // own a secret just to answer one display question.
-        .task {
-            @Dependency(\.authenticationProvider.getToken) var getToken
-            hasToken = (try? await getToken(store.server)) != nil
-        }
     }
 
     public init(store: StoreOf<ServerDetailReducer>) {
@@ -41,11 +33,6 @@ public struct ServerDetailView: View {
     // cache no other part of it touches.
     @Shared
     private var favorites: IdentifiedArrayOf<FavoriteDocument>
-
-    // nil until the .task above resolves. Never guessed at: a wrong guess here would show
-    // "remote-user" for a server that is actually token-authenticated, or the other way round.
-    @State
-    private var hasToken: Bool?
 
     @ViewBuilder
     private func serverSection() -> some View {
@@ -193,27 +180,27 @@ public struct ServerDetailView: View {
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
-            LabeledContent(String(localized: .customFields)) {
+            LabeledContent(cachedLabel(.customFields)) {
                 Text(verbatim: String(store.customFields.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
-            LabeledContent(String(localized: .savedViews)) {
+            LabeledContent(cachedLabel(.savedViews)) {
                 Text(verbatim: String(store.savedViews.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
-            LabeledContent(String(localized: .users)) {
+            LabeledContent(cachedLabel(.users)) {
                 Text(verbatim: String(store.users.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
-            LabeledContent(String(localized: .groups)) {
+            LabeledContent(cachedLabel(.groups)) {
                 Text(verbatim: String(store.groups.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
-            LabeledContent(String(localized: .favorites)) {
+            LabeledContent(cachedLabel(.favorites)) {
                 Text(verbatim: String(favorites.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
@@ -242,7 +229,7 @@ public struct ServerDetailView: View {
     }
 
     private var authMode: String {
-        switch hasToken {
+        switch store.hasToken {
         case .some(true):
             "token"
         case .some(false):
@@ -281,6 +268,13 @@ public struct ServerDetailView: View {
 
     private func stringValue(_ value: String?) -> String {
         value ?? String(localized: .unknownValue)
+    }
+
+    // The label itself carries the distinction rather than a section footer: a reader glancing at
+    // one row - not the whole section - has to be able to tell a cached count from a fresh one, so
+    // that a cache lagging behind a fresh statistic reads as staleness rather than as a bug.
+    private func cachedLabel(_ title: LocalizedStringResource) -> String {
+        "\(String(localized: title)) (\(String(localized: .cached)))"
     }
 }
 

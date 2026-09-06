@@ -19,6 +19,7 @@ struct ServerDetailReducerTests {
         } withDependencies: {
             $0.updateCache.execute = { _ in }
             $0.getStatistics.execute = { _ in .testValue() }
+            $0.authenticationProvider.getToken = { _ in "c0ff33" }
         }
 
         await store.send(.view(.onAppear)) {
@@ -27,6 +28,34 @@ struct ServerDetailReducerTests {
         await store.receive(\.statisticsLoaded) {
             $0.statistics = .testValue()
             $0.isRefreshing = false
+        }
+        await store.receive(\.authModeLoaded) {
+            $0.hasToken = true
+        }
+    }
+
+    // onAppear also loads the auth mode, independently of the cache refresh - a server with no
+    // token (remote-user mode) must still resolve, even though it has nothing to do with
+    // statistics or the cache.
+    @Test
+    func onAppearLoadsRemoteUserModeWhenThereIsNoToken() async {
+        let store = TestStore(initialState: ServerDetailReducer.State(server: .testValue())) {
+            ServerDetailReducer()
+        } withDependencies: {
+            $0.updateCache.execute = { _ in }
+            $0.getStatistics.execute = { _ in .testValue() }
+            $0.authenticationProvider.getToken = { _ in nil }
+        }
+
+        await store.send(.view(.onAppear)) {
+            $0.isRefreshing = true
+        }
+        await store.receive(\.statisticsLoaded) {
+            $0.statistics = .testValue()
+            $0.isRefreshing = false
+        }
+        await store.receive(\.authModeLoaded) {
+            $0.hasToken = false
         }
     }
 
@@ -51,6 +80,11 @@ struct ServerDetailReducerTests {
         await store.receive(\.refreshFailed) {
             $0.isRefreshing = false
             $0.refreshFailed = true
+        }
+        // Concatenated after the failed refresh, and unaffected by it - the two effects have
+        // nothing to do with each other.
+        await store.receive(\.authModeLoaded) {
+            $0.hasToken = true
         }
 
         #expect(store.state.tags.count == 1)

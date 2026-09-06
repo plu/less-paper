@@ -86,19 +86,36 @@
         }
       }
     },
+    "cached": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zwischengespeichert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cached"
+          }
+        }
+      }
+    },
     "cachedCountsFooter": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Einige Werte stammen aus dem lokalen Zwischenspeicher und können veraltet sein."
+            "value": "Als „Zwischengespeichert“ markierte Werte stammen aus dem lokalen Zwischenspeicher und nicht aus einer aktuellen Serverabfrage."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Some counts come from the local cache and may be out of date."
+            "value": "Counts marked \"Cached\" come from the local cache rather than a fresh count from the server."
           }
         }
       }
