@@ -135,14 +135,46 @@ public struct ServerDetailView: View {
         }
     }
 
+    // The same glyphs this app already uses for these four actions elsewhere — plus on every list's
+    // toolbar, square.and.pencil on edit, trash on delete, eye on preview — so the row reads as the
+    // actions the user already knows rather than a private vocabulary. nil means no glyph, and the
+    // caller falls back to the word.
+    static func symbol(for action: String) -> String? {
+        switch action {
+        case "add": "plus"
+        case "change": "square.and.pencil"
+        case "delete": "trash"
+        case "view": "eye"
+        default: nil
+        }
+    }
+
     @ViewBuilder
     private func permissionsSection() -> some View {
         Section {
             if let permissions = store.permissions {
                 ForEach(PermissionSummary.grouped(permissions), id: \.type) { summary in
                     LabeledContent(summary.type.capitalized) {
-                        Text(verbatim: summary.actions.map(\.capitalized).joined(separator: ", "))
+                        HStack(spacing: .x2) {
+                            ForEach(summary.actions, id: \.self) { action in
+                                if let symbol = Self.symbol(for: action) {
+                                    Image(systemName: symbol)
+                                } else {
+                                    // An action this app has no glyph for still has to be readable:
+                                    // paperless adding a fifth verb should degrade to its word
+                                    // rather than vanish or show a placeholder.
+                                    Text(verbatim: action.capitalized)
+                                }
+                            }
+                        }
+                        .foregroundStyle(Color.m3Outline)
                     }
+                    // One utterance carrying the words, rather than four icons announced
+                    // separately: the glyphs are for the eye, and this row is what VoiceOver reads.
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(
+                        "\(summary.type.capitalized): \(summary.actions.map(\.capitalized).joined(separator: ", "))"
+                    )
                     .listRowBackground(Color.m3SurfaceContainer)
                 }
             } else {

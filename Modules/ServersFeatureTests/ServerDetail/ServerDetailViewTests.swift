@@ -82,6 +82,25 @@ struct ServerDetailViewTests {
         #expect(first == second)
     }
 
+    // The glyph mapping, not the accessibility label: asserting a rendered SwiftUI accessibility
+    // label needs a view-introspection dependency this repo does not have, and the label is a
+    // straight interpolation of data other tests already cover. A wrong glyph is the likely defect
+    // here, and it is invisible in a snapshot unless you know which symbol to expect.
+    @Test
+    func eachActionMapsToTheGlyphThisAppAlreadyUsesForIt() {
+        #expect(ServerDetailView.symbol(for: "add") == "plus")
+        #expect(ServerDetailView.symbol(for: "change") == "square.and.pencil")
+        #expect(ServerDetailView.symbol(for: "delete") == "trash")
+        #expect(ServerDetailView.symbol(for: "view") == "eye")
+    }
+
+    // A verb this app has no glyph for must fall back to its word rather than vanishing, so a
+    // future paperless action stays readable.
+    @Test
+    func anUnknownActionHasNoGlyph() {
+        #expect(ServerDetailView.symbol(for: "approve") == nil)
+    }
+
     @Test
     func testSnapshot_fullyPopulated() async throws {
         let server = Server.testValue(
