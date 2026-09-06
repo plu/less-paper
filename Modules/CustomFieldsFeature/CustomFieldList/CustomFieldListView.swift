@@ -15,7 +15,7 @@ public struct CustomFieldListView: View {
         .overlay(emptyListView())
         // Pinned rather than left to its default: unpinned it is revealed by the first pull,
         // so a pull-to-refresh has to travel through it before the refresh starts.
-        .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
+        .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .automatic))
         .background(Color.m3SurfaceContainerLowest)
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(.customFields)

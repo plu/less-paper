@@ -32,7 +32,7 @@ public struct FavoriteListView: View {
             // Pinned rather than hidden above the list. Left to its default the field is revealed
             // by the first pull, so a pull-to-refresh has to travel through it before the refresh
             // starts — which reads as the gesture barely working.
-            .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .always))
+            .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .automatic))
             .task { await send(.onAppear).finish() }
         } destination: { store in
             switch store.case {

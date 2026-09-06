@@ -140,6 +140,11 @@ public struct DocumentViewerReducer: Sendable {
                     server: state.server
                 ))
                 return .none
+            // The detail here shows a LINKED document opened from a custom field, not the one this
+            // viewer is displaying, so deleting it dismisses the detail and leaves the viewer be.
+            case let .destination(.presented(.documentDetail(.delegate(.deleteDocument(id))))):
+                state.destination = nil
+                return .runDeleteDocument(id: id, server: state.server)
             case .customFields, .destination:
                 return .none
             case let .documentResult(result):

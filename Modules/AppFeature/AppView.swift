@@ -21,16 +21,11 @@ public struct AppView: View {
             }
         }
         .onChange(of: scenePhase) { _, newPhase in
-            switch newPhase {
-            case .active:
-                store.send(.lifecyclePhaseChanged(.active))
+            // Only becoming active matters: it is what refreshes permissions and favourites. The
+            // other phases were observed solely to log them, which said nothing a reader of a
+            // shared log could act on.
+            if newPhase == .active {
                 store.send(.didBecomeActive)
-            case .background:
-                store.send(.lifecyclePhaseChanged(.background))
-            case .inactive:
-                store.send(.lifecyclePhaseChanged(.inactive))
-            @unknown default:
-                break
             }
         }
         .onOpenURL { url in

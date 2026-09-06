@@ -318,6 +318,10 @@ public struct DocumentListReducer: Sendable {
                         sortField: state.filter.input.sort.field
                     )
                 }
+            // The detail's delete goes through the same effect as the row's. .documentsDeleted then
+            // removes the row and pops any detail showing it, so this screen needs nothing else.
+            case let .path(.element(id: _, action: .documentDetail(.delegate(.deleteDocument(id))))):
+                return .runDeleteDocuments(ids: [id], server: state.server)
             case let .documents(.element(id: id, action: .delegate(delegateAction))):
                 switch delegateAction {
                 case .deleteDocument:

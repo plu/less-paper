@@ -14,6 +14,21 @@ import TestSupport
 )
 struct DocumentListEmptyViewTests {
 
+    // The bug this covers: before, this view spoke only once isLoaded was true, so a slow first
+    // fetch rendered nothing at all and the user could not tell a loading list from an empty
+    // server. isLoaded false with no documents is exactly that state.
+    @Test
+    func testSnapshot_loading() async throws {
+        assertSnapshot(
+            of: view(state: .testValue(
+                documents: [],
+                isLoaded: false
+            )),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "loading"
+        )
+    }
+
     @Test
     func testSnapshot_error() async throws {
         assertSnapshot(

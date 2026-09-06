@@ -19,14 +19,6 @@ struct PendingDeepLink: Equatable {
     let server: Server
 }
 
-// Mirrors SwiftUI's ScenePhase rather than using it, so the reducer and its tests do not depend on
-// SwiftUI. AppView does the mapping.
-public enum AppLifecyclePhase: String, Sendable {
-    case active
-    case background
-    case inactive
-}
-
 @Reducer
 public struct AppReducer {
 
@@ -37,7 +29,6 @@ public struct AppReducer {
         case certificateApproval(CertificateApprovalReducer.Action)
         case didBecomeActive
         case forwardAuth(ForwardAuthReducer.Action)
-        case lifecyclePhaseChanged(AppLifecyclePhase)
         case logLaunchContext
         case main(MainReducer.Action)
         case openURL(URL)
@@ -137,9 +128,6 @@ public struct AppReducer {
                 return .runRefreshStatistics(server: server)
                     .merge(with: .runRefreshFavorites(server: server))
                     .merge(with: .runRefreshPermissions(server: server))
-            case let .lifecyclePhaseChanged(phase):
-                log.info("scene phase: \(phase.rawValue)", category: .app)
-                return .none
             case .logLaunchContext:
                 return .runLogLaunchContext()
             case .selectedServerChanged(let server):

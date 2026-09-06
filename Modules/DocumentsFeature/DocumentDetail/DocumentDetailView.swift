@@ -74,6 +74,19 @@ public struct DocumentDetailView: View {
                 shareMenu()
 
                 viewerMenu()
+
+                // Held out below the divider rather than sorted in with the rest, the same way the
+                // row's menu holds it: the reversible actions are together, and the one that is not
+                // is a deliberate reach away from them.
+                if !store.isOfflineSnapshot, store.canDelete {
+                    Divider()
+
+                    Button(role: .destructive) {
+                        send(.deleteButtonTapped)
+                    } label: {
+                        Label(.delete, systemImage: "trash")
+                    }
+                }
             } label: {
                 // The menu dismisses on selection, so a spinner inside it would never be seen.
                 // The toolbar item itself carries the wait instead.

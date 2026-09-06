@@ -8,13 +8,21 @@ import Tagged
 public struct DocumentDetailReducer: Sendable {
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
+        case delegate(Delegate)
         case destination(PresentationAction<Destination.Action>)
         case downloadResult(DownloadResult)
         case favoriteToggleFailed(Error)
         case favoriteToggleSucceeded
         case view(View)
 
+        // The parent owns the collection this document belongs to, so it performs the deletion and
+        // decides how to leave: this screen is showing a document that no longer exists.
+        public enum Delegate {
+            case deleteDocument(Document.Id)
+        }
+
         public enum View {
+            case deleteButtonTapped
             case editDocumentButtonTapped
             case favoriteButtonTapped
             case onAppear
@@ -68,6 +76,8 @@ public struct DocumentDetailReducer: Sendable {
 
         var canEdit: Bool { permissions.can(.changeDocument) }
 
+        var canDelete: Bool { permissions.can(.deleteDocument) }
+
         // The section, not a control inside it: without view_note the endpoint answers 403, so
         // there is nothing to show and nothing that could be added.
         var canViewNotes: Bool { permissions.can(.viewNote) }
@@ -103,6 +113,10 @@ public struct DocumentDetailReducer: Sendable {
         BindingReducer()
         Reduce { state, action in
             switch action {
+            // The parent performs the deletion: it owns the collection this document belongs to,
+            // and it is what decides whether this screen is popped or dismissed.
+            case .delegate:
+                return .none
             case .destination(.presented(.documentForm(.delegate(.documentUpdated)))):
                 state.destination = nil
                 return .none
@@ -117,6 +131,13 @@ public struct DocumentDetailReducer: Sendable {
                 return .none
             case let .view(viewAction):
                 switch viewAction {
+                case .deleteButtonTapped:
+                    // Same snapshot guard as the edit button below, for the same reason: a snapshot
+                    // is read-only and this is a network write.
+                    guard !state.isOfflineSnapshot else {
+                        return .none
+                    }
+                    return .runConfirmDelete(documentTitle: state.document.title, id: state.document.id)
                 case .editDocumentButtonTapped:
                     // A snapshot changes nothing: this stays unreachable even if something manages
                     // to send it with the edit button hidden, since it is the only door to the
