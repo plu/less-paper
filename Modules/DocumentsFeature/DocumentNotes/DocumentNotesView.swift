@@ -45,7 +45,9 @@ struct DocumentNotesView: View {
                     DocumentNoteRowView(
                         isDeleting: store.deletingNoteId == note.id,
                         note: note,
-                        deleteButtonTapped: isReadOnly ? nil : { send(.deleteButtonTapped(note.id)) }
+                        deleteButtonTapped: isReadOnly || !store.canDeleteNote
+                            ? nil
+                            : { send(.deleteButtonTapped(note.id)) }
                     )
                 }
                 .listStyle(.plain)

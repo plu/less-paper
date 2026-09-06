@@ -62,6 +62,16 @@ public struct DocumentDetailReducer: Sendable {
 
         var isTogglingFavorite = false
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        var canEdit: Bool { permissions.can(.changeDocument) }
+
+        // The section, not a control inside it: without view_note the endpoint answers 403, so
+        // there is nothing to show and nothing that could be added.
+        var canViewNotes: Bool { permissions.can(.viewNote) }
+
         var quickLookPreview: URL?
 
         let server: Server
@@ -83,6 +93,7 @@ public struct DocumentDetailReducer: Sendable {
             self.isTogglingFavorite = isTogglingFavorite
             self.quickLookPreview = quickLookPreview
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 

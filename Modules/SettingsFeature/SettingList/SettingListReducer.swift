@@ -69,6 +69,10 @@ public struct SettingListReducer {
 
         var permissions: ServerPermissions
 
+        var canImport: Bool { permissions.can(.addDocument) }
+
+        var canScan: Bool { permissions.can(.addDocument) }
+
         var canViewCorrespondents: Bool { permissions.can(.viewCorrespondent) }
 
         var canViewCustomFields: Bool { permissions.can(.viewCustomField) }
@@ -80,6 +84,8 @@ public struct SettingListReducer {
         var canViewStoragePaths: Bool { permissions.can(.viewStoragePath) }
 
         var canViewTags: Bool { permissions.can(.viewTag) }
+
+        var canViewTrash: Bool { permissions.can(.deleteDocument) }
 
         let server: Server
 

@@ -37,14 +37,25 @@ struct ShareFormView: View {
             .frame(maxWidth: .infinity)
             .disabled(store.isImporting)
 
-            Button {
-                send(.importButtonTapped)
-            } label: {
-                Text(.import)
+            if store.canImport {
+                Button {
+                    send(.importButtonTapped)
+                } label: {
+                    Text(.import)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.primary(isLoading: $store.isImporting))
+                .disabled(store.isLocked)
+            } else {
+                // Said here rather than by an absent button, because the server picker above is
+                // reachable and this is what tells the user to use it. It follows a switch on its
+                // own: reset() rebuilds permissions, so canImport re-answers for the new server.
+                Text(.importNotPermittedInfo(serverAlias: store.server.alias))
+                    .font(.footnote)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Color.m3Outline)
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.primary(isLoading: $store.isImporting))
-            .disabled(store.isLocked)
         }
     }
 
@@ -91,7 +102,7 @@ struct ShareFormView: View {
             options: store.correspondents.elements,
             selection: $store.input.correspondent,
             title: .correspondent,
-            onCreate: { send(.createCorrespondentButtonTapped) }
+            onCreate: store.canCreateCorrespondent ? { send(.createCorrespondentButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -109,7 +120,7 @@ struct ShareFormView: View {
             options: store.documentTypes.elements,
             selection: $store.input.documentType,
             title: .documentType,
-            onCreate: { send(.createDocumentTypeButtonTapped) }
+            onCreate: store.canCreateDocumentType ? { send(.createDocumentTypeButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -160,7 +171,7 @@ struct ShareFormView: View {
             options: store.storagePaths.elements,
             selection: $store.input.storagePath,
             title: .storagePath,
-            onCreate: { send(.createStoragePathButtonTapped) }
+            onCreate: store.canCreateStoragePath ? { send(.createStoragePathButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -178,7 +189,7 @@ struct ShareFormView: View {
             options: store.tags.elements,
             selection: $store.input.tags,
             title: .tags,
-            onCreate: { send(.createTagButtonTapped) },
+            onCreate: store.canCreateTag ? { send(.createTagButtonTapped) } : nil,
             fieldItem: {
                 Text($0.description)
                     .capsule(

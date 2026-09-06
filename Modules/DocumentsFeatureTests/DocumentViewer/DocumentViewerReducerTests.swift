@@ -311,4 +311,36 @@ struct DocumentViewerReducerTests {
 
         #expect(store.state.customFields.document.customFields.count == 1)
     }
+
+    @Test
+    func theSectionMenuFollowsViewNote() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument] }
+
+        let state = DocumentViewerReducer.State.testValue(server: server)
+
+        // The sheet is opened from an entrance that was already gated, and then offers its own way
+        // back into Notes — so it has to ask the same question again.
+        #expect(!state.canViewNotes)
+        #expect(!state.permissions.can(.changeDocument))
+    }
+
+    @Test
+    func theSectionMenuOpensWithViewNote() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .viewNote] }
+
+        let state = DocumentViewerReducer.State.testValue(server: server)
+
+        #expect(state.canViewNotes)
+        #expect(!state.permissions.can(.addNote))
+    }
 }

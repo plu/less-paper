@@ -82,6 +82,12 @@ public struct DocumentViewerReducer: Sendable {
 
         var notes: DocumentNotesReducer.State
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        var canViewNotes: Bool { permissions.can(.viewNote) }
+
         var section: DocumentViewerSection
 
         let server: Server
@@ -108,6 +114,7 @@ public struct DocumentViewerReducer: Sendable {
             )
             self.section = section
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 

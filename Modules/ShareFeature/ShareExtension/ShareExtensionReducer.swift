@@ -6,6 +6,11 @@ import SwiftSharing
 
 public enum ShareExtensionError: Equatable {
     case importFailed(String?)
+    // Not a failure, and the one place this app explains a permission. Everywhere else a control
+    // the user cannot use is simply absent, because the app can hide its own entrances. iOS owns
+    // this one: the share sheet opens whatever we think, and without add_document every screen
+    // behind it is dead, so the alternative is a sheet offering nothing but Skip.
+    case importNotPermitted(serverAlias: String)
     case missingServer
 }
 
@@ -50,6 +55,12 @@ public struct ShareExtensionReducer {
 
         @Shared(.selectedServer)
         var selectedServer: Server?
+
+        // Read for the import permission check only: the sheet is blocked outright when no
+        // configured server can add documents, and left alone when switching to another would
+        // help. ShareFormReducer holds the same list to drive its picker.
+        @Shared(.servers)
+        var servers: IdentifiedArrayOf<Server>
 
         public init(
             input: ShareExtensionInput
@@ -96,8 +107,26 @@ public struct ShareExtensionReducer {
                     }
                     return .dismiss()
                 case .onAppear:
-                    if state.selectedServer == nil {
+                    guard let selectedServer = state.selectedServer else {
                         state.error = .missingServer
+                        return .none
+                    }
+                    // Only when NOTHING can be imported anywhere. Blocking on the SELECTED server
+                    // alone traps a multi-server user: the server picker lives inside the form
+                    // this replaces, so the one control that could fix the problem disappears with
+                    // it. When another server would work, the form renders and ShareFormView shows
+                    // the explanation beside its own Skip button instead.
+                    //
+                    // Fails open like every other gate - an unread cache answers true, so a server
+                    // whose permissions were never fetched counts as able to import.
+                    // `!isEmpty` first, and not defensively: allSatisfy is vacuously true on an
+                    // empty list, so without it a state with no server list would block the sheet
+                    // outright. No list means nothing is known, and nothing known fails open.
+                    let noServerCanImport = !state.servers.isEmpty && state.servers.allSatisfy {
+                        !ServerPermissions(server: $0).can(.addDocument)
+                    }
+                    if noServerCanImport {
+                        state.error = .importNotPermitted(serverAlias: selectedServer.alias)
                         return .none
                     }
                     switch state.input {

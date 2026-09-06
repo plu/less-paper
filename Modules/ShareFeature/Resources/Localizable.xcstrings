@@ -137,6 +137,40 @@
         }
       }
     },
+    "importNotPermitted": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dokumente können nicht hinzugefügt werden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot add documents"
+          }
+        }
+      }
+    },
+    "importNotPermittedInfo": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Konto auf %(serverAlias)@ hat keine Berechtigung, Dokumente hinzuzufügen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your account on %(serverAlias)@ does not have permission to add documents."
+          }
+        }
+      }
+    },
     "noServersFound": {
       "extractionState": "manual",
       "localizations": {

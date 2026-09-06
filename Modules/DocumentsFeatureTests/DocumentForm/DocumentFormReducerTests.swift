@@ -511,4 +511,75 @@ struct DocumentFormReducerTests {
         #expect(store.state.content == full.content)
         #expect(store.state.isModified == false)
     }
+
+    @Test
+    func createButtonsFollowEachEntityAddPermission() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .addTag] }
+
+        let state = DocumentFormReducer.State.testValue(server: server)
+
+        #expect(state.canCreateTag)
+        // add_tag must not open any of the other four.
+        #expect(!state.canCreateCorrespondent)
+        #expect(!state.canCreateDocumentType)
+        #expect(!state.canCreateStoragePath)
+        #expect(!state.canCreateCustomField)
+    }
+
+    @Test
+    func theOtherFourCreateButtonsOpenOnTheirOwnAddPermission() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock {
+            $0 = [.viewDocument, .addCorrespondent, .addDocumentType, .addStoragePath, .addCustomField]
+        }
+
+        let state = DocumentFormReducer.State.testValue(server: server)
+
+        // The mirror of the test above: a gate wired to a permission nothing here grants would
+        // pass that one and fail this.
+        #expect(state.canCreateCorrespondent)
+        #expect(state.canCreateDocumentType)
+        #expect(state.canCreateStoragePath)
+        #expect(state.canCreateCustomField)
+        #expect(!state.canCreateTag)
+    }
+
+    @Test
+    func theSectionPickerFollowsViewNoteNotChangeDocument() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
+
+        let state = DocumentFormReducer.State.testValue(server: server)
+
+        // change_document is what gets a user into this form at all; it says nothing about notes.
+        #expect(!state.canViewNotes)
+    }
+
+    @Test
+    func theSectionPickerOpensWithViewNote() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .viewNote] }
+
+        let state = DocumentFormReducer.State.testValue(server: server)
+
+        #expect(state.canViewNotes)
+        #expect(!state.canCreateTag)
+    }
 }

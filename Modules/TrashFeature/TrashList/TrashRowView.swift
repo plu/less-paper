@@ -7,6 +7,7 @@ struct TrashRowView: View {
 
     let document: Document
     let isWorking: Bool
+    let canModify: Bool
     let deleteForever: () -> Void
     let restore: () -> Void
 
@@ -45,18 +46,20 @@ struct TrashRowView: View {
     // trash with no row to show it.
     @ViewBuilder
     private func swipeActions() -> some View {
-        Button(action: restore) {
-            Image(systemName: "arrow.uturn.backward")
-        }
-        .accessibilityLabel(.trashRestore)
-        .disabled(isWorking)
-        .tint(.m3Primary)
+        if canModify {
+            Button(action: restore) {
+                Image(systemName: "arrow.uturn.backward")
+            }
+            .accessibilityLabel(.trashRestore)
+            .disabled(isWorking)
+            .tint(.m3Primary)
 
-        Button(action: deleteForever) {
-            Image(systemName: "trash")
+            Button(action: deleteForever) {
+                Image(systemName: "trash")
+            }
+            .accessibilityLabel(.trashDeleteForever)
+            .disabled(isWorking)
+            .tint(.m3Error)
         }
-        .accessibilityLabel(.trashDeleteForever)
-        .disabled(isWorking)
-        .tint(.m3Error)
     }
 }

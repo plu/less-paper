@@ -95,38 +95,44 @@ public struct SettingListView: View {
                         .listRowBackground(Color.m3SurfaceContainer)
                     }
 
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.trashList(TrashListReducer.State(server: store.server))
-                    ) {
-                        Label(.trash, systemImage: "trash")
+                    if store.canViewTrash {
+                        NavigationLink(
+                            state: SettingListReducer.Path.State.trashList(TrashListReducer.State(server: store.server))
+                        ) {
+                            Label(.trash, systemImage: "trash")
+                        }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
                 }
 
                 Section {
-                    Button {
-                        send(.importButtonTapped)
-                    } label: {
-                        Label {
-                            Text(.import)
-                                .foregroundStyle(Color.m3OnSurface)
-                        } icon: {
-                            Image(systemName: "doc.badge.plus")
+                    if store.canImport {
+                        Button {
+                            send(.importButtonTapped)
+                        } label: {
+                            Label {
+                                Text(.import)
+                                    .foregroundStyle(Color.m3OnSurface)
+                            } icon: {
+                                Image(systemName: "doc.badge.plus")
+                            }
                         }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
 
-                    Button {
-                        send(.scanButtonTapped)
-                    } label: {
-                        Label {
-                            Text(.scan)
-                                .foregroundStyle(Color.m3OnSurface)
-                        } icon: {
-                            Image(systemName: "camera")
+                    if store.canScan {
+                        Button {
+                            send(.scanButtonTapped)
+                        } label: {
+                            Label {
+                                Text(.scan)
+                                    .foregroundStyle(Color.m3OnSurface)
+                            } icon: {
+                                Image(systemName: "camera")
+                            }
                         }
+                        .listRowBackground(Color.m3SurfaceContainer)
                     }
-                    .listRowBackground(Color.m3SurfaceContainer)
                 }
 
                 // A-Z by English title, matching the section above. German sorts differently and is

@@ -44,22 +44,28 @@ private struct DocumentListTopTrailingToolbar: ViewModifier {
     @ViewBuilder
     private var defaultActionsMenu: some View {
         Menu {
-            Button {
-                send(.importButtonTapped)
-            } label: {
-                Label(.import, systemImage: "doc.badge.plus")
+            if store.canImport {
+                Button {
+                    send(.importButtonTapped)
+                } label: {
+                    Label(.import, systemImage: "doc.badge.plus")
+                }
             }
 
-            Button {
-                send(.scanButtonTapped)
-            } label: {
-                Label(.scan, systemImage: "camera")
+            if store.canScan {
+                Button {
+                    send(.scanButtonTapped)
+                } label: {
+                    Label(.scan, systemImage: "camera")
+                }
             }
 
-            Button {
-                send(.toggleSelectionModeButtonTapped)
-            } label: {
-                Label(.select, systemImage: "checklist")
+            if store.canSelect {
+                Button {
+                    send(.toggleSelectionModeButtonTapped)
+                } label: {
+                    Label(.select, systemImage: "checklist")
+                }
             }
 
             serversMenu

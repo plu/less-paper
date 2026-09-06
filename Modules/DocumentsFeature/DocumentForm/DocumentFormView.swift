@@ -52,7 +52,12 @@ struct DocumentFormView: View {
             case .content, .customFields, .details:
                 buttons()
             case .notes:
-                DocumentNoteComposerView(store: notesStore)
+                // Existence, not enablement: canAddNote is the add_note permission, while the
+                // composer's own canCreate (draft non-empty, not saving) still governs whether the
+                // button inside it is enabled.
+                if store.notes.canAddNote {
+                    DocumentNoteComposerView(store: notesStore)
+                }
             }
         }
         .onAppear { send(.onAppear) }
@@ -69,7 +74,13 @@ struct DocumentFormView: View {
     private func sectionMenu() -> some View {
         Menu {
             Picker("", selection: $store.section) {
-                ForEach(DocumentFormSection.allCases, id: \.self) {
+                // Without view_note the endpoint answers 403, so Notes drops out here rather than
+                // opening onto a section with nothing to show. change_document gets a user into
+                // this form but says nothing about notes, so the form has to ask separately.
+                ForEach(
+                    DocumentFormSection.allCases.filter { $0 != .notes || store.canViewNotes },
+                    id: \.self
+                ) {
                     Text($0.description).tag($0)
                 }
             }
@@ -174,7 +185,7 @@ struct DocumentFormView: View {
             options: store.correspondents.elements,
             selection: $store.input.correspondent,
             title: .correspondent,
-            onCreate: { send(.createCorrespondentButtonTapped) }
+            onCreate: store.canCreateCorrespondent ? { send(.createCorrespondentButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -192,7 +203,7 @@ struct DocumentFormView: View {
             options: store.documentTypes.elements,
             selection: $store.input.documentType,
             title: .documentType,
-            onCreate: { send(.createDocumentTypeButtonTapped) }
+            onCreate: store.canCreateDocumentType ? { send(.createDocumentTypeButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -210,7 +221,7 @@ struct DocumentFormView: View {
             options: store.storagePaths.elements,
             selection: $store.input.storagePath,
             title: .storagePath,
-            onCreate: { send(.createStoragePathButtonTapped) }
+            onCreate: store.canCreateStoragePath ? { send(.createStoragePathButtonTapped) } : nil
         )
         .sheet(
             item: $store.scope(
@@ -228,7 +239,7 @@ struct DocumentFormView: View {
             options: store.tags.elements,
             selection: $store.input.tags,
             title: .tags,
-            onCreate: { send(.createTagButtonTapped) },
+            onCreate: store.canCreateTag ? { send(.createTagButtonTapped) } : nil,
             fieldItem: {
                 Text($0.description)
                     .capsule(

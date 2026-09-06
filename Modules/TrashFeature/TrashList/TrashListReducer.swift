@@ -33,10 +33,19 @@ public struct TrashListReducer: Reducer, Sendable {
         /// be asked twice.
         var isWorkingOn: Set<Document.Id> = []
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        // Restore, delete forever and empty trash are all delete_document. One property rather
+        // than three with identical bodies; split it if paperless ever separates them.
+        var canModifyTrash: Bool { permissions.can(.deleteDocument) }
+
         let server: Server
 
         public init(server: Server) {
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
 
         init(
@@ -47,6 +56,7 @@ public struct TrashListReducer: Reducer, Sendable {
             self.documents = documents
             self.isLoaded = isLoaded
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 

@@ -111,6 +111,18 @@ public struct DocumentListReducer: Sendable {
 
         var path: StackState<Path.State>
 
+        var permissions: ServerPermissions
+
+        var canImport: Bool { permissions.can(.addDocument) }
+
+        var canScan: Bool { permissions.can(.addDocument) }
+
+        // Either permission is enough to make a selection worth having: gating on change alone
+        // would hide bulk delete from someone who may delete but not edit.
+        var canSelect: Bool {
+            permissions.can(.changeDocument) || permissions.can(.deleteDocument)
+        }
+
         @Shared
         var correspondents: IdentifiedArrayOf<Correspondent>
 
@@ -165,6 +177,7 @@ public struct DocumentListReducer: Sendable {
             self.path = path
             self.server = server
             self.totalNumberOfDocuments = totalNumberOfDocuments
+            permissions = ServerPermissions(server: server)
             self._correspondents = Shared(wrappedValue: [], .correspondents(server))
             self._documentCache = Shared(wrappedValue: [], .documents(server))
             self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))

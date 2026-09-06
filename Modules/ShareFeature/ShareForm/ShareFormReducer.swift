@@ -96,6 +96,28 @@ public struct ShareFormReducer {
 
         var server: Server { didSet { reset() } }
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        var canCreateTag: Bool { permissions.can(.addTag) }
+
+        var canCreateCorrespondent: Bool { permissions.can(.addCorrespondent) }
+
+        var canCreateDocumentType: Bool { permissions.can(.addDocumentType) }
+
+        var canCreateStoragePath: Bool { permissions.can(.addStoragePath) }
+
+        // The import is a document upload, so it answers to add_document like the list toolbar's
+        // Import and the Settings row do — the share sheet is a third entrance to the same write.
+        //
+        // This looks redundant beside ShareExtensionReducer's importNotPermitted check and is not.
+        // That one runs once, on appear, and replaces the whole sheet when the SELECTED server
+        // cannot import. The user can then switch servers inside the form, which rebuilds this
+        // State's permissions through reset() but never re-runs that check — so a switch to a
+        // server without add_document is caught here and nowhere else.
+        var canImport: Bool { permissions.can(.addDocument) }
+
         public init(
             files: [URL],
             server: Server
@@ -106,6 +128,7 @@ public struct ShareFormReducer {
             self._documentTypes = Shared(wrappedValue: [], .documentTypes(server))
             self._storagePaths = Shared(wrappedValue: [], .storagePaths(server))
             self._tags = Shared(wrappedValue: [], .tags(server))
+            permissions = ServerPermissions(server: server)
             selectFile(index: currentIndex)
         }
     }
@@ -226,6 +249,9 @@ extension ShareFormReducer.State {
         _documentTypes = Shared(wrappedValue: [], .documentTypes(server))
         _storagePaths = Shared(wrappedValue: [], .storagePaths(server))
         _tags = Shared(wrappedValue: [], .tags(server))
+        // Rebuilt for the same reason as the four above: a gate left pointing at the previous
+        // server would answer for the wrong account after a switch.
+        permissions = ServerPermissions(server: server)
     }
 
     mutating func selectNextFile(index: Int) {

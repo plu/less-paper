@@ -165,6 +165,36 @@
       "actions": [],
       "is_superuser": true,
       "expect": "Everything visible. Note that this does NOT isolate the is_superuser bypass in ServerPermissions.can: paperless expands a superuser's effective permissions into ui_settings, so this user arrives holding all 162 and the ordinary contains() check already answers true. The bypass is belt and braces against a server that stops doing that, and only the unit tests reach it."
+    },
+    {
+      "username": "perm-doc-reader",
+      "actions": ["view"],
+      "entities": ["document"],
+      "expect": "Documents visible. No import, no scan, no Select, no Edit or Delete in a row's context menu, and no Notes at any of its four entrances - the row's context menu, the detail toolbar's View menu, the viewer sheet's section menu and the edit form's section menu."
+    },
+    {
+      "username": "perm-doc-editor",
+      "actions": ["view", "change"],
+      "entities": ["document"],
+      "expect": "Edit in a row's context menu and the bulk edit actions. No Delete in that menu, no bulk delete, no import, no scan. Select IS offered - it is gated on change OR delete."
+    },
+    {
+      "username": "perm-doc-deleter",
+      "actions": ["view", "delete"],
+      "entities": ["document"],
+      "expect": "Delete in a row's context menu, bulk delete, Trash row in Settings and its actions. No Edit in that menu, no bulk edit actions. Select IS offered. The mirror of perm-doc-editor: run the pair to prove edit and delete are not wired to each other's permission."
+    },
+    {
+      "username": "perm-doc-creator",
+      "actions": ["view", "add"],
+      "entities": ["document"],
+      "expect": "Import, Scan, bulk Merge and the share sheet's Import button. No Edit or Delete in a row's context menu. Select is NOT offered - add_document is not one of its two permissions."
+    },
+    {
+      "username": "perm-notes",
+      "actions": ["view", "add", "delete"],
+      "entities": ["note"],
+      "expect": "Notes section visible with add and delete. Compare against perm-doc-reader, whose notes section is absent entirely."
     }
   ]
 }

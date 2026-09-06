@@ -86,7 +86,7 @@ public struct DocumentDetailView: View {
 
             // A snapshot is read-only: its edit form is the only door to a network write this
             // screen can otherwise reach, so it is not offered here at all.
-            if !store.isOfflineSnapshot {
+            if !store.isOfflineSnapshot, store.canEdit {
                 Button(action: {
                     send(.editDocumentButtonTapped)
                 }) {
@@ -108,7 +108,11 @@ public struct DocumentDetailView: View {
 
     @ViewBuilder
     private func viewerMenu() -> some View {
-        DocumentViewerMenu { send(.viewButtonTapped($0)) }
+        // Without view_note the endpoint answers 403, so Notes drops out here rather than opening
+        // onto a section with nothing to show.
+        DocumentViewerMenu(
+            sections: DocumentViewerSection.allCases.filter { $0 != .notes || store.canViewNotes }
+        ) { send(.viewButtonTapped($0)) }
     }
 
     @ViewBuilder

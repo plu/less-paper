@@ -4,6 +4,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import SwiftSharing
 import Testing
 import TestSupport
 
@@ -1267,5 +1268,67 @@ struct DocumentListReducerTests {
 
         #expect(withoutTags.isInboxWithoutInboxTags == true)
         #expect(withTags.isInboxWithoutInboxTags == false)
+    }
+
+    @Test
+    func listActionsAreHiddenWithoutDocumentPermissions() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument] }
+
+        let state = DocumentListReducer.State(server: server)
+
+        #expect(!state.canImport)
+        #expect(!state.canScan)
+        #expect(!state.canSelect)
+        // The neighbour check: gating import on a tag permission would compile and look identical.
+        #expect(!state.permissions.can(.addTag))
+    }
+
+    @Test
+    func importAndScanOpenWithAddDocumentAlone() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .addDocument] }
+
+        let state = DocumentListReducer.State(server: server)
+
+        #expect(state.canImport)
+        #expect(state.canScan)
+        // add_document is neither half of the selection gate.
+        #expect(!state.canSelect)
+    }
+
+    @Test
+    func selectionIsOfferedWithChangeAlone() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
+
+        let state = DocumentListReducer.State(server: server)
+
+        #expect(state.canSelect)
+        #expect(!state.canImport)
+    }
+
+    @Test
+    func selectionIsOfferedWithDeleteAlone() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .deleteDocument] }
+
+        #expect(DocumentListReducer.State(server: server).canSelect)
     }
 }

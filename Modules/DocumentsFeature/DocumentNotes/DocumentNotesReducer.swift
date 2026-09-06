@@ -52,12 +52,21 @@ public struct DocumentNotesReducer: Sendable {
             !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isCreating
         }
 
+        // Stored rather than computed from `server`: constructing a ServerPermissions reads two
+        // files and arms two file watchers, and a computed property would do that on every render.
+        var permissions: ServerPermissions
+
+        var canAddNote: Bool { permissions.can(.addNote) }
+
+        var canDeleteNote: Bool { permissions.can(.deleteNote) }
+
         init(
             documentId: Document.Id,
             server: Server
         ) {
             self.documentId = documentId
             self.server = server
+            permissions = ServerPermissions(server: server)
         }
     }
 

@@ -1,5 +1,6 @@
 @testable import DocumentsFeature
 
+import ApiInterface
 import ComposableArchitecture
 import Dependencies
 import SwiftUI
@@ -131,6 +132,35 @@ struct DocumentFormViewTests {
             ),
             as: .image(layout: .device(config: .iPhone12)),
             named: "notes"
+        )
+    }
+
+    // Existence, not enablement: without add_note the composer is gone entirely, not merely
+    // disabled — canCreate (draft validity) is a separate condition and stays untested here.
+    @Test
+    func testSnapshot_notes_addNoteHidden() async throws {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .viewNote] }
+
+        assertSnapshot(
+            of: DocumentFormView(
+                store: Store(
+                    initialState: DocumentFormReducer.State.testValue(
+                        notes: [.testValue()],
+                        section: .notes,
+                        server: server
+                    ),
+                    reducer: {
+                        DocumentFormReducer()
+                    }
+                )
+            ),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "notesAddNoteHidden"
         )
     }
 }

@@ -237,6 +237,42 @@ struct DocumentRowReducerTests {
     }
 
     @Test
+    func editAndDeleteFollowTheirOwnPermissions() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
+
+        let state = DocumentRowReducer.State.testValue(server: server)
+
+        #expect(state.canEdit)
+        #expect(!state.canDelete)
+        // change_document says nothing about notes: the row's context menu offers them too.
+        #expect(!state.canViewNotes)
+        // The neighbour check: gating a document control on a tag permission compiles.
+        #expect(!state.permissions.can(.changeTag))
+    }
+
+    @Test
+    func deleteAndTheNotesEntranceOpenOnTheirOwnPermissions() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .deleteDocument, .viewNote] }
+
+        let state = DocumentRowReducer.State.testValue(server: server)
+
+        #expect(state.canDelete)
+        #expect(state.canViewNotes)
+        // The mirror of the test above: neither implies change_document.
+        #expect(!state.canEdit)
+    }
+
+    @Test
     func test_favoriteButtonTapped_toastsOnFailure() async {
         let server = Server.testValue()
 

@@ -204,4 +204,54 @@ struct DocumentSelectionReducerTests {
 
         #expect(store.state.tabBarVisibility == .automatic)
     }
+
+    @Test
+    func bulkActionsFollowTheirOwnPermissions() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
+
+        let state = DocumentSelectionReducer.State(server: server)
+
+        #expect(state.canBulkEdit)
+        // change_document must not imply either of the other two.
+        #expect(!state.canBulkDelete)
+        #expect(!state.canMerge)
+    }
+
+    @Test
+    func mergeFollowsAddDocumentAlone() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .addDocument] }
+
+        let state = DocumentSelectionReducer.State(server: server)
+
+        // Merge produces a document that did not exist before, so it is add_document and nothing
+        // else follows from holding it.
+        #expect(state.canMerge)
+        #expect(!state.canBulkEdit)
+        #expect(!state.canBulkDelete)
+    }
+
+    @Test
+    func bulkDeleteFollowsDeleteAlone() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .deleteDocument] }
+
+        let state = DocumentSelectionReducer.State(server: server)
+
+        #expect(state.canBulkDelete)
+        #expect(!state.canBulkEdit)
+    }
 }

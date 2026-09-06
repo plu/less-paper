@@ -42,6 +42,25 @@ struct SettingListReducerTests {
     }
 
     @Test
+    func importAndScanRowsOpenWithAddDocument() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.addDocument] }
+
+        let state = SettingListReducer.State(server: server)
+
+        // Settings carries a second copy of Import and Scan, gated the same way the list toolbar
+        // is; the snapshot covers only their absence.
+        #expect(state.canImport)
+        #expect(state.canScan)
+        // The neighbour check: the Trash row answers to delete_document, not to add_document.
+        #expect(!state.canViewTrash)
+    }
+
+    @Test
     func path_pdfPasswordList_isReachable() async throws {
         let store = TestStore(initialState: SettingListReducer.State(server: .testValue())) {
             SettingListReducer()
