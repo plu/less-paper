@@ -1,0 +1,200 @@
+@testable import ServersFeature
+
+import ApiInterface
+import ComposableArchitecture
+import Foundation
+import SnapshotTesting
+import SwiftUI
+import Testing
+import TestSupport
+import UIKit
+
+@MainActor
+@Suite(
+    // Every view here fires .task { await send(.onAppear).finish() }, which runs runRefresh. The
+    // result never lands before a synchronous snapshot capture - TagListViewTests relies on the
+    // same thing - but the call still has to go somewhere, or the unimplemented default records a
+    // failure regardless of timing.
+    .dependencies {
+        $0.updateCache.execute = { _ in }
+    },
+    .snapshots(record: .environment),
+    .tags(.snapshotTests)
+)
+struct ServerDetailViewTests {
+
+    // The masking decision is only as good as something that fails when a field prints a raw value,
+    // and this screen will accumulate fields. Two different secrets must be indistinguishable on
+    // screen; if one ever reaches the output, these two images stop matching.
+    //
+    // Rendered with the same Snapshotting<SwiftUI.View, UIImage>.image strategy every other view
+    // test in this module asserts with (see TestSupport's `assertSnapshot`), rather than
+    // ImageRenderer: this is the rasteriser the repo has already proven handles a List body, and
+    // reusing it means the two images are captured exactly the way a recorded reference would be.
+    @Test
+    func twoDifferentSecretsRenderIdentically() async throws {
+        func image(headerValue: String) async throws -> Data {
+            let server = Server.testValue(
+                headers: [HTTPHeader.testValue(name: "X-Api-Key", value: headerValue)]
+            )
+            let view = ServerDetailView(
+                store: Store(initialState: ServerDetailReducer.State(server: server)) {
+                    ServerDetailReducer()
+                }
+            )
+
+            let uiImage = await withCheckedContinuation { continuation in
+                Snapshotting<AnyView, UIImage>.image(layout: .device(config: .iPhone12))
+                    .snapshot(AnyView(view))
+                    .run { continuation.resume(returning: $0) }
+            }
+
+            return try #require(uiImage.pngData())
+        }
+
+        let first = try await image(headerValue: "SECRET-ONE")
+        let second = try await image(headerValue: "SECRET-TWO")
+
+        #expect(first == second)
+    }
+
+    @Test
+    func testSnapshot_fullyPopulated() async throws {
+        let server = Server.testValue(
+            headers: [HTTPHeader.testValue(name: "X-Api-Key", value: "SECRET-VALUE")]
+        )
+
+        @Shared(.apiVersion(server)) var apiVersion: Int?
+        $apiVersion.withLock { $0 = 9 }
+
+        @Shared(.paperlessVersion(server)) var paperlessVersion: String?
+        $paperlessVersion.withLock { $0 = "2.10.2" }
+
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock {
+            $0 = .testValue(groups: [1], isStaff: true, isSuperuser: true, username: "admin")
+        }
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        $permissions.withLock { $0 = Permission.allCases }
+
+        @Shared(.correspondents(server)) var correspondents: IdentifiedArrayOf<Correspondent>
+        $correspondents.withLock { $0 = [.testValue()] }
+
+        @Shared(.customFields(server)) var customFields: IdentifiedArrayOf<CustomField>
+        $customFields.withLock { $0 = [.testValue()] }
+
+        @Shared(.documentTypes(server)) var documentTypes: IdentifiedArrayOf<DocumentType>
+        $documentTypes.withLock { $0 = [.testValue()] }
+
+        @Shared(.groups(server)) var groups: IdentifiedArrayOf<ApiInterface.Group>
+        $groups.withLock { $0 = [.testValue(id: 1, name: "Admins")] }
+
+        @Shared(.savedViews(server)) var savedViews: IdentifiedArrayOf<SavedView>
+        $savedViews.withLock { $0 = [.testValue()] }
+
+        @Shared(.storagePaths(server)) var storagePaths: IdentifiedArrayOf<StoragePath>
+        $storagePaths.withLock { $0 = [.testValue()] }
+
+        @Shared(.tags(server)) var tags: IdentifiedArrayOf<ApiInterface.Tag>
+        $tags.withLock { $0 = [.testValue()] }
+
+        @Shared(.users(server)) var users: IdentifiedArrayOf<User>
+        $users.withLock { $0 = [.testValue()] }
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument>
+        $favorites.withLock { $0 = [.testValue()] }
+
+        var state = ServerDetailReducer.State.testValue(server: server)
+        state.statistics = .testValue()
+
+        TestSupport.assertSnapshot(
+            of: NavigationStack {
+                ServerDetailView(
+                    store: Store(initialState: state) {
+                        ServerDetailReducer()
+                    }
+                )
+            },
+            as: .image(layout: .device(config: .iPhone12))
+        )
+    }
+
+    // The case that catches a screen printing 0: nothing has ever been cached, so every
+    // statistics-derived count must read "Unknown" rather than a number that looks real but isn't.
+    @Test
+    func testSnapshot_neverFetched() async throws {
+        let server = Server.testValue()
+
+        let state = ServerDetailReducer.State.testValue(server: server)
+
+        TestSupport.assertSnapshot(
+            of: NavigationStack {
+                ServerDetailView(
+                    store: Store(initialState: state) {
+                        ServerDetailReducer()
+                    }
+                )
+            },
+            as: .image(layout: .device(config: .iPhone12))
+        )
+    }
+
+    @Test
+    func testSnapshot_restricted() async throws {
+        let server = Server.testValue()
+
+        @Shared(.apiVersion(server)) var apiVersion: Int?
+        $apiVersion.withLock { $0 = 9 }
+
+        @Shared(.paperlessVersion(server)) var paperlessVersion: String?
+        $paperlessVersion.withLock { $0 = "2.10.2" }
+
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock {
+            $0 = .testValue(groups: [], isStaff: false, isSuperuser: false, username: "restricted")
+        }
+
+        // Missing view_user on purpose: this is the permission a superuser bypass would otherwise
+        // paper over, and the Permissions section must show every other type it was given.
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        $permissions.withLock { $0 = Permission.allCases.filter { $0 != .viewUser } }
+
+        @Shared(.correspondents(server)) var correspondents: IdentifiedArrayOf<Correspondent>
+        $correspondents.withLock { $0 = [.testValue()] }
+
+        @Shared(.customFields(server)) var customFields: IdentifiedArrayOf<CustomField>
+        $customFields.withLock { $0 = [.testValue()] }
+
+        @Shared(.documentTypes(server)) var documentTypes: IdentifiedArrayOf<DocumentType>
+        $documentTypes.withLock { $0 = [.testValue()] }
+
+        @Shared(.savedViews(server)) var savedViews: IdentifiedArrayOf<SavedView>
+        $savedViews.withLock { $0 = [.testValue()] }
+
+        @Shared(.storagePaths(server)) var storagePaths: IdentifiedArrayOf<StoragePath>
+        $storagePaths.withLock { $0 = [.testValue()] }
+
+        @Shared(.tags(server)) var tags: IdentifiedArrayOf<ApiInterface.Tag>
+        $tags.withLock { $0 = [.testValue()] }
+
+        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument>
+        $favorites.withLock { $0 = [.testValue()] }
+
+        // Users and groups stay empty on purpose - the restriction under test.
+
+        var state = ServerDetailReducer.State.testValue(server: server)
+        state.statistics = .testValue()
+
+        TestSupport.assertSnapshot(
+            of: NavigationStack {
+                ServerDetailView(
+                    store: Store(initialState: state) {
+                        ServerDetailReducer()
+                    }
+                )
+            },
+            as: .image(layout: .device(config: .iPhone12))
+        )
+    }
+}

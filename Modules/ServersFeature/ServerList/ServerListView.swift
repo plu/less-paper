@@ -30,9 +30,7 @@ public struct ServerListView: View {
                 action: \.destination.serverDetail
             )
         ) { store in
-            // Placeholder: ServerDetailView ships in the next task, presented through this same
-            // destination.
-            Text(verbatim: store.server.alias)
+            ServerDetailView(store: store)
         }
         .navigationTitle(.servers)
         .scrollContentBackground(.hidden)
