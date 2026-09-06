@@ -4,21 +4,33 @@ import DependenciesMacros
 import Foundation
 import Get
 
+public struct ServerVersions: Equatable, Sendable {
+
+    public let apiVersion: Int?
+
+    public let paperlessVersion: String?
+
+    public init(apiVersion: Int?, paperlessVersion: String?) {
+        self.apiVersion = apiVersion
+        self.paperlessVersion = paperlessVersion
+    }
+}
+
 @DependencyClient
 struct ApiVersionRepository: Sendable {
 
-    var getAdvertisedApiVersion: @Sendable (
+    var getServerVersions: @Sendable (
         _ server: Server
-    ) async throws -> Int?
+    ) async throws -> ServerVersions
 }
 
 extension ApiVersionRepository: TestDependencyKey {
     static let previewValue = Self(
-        getAdvertisedApiVersion: { _ in ApiVersion.clientMaximum }
+        getServerVersions: { _ in ServerVersions(apiVersion: ApiVersion.clientMaximum, paperlessVersion: "3.0.5") }
     )
 
     static let testValue = Self(
-        getAdvertisedApiVersion: { _ in ApiVersion.clientMaximum }
+        getServerVersions: { _ in ServerVersions(apiVersion: ApiVersion.clientMaximum, paperlessVersion: "3.0.5") }
     )
 }
 
@@ -32,7 +44,7 @@ extension DependencyValues {
 
 extension ApiVersionRepository: DependencyKey {
     static let liveValue = Self(
-        getAdvertisedApiVersion: getAdvertisedApiVersion(server:)
+        getServerVersions: getServerVersions(server:)
     )
 }
 
@@ -42,9 +54,9 @@ private extension ApiVersionRepository {
     // an endpoint that actually authenticates — /api/token/ would always come back bare. It also
     // has to ask without naming a version, because a server that rejects the guess answers 406 and
     // that response carries no X-Api-Version at all.
-    static func getAdvertisedApiVersion(
+    static func getServerVersions(
         server: Server
-    ) async throws -> Int? {
+    ) async throws -> ServerVersions {
         let response = try await APIClient
             .client(server: server, sendsApiVersion: false)
             .send(Request<GetUISettingsOutput>(
@@ -52,11 +64,12 @@ private extension ApiVersionRepository {
                 method: .get
             ))
 
-        guard let httpResponse = response.response as? HTTPURLResponse,
-              let header = httpResponse.value(forHTTPHeaderField: "X-Api-Version")
-        else {
-            return nil
+        guard let httpResponse = response.response as? HTTPURLResponse else {
+            return ServerVersions(apiVersion: nil, paperlessVersion: nil)
         }
-        return Int(header)
+        return ServerVersions(
+            apiVersion: httpResponse.value(forHTTPHeaderField: "X-Api-Version").flatMap(Int.init),
+            paperlessVersion: httpResponse.value(forHTTPHeaderField: "X-Version")
+        )
     }
 }

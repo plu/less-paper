@@ -47,6 +47,14 @@ struct ServerRowView: View {
     @ViewBuilder
     private func swipeActions() -> some View {
         Button {
+            send(.detailsButtonTapped)
+        } label: {
+            Image(systemName: "info.circle")
+        }
+        .accessibilityLabel(.serverDetails)
+        .tint(.m3Secondary)
+
+        Button {
             send(.editButtonTapped)
         } label: {
             Image(systemName: "square.and.pencil")

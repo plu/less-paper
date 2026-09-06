@@ -132,6 +132,22 @@ struct ServerListReducerTests {
     }
 
     @Test
+    func test_servers_element_delegate_showDetails() async throws {
+        let server = Server.testValue()
+
+        @Shared(.servers)
+        var servers: IdentifiedArrayOf<Server> = [server]
+
+        let store = TestStore(initialState: ServerListReducer.State()) {
+            ServerListReducer()
+        }
+
+        await store.send(.servers(.element(id: server.id, action: .delegate(.showDetails)))) {
+            $0.destination = .serverDetail(ServerDetailReducer.State(server: server))
+        }
+    }
+
+    @Test
     func test_view_createButtonTapped() async throws {
         let store = TestStore(initialState: ServerListReducer.State()) {
             ServerListReducer()

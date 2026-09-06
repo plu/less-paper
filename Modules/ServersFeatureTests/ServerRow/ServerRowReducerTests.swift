@@ -61,6 +61,18 @@ struct ServerRowReducerTests {
     }
 
     @Test
+    func test_view_detailsButtonTapped() async throws {
+        let store = TestStore(initialState: ServerRowReducer.State(
+            server: .testValue()
+        )) {
+            ServerRowReducer()
+        }
+
+        await store.send(.view(.detailsButtonTapped))
+        await store.receive(\.delegate, .showDetails)
+    }
+
+    @Test
     func test_view_serverTapped_fillsCachesBeforeSelecting() async throws {
         let server = Server.testValue(alias: "Other", id: "other")
         let selectedDuringSync = LockIsolated<String?>("unset")

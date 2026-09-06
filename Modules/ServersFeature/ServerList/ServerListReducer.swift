@@ -24,6 +24,7 @@ public struct ServerListReducer: Sendable {
     @Reducer
     public enum Destination {
         case diagnosticsList(DiagnosticsListReducer)
+        case serverDetail(ServerDetailReducer)
         case serverForm(ServerFormReducer)
     }
 
@@ -80,6 +81,12 @@ public struct ServerListReducer: Sendable {
                     return .runGetCredentials(
                         server: state.servers[id: id]?.server
                     )
+                case .showDetails:
+                    guard let server = state.servers[id: id]?.server else {
+                        return .none
+                    }
+                    state.destination = .serverDetail(ServerDetailReducer.State(server: server))
+                    return .none
                 }
             case let .view(viewAction):
                 switch viewAction {

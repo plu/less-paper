@@ -24,6 +24,14 @@ public struct ServerListView: View {
         ) { store in
             DiagnosticsListView(store: store)
         }
+        .navigationDestination(
+            item: $store.scope(
+                state: \.destination?.serverDetail,
+                action: \.destination.serverDetail
+            )
+        ) { store in
+            ServerDetailView(store: store)
+        }
         .navigationTitle(.servers)
         .scrollContentBackground(.hidden)
         .sheet(
