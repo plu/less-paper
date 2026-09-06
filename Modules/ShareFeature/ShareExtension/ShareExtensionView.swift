@@ -10,6 +10,8 @@ public struct ShareExtensionView: View {
         switch store.error {
         case let .importFailed(message):
             importFailedView(message: message)
+        case let .importNotPermitted(serverAlias):
+            importNotPermittedView(serverAlias: serverAlias)
         case .missingServer:
             missingServerView()
         case .none:
@@ -45,6 +47,31 @@ public struct ShareExtensionView: View {
                 title: .noServersFound
             ) {
                 Text(.noServersFoundInfo)
+                    .font(.body)
+                    .foregroundStyle(Color.m3OnSurface)
+
+                Button {
+                    send(.dismiss)
+                } label: {
+                    Text(.close)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.primary())
+            }
+        }
+        .background(Color.m3SurfaceContainerLowest)
+    }
+
+    // The server is named because a multi-server user needs to know which account to fix, and the
+    // share sheet is the one screen that cannot show them which server it is about any other way.
+    @ViewBuilder
+    private func importNotPermittedView(serverAlias: String) -> some View {
+        ContentUnavailableView {
+            EmptyListView(
+                systemImage: "lock.document",
+                title: .importNotPermitted
+            ) {
+                Text(.importNotPermittedInfo(serverAlias: serverAlias))
                     .font(.body)
                     .foregroundStyle(Color.m3OnSurface)
 

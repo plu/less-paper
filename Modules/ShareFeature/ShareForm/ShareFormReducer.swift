@@ -110,6 +110,12 @@ public struct ShareFormReducer {
 
         // The import is a document upload, so it answers to add_document like the list toolbar's
         // Import and the Settings row do — the share sheet is a third entrance to the same write.
+        //
+        // This looks redundant beside ShareExtensionReducer's importNotPermitted check and is not.
+        // That one runs once, on appear, and replaces the whole sheet when the SELECTED server
+        // cannot import. The user can then switch servers inside the form, which rebuilds this
+        // State's permissions through reset() but never re-runs that check — so a switch to a
+        // server without add_document is caught here and nowhere else.
         var canImport: Bool { permissions.can(.addDocument) }
 
         public init(

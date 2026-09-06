@@ -6,6 +6,11 @@ import SwiftSharing
 
 public enum ShareExtensionError: Equatable {
     case importFailed(String?)
+    // Not a failure, and the one place this app explains a permission. Everywhere else a control
+    // the user cannot use is simply absent, because the app can hide its own entrances. iOS owns
+    // this one: the share sheet opens whatever we think, and without add_document every screen
+    // behind it is dead, so the alternative is a sheet offering nothing but Skip.
+    case importNotPermitted(serverAlias: String)
     case missingServer
 }
 
@@ -96,8 +101,16 @@ public struct ShareExtensionReducer {
                     }
                     return .dismiss()
                 case .onAppear:
-                    if state.selectedServer == nil {
+                    guard let selectedServer = state.selectedServer else {
                         state.error = .missingServer
+                        return .none
+                    }
+                    // Checked here rather than on the button inside the form: without add_document
+                    // every screen behind this sheet is dead, so the whole sheet is replaced. Fails
+                    // open like every other gate - an unread cache answers true and the form
+                    // renders exactly as it does today.
+                    if !ServerPermissions(server: selectedServer).can(.addDocument) {
+                        state.error = .importNotPermitted(serverAlias: selectedServer.alias)
                         return .none
                     }
                     switch state.input {
