@@ -528,6 +528,23 @@
         }
       }
     },
+    "noGroups": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
     "noServersFound": {
       "extractionState": "manual",
       "localizations": {

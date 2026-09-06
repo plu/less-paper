@@ -133,7 +133,14 @@ struct ServerDetailViewTests {
         // other fixture shows - a fixture has to seed this or the row's real values never get
         // exercised, only its fallback.
         var state = ServerDetailReducer.State.testValue(hasToken: true, server: server)
-        state.statistics = .testValue()
+        // The three counts overridden here default to 0 in the shared testValue. On this screen a
+        // 0 is a claim about the server, so a reference full of them is one a reader has to
+        // re-derive as legitimate every time - and the rows never get exercised with a real number.
+        state.statistics = .testValue(
+            correspondentCount: 3,
+            documentTypeCount: 2,
+            storagePathCount: 1
+        )
 
         TestSupport.assertSnapshot(
             of: NavigationStack {
@@ -147,9 +154,11 @@ struct ServerDetailViewTests {
         )
     }
 
-    // The case that catches a screen printing 0: nothing has ever been cached, so every
-    // statistics-derived count must read "Unknown" rather than a number that looks real but isn't.
-    // hasToken stays nil here too, on purpose: this is the fixture for "never resolved anything".
+    // The case that catches a screen printing 0: nothing has ever been cached, so every count that
+    // depends on the server must read "Unknown" rather than a number that looks real but isn't.
+    // Favorites is the one row that legitimately reads 0 - nothing was ever asked of the server to
+    // know that this device has none. hasToken stays nil here too, on purpose: this is the fixture
+    // for "never resolved anything".
     @Test
     func testSnapshot_neverFetched() async throws {
         let server = Server.testValue()
@@ -168,16 +177,21 @@ struct ServerDetailViewTests {
         )
     }
 
-    // The other half of the "unknown, never 0" rule for cache-derived counts: once this screen's
-    // own refresh has succeeded, an empty cache is a known fact - the server genuinely has none -
-    // and must read 0 rather than Unknown forever. Every cache-derived array is left at its default
-    // [] on purpose; only statistics is set, which is the signal a refresh completed.
+    // The exception to the "empty cache reads Unknown" rule, and the fixture that stops it being
+    // silently withdrawn. Every cache-derived array is left at its default [] on purpose, after a
+    // refresh that completed (statistics is set): the four server-side counts still read Unknown,
+    // because a completed refresh does not prove any individual list was fetched, while Favorites
+    // reads 0 - it is a local store, so its emptiness is knowable without asking anyone.
     @Test
-    func testSnapshot_emptyCachesAfterSuccessfulRefresh() async throws {
+    func testSnapshot_emptyCachesReadUnknownExceptFavorites() async throws {
         let server = Server.testValue()
 
         var state = ServerDetailReducer.State.testValue(server: server)
-        state.statistics = .testValue()
+        state.statistics = .testValue(
+            correspondentCount: 3,
+            documentTypeCount: 2,
+            storagePathCount: 1
+        )
 
         TestSupport.assertSnapshot(
             of: NavigationStack {
@@ -202,8 +216,11 @@ struct ServerDetailViewTests {
         $paperlessVersion.withLock { $0 = "2.10.2" }
 
         @Shared(.currentUser(server)) var currentUser: User?
+        // Member of a group whose name cannot be looked up, because /api/groups/ is one of the two
+        // endpoints this account is refused. The ids are in hand and the names are not, which must
+        // read Unknown - not the blank row a silent compactMap used to leave behind.
         $currentUser.withLock {
-            $0 = .testValue(groups: [], isStaff: false, isSuperuser: false, username: "restricted")
+            $0 = .testValue(groups: [1], isStaff: false, isSuperuser: false, username: "restricted")
         }
 
         // Missing view_user on purpose: this is the permission a superuser bypass would otherwise
@@ -232,12 +249,19 @@ struct ServerDetailViewTests {
         @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument>
         $favorites.withLock { $0 = [.testValue()] }
 
-        // Users and groups stay empty on purpose - the restriction under test.
+        // Users and groups stay empty on purpose - the restriction under test. updateCache swallows
+        // the 403 each of them answers with, so nothing distinguishes a refused fetch from an empty
+        // server: both counts must read Unknown rather than telling a reader this server has 0
+        // users, which is the app reporting its own permission error as a fact about the server.
 
         // hasToken: false renders the auth mode row as "remote-user" - the other real value,
         // alongside fullyPopulated's "token", so both non-Unknown outcomes are exercised somewhere.
         var state = ServerDetailReducer.State.testValue(hasToken: false, server: server)
-        state.statistics = .testValue()
+        state.statistics = .testValue(
+            correspondentCount: 3,
+            documentTypeCount: 2,
+            storagePathCount: 1
+        )
 
         TestSupport.assertSnapshot(
             of: NavigationStack {

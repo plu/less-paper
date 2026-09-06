@@ -200,8 +200,12 @@ public struct ServerDetailView: View {
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
-            LabeledContent(cachedLabel(.favorites)) {
-                Text(verbatim: cachedCount(favorites.count))
+            // Not labelled "(Cached)" and not gated: favorites is a purely local store - records
+            // are created by user action and refreshed only where they already exist - so an empty
+            // array means the user has no favorites here, a fact that is known without ever asking
+            // the server. It is the one count on this screen that cannot be stale.
+            LabeledContent(String(localized: .favorites)) {
+                Text(verbatim: String(favorites.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
         } header: {
@@ -239,14 +243,25 @@ public struct ServerDetailView: View {
         }
     }
 
+    // Three outcomes, not two. A user who belongs to no group is a fact worth stating; a user whose
+    // group ids are all in hand but resolve to nothing is a lookup that failed - /api/groups/ 403s
+    // on its own, and the cache is then empty - and reporting that as "no groups" would be the same
+    // wrong-fact bug cachedCount exists to avoid. Neither may render as the blank row compactMap
+    // used to produce, which is neither a value nor Unknown.
     private func groupNames() -> String {
         guard let currentUser = store.currentUser else {
             return String(localized: .unknownValue)
         }
-        return currentUser.groups
+        guard !currentUser.groups.isEmpty else {
+            return String(localized: .noGroups)
+        }
+        let names = currentUser.groups
             .compactMap { store.groups[id: $0]?.name }
             .sorted()
-            .joined(separator: ", ")
+        guard !names.isEmpty else {
+            return String(localized: .unknownValue)
+        }
+        return names.joined(separator: ", ")
     }
 
     private func boolValue(_ value: Bool?) -> LocalizedStringResource {
@@ -277,21 +292,21 @@ public struct ServerDetailView: View {
         "\(String(localized: title)) (\(String(localized: .cached)))"
     }
 
-    // An empty @Shared array is ambiguous by construction - it defaults to [] whether nothing has
-    // ever been fetched or the server genuinely has none - so a bare count cannot tell the two
-    // apart on its own. This screen can: store.statistics is the signal that this screen's own
-    // refresh has completed successfully at least once (set only by .statisticsLoaded, which
-    // follows a successful updateCache + getStatistics chain), so it doubles as "the caches this
-    // refresh populates are now trustworthy". A non-zero count needs no such gate - if the cache
-    // holds items, at least that many exist regardless of whether a refresh has ever run.
+    // An empty @Shared array derived from a server-side list is ambiguous by construction, and
+    // nothing on this screen can disambiguate it: it defaults to [] whether nothing has ever been
+    // fetched, the server genuinely has none, or the fetch was refused. UpdateCacheUseCase catches
+    // every list failure separately and never rethrows - that tolerance is deliberate, see the
+    // comment there - so a completed refresh proves only that the function ran to the end, not that
+    // /api/users/ answered. An account without view_user would otherwise be told the server has 0
+    // users, which is the app reporting its own permission error as a fact about the server.
+    //
+    // So empty always reads Unknown. A non-empty count needs no gate - if the cache holds items, at
+    // least that many exist regardless of which fetch succeeded.
     private func cachedCount(_ count: Int) -> String {
-        guard count == 0 else {
-            return String(count)
-        }
-        guard store.statistics != nil else {
+        guard count > 0 else {
             return String(localized: .unknownValue)
         }
-        return "0"
+        return String(count)
     }
 }
 
