@@ -13,9 +13,12 @@ public struct CorrespondentListView: View {
             }
         }
         .overlay(emptyListView())
-        // Pinned rather than left to its default: unpinned it is revealed by the first pull,
-        // so a pull-to-refresh has to travel through it before the refresh starts.
-        .searchable(text: $store.searchText, placement: .navigationBarDrawer(displayMode: .automatic))
+        // Left to its default so the field stays out of the way until pulled down. That costs
+        // something real and known: the first pull of a pull-to-refresh travels through the field
+        // before the refresh engages. These screens were pinned for exactly that reason and
+        // deliberately unpinned again — a row of every screen spent on a control most visits never
+        // use was the worse trade.
+        .searchable(text: $store.searchText)
         .background(Color.m3SurfaceContainerLowest)
         .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(.correspondents)
