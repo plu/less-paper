@@ -64,7 +64,21 @@ public struct DocumentTypeListReducer: Sendable {
             isLoaded: Bool = false,
             server: Server
         ) {
-            self.documentTypes = documentTypes
+            // Seeded from the cache updateCache already filled, so the first paint has rows.
+            // Without it these screens render an empty list and fill in when the fetch lands, which
+            // flashes and — because the search field sits above the list and needs somewhere to
+            // scroll into — leaves that field stranded on screen for the whole visit. An explicitly
+            // passed value still wins, so fixtures are unaffected.
+            if documentTypes.isEmpty {
+                @Shared(.documentTypes(server))
+                var cached
+
+                self.documentTypes = IdentifiedArray(
+                    uniqueElements: cached.map { DocumentTypeRowReducer.State(server: server, documentType: $0) }
+                )
+            } else {
+                self.documentTypes = documentTypes
+            }
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server

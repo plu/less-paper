@@ -64,7 +64,21 @@ public struct CustomFieldListReducer: Sendable {
             isLoaded: Bool = false,
             server: Server
         ) {
-            self.customFields = customFields
+            // Seeded from the cache updateCache already filled, so the first paint has rows.
+            // Without it these screens render an empty list and fill in when the fetch lands, which
+            // flashes and — because the search field sits above the list and needs somewhere to
+            // scroll into — leaves that field stranded on screen for the whole visit. An explicitly
+            // passed value still wins, so fixtures are unaffected.
+            if customFields.isEmpty {
+                @Shared(.customFields(server))
+                var cached
+
+                self.customFields = IdentifiedArray(
+                    uniqueElements: cached.map { CustomFieldRowReducer.State(server: server, customField: $0) }
+                )
+            } else {
+                self.customFields = customFields
+            }
             self.destination = destination
             self.isLoaded = isLoaded
             self.server = server
