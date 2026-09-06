@@ -43,7 +43,7 @@ public struct ServerDetailView: View {
             .listRowBackground(Color.m3SurfaceContainer)
 
             LabeledContent(String(localized: .url)) {
-                Text(verbatim: store.server.url.absoluteString)
+                Text(verbatim: stringValue(store.server.url.credentialFreeDisplayString))
             }
             .listRowBackground(Color.m3SurfaceContainer)
 

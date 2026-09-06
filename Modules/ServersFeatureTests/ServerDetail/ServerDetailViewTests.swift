@@ -24,8 +24,17 @@ import UIKit
 struct ServerDetailViewTests {
 
     // The masking decision is only as good as something that fails when a field prints a raw value,
-    // and this screen will accumulate fields. Two different secrets must be indistinguishable on
-    // screen; if one ever reaches the output, these two images stop matching.
+    // and this screen will accumulate fields. Two servers differing in every secret-bearing input
+    // the app holds must be indistinguishable on screen; if any one of them reaches the output,
+    // these two images stop matching.
+    //
+    // "Every input" is the part that matters, and the part this test used to get wrong. Varying
+    // only the header value is why a URL leak - absoluteString round-trips userinfo, so
+    // https://user:s3cr3t@host printed the password - stayed green through several reviews. The
+    // three inputs varied here are the three the app can hold a credential in: userinfo embedded
+    // in Server.url, a custom header's value, and the keychain token behind the auth mode row.
+    // Only the alias and the host are held constant, because those are what the screen is
+    // supposed to print.
     //
     // Rendered with the same Snapshotting<SwiftUI.View, UIImage>.image strategy every other view
     // test in this module asserts with (see TestSupport's `assertSnapshot`), rather than
@@ -33,15 +42,20 @@ struct ServerDetailViewTests {
     // reusing it means the two images are captured exactly the way a recorded reference would be.
     @Test
     func twoDifferentSecretsRenderIdentically() async throws {
-        func image(headerValue: String) async throws -> Data {
+        func image(url: String, headerValue: String, token: String) async throws -> Data {
             let server = Server.testValue(
-                headers: [HTTPHeader.testValue(name: "X-Api-Key", value: headerValue)]
+                headers: [HTTPHeader.testValue(name: "X-Api-Key", value: headerValue)],
+                url: .testValue(string: url)
             )
-            let view = ServerDetailView(
-                store: Store(initialState: ServerDetailReducer.State(server: server)) {
-                    ServerDetailReducer()
-                }
-            )
+            let view = withDependencies {
+                $0.authenticationProvider.getToken = { _ in token }
+            } operation: {
+                ServerDetailView(
+                    store: Store(initialState: ServerDetailReducer.State(server: server)) {
+                        ServerDetailReducer()
+                    }
+                )
+            }
 
             let uiImage = await withCheckedContinuation { continuation in
                 Snapshotting<AnyView, UIImage>.image(layout: .fixed(width: 390, height: 3600))
@@ -52,8 +66,18 @@ struct ServerDetailViewTests {
             return try #require(uiImage.pngData())
         }
 
-        let first = try await image(headerValue: "SECRET-ONE")
-        let second = try await image(headerValue: "SECRET-TWO")
+        // One URL carries credentials and the other carries none, so the pair also proves that
+        // whether userinfo is present is itself invisible - not only that its value is.
+        let first = try await image(
+            url: "https://operator:s3cr3t@paperless.example.com:8000/",
+            headerValue: "SECRET-ONE",
+            token: "TOKEN-ONE"
+        )
+        let second = try await image(
+            url: "https://paperless.example.com:8000/",
+            headerValue: "A-MUCH-LONGER-SECRET-TWO",
+            token: "TOKEN-TWO"
+        )
 
         #expect(first == second)
     }
