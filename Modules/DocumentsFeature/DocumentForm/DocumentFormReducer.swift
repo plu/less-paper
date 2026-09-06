@@ -130,6 +130,20 @@ public struct DocumentFormReducer: Sendable {
 
         var canCreateCustomField: Bool { permissions.can(.addCustomField) }
 
+        // A picker is an input, not a rendering of what a document already carries. Without
+        // view_<entity> its endpoint answers 403, so it offers an empty list the user cannot fill
+        // - a control that looks interactive and does nothing. The document's existing correspondent
+        // still shows wherever the payload carries it; this hides only the means of changing it.
+        var canViewCorrespondent: Bool { permissions.can(.viewCorrespondent) }
+
+        var canViewCustomField: Bool { permissions.can(.viewCustomField) }
+
+        var canViewDocumentType: Bool { permissions.can(.viewDocumentType) }
+
+        var canViewStoragePath: Bool { permissions.can(.viewStoragePath) }
+
+        var canViewTag: Bool { permissions.can(.viewTag) }
+
         var canViewNotes: Bool { permissions.can(.viewNote) }
 
         init(

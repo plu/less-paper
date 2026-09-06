@@ -30,6 +30,32 @@ struct DocumentFormViewTests {
         )
     }
 
+    // The pickers sit in the rendered body, so unlike toolbar chrome this image genuinely
+    // discriminates. Seeded explicitly: a nil cache fails open and would render every field,
+    // making a "gated" reference identical to the ungated one.
+    @Test
+    func testSnapshot_pickersHidden() async throws {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
+
+        assertSnapshot(
+            of: DocumentFormView(
+                store: Store(
+                    initialState: DocumentFormReducer.State.testValue(server: server),
+                    reducer: {
+                        DocumentFormReducer()
+                    }
+                )
+            ),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "pickersHidden"
+        )
+    }
+
     @Test
     func testSnapshot_content() async throws {
         assertSnapshot(

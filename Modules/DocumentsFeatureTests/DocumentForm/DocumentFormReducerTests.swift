@@ -531,6 +531,56 @@ struct DocumentFormReducerTests {
         #expect(!state.canCreateCustomField)
     }
 
+    // A picker is an input, not a rendering of payload data: without view_<entity> its endpoint
+    // answers 403, so it would offer an empty list the user cannot fill.
+    @Test
+    func pickersFollowEachEntityViewPermission() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .viewTag] }
+
+        let state = DocumentFormReducer.State.testValue(server: server)
+
+        #expect(state.canViewTag)
+        // view_tag must not open any of the other four.
+        #expect(!state.canViewCorrespondent)
+        #expect(!state.canViewDocumentType)
+        #expect(!state.canViewStoragePath)
+        #expect(!state.canViewCustomField)
+    }
+
+    // The add permission is not the view one: a user who may create a correspondent but not list
+    // them still gets no picker, and one who may list them gets the picker without the button.
+    @Test
+    func aPickerFollowsViewRatherThanAdd() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .viewCorrespondent] }
+
+        let state = DocumentFormReducer.State.testValue(server: server)
+
+        #expect(state.canViewCorrespondent)
+        #expect(!state.canCreateCorrespondent)
+    }
+
+    @Test
+    func pickersAreShownWhenNothingHasBeenRead() {
+        // Fail open: an unread cache leaves the form exactly as it looks today.
+        let state = DocumentFormReducer.State.testValue(server: .testValue())
+
+        #expect(state.canViewCorrespondent)
+        #expect(state.canViewDocumentType)
+        #expect(state.canViewStoragePath)
+        #expect(state.canViewTag)
+        #expect(state.canViewCustomField)
+    }
+
     @Test
     func theOtherFourCreateButtonsOpenOnTheirOwnAddPermission() {
         let server = Server.testValue()
