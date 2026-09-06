@@ -24,6 +24,16 @@ public struct ServerListView: View {
         ) { store in
             DiagnosticsListView(store: store)
         }
+        .navigationDestination(
+            item: $store.scope(
+                state: \.destination?.serverDetail,
+                action: \.destination.serverDetail
+            )
+        ) { store in
+            // Placeholder: ServerDetailView ships in the next task, presented through this same
+            // destination.
+            Text(verbatim: store.server.alias)
+        }
         .navigationTitle(.servers)
         .scrollContentBackground(.hidden)
         .sheet(

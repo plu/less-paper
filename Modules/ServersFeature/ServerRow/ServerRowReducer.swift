@@ -15,10 +15,12 @@ public struct ServerRowReducer: Sendable {
         public enum Delegate {
             case deleteServer
             case editServer
+            case showDetails
         }
 
         public enum View {
             case deleteButtonTapped
+            case detailsButtonTapped
             case editButtonTapped
             case serverTapped
         }
@@ -38,6 +40,8 @@ public struct ServerRowReducer: Sendable {
             switch action {
             case let .view(viewAction):
                 switch viewAction {
+                case .detailsButtonTapped:
+                    return .send(.delegate(.showDetails))
                 case .editButtonTapped:
                     return .send(.delegate(.editServer))
                 case .deleteButtonTapped:

@@ -341,6 +341,23 @@
         }
       }
     },
+    "serverDetails": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Serverdetails"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server details"
+          }
+        }
+      }
+    },
     "servers": {
       "extractionState": "manual",
       "localizations": {
