@@ -1053,17 +1053,23 @@ and add the export next to the other two:
 export TUIST_WIDGET_EXTENSION_PROVISIONING_PROFILE=com.aptumtek.app.Paperless.WidgetExtension
 ```
 
-- [ ] **Step 5: Pass the secret to the build job**
+- [ ] **Step 5 (human): Add the secret to `fnox`, not to a workflow**
 
-Find where `SHARE_EXTENSION_PROVISIONING_PROFILE` is passed to the step that runs `ci:build`:
+`SHARE_EXTENSION_PROVISIONING_PROFILE` is not a GitHub Actions secret in this repo: it lives,
+encrypted, in `fnox.toml`'s `[secrets]` table, and `.github/workflows/ci.yml:157` runs the build job
+as `fnox exec -P ci -- mise ci:build`, which decrypts the whole table into the environment before
+`ci:build` ever sees it. The only `secrets.*` reference in `.github/workflows` is `GITHUB_TOKEN` — a
+`grep -rn "SHARE_EXTENSION_PROVISIONING_PROFILE" .github/` returns nothing, and adding a
+`${{ secrets.… }}` line would not do anything, since nothing reads it.
 
-Run: `grep -rn "SHARE_EXTENSION_PROVISIONING_PROFILE" .github/`
+Add the new secret the same way:
 
-Add a sibling line in the same `env:` block:
-
-```yaml
-          WIDGET_EXTENSION_PROVISIONING_PROFILE: ${{ secrets.WIDGET_EXTENSION_PROVISIONING_PROFILE }}
+```bash
+fnox set WIDGET_EXTENSION_PROVISIONING_PROFILE
 ```
+
+No workflow edit is needed — `fnox exec -P ci -- mise ci:build` passes it through generically, the
+same as it already does for `SHARE_EXTENSION_PROVISIONING_PROFILE`.
 
 - [ ] **Step 6: Verify the archive signs**
 

@@ -73,13 +73,12 @@ creates, not speculative generality.
 ```
 WidgetExtension (new, .appExtension)
   ScanControl            ControlWidget — the declaration iOS reads
-  ScanControlIntent      ControlConfigurationIntent — holds the chosen server
-  ScanControlURL         plain function: Server? -> URL?  (the testable part)
+  ScanControlConfiguration  ControlConfigurationIntent — holds the chosen server
   ServerEntity + Query   AppEntity over @Shared(.servers)
         |
         | depends on
         v
-ApiInterface (existing)   Server, SharedReaderKey.servers, DeepLink
+ApiInterface (existing)   Server, SharedReaderKey.servers, DeepLink.scanURL(server:)
         ^
         | route added
         |
@@ -188,7 +187,8 @@ and the first also asserts `selectedTab == .inbox`. Asserting the tab matters mo
 `documentList` and `inbox` are the same reducer type, so a route that targeted the wrong one would
 still compile, still present a scanner, and still pass a test that only checked "a scanner appeared".
 
-**`scanURL(for:)`** gets tests for both branches — a server, and `nil`.
+**`DeepLink.scanURL(server:)`** gets tests for both branches — a server, and `nil` — in
+`ApiInterfaceTests`.
 
 **What is not covered, plainly.** `ControlWidget` bodies and `AppIntent.perform()` have no unit-test
 story here: there is no snapshot support for controls, and the intent's real effect is "iOS opened
@@ -226,3 +226,53 @@ tapping it.
 `servers.json`, but it does so while the app may be writing. `FileStorageKey` is the same mechanism
 the share extension already relies on for the same file, so this adds a reader to an arrangement that
 already has one.
+
+## Implementation notes
+
+This design's reasoning held up — the control still opens a deep link, the server is still pinned per
+control, and the inbox is still where the scan lands. Four things changed between this doc and what
+shipped.
+
+**`scanURL` lives in `ApiInterface`, not `WidgetExtension`.** The design put it in the extension
+"extracted so it can be tested". It cannot be: a `.appExtension` product cannot be linked into a
+unit-test bundle, and every test target in this project is a `.unitTests` bundle over a framework. It
+uses only `Server` and `DeepLink`, both already in `ApiInterface`, so it moved one box down the
+dependency arrow, as `DeepLink.scanURL(server:)`, and `ApiInterfaceTests` covers it. The design's
+intent — that the testable part stays testable — is preserved.
+
+**There is no custom action intent, and `ControlConfigurationIntent` could never have been one.** The
+design said `ScanControlIntent`'s `perform()` would return `.result(opensIntent: OpenURLIntent(url))`.
+Two separate problems. First, `ControlConfigurationIntent` declares
+`associatedtype NeverResult where NeverResult == Never` and supplies its own
+`perform() async throws -> Never` — a configuration intent only carries the user's choice; it cannot
+act. Second, even in a plain `AppIntent`, returning `.result()` from one branch and
+`.result(opensIntent:)` from the other does not compile at this project's iOS 18.0 deployment target:
+the only always-available `result(opensIntent:)` is an `@_disfavoredOverload` returning
+`IntentResultContainer<Never, OpensAppIntent, Never, Never>`, while plain `.result()` returns
+`IntentResultContainer<Never, Never, Never, Never>`; the overload that reconciles them requires
+iOS 18.2.
+
+What shipped instead is simpler than the design imagined: `ScanControlConfiguration` carries the
+pinned server, and the button's action is `OpenURLIntent` directly — `OpenURLIntent: SystemIntent:
+AppIntent`, so it satisfies `ControlWidgetButton`'s `Action: AppIntent` requirement, and iOS performs
+the open. No `perform()` runs in the extension at all, which also removes the design's named risk of a
+control that appears but does nothing: there is no extension code left in that path to fail.
+
+The no-server case became `DeepLink.appLaunchURL` — a non-optional, scheme-only URL that
+`DeepLink(url:)` deliberately cannot parse, so `AppReducer` ignores it and the user lands on the server
+list. Both halves of that contract are unit-tested.
+
+**The design said nothing about code signing, and a second app extension needs it.** A new
+`.appExtension` needs its own App ID, provisioning profile and CI secret, or the release archive stops
+exporting. `Module+Targets.swift` now reads `Environment.widgetExtensionProvisioningProfile`, and
+`mise/tasks/ci/build` installs the profile and names it in the export options. Note that this repo
+carries signing secrets in `fnox.toml`'s age-encrypted `[secrets]` table, injected by
+`fnox exec -P ci -- mise ci:build` — not as GitHub Actions secrets — so the remaining step is
+`fnox set WIDGET_EXTENSION_PROVISIONING_PROFILE`, not a workflow edit.
+
+**String catalog symbols do not work in App Intents declarations.** The `ExtractAppIntentsMetadata`
+build step statically parses `static var title`, `@Parameter(title:)` and
+`TypeDisplayRepresentation(name:)`, and rejects a catalog-generated static member with
+"'LocalizedStringResource' must be initialized with a call to its initializer or a string literal".
+Those declarations spell `LocalizedStringResource("scanControlTitle")` in full. Everywhere else in the
+extension the generated symbols work normally.
