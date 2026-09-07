@@ -979,6 +979,14 @@ A second app extension does not archive without its own App ID, provisioning pro
 options entry. The spec does not mention this; without it, `mise run ci:build` fails at the export
 step with "no profile for com.aptumtek.app.Paperless.WidgetExtension".
 
+**Merge ordering — do not merge before this is done.** The `upload` job (`.github/workflows/ci.yml:131`)
+that runs `mise ci:build` (line 151) is gated on `github.ref == 'refs/heads/main'` or the pull request
+carrying a `TestFlight` label. A normal PR for this branch never exercises `ci:build`, so the branch
+can go green and merge with no profile set, and only then does `main` fail on the next push with
+`WIDGET_EXTENSION_PROVISIONING_PROFILE: unbound variable` — which also blocks TestFlight uploads
+until it's fixed. The safe order is: create the App ID (Step 1) → generate and download the profile
+(Step 1) → `fnox set WIDGET_EXTENSION_PROVISIONING_PROFILE` (Step 2) → *then* merge.
+
 **Steps 1 and 2 can only be done by a human** — they need the Apple Developer portal and the
 repository's `fnox` secrets. Do them first, or the rest cannot be verified.
 
@@ -996,7 +1004,10 @@ repository's `fnox` secrets. Do them first, or the rest cannot be verified.
 
 In the Apple Developer portal:
 1. Identifiers → new App ID `com.aptumtek.app.Paperless.WidgetExtension`, with the App Groups
-   capability enabled and assigned to `group.com.plunien.app.Paperless`.
+   capability **enabled and assigned to `group.com.plunien.app.Paperless`**. This is not optional:
+   an App ID without it still lets the archive sign and ship, but the extension then silently reads
+   an empty container at runtime — the server picker shows no servers at all, with no error, and the
+   symptom points at the entity query rather than at the missing entitlement.
 2. Profiles → new App Store distribution profile for that App ID, named exactly
    `com.aptumtek.app.Paperless.WidgetExtension`.
 3. Download it.
@@ -1127,7 +1138,21 @@ Expected: the same, with the visible server switch.
 - Place a control with no servers configured at all. Expected: the app opens on the server list, with
   no error.
 
-- [ ] **Step 6: Record the deviations in the spec**
+- [ ] **Step 6: Check three more manual cases**
+
+- Pin server A, delete server A while server B stays selected, then tap the control.
+  `ScanControlConfiguration.init()` seeds its parameter from `@Shared(.selectedServer)`, and
+  AppIntents runs `init()` before applying persisted parameter values — so a control pinned to a
+  now-deleted server may silently repoint at whatever is currently selected instead of falling back
+  to opening the app plainly. This is the one case whose failure is "scans on the wrong server"
+  rather than "does nothing", so it is worth checking by hand.
+- Look at the tile with only one server configured. The button is labelled with the server's alias,
+  so with a single server it never reads "Scan" and the icon carries the whole meaning. That follows
+  the design, but the design's reasoning may not survive seeing it.
+- If the server picker comes up empty, check the provisioning profile's App Groups capability first
+  (Task 5, Step 1) — the symptom misdirects.
+
+- [ ] **Step 7: Record the deviations in the spec**
 
 Append a short "Implementation notes" section to
 `docs/superpowers/specs/2026-09-04-control-center-scan-design.md` recording the three things this
@@ -1135,7 +1160,7 @@ plan changed: `scanURL` living in `ApiInterface`, the split into `ScanControlCon
 `ScanIntent`, and the provisioning work the spec omitted. Keep it to a paragraph each — the spec's
 reasoning still stands, only these mechanics changed.
 
-- [ ] **Step 7: Commit and open the pull request**
+- [ ] **Step 8: Commit and open the pull request**
 
 ```bash
 git add docs/superpowers/specs/2026-09-04-control-center-scan-design.md

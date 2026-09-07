@@ -79,13 +79,16 @@ public extension DeepLink {
         url(scheme: Self.scheme, server: server, route: route)
     }
 
+    // Not every route has a web equivalent: `.scan` is an app-only action, so rendering it here
+    // produces a URL no server serves.
     static func webURL(server: Server, route: Route) -> URL? {
         url(scheme: server.url.scheme ?? "https", server: server, route: route)
     }
 
     // Nil when there is no server to scan to, which is not an error: the control opens the app
-    // plainly and the user lands on the server list. A control placed before any server exists is
-    // the ordinary first-launch order of events, not a misconfiguration.
+    // plainly, landing on the server list if none is configured or the selected server's inbox
+    // otherwise. A control placed before any server exists is the ordinary first-launch order of
+    // events, not a misconfiguration.
     static func scanURL(server: Server?) -> URL? {
         guard let server else {
             return nil
@@ -96,8 +99,9 @@ public extension DeepLink {
 
     // The app's own scheme with no host, which `DeepLink(url:)` requires and this deliberately
     // omits: parsing it fails, so `AppReducer` ignores it and the app just opens plainly, landing
-    // on the server list. A control that can't build a real link (no server selected yet) hands
-    // this to `OpenURLIntent` instead of nothing, since the intent needs a non-optional URL.
+    // on the server list if none is configured or the selected server's inbox otherwise. A control
+    // that can't build a real link (no server selected yet) hands this to `OpenURLIntent` instead
+    // of nothing, since the intent needs a non-optional URL.
     static let appLaunchURL: URL = {
         var components = URLComponents()
         components.scheme = Self.scheme
