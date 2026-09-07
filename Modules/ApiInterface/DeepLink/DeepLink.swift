@@ -93,6 +93,21 @@ public extension DeepLink {
 
         return appURL(server: server, route: .scan)
     }
+
+    // The app's own scheme with no host, which `DeepLink(url:)` requires and this deliberately
+    // omits: parsing it fails, so `AppReducer` ignores it and the app just opens plainly, landing
+    // on the server list. A control that can't build a real link (no server selected yet) hands
+    // this to `OpenURLIntent` instead of nothing, since the intent needs a non-optional URL.
+    static let appLaunchURL: URL = {
+        var components = URLComponents()
+        components.scheme = Self.scheme
+
+        guard let url = components.url else {
+            preconditionFailure("A URL with only a scheme set is always valid")
+        }
+
+        return url
+    }()
 }
 
 private extension DeepLink {

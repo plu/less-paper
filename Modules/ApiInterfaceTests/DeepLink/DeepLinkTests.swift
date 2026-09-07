@@ -205,4 +205,17 @@ struct DeepLinkTests {
 
         #expect(url.absoluteString == "lesspaper://example.com/scan")
     }
+
+    @Test
+    func appLaunchURLUsesTheAppScheme() {
+        #expect(DeepLink.appLaunchURL.scheme == DeepLink.scheme)
+    }
+
+    // This is the property the control actually depends on: without it, a control with no server
+    // selected would hand `OpenURLIntent` a link that resolves to something instead of opening the
+    // app plainly.
+    @Test
+    func appLaunchURLIsNotAParsableLink() {
+        #expect(DeepLink(url: DeepLink.appLaunchURL) == nil)
+    }
 }

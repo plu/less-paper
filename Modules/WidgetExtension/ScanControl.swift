@@ -1,4 +1,6 @@
+import ApiInterface
 import AppIntents
+import SwiftSharing
 import SwiftUI
 import WidgetKit
 
@@ -11,7 +13,14 @@ struct ScanControl: ControlWidget {
     // `LocalizedStringResource` initializer call, not a catalog-generated static member access.
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: Self.kind) {
-            ControlWidgetButton(action: ScanIntent()) {
+            @Shared(.selectedServer)
+            var selectedServer
+
+            // No server selected is not an error: `appLaunchURL` is a link `DeepLink(url:)` cannot
+            // parse, so the app just opens plainly and the user lands on the server list.
+            let scanURL = DeepLink.scanURL(server: selectedServer) ?? DeepLink.appLaunchURL
+
+            ControlWidgetButton(action: OpenURLIntent(scanURL)) {
                 Label(String(localized: LocalizedStringResource("scanControlTitle")), systemImage: "doc.viewfinder")
             }
         }
