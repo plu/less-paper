@@ -1,6 +1,5 @@
 import ApiInterface
 import AppIntents
-import SwiftSharing
 import SwiftUI
 import WidgetKit
 
@@ -12,16 +11,21 @@ struct ScanControl: ControlWidget {
     // statically parses `.displayName` / `.description` and requires a literal or a direct
     // `LocalizedStringResource` initializer call, not a catalog-generated static member access.
     var body: some ControlWidgetConfiguration {
-        StaticControlConfiguration(kind: Self.kind) {
-            @Shared(.selectedServer)
-            var selectedServer
-
+        AppIntentControlConfiguration(
+            kind: Self.kind,
+            intent: ScanControlConfiguration.self
+        ) { configuration in
             // No server selected is not an error: `appLaunchURL` is a link `DeepLink(url:)` cannot
             // parse, so the app just opens plainly and the user lands on the server list.
-            let scanURL = DeepLink.scanURL(server: selectedServer) ?? DeepLink.appLaunchURL
+            let scanURL = DeepLink.scanURL(server: configuration.server?.server) ?? DeepLink.appLaunchURL
 
+            // Labelled with the server the control is pinned to, so two controls for two servers
+            // are told apart in Control Center without opening either.
             ControlWidgetButton(action: OpenURLIntent(scanURL)) {
-                Label(String(localized: LocalizedStringResource("scanControlTitle")), systemImage: "doc.viewfinder")
+                Label(
+                    configuration.server?.alias ?? String(localized: LocalizedStringResource("scanControlTitle")),
+                    systemImage: "doc.viewfinder"
+                )
             }
         }
         .displayName(LocalizedStringResource("scanControlTitle"))

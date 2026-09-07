@@ -7,13 +7,30 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Öffnet Less Paper und startet den Dokumentenscanner."
+            "value" : "Öffnet Less Paper und startet den Dokumentenscanner auf dem gewählten Server."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Opens Less Paper and starts the document scanner."
+            "value" : "Opens Less Paper and starts the document scanner on the chosen server."
+          }
+        }
+      }
+    },
+    "scanControlServerParameter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server"
           }
         }
       }
@@ -31,6 +48,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Scan"
+          }
+        }
+      }
+    },
+    "serverEntityTypeName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server"
           }
         }
       }
