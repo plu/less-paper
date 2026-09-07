@@ -980,7 +980,7 @@ options entry. The spec does not mention this; without it, `mise run ci:build` f
 step with "no profile for com.aptumtek.app.Paperless.WidgetExtension".
 
 **Merge ordering — do not merge before this is done.** The `upload` job (`.github/workflows/ci.yml:131`)
-that runs `mise ci:build` (line 151) is gated on `github.ref == 'refs/heads/main'` or the pull request
+that runs `mise ci:build` (line 157) is gated on `github.ref == 'refs/heads/main'` or the pull request
 carrying a `TestFlight` label. A normal PR for this branch never exercises `ci:build`, so the branch
 can go green and merge with no profile set, and only then does `main` fail on the next push with
 `WIDGET_EXTENSION_PROVISIONING_PROFILE: unbound variable` — which also blocks TestFlight uploads
