@@ -123,4 +123,86 @@ struct DeepLinkTests {
 
         #expect(url.absoluteString == "http://example.com:8200/documents/42/details")
     }
+
+    @Test
+    func parsesTheScanRoute() throws {
+        let link = try #require(DeepLink(url: URL(string: "lesspaper://paperless.example.com/scan")!))
+
+        #expect(link.host == "paperless.example.com")
+        #expect(link.port == nil)
+        #expect(link.prefix == "")
+        #expect(link.route == .scan)
+    }
+
+    // The prefix is what identifies the server, so a scan link to a server under a subpath has to
+    // hand it back intact. Losing it resolves the link to no server at all, and the user gets
+    // "server not found" from a control they configured correctly.
+    @Test
+    func keepsTheServersPathPrefixOnAScanLink() throws {
+        let link = try #require(DeepLink(url: URL(string: "lesspaper://example.com/paperless/scan")!))
+
+        #expect(link.prefix == "/paperless")
+        #expect(link.route == .scan)
+    }
+
+    @Test
+    func toleratesATrailingSlashOnAScanLink() throws {
+        let link = try #require(DeepLink(url: URL(string: "lesspaper://example.com/scan/")!))
+
+        #expect(link.route == .scan)
+    }
+
+    @Test
+    func resolvesAScanLinkAgainstTheServerItNames() throws {
+        let server = Server.testValue(url: URL(string: "https://example.com/paperless")!)
+        let link = try #require(DeepLink(url: URL(string: "lesspaper://example.com/paperless/scan")!))
+
+        #expect(link.resolves(to: server))
+    }
+
+    @Test
+    func appURLBuildsTheScanPath() throws {
+        let server = Server.testValue(url: URL(string: "https://example.com/paperless")!)
+        let url = try #require(DeepLink.appURL(server: server, route: .scan))
+
+        #expect(url.absoluteString == "lesspaper://example.com/paperless/scan")
+    }
+
+    @Test
+    func roundTripsAScanLink() throws {
+        for server in [
+            Server.testValue(url: URL(string: "https://paperless.example.com")!),
+            Server.testValue(url: URL(string: "https://example.com/paperless")!),
+            Server.testValue(url: URL(string: "http://example.com:8200")!),
+        ] {
+            let url = try #require(DeepLink.appURL(server: server, route: .scan))
+            let link = try #require(DeepLink(url: url))
+
+            #expect(link.resolves(to: server))
+            #expect(link.route == .scan)
+        }
+    }
+
+    // A server whose own path ends in "scan" is the case that would break a parser matching the
+    // last segment without looking further: this must stay a document link, not become a scan.
+    @Test
+    func stillReadsADocumentLinkUnderAServerPathEndingInScan() throws {
+        let link = try #require(DeepLink(url: URL(string: "lesspaper://example.com/scan/documents/42/details")!))
+
+        #expect(link.prefix == "/scan")
+        #expect(link.route == .documentDetail(42))
+    }
+
+    @Test
+    func scanURLIsNilWithoutAServer() {
+        #expect(DeepLink.scanURL(server: nil) == nil)
+    }
+
+    @Test
+    func scanURLNamesTheServer() throws {
+        let server = Server.testValue(url: URL(string: "https://example.com")!)
+        let url = try #require(DeepLink.scanURL(server: server))
+
+        #expect(url.absoluteString == "lesspaper://example.com/scan")
+    }
 }

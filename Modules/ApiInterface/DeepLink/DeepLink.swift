@@ -9,6 +9,7 @@ public struct DeepLink: Equatable, Sendable {
 
     public enum Route: Equatable, Sendable {
         case documentDetail(Document.Id)
+        case scan
     }
 
     // What new links are written with. `atlp` is still parsed because the shipping app wrote it and
@@ -81,6 +82,17 @@ public extension DeepLink {
     static func webURL(server: Server, route: Route) -> URL? {
         url(scheme: server.url.scheme ?? "https", server: server, route: route)
     }
+
+    // Nil when there is no server to scan to, which is not an error: the control opens the app
+    // plainly and the user lands on the server list. A control placed before any server exists is
+    // the ordinary first-launch order of events, not a misconfiguration.
+    static func scanURL(server: Server?) -> URL? {
+        guard let server else {
+            return nil
+        }
+
+        return appURL(server: server, route: .scan)
+    }
 }
 
 private extension DeepLink {
@@ -90,6 +102,12 @@ private extension DeepLink {
     static func parse(path: String) -> (prefix: String, route: Route)? {
         var segments = path.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
 
+        if segments.last == "scan" {
+            segments.removeLast()
+
+            return (prefix(from: segments), .scan)
+        }
+
         guard segments.count >= 3,
               segments.removeLast() == "details",
               let id = Int(segments.removeLast()),
@@ -98,9 +116,11 @@ private extension DeepLink {
             return nil
         }
 
-        let prefix = segments.isEmpty ? "" : "/" + segments.joined(separator: "/")
+        return (prefix(from: segments), .documentDetail(Document.Id(rawValue: id)))
+    }
 
-        return (prefix, .documentDetail(Document.Id(rawValue: id)))
+    static func prefix(from segments: [String]) -> String {
+        segments.isEmpty ? "" : "/" + segments.joined(separator: "/")
     }
 
     static func normalized(path: String) -> String {
@@ -121,6 +141,8 @@ private extension DeepLink {
         switch route {
         case let .documentDetail(id):
             components.path = normalized(path: components.path) + "/documents/\(id.rawValue)/details"
+        case .scan:
+            components.path = normalized(path: components.path) + "/scan"
         }
 
         components.scheme = scheme
