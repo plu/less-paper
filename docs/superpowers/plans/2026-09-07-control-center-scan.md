@@ -980,12 +980,12 @@ options entry. The spec does not mention this; without it, `mise run ci:build` f
 step with "no profile for com.aptumtek.app.Paperless.WidgetExtension".
 
 **Steps 1 and 2 can only be done by a human** — they need the Apple Developer portal and the
-repository's GitHub secrets. Do them first, or the rest cannot be verified.
+repository's `fnox` secrets. Do them first, or the rest cannot be verified.
 
 **Files:**
 - Modify: `Tuist/ProjectDescriptionHelpers/Module+Targets.swift`
 - Modify: `mise/tasks/ci/build`
-- Modify: `.github/workflows/*.yml` (wherever `SHARE_EXTENSION_PROVISIONING_PROFILE` is passed)
+- Modify: `fnox.toml` (human, via `fnox set WIDGET_EXTENSION_PROVISIONING_PROFILE` — not a hand edit)
 
 **Interfaces:**
 - Consumes: `Module.widgetExtension` from Task 3.
@@ -1003,14 +1003,15 @@ In the Apple Developer portal:
 
 - [ ] **Step 2 (human): Add the CI secret**
 
-Run locally, then paste the output into a new repository secret named
-`WIDGET_EXTENSION_PROVISIONING_PROFILE`:
+`SHARE_EXTENSION_PROVISIONING_PROFILE` is not a GitHub repository secret — it lives, encrypted, in
+`fnox.toml`'s `[secrets]` table, and `fnox exec -P ci -- mise ci:build` (`.github/workflows/ci.yml:157`)
+decrypts the whole table into the environment before the build step runs. Add the new one the same
+way, piping the base64 straight into `fnox set` rather than pasting it anywhere on GitHub:
 
 ```bash
-base64 -i ~/Downloads/com.aptumtek.app.Paperless.WidgetExtension.mobileprovision | tr -d '\n' | pbcopy
+base64 -i ~/Downloads/com.aptumtek.app.Paperless.WidgetExtension.mobileprovision | tr -d '\n' \
+  | fnox set WIDGET_EXTENSION_PROVISIONING_PROFILE
 ```
-
-Add it the same way `SHARE_EXTENSION_PROVISIONING_PROFILE` is set today.
 
 - [ ] **Step 3: Read the profile name in the target settings**
 
@@ -1053,23 +1054,15 @@ and add the export next to the other two:
 export TUIST_WIDGET_EXTENSION_PROVISIONING_PROFILE=com.aptumtek.app.Paperless.WidgetExtension
 ```
 
-- [ ] **Step 5 (human): Add the secret to `fnox`, not to a workflow**
+- [ ] **Step 5 (human): Confirm no workflow needs the secret named explicitly**
 
-`SHARE_EXTENSION_PROVISIONING_PROFILE` is not a GitHub Actions secret in this repo: it lives,
-encrypted, in `fnox.toml`'s `[secrets]` table, and `.github/workflows/ci.yml:157` runs the build job
-as `fnox exec -P ci -- mise ci:build`, which decrypts the whole table into the environment before
-`ci:build` ever sees it. The only `secrets.*` reference in `.github/workflows` is `GITHUB_TOKEN` — a
-`grep -rn "SHARE_EXTENSION_PROVISIONING_PROFILE" .github/` returns nothing, and adding a
-`${{ secrets.… }}` line would not do anything, since nothing reads it.
-
-Add the new secret the same way:
-
-```bash
-fnox set WIDGET_EXTENSION_PROVISIONING_PROFILE
-```
-
-No workflow edit is needed — `fnox exec -P ci -- mise ci:build` passes it through generically, the
-same as it already does for `SHARE_EXTENSION_PROVISIONING_PROFILE`.
+Step 2 already put `WIDGET_EXTENSION_PROVISIONING_PROFILE` where `SHARE_EXTENSION_PROVISIONING_PROFILE`
+already lives — `fnox.toml`'s `[secrets]` table — and `fnox exec -P ci -- mise ci:build`
+(`.github/workflows/ci.yml:157`) decrypts the whole table into the environment before the build step
+runs, so there is nothing left to wire up here. The only `secrets.*` reference anywhere in
+`.github/workflows` is `GITHUB_TOKEN` — a `grep -rn "SHARE_EXTENSION_PROVISIONING_PROFILE" .github/`
+returns nothing today, and it should still return nothing after this task: no workflow file names
+either provisioning-profile secret, and none needs to.
 
 - [ ] **Step 6: Verify the archive signs**
 
@@ -1092,7 +1085,7 @@ the step done, and verify it on the next CI run instead.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add Tuist/ProjectDescriptionHelpers/Module+Targets.swift mise/tasks/ci/build .github
+git add Tuist/ProjectDescriptionHelpers/Module+Targets.swift mise/tasks/ci/build
 git commit -m "chore: sign and embed the widget extension in the release build"
 ```
 
