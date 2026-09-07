@@ -29,6 +29,11 @@ extension Module {
             releaseSettings.set(Environment.shareExtensionProvisioningProfile, forKey: "PROVISIONING_PROFILE_SPECIFIER")
         }
 
+        if case .widgetExtension = self {
+            debugSettings.set(Environment.widgetExtensionProvisioningProfile, forKey: "PROVISIONING_PROFILE_SPECIFIER")
+            releaseSettings.set(Environment.widgetExtensionProvisioningProfile, forKey: "PROVISIONING_PROFILE_SPECIFIER")
+        }
+
         if case .app = product, self != .app {
             debugSettings["ASSETCATALOG_COMPILER_APPICON_NAME"] = "TestAppIcon"
             releaseSettings["ASSETCATALOG_COMPILER_APPICON_NAME"] = "TestAppIcon"
