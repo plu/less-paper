@@ -105,6 +105,18 @@ public extension Module {
                     runAction: .runAction(executable: .target(.app))
                 )
             ]
+        case .widgetExtension:
+            [
+                .scheme(
+                    name: "WidgetExtension",
+                    buildAction: .buildAction(
+                        targets: [.target(self)],
+                        postActions: [inspectBuildPostAction(target: .target(self))],
+                        runPostActionsOnFailure: true
+                    ),
+                    runAction: .runAction(executable: .target(.app))
+                )
+            ]
         case .apiImplementation,
              .apiInterface,
              .appFeature,

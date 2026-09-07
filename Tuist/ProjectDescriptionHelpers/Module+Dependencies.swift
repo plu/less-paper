@@ -24,6 +24,7 @@ extension Module {
                 .target(.serversFeature),
                 .target(.shareExtension),
                 .target(.snapshotSupport),
+                .target(.widgetExtension),
             ]
         case .appFeature:
             [
@@ -669,6 +670,11 @@ extension Module {
             [
                 .external(.dependencies),
                 .target(.apiImplementation),
+                .target(.apiInterface),
+            ]
+        case .widgetExtension:
+            [
+                .external(.sharing),
                 .target(.apiInterface),
             ]
         }

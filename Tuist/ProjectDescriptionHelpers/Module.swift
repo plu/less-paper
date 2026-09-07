@@ -83,6 +83,7 @@ public enum Module: String, CaseIterable {
     case trashFeature = "TrashFeature"
     case trashFeatureTests = "TrashFeatureTests"
     case uiTestSupport = "UITestSupport"
+    case widgetExtension = "WidgetExtension"
 }
 
 extension Module {
@@ -193,7 +194,8 @@ extension Module {
              .tipsFeatureTests,
              .trashFeatureTests,
              .testSupport,
-             .uiTestSupport:
+             .uiTestSupport,
+             .widgetExtension:
             false
         }
     }
@@ -215,6 +217,13 @@ extension Module {
             .dictionary([
                 "com.apple.security.application-groups": .array(["group.com.plunien.app.Paperless"]),
                 "keychain-access-groups": .array(["$(AppIdentifierPrefix)com.aptumtek.app.Paperless"]),
+            ])
+        // The app group and nothing else. This extension reads servers.json to name a server and
+        // builds a URL; it never makes an authenticated request, so it has no business with the
+        // keychain, and the way to keep that true is not to grant it.
+        case .widgetExtension:
+            .dictionary([
+                "com.apple.security.application-groups": .array(["group.com.plunien.app.Paperless"]),
             ])
         default:
             nil
@@ -300,7 +309,8 @@ extension Module {
              .appUITests,
              .shareAppTests:
             .uiTests
-        case .shareExtension:
+        case .shareExtension,
+             .widgetExtension:
             .appExtension
         }
     }

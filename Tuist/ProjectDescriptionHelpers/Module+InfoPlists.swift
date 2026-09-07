@@ -74,6 +74,19 @@ extension Module {
                     "NSExtensionPrincipalClass": "$(PRODUCT_MODULE_NAME).ShareViewController",
                 ],
             ])
+        case .widgetExtension:
+            .extendingDefault(with: [
+                "CFBundleDisplayName": "Less Paper",
+                "CFBundleShortVersionString": .string(.marketingVersion),
+                "CFBundleLocalizations": [
+                    "en",
+                    "de",
+                ],
+                "CFBundleVersion": .string(.buildNumber),
+                "NSExtension": [
+                    "NSExtensionPointIdentifier": "com.apple.widgetkit-extension",
+                ],
+            ])
         case .shareApp:
             .extendingDefault(with: [
                 "CFBundleDisplayName": .string(rawValue.replacingOccurrences(of: "App", with: "")),
