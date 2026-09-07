@@ -80,6 +80,12 @@ public struct AppReducer {
                 case let .documentDetail(id):
                     state.main?.selectedTab = .documents
                     return .send(.main(.documentList(.openDocument(id))))
+                // The inbox, not the documents tab: a freshly scanned document is unfiled, so it
+                // lands there, and .inbox is already the default tab - a cold launch from the
+                // control presents the scanner without a visible tab switch behind it.
+                case .scan:
+                    state.main?.selectedTab = .inbox
+                    return .send(.main(.inbox(.documentImport(.view(.scanButtonTapped)))))
                 }
             case let .openURL(url):
                 // A URL this app cannot read says nothing the user could act on, so it is dropped

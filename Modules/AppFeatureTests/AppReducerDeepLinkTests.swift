@@ -73,6 +73,66 @@ struct AppReducerDeepLinkTests {
         #expect(store.state.pendingLink == nil)
     }
 
+    // MainReducer holds two DocumentListReducer instances and both own a DocumentImportReducer, so
+    // a route that presented the wrong one would still compile and still show a scanner. Receiving
+    // on \.main.inbox is what tells them apart; the tab assertion is what a reader can see.
+    @Test
+    func openURL_forTheSelectedServer_opensTheScanner() async {
+        let server = Server.testValue(id: "1", url: URL(string: "https://paperless.example.com")!)
+
+        @Shared(.servers)
+        var servers: IdentifiedArrayOf<Server> = [server]
+
+        let store = TestStore(
+            initialState: AppReducer.State(main: MainReducer.State(selectedTab: .settings, server: server)),
+            reducer: { AppReducer() }
+        )
+        store.exhaustivity = .off
+
+        await store.send(.openURL(URL(string: "lesspaper://paperless.example.com/scan")!))
+        await store.receive(\.applyPendingLink)
+        await store.receive(\.main.inbox.documentImport.view)
+
+        #expect(store.state.main?.selectedTab == .inbox)
+        #expect(store.state.pendingLink == nil)
+    }
+
+    // The control pins a server, which need not be the one the app is showing. This is the case the
+    // whole per-control-server design rests on, so it is asserted directly rather than assumed from
+    // the documentDetail equivalent.
+    @Test
+    func openURL_scanningAnotherServer_waitsForTheSwitch() async {
+        let current = Server.testValue(id: "1", url: URL(string: "https://one.example.com")!)
+        let other = Server.testValue(id: "2", url: URL(string: "https://two.example.com")!)
+
+        @Shared(.servers)
+        var servers: IdentifiedArrayOf<Server> = [current, other]
+
+        @Shared(.selectedServer)
+        var selectedServer: Server? = current
+
+        let store = TestStore(
+            initialState: AppReducer.State(main: MainReducer.State(server: current)),
+            reducer: { AppReducer() },
+            withDependencies: {
+                $0.updateCache.execute = { _ in }
+            }
+        )
+        store.exhaustivity = .off
+
+        await store.send(.openURL(URL(string: "lesspaper://two.example.com/scan")!))
+
+        #expect(store.state.pendingLink?.server.id == "2")
+        #expect(selectedServer?.id == "2")
+
+        await store.send(.selectedServerChanged(other))
+        await store.receive(\.applyPendingLink)
+        await store.receive(\.main.inbox.documentImport.view)
+
+        #expect(store.state.main?.selectedTab == .inbox)
+        #expect(store.state.pendingLink == nil)
+    }
+
     // A URL can arrive before servers have loaded at all. Held, not dropped.
     @Test
     func openURL_beforeAServerIsSelected_waits() async {
