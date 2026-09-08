@@ -62,26 +62,11 @@ public struct TitleSuggestionContext: Equatable, Sendable {
     public let title: String
 
     // The user prompt. Instructions live on the session, not here.
+    // EXPERIMENT (2026-09-08): the document text alone, with none of the metadata this type still
+    // carries. Revert this commit to put the metadata back. The other properties are deliberately
+    // left populated so the diff is one method and the caller is untouched.
     public var prompt: String {
-        var lines: [String] = []
-
-        appendIfPresent(&lines, "Current title", title)
-        appendIfPresent(&lines, "Correspondent", correspondent)
-        appendIfPresent(&lines, "Document type", documentType)
-        appendIfPresent(&lines, "Storage path", storagePath)
-        appendIfPresent(&lines, "Tags", tags.isEmpty ? nil : tags.joined(separator: ", "))
-        appendIfPresent(&lines, "Archive serial number", archiveSerialNumber)
-        appendIfPresent(&lines, "Created", createdDate)
-
-        for field in customFields {
-            appendIfPresent(&lines, field.label, field.value)
-        }
-
-        lines.append("")
-        lines.append("Document text:")
-        lines.append(Self.truncated(content))
-
-        return lines.joined(separator: "\n")
+        Self.truncated(content)
     }
 
     static func truncated(_ content: String) -> String {
@@ -98,12 +83,5 @@ public struct TitleSuggestionContext: Equatable, Sendable {
         }
 
         return String(clipped[..<boundary]) + "…"
-    }
-
-    private func appendIfPresent(_ lines: inout [String], _ label: String, _ value: String?) {
-        guard let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return
-        }
-        lines.append("\(label): \(value)")
     }
 }

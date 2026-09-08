@@ -105,14 +105,13 @@ private enum TitleSuggestionSession {
         """
         You name scanned documents in a personal document archive.
 
-        Suggest exactly three distinct titles for the document described below.
+        Suggest exactly three distinct titles for the document text below.
 
         Rules:
         - Write each title in the same language as the document text. Do not translate.
         - At most 60 characters.
         - No file extensions, no quotation marks, no trailing punctuation.
         - Prefer concrete identifiers: sender, subject, reference or invoice number, period.
-        - Do not repeat the current title verbatim.
         """
     }
 

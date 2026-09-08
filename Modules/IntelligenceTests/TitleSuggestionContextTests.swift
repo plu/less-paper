@@ -40,7 +40,11 @@ struct TitleSuggestionContextTests {
     }
 
     @Test
-    func test_prompt_populatedFields_allAppear() {
+    func test_prompt_isTheDocumentTextAlone() {
+        // EXPERIMENT (2026-09-08): the prompt carries the document text and nothing else. The
+        // metadata is still populated on the type — only `prompt` ignores it — so these assertions
+        // are what pins that, and they go back to the previous three tests when the experiment is
+        // reverted.
         let context = TitleSuggestionContext(
             archiveSerialNumber: "412",
             content: "Electricity for August.",
@@ -53,42 +57,6 @@ struct TitleSuggestionContextTests {
             title: "scan_20240817_113052"
         )
 
-        let prompt = context.prompt
-
-        #expect(prompt.contains("scan_20240817_113052"))
-        #expect(prompt.contains("Stadtwerke München"))
-        #expect(prompt.contains("Invoice"))
-        #expect(prompt.contains("Utilities, Paid"))
-        #expect(prompt.contains("412"))
-        #expect(prompt.contains("17 August 2024"))
-        #expect(prompt.contains("Amount: 84.20 EUR"))
-        #expect(prompt.contains("Electricity for August."))
-    }
-
-    @Test
-    func test_prompt_emptyFields_areOmittedRatherThanNamed() {
-        // Spending tokens to tell the model what the document is *not* is worse than saying nothing.
-        let context = TitleSuggestionContext(content: "Body text.")
-
-        let prompt = context.prompt
-
-        #expect(!prompt.contains("Correspondent"))
-        #expect(!prompt.contains("Document type"))
-        #expect(!prompt.contains("Storage path"))
-        #expect(!prompt.contains("Tags"))
-        #expect(!prompt.contains("Archive serial number"))
-        #expect(!prompt.contains("Current title"))
-    }
-
-    @Test
-    func test_prompt_blankStringsCountAsEmpty() {
-        let context = TitleSuggestionContext(
-            content: "Body text.",
-            correspondent: "   ",
-            title: ""
-        )
-
-        #expect(!context.prompt.contains("Correspondent"))
-        #expect(!context.prompt.contains("Current title"))
+        #expect(context.prompt == "Electricity for August.")
     }
 }
