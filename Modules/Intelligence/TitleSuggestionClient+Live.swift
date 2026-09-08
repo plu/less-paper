@@ -31,8 +31,37 @@ private enum TitleSuggestionSession {
     // already holds, which is what a scan of their own paper is.
     static let model = SystemLanguageModel(guardrails: .permissiveContentTransformations)
 
+    // Logged rather than answered silently. The button is hidden whenever this is false, so without
+    // a line here a user who expects it — on eligible hardware, with the feature shipped — has no
+    // way to find out that Apple Intelligence is switched off or still downloading, and neither has
+    // anyone reading the diagnostics they send. The reason names a device setting, never anything
+    // about a document.
     static var isAvailable: Bool {
-        model.availability == .available
+        let availability = model.availability
+
+        guard availability == .available else {
+            @Dependency(\.log)
+            var log
+
+            log.info("Title suggestions unavailable: \(label(for: availability))", category: .app)
+            return false
+        }
+
+        return true
+    }
+
+    static func label(for availability: SystemLanguageModel.Availability) -> String {
+        switch availability {
+        case .available:
+            "available"
+        case let .unavailable(reason):
+            switch reason {
+            case .appleIntelligenceNotEnabled: "appleIntelligenceNotEnabled"
+            case .deviceNotEligible: "deviceNotEligible"
+            case .modelNotReady: "modelNotReady"
+            @unknown default: "unknown"
+            }
+        }
     }
 
     static func stream(_ context: TitleSuggestionContext) -> AsyncThrowingStream<[String], any Error> {
