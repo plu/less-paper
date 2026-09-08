@@ -549,7 +549,7 @@ tuist generate --no-open
 tuist build Intelligence -d "$TEST_SIMULATOR" -o "$TEST_SIMULATOR_OS"
 ```
 
-Expected: build succeeds. If `LogCategory` has no `.app` case, use whichever case the enum in `Modules/Logging/LogCategory.swift` defines for general app errors — read the file rather than guessing.
+Expected: build succeeds. (`LogCategory.app` exists — verified.)
 
 - [ ] **Step 3: Verify FoundationModels is weak-linked**
 
