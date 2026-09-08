@@ -36,6 +36,17 @@ looks interactive and does nothing is worse than no control. The same reasoning 
 capability the device does not have. It also means no string is needed to explain any of the three
 `UnavailableReason` cases, and no screen has to teach the user what Apple Intelligence is.
 
+**The button also waits for the document text.** `canSuggestTitle` is the model's availability *and*
+`content != nil`, so the button is absent until `runGetDocument` lands and stays absent when the load
+failed. Without the second half, tapping during the load would build a context whose document text is
+empty and let the model title the document from its own `scan_20240817` filename — the exact case the
+feature exists to fix, failing silently and looking like a bad model rather than a missing input.
+
+**A stream that finishes having yielded nothing is a failure.** It sets the same
+`titleSuggestionFailed` message rather than leaving `isGenerating` false with an empty list, which
+renders as a spinner that never stops and puts Retry — which lives in the error branch — out of
+reach.
+
 **Guardrails are permissive, deliberately.** The session is built with
 `SystemLanguageModel(guardrails: .permissiveContentTransformations)` rather than the default. A
 personal archive is full of exactly what default guardrails refuse: medical letters, legal
@@ -220,6 +231,13 @@ destination; a `titleSuggestions` case on `Destination`; and a delegate handler 
 
 `contextWindowExceeded` should not survive truncation, but if it does it must not masquerade as a
 network failure — that is an afternoon spent looking at the wrong layer.
+
+**Only the case name is logged, never the payload.** `.failed` carries a `localizedDescription` from
+an error of unknown provenance, and the log is a file the app invites the user to email to a
+stranger; the repo's standing rule is that bodies are never written. `TitleSuggestionError.logLabel`
+is an exhaustive switch returning the bare case name, so a case added later cannot silently start
+printing a payload. Nothing is lost: the reducer collapses `.failed` and `.unavailable` into one
+message, so the payload has no consumer.
 
 Logging happens in `Intelligence`'s live client, where the error originates, not in
 `DocumentsFeature`. `DocumentsFeature` does not depend on `Logging` today and should not start:
