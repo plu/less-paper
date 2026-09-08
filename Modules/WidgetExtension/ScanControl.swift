@@ -1,5 +1,3 @@
-import ApiInterface
-import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -16,14 +14,9 @@ struct ScanControl: ControlWidget {
             kind: Self.kind,
             intent: ScanControlConfiguration.self
         ) { configuration in
-            // No server selected is not an error: `appLaunchURL` is a link `DeepLink(url:)` cannot
-            // parse, so the app just opens plainly, landing on the server list if none is configured
-            // or the selected server's inbox otherwise.
-            let scanURL = DeepLink.scanURL(server: configuration.server?.server) ?? DeepLink.appLaunchURL
-
             // Labelled with the server the control is pinned to, so two controls for two servers
             // are told apart in Control Center without opening either.
-            ControlWidgetButton(action: OpenURLIntent(scanURL)) {
+            ControlWidgetButton(action: ScanIntent(server: configuration.server)) {
                 Label(
                     configuration.server?.alias ?? String(localized: .scanControlTitle),
                     systemImage: "doc.viewfinder"
