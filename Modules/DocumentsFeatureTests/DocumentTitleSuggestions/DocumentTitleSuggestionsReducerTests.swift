@@ -41,6 +41,28 @@ struct DocumentTitleSuggestionsReducerTests {
     }
 
     @Test
+    func test_view_onAppear_streamFinishesWithNoSuggestions_isTreatedAsFailure() async throws {
+        // Otherwise the view falls into its ProgressView branch on an empty `suggestions`, claiming
+        // work is still happening after the stream has already stopped, with Retry unreachable
+        // because it lives in the error branch.
+        let store = TestStore(initialState: DocumentTitleSuggestionsReducer.State.testValue()) {
+            DocumentTitleSuggestionsReducer()
+        } withDependencies: {
+            $0.titleSuggestion.suggest = { _ in
+                AsyncThrowingStream { $0.finish() }
+            }
+        }
+
+        await store.send(.view(.onAppear)) {
+            $0.isGenerating = true
+        }
+        await store.receive(\.generationFinished) {
+            $0.error = String(localized: .titleSuggestionFailed)
+            $0.isGenerating = false
+        }
+    }
+
+    @Test
     func test_view_suggestionTapped_delegatesTheTitle() async throws {
         let store = TestStore(
             initialState: DocumentTitleSuggestionsReducer.State.testValue(suggestions: ["Chosen"])

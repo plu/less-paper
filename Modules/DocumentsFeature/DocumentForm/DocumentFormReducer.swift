@@ -90,6 +90,10 @@ public struct DocumentFormReducer: Sendable {
             input != DocumentFormInput(document: document, server: server) || isContentModified
         }
 
+        // Set on appearance rather than computed: reading model availability is a framework call,
+        // and a computed property would make it on every render.
+        var isTitleSuggestionModelAvailable = false
+
         var isUpdating = false
 
         // Resolved titles for every documentlink value on the document, so the capsules can name
@@ -133,9 +137,9 @@ public struct DocumentFormReducer: Sendable {
 
         var canCreateCustomField: Bool { permissions.can(.addCustomField) }
 
-        // Set on appearance rather than computed: reading model availability is a framework call,
-        // and a computed property would make it on every render.
-        var canSuggestTitle = false
+        // The model being available says nothing about whether there is content to suggest from:
+        // `content` is nil until `runGetDocument` lands, and stays nil forever after a failed load.
+        var canSuggestTitle: Bool { isTitleSuggestionModelAvailable && content != nil }
 
         // A picker is an input, not a rendering of what a document already carries. Without
         // view_<entity> its endpoint answers 403, so it offers an empty list the user cannot fill
@@ -309,7 +313,7 @@ public struct DocumentFormReducer: Sendable {
                 case .getNextArchiveSerialNumberButtonTapped:
                     return .runGetNextArchiveSerialNumber(server: state.server)
                 case .onAppear:
-                    state.canSuggestTitle = titleSuggestion.isAvailable()
+                    state.isTitleSuggestionModelAvailable = titleSuggestion.isAvailable()
                     let resolveLinked = Effect.runResolveLinkedCustomFieldDocuments(state)
                     // A failed load is not retried silently on the next appearance; that is what
                     // the retry button is for. The title lookup still runs: it is keyed off the

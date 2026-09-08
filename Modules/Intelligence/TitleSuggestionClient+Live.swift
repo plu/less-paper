@@ -63,7 +63,7 @@ private enum TitleSuggestionSession {
                     continuation.finish()
                 } catch {
                     let mapped = map(error)
-                    log.error("Title suggestion failed: \(String(describing: mapped))", category: .app)
+                    log.error("Title suggestion failed: \(mapped.logLabel)", category: .app)
                     continuation.finish(throwing: mapped)
                 }
             }

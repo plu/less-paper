@@ -663,6 +663,14 @@ struct DocumentFormReducerTests {
     }
 
     @Test
+    func test_canSuggestTitle_modelAvailableButNoContent_isFalse() {
+        var state = DocumentFormReducer.State.testValue(content: nil)
+        state.isTitleSuggestionModelAvailable = true
+
+        #expect(state.canSuggestTitle == false)
+    }
+
+    @Test
     func test_view_suggestTitleButtonTapped_carriesTheStagedFieldsIntoTheContext() async throws {
         // The staged input, not the saved document: a user who has just picked a correspondent
         // should get suggestions that know about it.

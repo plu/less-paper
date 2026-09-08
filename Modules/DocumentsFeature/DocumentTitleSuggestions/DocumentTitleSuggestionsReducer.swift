@@ -50,7 +50,15 @@ public struct DocumentTitleSuggestionsReducer: Sendable {
             switch action {
             case let .generationFinished(error):
                 state.isGenerating = false
-                state.error = error.map(message(for:))
+                if let error {
+                    state.error = message(for: error)
+                } else if state.suggestions.isEmpty {
+                    // Finishing with nothing yielded still has to land in the error branch: the
+                    // view's ProgressView is gated on suggestions being empty, so leaving `error`
+                    // nil here would show a spinner for work that has already stopped, with Retry
+                    // unreachable because it lives in the error branch.
+                    state.error = String(localized: .titleSuggestionFailed)
+                }
                 return .none
             case let .suggestionsUpdated(suggestions):
                 state.suggestions = suggestions

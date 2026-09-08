@@ -194,7 +194,7 @@ struct DocumentFormViewTests {
     @Test
     func testSnapshot_canSuggestTitle() async throws {
         var state = DocumentFormReducer.State.testValue(content: "Electricity for August.")
-        state.canSuggestTitle = true
+        state.isTitleSuggestionModelAvailable = true
 
         // Rendering fires onAppear on this real Store, which would otherwise overwrite the
         // state above with the suite's default `false`.
