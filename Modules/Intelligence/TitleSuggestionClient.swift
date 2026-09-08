@@ -32,9 +32,23 @@ extension TitleSuggestionClient: TestDependencyKey {
         }
     )
 
-    // Unimplemented, unlike `LogClient`'s no-op: a test that reaches the model by accident should
-    // say so rather than quietly return nothing.
-    public static let testValue = Self()
+    // `suggest` stays unimplemented, unlike `LogClient`'s no-op: a test that reaches the model by
+    // accident should say so rather than quietly return nothing. `isAvailable` is different — a
+    // synchronous, side-effect-free capability read — so it defaults to `false` here rather than
+    // joining `suggest` in failing loudly: that is both the safe default and the one that matches
+    // `canSuggestTitle`'s own default, so a test that never mentions this dependency renders exactly
+    // as if the feature did not exist.
+    //
+    // Built off `Self()` and mutated rather than passed to the memberwise initialiser: `@DependencyClient`
+    // generates that initialiser to take either every endpoint or none, so setting `isAvailable`
+    // alone has to happen after construction, on the property `@DependencyEndpoint` itself
+    // generates a plain get/set for. `suggest`'s backing storage is untouched and keeps its
+    // macro-generated, issue-reporting default.
+    public static let testValue: Self = {
+        var value = Self()
+        value.isAvailable = { false }
+        return value
+    }()
 }
 
 public extension DependencyValues {

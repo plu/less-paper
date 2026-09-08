@@ -119,9 +119,13 @@ public struct TitleSuggestionClient: Sendable {
 ```
 
 `suggest` yields the whole array as it stands after each snapshot, not deltas, so the reducer
-replaces `state.suggestions` and has no accumulation to get wrong. `testValue` stays unimplemented —
-unlike `LogClient`, whose no-op default exists because logging is incidental to what any test
-asserts. Here a test that reaches the model by accident should fail loudly.
+replaces `state.suggestions` and has no accumulation to get wrong. `testValue.suggest` stays
+unimplemented — unlike `LogClient`, whose no-op default exists because logging is incidental to what
+any test asserts. Here a test that reaches the model by accident should fail loudly. `testValue.isAvailable`
+is the exception: it is a synchronous, side-effect-free capability read, not a call into the model, so
+it defaults to `false` — both the safe default and the one that matches `canSuggestTitle`'s own
+default, so a test that never mentions this dependency renders exactly as if the feature did not
+exist.
 
 `isAvailable` is a single synchronous read of `SystemLanguageModel.availability` on the same instance
 the session is built from, so the button's visibility and the session's behaviour cannot disagree.

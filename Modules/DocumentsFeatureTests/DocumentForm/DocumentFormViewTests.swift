@@ -10,12 +10,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    // Rendering sends onAppear, which now reads this dependency; stubbing it false matches
-    // `canSuggestTitle`'s own default so every snapshot here stays exactly what it was before the
-    // suggest button existed.
-    .dependencies {
-        $0.titleSuggestion.isAvailable = { false }
-    },
+    .dependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )

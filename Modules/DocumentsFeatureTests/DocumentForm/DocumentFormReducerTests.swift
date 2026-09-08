@@ -11,12 +11,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    // Every unrelated test sends onAppear without knowing about title suggestions; stubbing it
-    // false here matches `canSuggestTitle`'s own default and keeps this suite's tests from tripping
-    // the client's unimplemented `isAvailable`.
-    .dependencies {
-        $0.titleSuggestion.isAvailable = { false }
-    }
+    .dependencies()
 )
 struct DocumentFormReducerTests {
 
