@@ -334,6 +334,18 @@ extension Module {
                 .target(.logging),
                 .target(.testSupport),
             ]
+        case .intelligence:
+            [
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .target(.logging),
+            ]
+        case .intelligenceTests:
+            [
+                .external(.dependenciesTestSupport),
+                .target(.intelligence),
+                .target(.testSupport),
+            ]
         case .logging:
             [
                 .external(.dependencies),
