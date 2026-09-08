@@ -2475,6 +2475,23 @@
         }
       }
     },
+    "regenerate": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu generieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regenerate"
+          }
+        }
+      }
+    },
     "reload": {
       "extractionState": "manual",
       "localizations": {
@@ -3135,6 +3152,23 @@
         }
       }
     },
+    "suggestTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Titel vorschlagen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggest title"
+          }
+        }
+      }
+    },
     "tag": {
       "extractionState": "manual",
       "localizations": {
@@ -3305,6 +3339,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "Title"
+          }
+        }
+      }
+    },
+    "titleSuggestionDeclined": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Modell hat für dieses Dokument keinen Titel vorgeschlagen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The model declined to suggest a title for this document."
+          }
+        }
+      }
+    },
+    "titleSuggestionFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Titel konnten nicht vorgeschlagen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Titles could not be suggested."
+          }
+        }
+      }
+    },
+    "titleSuggestionTooLong": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Dokument ist zu lang für einen Titelvorschlag."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This document is too long to suggest a title for."
           }
         }
       }
