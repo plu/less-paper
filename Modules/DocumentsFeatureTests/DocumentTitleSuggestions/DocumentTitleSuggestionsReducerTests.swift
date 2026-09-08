@@ -104,6 +104,54 @@ struct DocumentTitleSuggestionsReducerTests {
     }
 
     @Test
+    func test_view_regenerateButtonTapped_cancelsTheInFlightStream() async throws {
+        let (firstStream, firstContinuation) = AsyncThrowingStream<[String], any Error>.makeStream()
+        let callCount = LockIsolated(0)
+
+        let store = TestStore(initialState: DocumentTitleSuggestionsReducer.State.testValue()) {
+            DocumentTitleSuggestionsReducer()
+        } withDependencies: {
+            $0.titleSuggestion.suggest = { _ in
+                callCount.withValue { $0 += 1 }
+                guard callCount.value == 1 else {
+                    return AsyncThrowingStream { continuation in
+                        continuation.yield(["Second run"])
+                        continuation.finish()
+                    }
+                }
+                return firstStream
+            }
+        }
+
+        await store.send(.view(.onAppear)) {
+            $0.isGenerating = true
+        }
+        firstContinuation.yield(["First run"])
+        await store.receive(\.suggestionsUpdated) {
+            $0.suggestions = ["First run"]
+        }
+
+        await store.send(.view(.regenerateButtonTapped)) {
+            $0.isGenerating = true
+            $0.suggestions = []
+        }
+        await store.receive(\.suggestionsUpdated) {
+            $0.suggestions = ["Second run"]
+        }
+        await store.receive(\.generationFinished) {
+            $0.isGenerating = false
+        }
+
+        // The first run's stream is still open. Left uncancelled, this would surface as another
+        // `suggestionsUpdated` and TestStore's own exhaustiveness check would fail the test for an
+        // unreceived action.
+        firstContinuation.yield(["Stale from the cancelled run"])
+        firstContinuation.finish()
+
+        #expect(store.state.suggestions == ["Second run"])
+    }
+
+    @Test
     func test_generationFinished_guardrailViolation_saysTheModelDeclined() async throws {
         let store = TestStore(initialState: DocumentTitleSuggestionsReducer.State.testValue()) {
             DocumentTitleSuggestionsReducer()
