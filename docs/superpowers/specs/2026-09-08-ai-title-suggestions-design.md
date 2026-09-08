@@ -88,6 +88,7 @@ Intelligence                                                                    
   TitleSuggestionContext        plain Sendable struct; owns truncation + prompt rendering
   TitleSuggestionError          four cases, so callers need no FoundationModels import
   TitleSuggestionClient+Live    the only file importing FoundationModels; wholly @available(iOS 26)
+                                depends on Logging; every failure is logged here
         ^
         |
 DocumentsFeature
@@ -214,9 +215,13 @@ destination; a `titleSuggestions` case on `Destination`; and a delegate handler 
 | `failed` | generic, with Retry |
 
 `contextWindowExceeded` should not survive truncation, but if it does it must not masquerade as a
-network failure — that is an afternoon spent looking at the wrong layer. All four go through
-`log.error(_:category:)`, so "suggestions never work for me" arrives with something shareable
-attached.
+network failure — that is an afternoon spent looking at the wrong layer.
+
+Logging happens in `Intelligence`'s live client, where the error originates, not in
+`DocumentsFeature`. `DocumentsFeature` does not depend on `Logging` today and should not start:
+`Intelligence` takes that dependency instead, one call at the single place every failure passes
+through. So "suggestions never work for me" still arrives with something shareable attached, without
+widening the graph around the app's largest module.
 
 ## Testing
 
@@ -234,9 +239,19 @@ offers the model at all varies with the host machine's own Apple Intelligence st
 
 Verification is `mise run ci:lint` — five steps under `set -eou pipefail`, so the first failure hides
 every one after it — plus the unit schemes for `Intelligence`, `Components` and `DocumentsFeature`.
-The new module means a new entry in `Module.swift`, `Module+Dependencies.swift` and
-`Module+Targets.swift`; `tuist inspect dependencies --only implicit` is the step that catches a
-target reaching a module it did not declare, and it is the one tests cannot substitute for.
+
+The new module is five edits across three files, none of them `Module+Targets.swift`, which is
+generic and needs nothing: `Module.swift` gains the two cases and lists `intelligence` in both
+`codeCoverageTarget` and `product`; `Module+Dependencies.swift` gains the two dependency blocks;
+`Module+Schemes.swift` lists `intelligence` in the framework-scheme case and `intelligenceTests` in
+the empty case. `tuist inspect dependencies --only implicit` is the step that catches a target
+reaching a module it did not declare, and it is the one tests cannot substitute for.
+
+One check has no test and must be done by hand: `FoundationModels` is an iOS 26 framework linked
+into an iOS 18 binary, so it **must** be weak-linked or the app will not launch on iOS 18. The
+linker does this automatically from the SDK's availability data, but "automatically" is worth
+confirming once — `otool -l` on the built framework should show `LC_LOAD_WEAK_DYLIB`, not
+`LC_LOAD_DYLIB`, for FoundationModels.
 
 ## Out of scope
 
