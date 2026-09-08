@@ -101,7 +101,18 @@ struct DocumentFormView: View {
     @ViewBuilder
     private func detailsSection() -> some View {
         VStack(spacing: .x3) {
-            TitleField(text: $store.input.title)
+            TitleField(
+                text: $store.input.title,
+                suggestButtonTapped: store.canSuggestTitle ? { send(.suggestTitleButtonTapped) } : nil
+            )
+            .sheet(
+                item: $store.scope(
+                    state: \.destination?.titleSuggestions,
+                    action: \.destination.titleSuggestions
+                )
+            ) { store in
+                DocumentTitleSuggestionsView(store: store)
+            }
             ASNField(
                 isLoading: $store.isLoadingNextArchiveSerialNumber,
                 text: $store.input.archiveSerialNumber,

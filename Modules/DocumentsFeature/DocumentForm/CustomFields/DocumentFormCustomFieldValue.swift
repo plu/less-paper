@@ -89,6 +89,27 @@ extension DocumentFormCustomFieldValue {
         return false
     }
 
+    // What this value contributes to a title-suggestion prompt, or nil when it contributes nothing.
+    //
+    // Select options and document links are stored as ids rather than labels, so they would reach
+    // the model as bare numbers — noise that costs tokens and says nothing about the document.
+    var promptValue: String? {
+        switch self {
+        case let .boolean(flag):
+            String(flag)
+        case let .date(date):
+            date.map { DateFormatter.createdDate.string(from: $0) }
+        case let .monetary(currency, amount):
+            amount.isEmpty ? nil : "\(currency)\(amount)"
+        case let .number(text):
+            text.isEmpty ? nil : text
+        case let .text(text):
+            text.isEmpty ? nil : text
+        case .documentLink, .select, .unsupported:
+            nil
+        }
+    }
+
     var validationError: LocalizedStringResource? {
         switch self {
         case let .monetary(_, amount):

@@ -4,13 +4,19 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import Intelligence
 import SwiftSharing
 import Testing
 import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies()
+    // Every unrelated test sends onAppear without knowing about title suggestions; stubbing it
+    // false here matches `canSuggestTitle`'s own default and keeps this suite's tests from tripping
+    // the client's unimplemented `isAvailable`.
+    .dependencies {
+        $0.titleSuggestion.isAvailable = { false }
+    }
 )
 struct DocumentFormReducerTests {
 
@@ -631,5 +637,76 @@ struct DocumentFormReducerTests {
 
         #expect(state.canViewNotes)
         #expect(!state.canCreateTag)
+    }
+
+    @Test
+    func test_view_onAppear_modelUnavailable_hidesTheSuggestButton() async throws {
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue(content: "Body.")) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.titleSuggestion.isAvailable = { false }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.onAppear))
+
+        #expect(store.state.canSuggestTitle == false)
+    }
+
+    @Test
+    func test_view_onAppear_modelAvailable_showsTheSuggestButton() async throws {
+        let store = TestStore(initialState: DocumentFormReducer.State.testValue(content: "Body.")) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.titleSuggestion.isAvailable = { true }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.onAppear))
+
+        #expect(store.state.canSuggestTitle)
+    }
+
+    @Test
+    func test_view_suggestTitleButtonTapped_carriesTheStagedFieldsIntoTheContext() async throws {
+        // The staged input, not the saved document: a user who has just picked a correspondent
+        // should get suggestions that know about it.
+        var state = DocumentFormReducer.State.testValue(content: "Electricity for August.")
+        state.input.title = "scan_20240817_113052"
+        state.input.correspondent = .testValue(name: "Stadtwerke München")
+
+        let store = TestStore(initialState: state) {
+            DocumentFormReducer()
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.suggestTitleButtonTapped))
+
+        let context = try #require(store.state.destination?.titleSuggestions?.context)
+        #expect(context.title == "scan_20240817_113052")
+        #expect(context.correspondent == "Stadtwerke München")
+        #expect(context.content == "Electricity for August.")
+    }
+
+    @Test
+    func test_destination_titleSelected_stagesTheTitleWithoutSaving() async throws {
+        var state = DocumentFormReducer.State.testValue(content: "Body.")
+        state.destination = .titleSuggestions(.testValue(suggestions: ["Chosen title"]))
+
+        let store = TestStore(initialState: state) {
+            DocumentFormReducer()
+        } withDependencies: {
+            $0.updateDocument.execute = { _, _, _ in
+                Issue.record("Choosing a suggestion stages a title; it must not save the document.")
+                return .testValue()
+            }
+        }
+
+        await store.send(.destination(.presented(.titleSuggestions(.delegate(.titleSelected("Chosen title")))))) {
+            $0.destination = nil
+            $0.input.title = "Chosen title"
+        }
+
+        #expect(store.state.isModified)
     }
 }

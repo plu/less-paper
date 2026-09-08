@@ -3,13 +3,19 @@
 import ApiInterface
 import ComposableArchitecture
 import Dependencies
+import Intelligence
 import SwiftUI
 import Testing
 import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies(),
+    // Rendering sends onAppear, which now reads this dependency; stubbing it false matches
+    // `canSuggestTitle`'s own default so every snapshot here stays exactly what it was before the
+    // suggest button existed.
+    .dependencies {
+        $0.titleSuggestion.isAvailable = { false }
+    },
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
@@ -188,5 +194,30 @@ struct DocumentFormViewTests {
             as: .image(layout: .device(config: .iPhone12)),
             named: "notesAddNoteHidden"
         )
+    }
+
+    @Test
+    func testSnapshot_canSuggestTitle() async throws {
+        var state = DocumentFormReducer.State.testValue(content: "Electricity for August.")
+        state.canSuggestTitle = true
+
+        // Rendering fires onAppear on this real Store, which would otherwise overwrite the
+        // state above with the suite's default `false`.
+        withDependencies {
+            $0.titleSuggestion.isAvailable = { true }
+        } operation: {
+            assertSnapshot(
+                of: DocumentFormView(
+                    store: Store(
+                        initialState: state,
+                        reducer: {
+                            DocumentFormReducer()
+                        }
+                    )
+                ),
+                as: .image(layout: .device(config: .iPhone12)),
+                named: "canSuggestTitle"
+            )
+        }
     }
 }

@@ -5,6 +5,7 @@ import ComposableArchitecture
 import CustomFieldsFeature
 import Foundation
 import IdentifiedCollections
+import Intelligence
 import SwiftSharing
 import Testing
 import TestSupport
@@ -32,6 +33,9 @@ private func server(_ id: String) -> Server {
             }
             return customFieldFixtures[id: id]
         }
+        // These tests send onAppear without knowing about title suggestions; stubbing it false
+        // matches `canSuggestTitle`'s own default.
+        $0.titleSuggestion.isAvailable = { false }
     }
 )
 struct DocumentFormCustomFieldsReducerTests {

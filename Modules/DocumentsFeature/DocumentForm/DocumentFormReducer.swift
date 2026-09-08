@@ -5,6 +5,7 @@ import CorrespondentsFeature
 import CustomFieldsFeature
 import DocumentTypesFeature
 import Foundation
+import Intelligence
 import StoragePathsFeature
 import Tagged
 import TagsFeature
@@ -42,6 +43,7 @@ public struct DocumentFormReducer: Sendable {
             case resetButtonTapped
             case retryLoadButtonTapped
             case saveButtonTapped
+            case suggestTitleButtonTapped
         }
     }
 
@@ -53,6 +55,7 @@ public struct DocumentFormReducer: Sendable {
         case documentTypeForm(DocumentTypeFormReducer)
         case storagePathForm(StoragePathFormReducer)
         case tagForm(TagFormReducer)
+        case titleSuggestions(DocumentTitleSuggestionsReducer)
     }
 
     @ObservableState
@@ -130,6 +133,10 @@ public struct DocumentFormReducer: Sendable {
 
         var canCreateCustomField: Bool { permissions.can(.addCustomField) }
 
+        // Set on appearance rather than computed: reading model availability is a framework call,
+        // and a computed property would make it on every render.
+        var canSuggestTitle = false
+
         // A picker is an input, not a rendering of what a document already carries. Without
         // view_<entity> its endpoint answers 403, so it offers an empty list the user cannot fill
         // - a control that looks interactive and does nothing. The document's existing correspondent
@@ -170,6 +177,9 @@ public struct DocumentFormReducer: Sendable {
             permissions = ServerPermissions(server: server)
         }
     }
+
+    @Dependency(\.titleSuggestion)
+    private var titleSuggestion
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -217,6 +227,10 @@ public struct DocumentFormReducer: Sendable {
             case let .destination(.presented(.tagForm(.delegate(.tagSaved(tag))))):
                 state.destination = nil
                 state.input.tags.insert(tag)
+                return .none
+            case let .destination(.presented(.titleSuggestions(.delegate(.titleSelected(title))))):
+                state.destination = nil
+                state.input.title = title
                 return .none
             case let .documentResult(result):
                 state.isLoadingDocument = false
@@ -295,6 +309,7 @@ public struct DocumentFormReducer: Sendable {
                 case .getNextArchiveSerialNumberButtonTapped:
                     return .runGetNextArchiveSerialNumber(server: state.server)
                 case .onAppear:
+                    state.canSuggestTitle = titleSuggestion.isAvailable()
                     let resolveLinked = Effect.runResolveLinkedCustomFieldDocuments(state)
                     // A failed load is not retried silently on the next appearance; that is what
                     // the retry button is for. The title lookup still runs: it is keyed off the
@@ -341,6 +356,16 @@ public struct DocumentFormReducer: Sendable {
                         input: state.input,
                         server: state.server
                     )
+                case .suggestTitleButtonTapped:
+                    state.destination = .titleSuggestions(
+                        DocumentTitleSuggestionsReducer.State(
+                            context: state.input.titleSuggestionContext(
+                                content: state.content,
+                                server: state.server
+                            )
+                        )
+                    )
+                    return .none
                 }
             case .binding, .delegate, .destination, .notes:
                 return .none
