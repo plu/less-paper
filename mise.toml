@@ -29,6 +29,13 @@ postinstall = "brew bundle"
 git-lfs = "3.8.0"
 "github:a7ex/xcresultparser" = "2.2.0"
 "github:abiosoft/colima" = "0.10.3"
+# AXe publishes two macOS tarballs per release. The one autodetection picks, the "homebrew"
+# variant, ships the binary unsigned because Homebrew ad-hoc signs it on install - mise does not,
+# so on Apple silicon the kernel kills `axe` with SIGKILL before main() and the UI automation tools
+# in XcodeBuildMCP fail with nothing printed. The "universal" tarball is the same build signed with
+# a Developer ID, so it runs straight out of the download.
+"github:cameroncooke/axe" = { version = "1.8.0", matching = "universal" }
+"github:getsentry/XcodeBuildMCP" = "2.7.0"
 "github:jdx/aube" = "2.2.4"
 "github:jdx/fnox" = "1.34.1"
 "github:lima-vm/lima" = "2.2.0"

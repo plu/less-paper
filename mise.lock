@@ -152,6 +152,67 @@ checksum = "sha256:3082737fe8a98afda11cba7d9a20b6e56fe80c6153464beda04bec6307587
 url = "https://github.com/abiosoft/colima/releases/download/v0.10.3/colima-Darwin-x86_64"
 url_api = "https://api.github.com/repos/abiosoft/colima/releases/assets/438456722"
 
+[[tools."github:cameroncooke/axe"]]
+version = "1.8.0"
+backend = "github:cameroncooke/axe"
+specifiers = ["1.8.0"]
+
+[tools."github:cameroncooke/axe".options]
+matching = "universal"
+
+[tools."github:cameroncooke/axe"."platforms.macos-arm64"]
+checksum = "sha256:7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834"
+url = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz"
+url_api = "https://api.github.com/repos/cameroncooke/AXe/releases/assets/483428549"
+
+[tools."github:cameroncooke/axe"."platforms.macos-x64"]
+checksum = "sha256:7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8834"
+url = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz"
+url_api = "https://api.github.com/repos/cameroncooke/AXe/releases/assets/483428549"
+
+[[tools."github:getsentry/XcodeBuildMCP"]]
+version = "2.7.0"
+backend = "github:getsentry/XcodeBuildMCP"
+specifiers = [
+    "2.7.0",
+    "latest",
+]
+
+[tools."github:getsentry/XcodeBuildMCP"."platforms.linux-arm64"]
+checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+
+[tools."github:getsentry/XcodeBuildMCP"."platforms.linux-arm64-musl"]
+checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+
+[tools."github:getsentry/XcodeBuildMCP"."platforms.linux-x64"]
+checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+
+[tools."github:getsentry/XcodeBuildMCP"."platforms.linux-x64-musl"]
+checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+
+[tools."github:getsentry/XcodeBuildMCP"."platforms.macos-arm64"]
+checksum = "sha256:bd724a2c0e6ffe027b3f46257e66d626149a64cd045f4867124bd683b3cf081a"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487259354"
+
+[tools."github:getsentry/XcodeBuildMCP"."platforms.macos-x64"]
+checksum = "sha256:f62522c07591a0871601b9fe0c30666bcbe3b1d93dc458eb295c8998ac4fa304"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0-darwin-x64.tar.gz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487259349"
+
+[tools."github:getsentry/XcodeBuildMCP"."platforms.windows-x64"]
+checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+
 [[tools."github:jdx/aube"]]
 version = "2.2.4"
 backend = "github:jdx/aube"
