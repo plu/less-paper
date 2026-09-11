@@ -1,0 +1,36 @@
+# XcodeBuildMCP project configuration.
+#
+# The tool itself and the AXe binary it drives for touch input are pinned in
+# mise.toml, which is why .mcp.json launches the server through `mise exec` -
+# that puts both on PATH at the pinned versions. This file covers the other
+# half: which tools the server exposes, and what it should default to.
+schemaVersion: 1
+
+# Only session-management and simulator load by default, which leaves out every
+# touch, swipe and type tool. ui-automation is the one that matters here;
+# simulator-management supplies boot/appearance/keyboard control, and
+# project-discovery supplies scheme and build-setting lookup.
+enabledWorkflows:
+  - simulator
+  - simulator-management
+  - ui-automation
+  - project-discovery
+
+# These have to sit under sessionDefaults. The same keys at the top level parse
+# without complaint and are then ignored, so tool calls still fail asking for a
+# workspace the file appears to supply.
+sessionDefaults:
+  workspacePath: LessPaper.xcworkspace
+
+  # The app scheme, spaced - distinct from the ~20 per-module schemes that sit
+  # alongside it in LessPaper.xcodeproj/xcshareddata/xcschemes.
+  scheme: Less Paper
+
+  # Matches TEST_SIMULATOR in mise.toml so UI automation drives the same device
+  # the test suites and the marketing render use. Change the two together.
+  #
+  # simulatorName, not simulatorId: the UDID is machine-local and would be wrong
+  # for anyone else with this checked out. `session_set_defaults { persist: true }`
+  # writes a simulatorId (and an absolute workspacePath) back into this file -
+  # drop both again before committing.
+  simulatorName: iPhone 17 Pro

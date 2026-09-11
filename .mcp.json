@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "XcodeBuildMCP": {
+      "type": "stdio",
+      "command": "mise",
+      "args": ["exec", "--", "xcodebuildmcp", "mcp"]
+    }
+  }
+}
