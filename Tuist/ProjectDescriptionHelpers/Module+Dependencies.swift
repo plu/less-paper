@@ -295,6 +295,26 @@ extension Module {
                 .target(.favoritesFeature),
                 .target(.testSupport),
             ]
+        case .fileTasksFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .external(.tagged),
+                .target(.apiInterface),
+                .target(.components),
+                .target(.designTokens),
+            ]
+        case .fileTasksFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .target(.apiInterface),
+                .target(.apiTestSupport),
+                .target(.components),
+                .target(.testSupport),
+                .target(.fileTasksFeature),
+            ]
         case .forwardAuthFeature:
             [
                 .external(.composableArchitecture),
