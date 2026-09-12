@@ -44,7 +44,13 @@ against paperless 3.0.5 (which advertises API version 10):
 | status | `SUCCESS`, `FAILURE`, `STARTED`, `PENDING` | `success`, `failure`, `started`, `pending` |
 | message | `result`, a human-readable string | `result_data`, an object |
 | kind | `task_name` is the task, `type` is the trigger | `task_type` and `trigger_source`, each with a `_display` twin |
-| dismiss | `POST /api/acknowledge_tasks/` | `POST /api/tasks/acknowledge/` |
+| dismiss | `POST /api/tasks/acknowledge/` — see below | `POST /api/tasks/acknowledge/` |
+
+The dismiss row is the one place where reading paperless's source misled us. `/api/acknowledge_tasks/`
+looks like the v9-era endpoint and is not: measured against live containers it answers **403** on both
+2.15.3 (API 8) and 2.19.6 (API 9), and works only on API 3 — a version `ApiVersion.negotiated(from:)`
+rejects outright. `/api/tasks/acknowledge/` answers 200 and actually flips the flag on API 8, 9 and 10,
+so it is the only path the app calls and there is no version branch for dismissal.
 
 Gating the feature behind v10 was considered and rejected: it would hide the screen from every server
 the README tells people is supported. The cost is one extra payload struct and a mapping, which is
@@ -159,8 +165,9 @@ it is meant to be independent of.
 ### `FileTaskRepository` and its use cases
 
 The repository exposes one function per wire shape — `getFileTasksV9`, `getFileTasksV10`,
-`acknowledgeFileTask`, `acknowledgeFileTaskLegacy` — and each use case branches once on the
-negotiated version:
+`acknowledgeFileTask` — and the list and count use cases branch once on the negotiated version.
+Dismissal does not branch: only one endpoint works across the supported range, for the reason given
+above.
 
 - **list**: v10 sends `task_type=consume_file`, `status=<segment>`, `ordering=-date_created`,
   `page`, `page_size=50` and returns `ListOutput`; v9 and below send `GET /api/tasks/` and filter to
@@ -168,8 +175,7 @@ negotiated version:
   `nextPage: nil` — an unpaginated endpoint has handed over everything it has.
 - **failed count**: v10 reads `count` from `status=failure&acknowledged=false&page_size=1`; older
   versions count the filtered array.
-- **acknowledge**: `POST /api/tasks/acknowledge/` on v10, `POST /api/acknowledge_tasks/` below, body
-  `{"tasks": [id]}` either way.
+- **acknowledge**: `POST /api/tasks/acknowledge/` on every supported version, body `{"tasks": [id]}`.
 
 The failure message is read defensively: v9's `result` is already a string; on v10 `result_data` is an
 object whose failure shape is unverified, so the mapping takes any string value it finds, falls back
@@ -279,19 +285,34 @@ it is what lets the toast speak about one document rather than guessing from the
 
 ## Risks
 
-**Two legacy behaviours are read from paperless 2.x source, not probed.** The only instance reachable
-from this machine is 3.0.5, where `/api/acknowledge_tasks/` is gone and unknown query parameters are
-honoured rather than ignored. So the v9 dismiss path and the assumption that an old server ignores
-`task_type=consume_file` (which is why that branch also filters in memory) are both unverified
-against a real 2.15.x server. Both are cheap to confirm by running one 2.15.3 container on the host
-under its own project name and port; until then the in-memory filter is what keeps the v9 list
-correct either way.
+**Resolved: the two legacy behaviours have been probed, and one of them was wrong.** Running 2.15.3
+(API 8) and 2.19.6 (API 9) as their own containers answered both questions that this section
+originally left open, and turned up a third problem nobody had thought to ask about.
 
-**Whether a non-superuser sees only their own tasks is unverified, and the journey depends on it.**
-Every UI test runs as its own freshly created user, so if `/api/tasks/` is not owner-scoped the
-journey's "find the file I just uploaded" step will be looking at a list full of other users' imports.
-`docker:seed`'s permission-scenario users are the cheapest way to check this before the journey is
-written.
+The dismiss path was **wrong**: `/api/acknowledge_tasks/` answers 403 on both, and only the modern
+`/api/tasks/acknowledge/` works — see the dismiss row above. The query-parameter assumption was
+**right**, though not where it was expected: a real 2.15.3 honours `task_type` and `status`, while
+2.0.1 (API 3, below the floor) ignores every unknown parameter. The in-memory filter is correct
+either way and stays.
+
+The third finding is the reason recorded payloads are not enough on their own. The v9 fixtures were
+taken from a 3.0.5 instance asked for `version=9`, and a v10-era server impersonating v9 does not
+serialise like a real 2.x one: it sends `related_document` as an integer where 2.15.3 and 2.19.6 both
+send the **string** `"1"`. Decoding that into an `Int`-backed `Tagged` threw and failed the whole
+page, so the list broke on every supported 2.x server as soon as one task completed. The payload now
+accepts both spellings and the suite carries a fixture recorded from a genuine 2.15.3 alongside the
+original.
+
+**Resolved: `/api/tasks/` is owner-scoped, as owned-by-me plus owned-by-nobody.** Measured with a
+throwaway non-superuser: it saw 26 tasks — its own upload plus every `owner: null` row from the seeded
+corpus — where admin saw 152 including another user's, which never appeared to it. So the journey sees
+its own imports and the unowned corpus, never another live user's, which is the same object-permission
+filtering every other paperless entity uses.
+
+That corpus is why the journey does not match on the shared fixture's file name. Paperless records the
+uploaded file's own name, not the document title, so every upload of the standard fixture is called
+`Sonos One.pdf` — the corpus's own copy included — and a task record outlives both the document and
+the user that made it. The journey therefore uploads a copy under a per-run name.
 
 **The badge's shared key is not in the app group.** `appStorage` keys read
 `UserDefaults.standard` per process, the caveat `docs/ideas.md` already records for
