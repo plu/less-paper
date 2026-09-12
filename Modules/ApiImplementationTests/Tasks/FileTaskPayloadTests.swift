@@ -47,6 +47,43 @@ struct FileTaskPayloadTests {
     ]
     """
 
+    // GET /api/tasks/ recorded directly from a real paperless 2.15.3 instance (`x-api-version: 8`).
+    // Real 2.x servers send related_document as a JSON *string* ("1"), unlike recordedV9 above,
+    // which was recorded from a 3.0.5 instance impersonating v9 and sends an integer. Confirmed
+    // against both 2.15.3 and 2.19.6.
+    private static let recordedV9RealServer = """
+    [
+        {
+            "id": 2,
+            "task_id": "d98797e0-b11b-4b75-8019-365292067ec5",
+            "task_name": "consume_file",
+            "task_file_name": "Sonos One.pdf",
+            "date_created": "2026-09-12T20:08:19.248632+02:00",
+            "date_done": "2026-09-12T20:08:19.282073+02:00",
+            "type": "auto_task",
+            "status": "FAILURE",
+            "result": "Sonos One.pdf: Not consuming Sonos One.pdf: It is a duplicate of probe-2.15.3 (#1).",
+            "acknowledged": false,
+            "related_document": "1",
+            "owner": 3
+        },
+        {
+            "id": 1,
+            "task_id": "6767e468-9a6b-4ace-a4a2-075f49bc0b10",
+            "task_name": "consume_file",
+            "task_file_name": "Sonos One.pdf",
+            "date_created": "2026-09-12T20:07:19.220689+02:00",
+            "date_done": "2026-09-12T20:07:20.431745+02:00",
+            "type": "auto_task",
+            "status": "SUCCESS",
+            "result": "Success. New document id 1 created",
+            "acknowledged": false,
+            "related_document": "1",
+            "owner": 3
+        }
+    ]
+    """
+
     // The same task 267, requested at version 10. Different envelope, different field names, and a
     // result that is an object rather than prose.
     private static let recordedV10 = """
@@ -173,6 +210,72 @@ struct FileTaskPayloadTests {
         #expect(task.documentId == 43)
         #expect(task.isAcknowledged == false)
         #expect(task.message == "Success. New document id 43 created")
+    }
+
+    // A real 2.x server sends related_document as a JSON string, not the integer a 3.0.5 instance
+    // impersonating v9 sends (see v9_mapsTheRecordedConsumeTask). Decoding "1" into an Int-backed
+    // Tagged used to throw typeMismatch and fail the whole page.
+    @Test
+    func v9_decodesAStringRelatedDocumentFromARealServer() throws {
+        let payloads = try JSONDecoder.apiDecoder.decode(
+            [FileTaskPayloadV9].self,
+            from: #require(Self.recordedV9RealServer.data(using: .utf8))
+        )
+
+        let failed = try #require(payloads.first).asFileTask
+        #expect(failed.id == 2)
+        #expect(failed.documentId == 1)
+        #expect(failed.status == .failed)
+        #expect(failed.fileName == "Sonos One.pdf")
+
+        let succeeded = try #require(payloads.last).asFileTask
+        #expect(succeeded.id == 1)
+        #expect(succeeded.documentId == 1)
+        #expect(succeeded.status == .complete)
+        #expect(succeeded.message == "Success. New document id 1 created")
+    }
+
+    // The fallback's third branch: no known server sends this, but decodeRelatedDocument's own
+    // contract is that a related_document which is neither Document.Id nor a numeric string - and
+    // one that is missing entirely - must not throw. Either failure mode would take the whole row,
+    // and with it the whole page, down with it.
+    @Test
+    func v9_relatedDocumentDecodesAsNilRatherThanThrowing_whenNonNumericOrAbsent() throws {
+        let json = """
+        [
+            {
+                "id": 5,
+                "task_name": "consume_file",
+                "task_file_name": "a.pdf",
+                "date_created": "2026-09-08T14:48:16.989002+02:00",
+                "status": "SUCCESS",
+                "acknowledged": false,
+                "related_document": "abc"
+            },
+            {
+                "id": 6,
+                "task_name": "consume_file",
+                "task_file_name": "b.pdf",
+                "date_created": "2026-09-08T14:48:16.989002+02:00",
+                "status": "SUCCESS",
+                "acknowledged": false
+            }
+        ]
+        """
+        let payloads = try JSONDecoder.apiDecoder.decode(
+            [FileTaskPayloadV9].self,
+            from: #require(json.data(using: .utf8))
+        )
+
+        let nonNumeric = try #require(payloads.first).asFileTask
+        #expect(nonNumeric.id == 5)
+        #expect(nonNumeric.fileName == "a.pdf")
+        #expect(nonNumeric.documentId == nil)
+
+        let absent = try #require(payloads.last).asFileTask
+        #expect(absent.id == 6)
+        #expect(absent.fileName == "b.pdf")
+        #expect(absent.documentId == nil)
     }
 
     // Old servers have no task_type filter to honour, so the client has to recognise its own rows.
