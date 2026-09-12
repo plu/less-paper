@@ -12,7 +12,7 @@ extension Effect where Action == FileTaskListReducer.Action {
         } catch: { error, send in
             await send(.tasksLoaded(.failure(error)))
         }
-        .cancellable(id: CancelID.loadFileTasks, cancelInFlight: true)
+        .cancellable(id: CancelID.fileTasks, cancelInFlight: true)
     }
 
     static func runLoadMoreFileTasks(server: Server, status: FileTaskStatus, page: Int) -> Self {
@@ -24,7 +24,12 @@ extension Effect where Action == FileTaskListReducer.Action {
         } catch: { error, send in
             await send(.moreTasksLoaded(.failure(error)))
         }
-        .cancellable(id: CancelID.loadMoreFileTasks, cancelInFlight: true)
+        // The initial load's id, so restarting the list - a segment switch, a refresh - drops a
+        // next page still in flight. It would otherwise resolve into the new segment's list and
+        // overwrite its nextPage with the old one's. Not cancelInFlight, the other way round: an
+        // initial load already running is the fresher request of the two, and a row appearing must
+        // not cancel it.
+        .cancellable(id: CancelID.fileTasks)
     }
 
     static func runDismiss(id: FileTask.Id, server: Server) -> Self {
@@ -41,6 +46,5 @@ extension Effect where Action == FileTaskListReducer.Action {
 }
 
 private enum CancelID {
-    case loadFileTasks
-    case loadMoreFileTasks
+    case fileTasks
 }

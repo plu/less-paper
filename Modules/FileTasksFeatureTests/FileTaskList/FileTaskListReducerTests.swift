@@ -42,37 +42,94 @@ struct FileTaskListReducerTests {
         #expect(FileTaskListReducer.State(server: server).segment == .failed)
     }
 
+    // The load in flight is cancelled rather than left to land: the clock is advanced at the end, so
+    // the old segment's rows would arrive as an unreceived action if it were not.
     @Test
-    func test_segmentChanged_reloadsForTheNewSegment() async {
+    func test_segmentChanged_cancelsTheLoadInFlight() async {
         let asked = LockIsolated<[FileTaskStatus]>([])
+        let clock = TestClock()
+        let stale = FileTask.testValue(id: 1, status: .failed)
+        let fresh = FileTask.testValue(id: 2)
         let store = TestStore(
-            initialState: FileTaskListReducer.State(
-                segment: .failed,
-                tasks: [.testValue(id: 1, status: .failed)],
-                isLoaded: true,
-                server: .testValue()
-            )
+            initialState: FileTaskListReducer.State(segment: .failed, server: .testValue())
         ) {
             FileTaskListReducer()
         } withDependencies: {
+            $0.continuousClock = clock
             $0.getFileTasks.execute = { _, status, _ in
                 asked.withValue { $0.append(status) }
-                return .testValue(nextPage: nil, tasks: [.testValue(id: 2, status: .complete)])
+                guard status == .complete else {
+                    try await clock.sleep(for: .seconds(1))
+                    return .testValue(nextPage: nil, tasks: [stale])
+                }
+                return .testValue(nextPage: nil, tasks: [fresh])
             }
         }
-        store.exhaustivity = .off(showSkippedAssertions: false)
 
+        await store.send(.view(.onAppear))
         await store.send(.binding(.set(\.segment, .complete))) {
+            // Everything else the branch clears is already clear on a list that never loaded.
             $0.segment = .complete
-            // Cleared rather than left in place: rows from the previous segment under a heading that
-            // no longer matches them is the one state worse than an empty list.
-            $0.tasks = []
-            $0.isLoaded = false
         }
-        await store.receive(\.tasksLoaded)
+        await store.receive(\.tasksLoaded) {
+            $0.isLoaded = true
+            $0.tasks = [fresh]
+        }
+        await clock.advance(by: .seconds(1))
 
-        #expect(asked.value == [.complete])
+        #expect(asked.value == [.failed, .complete])
         #expect(store.state.tasks.map(\.id) == [2])
+    }
+
+    // Rows from the previous segment under a heading that no longer matches them is the one state
+    // worse than an empty list, and the next page in flight is how they would get there.
+    @Test
+    func test_segmentChanged_dropsTheNextPageInFlight() async {
+        let clock = TestClock()
+        let first = FileTask.testValue(id: 1, status: .failed)
+        let stale = FileTask.testValue(id: 2, status: .failed)
+        let fresh = FileTask.testValue(id: 3)
+        let store = TestStore(
+            initialState: FileTaskListReducer.State(segment: .failed, server: .testValue())
+        ) {
+            FileTaskListReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.getFileTasks.execute = { _, status, _ in
+                guard status == .complete else {
+                    try await clock.sleep(for: .seconds(1))
+                    return .testValue(nextPage: 3, tasks: [stale])
+                }
+                return .testValue(nextPage: nil, tasks: [fresh])
+            }
+        }
+
+        // Seeded through the action, not by assigning store.state: a TestStore's state is read-only.
+        await store.send(.tasksLoaded(.success(.testValue(nextPage: 2, tasks: [first])))) {
+            $0.isLoaded = true
+            $0.nextPage = 2
+            $0.tasks = [first]
+        }
+        await store.send(.view(.onRowAppear(first))) {
+            $0.isLoadingMore = true
+        }
+        await store.send(.binding(.set(\.segment, .complete))) {
+            $0.isLoaded = false
+            // The cancelled page cannot clear this itself, and the new segment cannot page until it
+            // is clear.
+            $0.isLoadingMore = false
+            $0.nextPage = nil
+            $0.segment = .complete
+            $0.tasks = []
+        }
+        await store.receive(\.tasksLoaded) {
+            $0.isLoaded = true
+            $0.tasks = [fresh]
+        }
+        await clock.advance(by: .seconds(1))
+
+        #expect(store.state.tasks.map(\.id) == [3])
+        #expect(store.state.nextPage == nil)
     }
 
     @Test
@@ -80,25 +137,26 @@ struct FileTaskListReducerTests {
         let first = FileTask.testValue(id: 1)
         let second = FileTask.testValue(id: 2)
         let store = TestStore(
-            initialState: FileTaskListReducer.State(
-                tasks: [first],
-                isLoaded: true,
-                server: .testValue()
-            )
+            initialState: FileTaskListReducer.State(server: .testValue())
         ) {
             FileTaskListReducer()
         } withDependencies: {
             $0.getFileTasks.execute = { _, _, _ in .testValue(nextPage: nil, tasks: [second]) }
         }
-        store.exhaustivity = .off(showSkippedAssertions: false)
-        // Seeded through the action, not by assigning store.state: a TestStore's state is read-only.
-        await store.send(.tasksLoaded(.success(FileTaskPage(nextPage: 2, tasks: [first]))))
 
-        await store.send(.view(.onRowAppear(first)))
-        await store.receive(\.moreTasksLoaded)
-
-        #expect(store.state.tasks.map(\.id) == [1, 2])
-        #expect(store.state.nextPage == nil)
+        await store.send(.tasksLoaded(.success(.testValue(nextPage: 2, tasks: [first])))) {
+            $0.isLoaded = true
+            $0.nextPage = 2
+            $0.tasks = [first]
+        }
+        await store.send(.view(.onRowAppear(first))) {
+            $0.isLoadingMore = true
+        }
+        await store.receive(\.moreTasksLoaded) {
+            $0.isLoadingMore = false
+            $0.nextPage = nil
+            $0.tasks = [first, second]
+        }
     }
 
     @Test
@@ -126,7 +184,7 @@ struct FileTaskListReducerTests {
     }
 
     @Test
-    func test_dismiss_removesTheRow() async {
+    func test_dismiss_marksTheRowThenRemovesIt() async {
         let server = Server.testValue()
         @Shared(.failedFileTaskCount(server))
         var failedFileTaskCount: Int
@@ -144,13 +202,15 @@ struct FileTaskListReducerTests {
         } withDependencies: {
             $0.acknowledgeFileTask.execute = { _, _ in }
         }
-        store.exhaustivity = .off(showSkippedAssertions: false)
 
-        await store.send(.view(.dismissButtonTapped(1)))
-        await store.receive(\.dismissFinished)
+        await store.send(.view(.dismissButtonTapped(1))) {
+            $0.isDismissing = [1]
+        }
+        await store.receive(\.dismissFinished) {
+            $0.isDismissing = []
+            $0.tasks = []
+        }
 
-        #expect(store.state.tasks.isEmpty)
-        #expect(store.state.isDismissing.isEmpty)
         // Untouched, and deliberately so: AcknowledgeFileTaskUseCase re-reads the count from the
         // server and writes the key. A reducer that decremented it here would drift from the server
         // and fire a second count request per dismiss.
@@ -158,12 +218,47 @@ struct FileTaskListReducerTests {
     }
 
     @Test
-    func test_dismiss_keepsTheRowWhenItFails() async {
-        let toasts = LockIsolated<[Toast]>([])
+    func test_dismiss_ignoresASecondTapOnTheSameRow() async {
+        let acknowledged = LockIsolated(0)
+        let clock = TestClock()
         let store = TestStore(
             initialState: FileTaskListReducer.State(
                 segment: .failed,
                 tasks: [.testValue(id: 1, status: .failed)],
+                isLoaded: true,
+                server: .testValue()
+            )
+        ) {
+            FileTaskListReducer()
+        } withDependencies: {
+            $0.acknowledgeFileTask.execute = { _, _ in
+                acknowledged.withValue { $0 += 1 }
+                try await clock.sleep(for: .seconds(1))
+            }
+        }
+
+        await store.send(.view(.dismissButtonTapped(1))) {
+            $0.isDismissing = [1]
+        }
+        // A row already marked asks nothing. A slow server must not be told twice.
+        await store.send(.view(.dismissButtonTapped(1)))
+        await clock.advance(by: .seconds(1))
+        await store.receive(\.dismissFinished) {
+            $0.isDismissing = []
+            $0.tasks = []
+        }
+
+        #expect(acknowledged.value == 1)
+    }
+
+    @Test
+    func test_dismiss_keepsTheRowWhenItFails() async {
+        let task = FileTask.testValue(id: 1, status: .failed)
+        let toasts = LockIsolated<[Toast]>([])
+        let store = TestStore(
+            initialState: FileTaskListReducer.State(
+                segment: .failed,
+                tasks: [task],
                 isLoaded: true,
                 server: .testValue()
             )
@@ -175,13 +270,16 @@ struct FileTaskListReducerTests {
                 toasts.withValue { $0.append(value) }
             }
         }
-        store.exhaustivity = .off(showSkippedAssertions: false)
 
-        await store.send(.view(.dismissButtonTapped(1)))
-        await store.receive(\.dismissFinished)
+        await store.send(.view(.dismissButtonTapped(1))) {
+            $0.isDismissing = [1]
+        }
+        await store.receive(\.dismissFinished) {
+            // Unmarked but not removed, so the row can be tried again.
+            $0.isDismissing = []
+        }
 
-        #expect(store.state.tasks.map(\.id) == [1])
-        #expect(store.state.isDismissing.isEmpty)
+        #expect(store.state.tasks == [task])
         #expect(toasts.value == [.error("Something went wrong")])
     }
 
@@ -214,11 +312,7 @@ struct FileTaskListReducerTests {
         let first = FileTask.testValue(id: 1)
         let toasts = LockIsolated<[Toast]>([])
         let store = TestStore(
-            initialState: FileTaskListReducer.State(
-                tasks: [first],
-                isLoaded: true,
-                server: .testValue()
-            )
+            initialState: FileTaskListReducer.State(server: .testValue())
         ) {
             FileTaskListReducer()
         } withDependencies: {
@@ -227,14 +321,21 @@ struct FileTaskListReducerTests {
                 toasts.withValue { $0.append(value) }
             }
         }
-        store.exhaustivity = .off(showSkippedAssertions: false)
-        await store.send(.tasksLoaded(.success(FileTaskPage(nextPage: 2, tasks: [first]))))
 
-        await store.send(.view(.onRowAppear(first)))
-        await store.receive(\.moreTasksLoaded)
+        await store.send(.tasksLoaded(.success(.testValue(nextPage: 2, tasks: [first])))) {
+            $0.isLoaded = true
+            $0.nextPage = 2
+            $0.tasks = [first]
+        }
+        await store.send(.view(.onRowAppear(first))) {
+            $0.isLoadingMore = true
+        }
+        await store.receive(\.moreTasksLoaded) {
+            $0.isLoadingMore = false
+        }
 
-        #expect(!store.state.isLoadingMore)
         #expect(store.state.tasks.map(\.id) == [1])
+        #expect(store.state.nextPage == 2)
         #expect(toasts.value == [.error("Something went wrong")])
     }
 

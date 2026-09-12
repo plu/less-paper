@@ -93,7 +93,14 @@ public struct FileTaskListReducer: Reducer, Sendable {
         Reduce { state, action in
             switch action {
             case .binding(\.segment):
+                // Everything the old segment had in flight goes with it. runLoadFileTasks cancels
+                // both loads, so the flags they set have to come off by hand - a cancelled effect
+                // sends nothing, and an isLoadingMore left standing stops the new segment paging at
+                // all. isDismissing too: a task keeps its id across statuses, so a dismiss still in
+                // flight would otherwise resolve against a row in the new list.
+                state.isDismissing = []
                 state.isLoaded = false
+                state.isLoadingMore = false
                 state.nextPage = nil
                 state.tasks = []
                 return .runLoadFileTasks(server: state.server, status: state.segment, page: 1)
@@ -138,6 +145,9 @@ public struct FileTaskListReducer: Reducer, Sendable {
                     state.isDismissing.insert(id)
                     return .runDismiss(id: id, server: state.server)
                 case .onAppear, .onRefresh:
+                    // Reloading from page one cancels a next page in flight, so the flag it set has
+                    // to come off with it.
+                    state.isLoadingMore = false
                     return .runLoadFileTasks(server: state.server, status: state.segment, page: 1)
                 case let .onRowAppear(task):
                     guard let nextPage = state.nextPage,
