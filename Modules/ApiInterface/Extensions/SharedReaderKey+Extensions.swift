@@ -195,6 +195,13 @@ public extension SharedReaderKey where Self == AppStorageKey<Int>.Default {
             default: 0
         ]
     }
+
+    static func failedFileTaskCount(_ server: Server) -> Self {
+        Self[
+            .appStorage("\(server.id)-failed-file-task-count"),
+            default: 0
+        ]
+    }
 }
 
 public extension SharedReaderKey where Self == FileStorageKey<[Tag.Id]>.Default {

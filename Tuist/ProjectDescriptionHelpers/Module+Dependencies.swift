@@ -249,6 +249,7 @@ extension Module {
                 .target(.customFieldsFeature),
                 .target(.designTokens),
                 .target(.documentTypesFeature),
+                .target(.fileTasksFeature),
                 .target(.imageFeature),
                 .target(.permissionsFeature),
                 .target(.savedViewsFeature),
@@ -268,6 +269,7 @@ extension Module {
                 .target(.designTokens),
                 .target(.documentTypesFeature),
                 .target(.documentsFeature),
+                .target(.fileTasksFeature),
                 .target(.storagePathsFeature),
                 .target(.tagsFeature),
                 .target(.testSupport),
@@ -293,6 +295,26 @@ extension Module {
                 .target(.components),
                 .target(.documentsFeature),
                 .target(.favoritesFeature),
+                .target(.testSupport),
+            ]
+        case .fileTasksFeature:
+            [
+                .external(.composableArchitecture),
+                .external(.dependencies),
+                .external(.dependenciesMacros),
+                .external(.tagged),
+                .target(.apiInterface),
+                .target(.components),
+                .target(.designTokens),
+            ]
+        case .fileTasksFeatureTests:
+            [
+                .external(.composableArchitecture),
+                .external(.dependenciesTestSupport),
+                .target(.apiInterface),
+                .target(.apiTestSupport),
+                .target(.components),
+                .target(.fileTasksFeature),
                 .target(.testSupport),
             ]
         case .forwardAuthFeature:

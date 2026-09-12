@@ -45,11 +45,31 @@ public enum Fixtures {
     //
     // Consumption is asynchronous — the document only gets an id once the consumer has finished, in
     // about three seconds — so this polls for it rather than sleeping a guessed interval.
+    //
+    // `fileNamed` uploads a copy of the same fixture PDF under a different name, for a caller that
+    // has to recognise its own upload by file name: paperless records the uploaded file's own name
+    // on the consume task, not the title, so every upload of the shared fixture is otherwise called
+    // "Sonos One.pdf" — the corpus's own copy included.
     public static func uploadDocument(
         titled title: String,
+        fileNamed fileName: String? = nil,
         token: String
     ) async throws -> Document.Id {
-        try await withUserDependencies(token: token) {
+        let fixture = URL.projectRoot.appending(path: "docker/data/Sonos One.pdf")
+        let copy = try fileName.map { name -> URL in
+            let copy = FileManager.default.temporaryDirectory.appending(path: name)
+            // A crashed run can leave the copy behind, and copyItem refuses to overwrite.
+            try? FileManager.default.removeItem(at: copy)
+            try FileManager.default.copyItem(at: fixture, to: copy)
+            return copy
+        }
+        defer {
+            if let copy {
+                try? FileManager.default.removeItem(at: copy)
+            }
+        }
+
+        return try await withUserDependencies(token: token) {
             @Dependency(\.documentsRepository)
             var documentsRepository
 
@@ -62,7 +82,7 @@ public enum Fixtures {
                     storagePath: nil,
                     tags: [],
                     title: title,
-                    url: .projectRoot.appending(path: "docker/data/Sonos One.pdf")
+                    url: copy ?? fixture
                 ),
                 server: .testValue()
             )

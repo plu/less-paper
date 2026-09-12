@@ -1,6 +1,7 @@
 import ApiInterface
 import Components
 import ComposableArchitecture
+import FileTasksFeature
 import Foundation
 import ShareFeature
 import Tagged
@@ -39,6 +40,7 @@ public struct DocumentListReducer: Sendable {
             case editStoragePathButtonTapped
             case editTagsButtonTapped
             case editTitleButtonTapped
+            case fileTasksButtonTapped
             case filterButtonTapped
             case importButtonTapped
             case mergeSelectedButtonTapped
@@ -63,6 +65,7 @@ public struct DocumentListReducer: Sendable {
         case bulkEditTags(DocumentBulkEditTagsReducer)
         case bulkEditTitle(DocumentBulkEditTitleReducer)
         case documentFilter(DocumentFilterReducer)
+        case fileTasks(FileTaskListReducer)
     }
 
     @Reducer
@@ -318,6 +321,12 @@ public struct DocumentListReducer: Sendable {
                         sortField: state.filter.input.sort.field
                     )
                 }
+            case .destination(.presented(.fileTasks(.delegate(.close)))):
+                state.destination = nil
+                return .none
+            case let .destination(.presented(.fileTasks(.delegate(.openDocument(id))))):
+                state.destination = nil
+                return .send(.openDocument(id))
             // The detail's delete goes through the same effect as the row's. .documentsDeleted then
             // removes the row and pops any detail showing it, so this screen needs nothing else.
             case let .path(.element(id: _, action: .documentDetail(.delegate(.deleteDocument(id))))):
@@ -439,6 +448,9 @@ public struct DocumentListReducer: Sendable {
                         server: state.server
                     ))
                     return .none
+                case .fileTasksButtonTapped:
+                    state.destination = .fileTasks(FileTaskListReducer.State(server: state.server))
+                    return .none
                 case .filterButtonTapped:
                     state.$filterMatchCount.withLock {
                         $0 = .init(count: state.isLoaded ? state.totalNumberOfDocuments : nil)
@@ -462,27 +474,22 @@ public struct DocumentListReducer: Sendable {
                     ))
                     return .none
                 case .onAppear:
+                    // Refreshed on every appearance, not just the branches below that fetch: the
+                    // failed-imports badge has to catch up when a document was sent in while the
+                    // inbox was already loaded, which is the ordinary way this screen gets revisited.
+                    // Inbox only - DocumentListView shares this reducer and renders no badge, and on
+                    // a v9 server reading the count is a full unpaginated GET /api/tasks/.
+                    let refreshFailedFileTaskCount: Effect<Action> = state.filter.isInbox
+                        ? .runRefreshFailedFileTaskCount(server: state.server)
+                        : .none
                     guard state.documents.isEmpty else {
-                        return .none
+                        return refreshFailedFileTaskCount
                     }
                     state.error = nil
                     state.rebuildInboxFilterIfNeeded()
                     guard !state.isInboxWithoutInboxTags else {
                         state.clearForEmptyInbox()
-                        return .none
-                    }
-                    return .runGetDocuments(
-                        filterRules: state.filter.input.filterRules,
-                        server: state.server,
-                        sortDirection: state.filter.input.sort.direction,
-                        sortField: state.filter.input.sort.field
-                    )
-                case .onRefresh, .reloadButtonTapped:
-                    state.error = nil
-                    state.rebuildInboxFilterIfNeeded()
-                    guard !state.isInboxWithoutInboxTags else {
-                        state.clearForEmptyInbox()
-                        return .runRefreshStatistics(server: state.server)
+                        return refreshFailedFileTaskCount
                     }
                     return .merge(
                         .runGetDocuments(
@@ -491,7 +498,31 @@ public struct DocumentListReducer: Sendable {
                             sortDirection: state.filter.input.sort.direction,
                             sortField: state.filter.input.sort.field
                         ),
-                        .runRefreshStatistics(server: state.server)
+                        refreshFailedFileTaskCount
+                    )
+                case .onRefresh, .reloadButtonTapped:
+                    // Inbox only, for the reason given under .onAppear above.
+                    let refreshFailedFileTaskCount: Effect<Action> = state.filter.isInbox
+                        ? .runRefreshFailedFileTaskCount(server: state.server)
+                        : .none
+                    state.error = nil
+                    state.rebuildInboxFilterIfNeeded()
+                    guard !state.isInboxWithoutInboxTags else {
+                        state.clearForEmptyInbox()
+                        return .merge(
+                            .runRefreshStatistics(server: state.server),
+                            refreshFailedFileTaskCount
+                        )
+                    }
+                    return .merge(
+                        .runGetDocuments(
+                            filterRules: state.filter.input.filterRules,
+                            server: state.server,
+                            sortDirection: state.filter.input.sort.direction,
+                            sortField: state.filter.input.sort.field
+                        ),
+                        .runRefreshStatistics(server: state.server),
+                        refreshFailedFileTaskCount
                     )
                 case let .onLayoutChanged(isSplit):
                     state.isSplitLayout = isSplit
