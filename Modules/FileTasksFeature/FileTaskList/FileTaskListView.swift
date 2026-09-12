@@ -77,7 +77,7 @@ public struct FileTaskListView: View {
             }
         }
         .background(Color.m3SurfaceContainerLowest)
-        .listStyle(.plain)
+        .listStyle(.insetGrouped)
         .overlay(emptyView())
         .refreshable { await send(.onRefresh).finish() }
         .scrollContentBackground(.hidden)
