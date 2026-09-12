@@ -95,36 +95,43 @@ struct FileTaskPayloadTests {
 
     // The failure shape is the one thing that could not be recorded: the dev instance has no failed
     // consume task. result_data's failure keys are therefore a guess, and the mapping must not
-    // depend on them - any string in the object will do.
-    private static let syntheticFailureV10 = """
-    {
-        "count": 1,
-        "next": null,
-        "previous": null,
-        "results": [
-            {
-                "id": 300,
-                "task_id": "11111111-2222-3333-4444-555555555555",
-                "task_type": "consume_file",
-                "task_type_display": "Consume File",
-                "trigger_source": "api_upload",
-                "trigger_source_display": "API Upload",
-                "status": "failure",
-                "status_display": "Failure",
-                "date_created": "2026-09-08T14:48:16.989002+02:00",
-                "date_started": "2026-09-08T14:48:16.992843+02:00",
-                "date_done": "2026-09-08T14:48:17.130038+02:00",
-                "duration_seconds": 0.1,
-                "wait_time_seconds": 0.1,
-                "input_data": { "filename": "broken.pdf" },
-                "result_data": { "error": "not a valid pdf" },
-                "related_document_ids": [],
-                "acknowledged": false,
-                "owner": 2
-            }
-        ]
+    // depend on them - any string in the object will do, and a payload with no string at all still
+    // has to say something.
+    private static let syntheticFailureV10 = syntheticFailure(
+        resultData: #"{"error": "not a valid pdf"}"#
+    )
+
+    private static func syntheticFailure(resultData: String) -> String {
+        """
+        {
+            "count": 1,
+            "next": null,
+            "previous": null,
+            "results": [
+                {
+                    "id": 300,
+                    "task_id": "11111111-2222-3333-4444-555555555555",
+                    "task_type": "consume_file",
+                    "task_type_display": "Consume File",
+                    "trigger_source": "api_upload",
+                    "trigger_source_display": "API Upload",
+                    "status": "failure",
+                    "status_display": "Failure",
+                    "date_created": "2026-09-08T14:48:16.989002+02:00",
+                    "date_started": "2026-09-08T14:48:16.992843+02:00",
+                    "date_done": "2026-09-08T14:48:17.130038+02:00",
+                    "duration_seconds": 0.1,
+                    "wait_time_seconds": 0.1,
+                    "input_data": { "filename": "broken.pdf" },
+                    "result_data": \(resultData),
+                    "related_document_ids": [],
+                    "acknowledged": false,
+                    "owner": 2
+                }
+            ]
+        }
+        """
     }
-    """
 
     private func decodeV9() throws -> [FileTaskPayloadV9] {
         try JSONDecoder.apiDecoder.decode(
@@ -189,13 +196,20 @@ struct FileTaskPayloadTests {
         #expect(output.count == 43)
     }
 
-    // v9 sends prose even on success; v10 sends none. Asserted rather than smoothed over, because a
-    // future reader will otherwise "fix" the difference.
+    // v9 sends prose even on success; v10 sends none, only `{"document_id": 43}`. Asserted rather
+    // than smoothed over, because a future reader will otherwise "fix" the difference. The mapping
+    // stays dumb and hands over the raw object; the view shows a message on failed rows only, so
+    // nothing displays this.
     @Test
-    func v10_hasNoMessageForASuccess() throws {
-        let task = try #require(try decodeV10(Self.recordedV10).results.first).asFileTask
+    func v10_hasNoProseForASuccess() throws {
+        let v9 = try #require(decodeV9().first).asFileTask
+        let v10 = try #require(try decodeV10(Self.recordedV10).results.first).asFileTask
 
-        #expect(task.message == nil)
+        #expect(v9.message == "Success. New document id 43 created")
+        // Snake case, and deliberately asserted that way: the keys inside a decoded
+        // [String: JSONValue] are not rewritten by convertFromSnakeCase, whatever the mapping's own
+        // comment above documentId says. Reading both spellings is what makes that harmless.
+        #expect(v10.message == #"{"document_id":43}"#)
     }
 
     @Test
@@ -206,6 +220,58 @@ struct FileTaskPayloadTests {
         #expect(task.fileName == "broken.pdf")
         #expect(task.documentId == nil)
         #expect(task.message == "not a valid pdf")
+    }
+
+    // The insurance tier. A failure whose values are all arrays or objects would otherwise render a
+    // failed row with nothing beside it, on the one screen whose entire job is saying what happened.
+    @Test
+    func v10_fallsBackToTheRawJsonWhenNoValueIsAString() throws {
+        let task = try #require(
+            try decodeV10(Self.syntheticFailure(resultData: #"{"errors": ["duplicate"]}"#))
+                .results
+                .first
+        ).asFileTask
+
+        #expect(task.message == #"{"errors":["duplicate"]}"#)
+    }
+
+    // And an absent result_data is the one case that legitimately has nothing to say.
+    @Test
+    func v10_hasNoMessageWithoutResultData() throws {
+        let task = try #require(
+            try decodeV10(Self.syntheticFailure(resultData: "null")).results.first
+        ).asFileTask
+
+        #expect(task.message == nil)
+    }
+
+    // A page must survive a row that is missing related_document_ids: one absent key taking every
+    // other row on the page with it is the failure mode every decision here is shaped against.
+    @Test
+    func v10_decodesARowWithoutRelatedDocumentIds() throws {
+        let json = """
+        {
+            "count": 1,
+            "next": null,
+            "previous": null,
+            "results": [
+                {
+                    "id": 301,
+                    "task_type": "consume_file",
+                    "status": "success",
+                    "date_created": "2026-09-08T14:48:16.989002+02:00",
+                    "date_done": null,
+                    "input_data": { "filename": "a.pdf" },
+                    "result_data": null,
+                    "acknowledged": false
+                }
+            ]
+        }
+        """
+        let task = try #require(try decodeV10(json).results.first).asFileTask
+
+        #expect(task.id == 301)
+        #expect(task.documentId == nil)
     }
 
     @Test
