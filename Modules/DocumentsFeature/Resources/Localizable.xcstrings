@@ -1764,6 +1764,23 @@
         }
       }
     },
+    "failedFileTaskCount": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld fehlgeschlagene Importe"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld failed imports"
+          }
+        }
+      }
+    },
     "favorite": {
       "extractionState": "manual",
       "localizations": {
@@ -1777,6 +1794,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Favorite"
+          }
+        }
+      }
+    },
+    "fileTasks": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dateiaufgaben"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Tasks"
           }
         }
       }

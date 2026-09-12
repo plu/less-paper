@@ -2,6 +2,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import DesignTokens
+import FileTasksFeature
 import SwiftUI
 
 @ViewAction(for: DocumentListReducer.self)
@@ -68,6 +69,15 @@ public struct InboxView: View {
         .onAppear { send(.onLayoutChanged(isSplit: horizontalSizeClass == .regular)) }
         .onChange(of: horizontalSizeClass) { _, sizeClass in
             send(.onLayoutChanged(isSplit: sizeClass == .regular))
+        }
+        .sheet(
+            item: $store.scope(
+                state: \.destination?.fileTasks,
+                action: \.destination.fileTasks
+            )
+        ) { store in
+            FileTaskListView(store: store)
+                .presentationDetents([.sheet])
         }
         .badge(inboxDocumentCount)
     }

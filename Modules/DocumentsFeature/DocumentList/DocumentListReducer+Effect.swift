@@ -90,6 +90,19 @@ extension Effect where Action == DocumentListReducer.Action {
         .cancellable(id: CancelID.refreshStatistics)
     }
 
+    static func runRefreshFailedFileTaskCount(server: Server) -> Self {
+        @Dependency(\.getFailedFileTaskCount.execute)
+        var getFailedFileTaskCount
+
+        return .run { _ in
+            _ = try await getFailedFileTaskCount(server)
+        } catch: { _, _ in
+            // Best-effort, like runRefreshStatistics above: the badge keeps its previous number
+            // rather than reporting zero for a request that failed.
+        }
+        .cancellable(id: CancelID.refreshFailedFileTaskCount, cancelInFlight: true)
+    }
+
     static func runRefreshDocuments(
         ids: Set<Document.Id>,
         server: Server
@@ -140,6 +153,7 @@ private enum CancelID {
     case getDocuments
     case getMoreDocuments
     case refreshDocuments
+    case refreshFailedFileTaskCount
     case refreshStatistics
     case selectServer
 }

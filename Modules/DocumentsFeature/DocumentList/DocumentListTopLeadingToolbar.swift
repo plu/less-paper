@@ -1,4 +1,7 @@
+import ApiInterface
+import Components
 import ComposableArchitecture
+import DesignTokens
 import SwiftUI
 
 extension View {
@@ -28,7 +31,7 @@ private struct DocumentListTopLeadingToolbar: ViewModifier {
                     } else {
                         switch type {
                         case .inbox:
-                            EmptyView()
+                            fileTasksButton
                         case .documents:
                             defaultActionsMenu
                         }
@@ -45,6 +48,7 @@ private struct DocumentListTopLeadingToolbar: ViewModifier {
         self.store = store
         self.type = type
         self.viewAction = viewAction
+        _failedFileTaskCount = Shared(.failedFileTaskCount(store.server))
     }
 
     @ViewBuilder
@@ -53,6 +57,41 @@ private struct DocumentListTopLeadingToolbar: ViewModifier {
             send(.toggleSelectionModeButtonTapped)
         } label: {
             Label(.done, systemImage: "xmark")
+        }
+    }
+
+    @Shared
+    private var failedFileTaskCount: Int
+
+    // A button whose only possible outcome is a 403 is worse than no button, so it is hidden
+    // entirely rather than shown disabled.
+    @ViewBuilder
+    private var fileTasksButton: some View {
+        if store.permissions.can(.viewPaperlessTask) {
+            Button {
+                send(.fileTasksButtonTapped)
+            } label: {
+                // An HStack rather than a badge overlay on the icon: an overlay on a toolbar item is
+                // clipped by the navigation bar on some heights, and this cannot be.
+                HStack(spacing: .x1) {
+                    Image(systemName: "tray.and.arrow.down")
+                    if failedFileTaskCount > 0 {
+                        Text(verbatim: String(failedFileTaskCount))
+                            .capsule(
+                                backgroundColor: .m3ErrorContainer,
+                                font: .caption2,
+                                foregroundColor: .m3OnErrorContainer,
+                                padding: .init(top: .x1, leading: .x2, bottom: .x1, trailing: .x2)
+                            )
+                    }
+                }
+            }
+            .accessibilityLabel(.fileTasks)
+            .accessibilityValue(
+                failedFileTaskCount > 0
+                    ? String(localized: .failedFileTaskCount(failedFileTaskCount))
+                    : ""
+            )
         }
     }
 
