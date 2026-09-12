@@ -30,3 +30,21 @@ public enum FileTaskStatus: String, CaseIterable, Codable, Equatable, Sendable {
         self = Self(rawValue: raw) ?? Self(apiValue: raw) ?? .queued
     }
 }
+
+public extension FileTaskStatus {
+
+    // What v10 calls this status in a `?status=` filter. The reverse of init(apiValue:), and lower
+    // case because v10 rejects the shouted spelling.
+    var apiQueryValue: String {
+        switch self {
+        case .complete:
+            "success"
+        case .failed:
+            "failure"
+        case .queued:
+            "pending"
+        case .started:
+            "started"
+        }
+    }
+}
