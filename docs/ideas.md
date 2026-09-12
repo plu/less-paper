@@ -279,3 +279,44 @@ real product data cannot be automated from a command line at all — not CI, not
 needs a human pressing Run in Xcode.
 
 Surfaced during: `docs/superpowers/specs/2026-09-04-tiny-tip-design.md`, 2026-09-04.
+
+---
+
+## Show task types other than imports
+
+`/api/tasks/` carries twelve task types; the file task list filters to `consume_file` because the
+other eleven are scheduled housekeeping the user did not start. On the dev instance that is 958 rows
+of `train_classifier`, `mail_fetch` and `check_workflows` against 43 imports.
+
+A type filter would make the screen a general task viewer. It needs a second picker or a filter
+sheet, and on API v9 it cannot be server-side at all.
+
+Surfaced during: `docs/superpowers/specs/2026-09-12-file-tasks-inbox-design.md`.
+
+---
+
+## `post_document` throws away the task id it is handed
+
+`POST /api/documents/post_document/` answers with the celery task id, and
+`DocumentsRepository.swift:145` discards the response body. `/api/tasks/` accepts a `task_id` filter,
+so threading that id out of `CreateDocumentUseCase` is what would let the app follow one upload rather
+than guess from the newest row.
+
+Needed by the background-polling-and-toast project; not needed by the file task list itself.
+
+Surfaced during: `docs/superpowers/specs/2026-09-12-file-tasks-inbox-design.md`.
+
+---
+
+## Uploads record a percent-encoded file name
+
+The multipart encoder percent-encodes the `Content-Disposition` filename, so an app upload of
+`Sonos One.pdf` is recorded by paperless as `Sonos%20One.pdf` in the consume task's
+`input_data.filename`. Confirmed against the dev instance: every app and fixture upload is
+percent-encoded, while the seeded corpus and plain `curl` uploads are not. It lives in
+`CreateDocumentInput.formData`.
+
+It was invisible until now; the file task list is the first screen to display that name, so a user
+sees `invoice%20march.pdf` for any file with a space in its name.
+
+Surfaced during: Task 9 of `docs/superpowers/specs/2026-09-12-file-tasks-inbox-design.md`.
