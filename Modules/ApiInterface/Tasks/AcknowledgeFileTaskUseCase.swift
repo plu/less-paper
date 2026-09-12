@@ -6,7 +6,7 @@ import Foundation
 public struct AcknowledgeFileTaskUseCase: Sendable {
 
     public var execute: @Sendable (
-        _ id: FileTask.Id,
+        _ ids: [FileTask.Id],
         _ server: Server
     ) async throws -> Void
 }

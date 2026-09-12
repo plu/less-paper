@@ -52,6 +52,81 @@
         }
       }
     },
+    "fileTasksDismissAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angezeigte Aufgaben ausblenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dismiss Shown Tasks"
+          }
+        }
+      }
+    },
+    "fileTasksDismissAllConfirmMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Dies blendet die %lld in dieser Liste angezeigte Aufgabe aus. Das kann nicht rückgängig gemacht werden."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Dies blendet die %lld in dieser Liste angezeigten Aufgaben aus. Das kann nicht rückgängig gemacht werden."
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This dismisses the %lld task shown in this list. This can't be undone."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This dismisses the %lld tasks shown in this list. This can't be undone."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "fileTasksDismissAllConfirmTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Angezeigte Aufgaben ausblenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dismiss Shown Tasks"
+          }
+        }
+      }
+    },
     "fileTasksEmpty": {
       "extractionState": "manual",
       "localizations": {

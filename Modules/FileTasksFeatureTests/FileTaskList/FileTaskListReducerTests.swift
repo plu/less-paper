@@ -283,6 +283,138 @@ struct FileTaskListReducerTests {
         #expect(toasts.value == [.error("Something went wrong")])
     }
 
+    @Test
+    func test_dismissAll_confirmsThenDismissesEveryLoadedRow() async {
+        let server = Server.testValue()
+        let tasks: IdentifiedArrayOf<FileTask> = [
+            .testValue(id: 1, status: .failed),
+            .testValue(id: 2, status: .failed)
+        ]
+        let confirmedCount = LockIsolated<Int?>(nil)
+        let acknowledgedIds = LockIsolated<[FileTask.Id]?>(nil)
+        let store = TestStore(
+            initialState: FileTaskListReducer.State(
+                segment: .failed,
+                tasks: tasks,
+                isLoaded: true,
+                server: server
+            )
+        ) {
+            FileTaskListReducer()
+        } withDependencies: {
+            $0.fileTaskDismissAllConfirmation.present = { count in
+                confirmedCount.setValue(count)
+                return true
+            }
+            $0.acknowledgeFileTask.execute = { ids, _ in acknowledgedIds.setValue(ids) }
+        }
+
+        await store.send(.view(.dismissAllButtonTapped))
+        await store.receive(\.dismissAllConfirmed) {
+            $0.isDismissing = [1, 2]
+        }
+        await store.receive(\.dismissAllFinished) {
+            $0.isDismissing = []
+            $0.tasks = []
+        }
+
+        #expect(confirmedCount.value == 2)
+        #expect(acknowledgedIds.value == [1, 2])
+    }
+
+    // The one test that stops a future refactor from firing the request before the user answers:
+    // declining leaves the use case uncalled and the state exactly as it was.
+    @Test
+    func test_dismissAll_decliningLeavesEverythingUntouched() async {
+        let task = FileTask.testValue(id: 1, status: .failed)
+        let acknowledged = LockIsolated(false)
+        let store = TestStore(
+            initialState: FileTaskListReducer.State(
+                segment: .failed,
+                tasks: [task],
+                isLoaded: true,
+                server: .testValue()
+            )
+        ) {
+            FileTaskListReducer()
+        } withDependencies: {
+            $0.fileTaskDismissAllConfirmation.present = { _ in false }
+            $0.acknowledgeFileTask.execute = { _, _ in acknowledged.setValue(true) }
+        }
+
+        await store.send(.view(.dismissAllButtonTapped))
+
+        #expect(!acknowledged.value)
+        #expect(store.state.tasks == [task])
+        #expect(store.state.isDismissing.isEmpty)
+    }
+
+    @Test
+    func test_dismissAll_keepsTheRowsWhenItFails() async {
+        let tasks: IdentifiedArrayOf<FileTask> = [
+            .testValue(id: 1, status: .failed),
+            .testValue(id: 2, status: .failed)
+        ]
+        let toasts = LockIsolated<[Toast]>([])
+        let store = TestStore(
+            initialState: FileTaskListReducer.State(
+                segment: .failed,
+                tasks: tasks,
+                isLoaded: true,
+                server: .testValue()
+            )
+        ) {
+            FileTaskListReducer()
+        } withDependencies: {
+            $0.fileTaskDismissAllConfirmation.present = { _ in true }
+            $0.acknowledgeFileTask.execute = { _, _ in throw ApiError.testValue() }
+            $0.toastPresenter.present = { value in
+                toasts.withValue { $0.append(value) }
+            }
+        }
+
+        await store.send(.view(.dismissAllButtonTapped))
+        await store.receive(\.dismissAllConfirmed) {
+            $0.isDismissing = [1, 2]
+        }
+        await store.receive(\.dismissAllFinished) {
+            // Unmarked but not removed, so every row can be tried again.
+            $0.isDismissing = []
+        }
+
+        #expect(store.state.tasks == tasks)
+        #expect(toasts.value == [.error("Something went wrong")])
+    }
+
+    // canDismissAll gates the header button, and it is checked here rather than only through a
+    // snapshot: an empty list must hide the button even when the permission allows it, and a denied
+    // permission must hide it even with rows loaded.
+    @Test
+    func test_canDismissAll_requiresBothThePermissionAndANonEmptyList() async {
+        let server = Server.testValue()
+        @Shared(.currentUser(server))
+        var currentUser: User?
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewPaperlessTask, .changePaperlessTask] }
+
+        #expect(FileTaskListReducer.State(
+            tasks: [.testValue(id: 1)],
+            isLoaded: true,
+            server: server
+        ).canDismissAll)
+
+        #expect(!FileTaskListReducer.State(tasks: [], isLoaded: true, server: server).canDismissAll)
+
+        $permissions.withLock { $0 = [.viewPaperlessTask] }
+        #expect(!FileTaskListReducer.State(
+            tasks: [.testValue(id: 1)],
+            isLoaded: true,
+            server: server
+        ).canDismissAll)
+    }
+
     // isLoaded is set even on a failure, so the list settles into its empty state with pull to
     // refresh working rather than spinning forever.
     @Test

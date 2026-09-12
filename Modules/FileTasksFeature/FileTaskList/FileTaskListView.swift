@@ -17,6 +17,16 @@ public struct FileTaskListView: View {
                 SheetCloseButton {
                     send(.closeButtonTapped)
                 }
+            }, right: {
+                if store.canDismissAll {
+                    Button {
+                        send(.dismissAllButtonTapped)
+                    } label: {
+                        Image(systemName: "checkmark.circle")
+                            .sheetHeaderTapTarget()
+                            .accessibilityLabel(.fileTasksDismissAll)
+                    }
+                }
             })
         } content: {
             VStack(spacing: .x0) {

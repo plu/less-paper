@@ -5,7 +5,7 @@ import Foundation
 extension AcknowledgeFileTaskUseCase: @retroactive DependencyKey {
 
     public static let liveValue = Self(
-        execute: execute(id:server:)
+        execute: execute(ids:server:)
     )
 }
 
@@ -17,17 +17,18 @@ private extension AcknowledgeFileTaskUseCase {
     // `ApiVersion.negotiated(from:)` rejects outright. `/api/tasks/acknowledge/` is the only path
     // that has ever worked on a server this app supports, so it is the only one called.
     static func execute(
-        id: FileTask.Id,
+        ids: [FileTask.Id],
         server: Server
     ) async throws {
         @Dependency(\.fileTaskRepository)
         var repository
 
-        try await repository.acknowledgeFileTask(id, server)
+        try await repository.acknowledgeFileTasks(ids, server)
 
         // The badge is read from the server so it cannot drift from it: a successful dismiss
         // re-reads the count rather than decrementing it locally, the same way DeleteDocumentsUseCase
-        // and CreateDocumentUseCase call refreshStatistics after their own mutations.
+        // and CreateDocumentUseCase call refreshStatistics after their own mutations. One refresh per
+        // batch, not per id: the count is a single server read regardless of how many rows it covers.
         await refreshFailedFileTaskCount(server: server)
     }
 }

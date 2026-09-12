@@ -35,6 +35,10 @@ public struct FileTaskListReducer: Reducer, Sendable {
 
         var canDismiss: Bool { permissions.can(.changePaperlessTask) }
 
+        // The header button's own condition, stated once so a reducer test can assert it directly
+        // rather than only through a snapshot.
+        var canDismissAll: Bool { canDismiss && !tasks.isEmpty }
+
         public init(server: Server) {
             // Read through a local: every stored property has to be initialised before any of them
             // can be read back, so `_failedCount.wrappedValue` here would not compile.
@@ -66,6 +70,8 @@ public struct FileTaskListReducer: Reducer, Sendable {
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
         case delegate(Delegate)
+        case dismissAllConfirmed(ids: [FileTask.Id])
+        case dismissAllFinished(ids: [FileTask.Id], Result<Void, Error>)
         case dismissFinished(id: FileTask.Id, Result<Void, Error>)
         case moreTasksLoaded(Result<FileTaskPage, Error>)
         case tasksLoaded(Result<FileTaskPage, Error>)
@@ -79,6 +85,7 @@ public struct FileTaskListReducer: Reducer, Sendable {
 
         public enum View: Equatable, Sendable {
             case closeButtonTapped
+            case dismissAllButtonTapped
             case dismissButtonTapped(FileTask.Id)
             case onAppear
             case onRefresh
@@ -124,6 +131,20 @@ public struct FileTaskListReducer: Reducer, Sendable {
             case let .moreTasksLoaded(.failure(error)):
                 state.isLoadingMore = false
                 return .toast(error)
+            case let .dismissAllConfirmed(ids):
+                state.isDismissing.formUnion(ids)
+                return .runDismissAll(ids: ids, server: state.server)
+            case let .dismissAllFinished(ids, .success):
+                for id in ids {
+                    state.isDismissing.remove(id)
+                    state.tasks.remove(id: id)
+                }
+                return .none
+            case let .dismissAllFinished(ids, .failure(error)):
+                for id in ids {
+                    state.isDismissing.remove(id)
+                }
+                return .toast(error)
             case let .dismissFinished(id, .success):
                 // Removed rather than reloaded: a reload would make the dismiss look slower than it
                 // was, and GetFileTasksUseCase filters acknowledged rows out of every segment, so
@@ -139,6 +160,11 @@ public struct FileTaskListReducer: Reducer, Sendable {
                 switch viewAction {
                 case .closeButtonTapped:
                     return .send(.delegate(.close))
+                case .dismissAllButtonTapped:
+                    guard state.canDismissAll else {
+                        return .none
+                    }
+                    return .runConfirmDismissAll(ids: Array(state.tasks.ids), server: state.server)
                 case let .dismissButtonTapped(id):
                     guard !state.isDismissing.contains(id) else {
                         return .none

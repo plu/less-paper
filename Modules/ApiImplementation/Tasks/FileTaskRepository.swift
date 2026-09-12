@@ -9,8 +9,8 @@ import Get
 @DependencyClient
 struct FileTaskRepository: Sendable {
 
-    var acknowledgeFileTask: @Sendable (
-        _ id: FileTask.Id,
+    var acknowledgeFileTasks: @Sendable (
+        _ ids: [FileTask.Id],
         _ server: Server
     ) async throws -> Void
 
@@ -32,14 +32,14 @@ struct FileTaskRepository: Sendable {
 extension FileTaskRepository: TestDependencyKey {
 
     static let previewValue = Self(
-        acknowledgeFileTask: { _, _ in },
+        acknowledgeFileTasks: { _, _ in },
         getFailedFileTaskCountV10: { _ in 0 },
         getFileTasksV10: { _, _, _ in .init() },
         getFileTasksV9: { _ in [] }
     )
 
     static let testValue = Self(
-        acknowledgeFileTask: { _, _ in },
+        acknowledgeFileTasks: { _, _ in },
         getFailedFileTaskCountV10: { _ in 0 },
         getFileTasksV10: { _, _, _ in .init() },
         getFileTasksV9: { _ in [] }
@@ -49,8 +49,8 @@ extension FileTaskRepository: TestDependencyKey {
 extension FileTaskRepository: DependencyKey {
 
     static let liveValue = Self(
-        acknowledgeFileTask: { id, server in
-            try await acknowledge(id: id, path: "/api/tasks/acknowledge/", server: server)
+        acknowledgeFileTasks: { ids, server in
+            try await acknowledge(ids: ids, path: "/api/tasks/acknowledge/", server: server)
         },
         getFailedFileTaskCountV10: getFailedFileTaskCountV10(server:),
         getFileTasksV10: getFileTasksV10(status:page:server:),
@@ -80,7 +80,7 @@ private extension FileTaskRepository {
     }
 
     static func acknowledge(
-        id: FileTask.Id,
+        ids: [FileTask.Id],
         path: String,
         server: Server
     ) async throws {
@@ -89,7 +89,7 @@ private extension FileTaskRepository {
             .send(.init(
                 path: path,
                 method: .post,
-                body: AcknowledgeBody(tasks: [id])
+                body: AcknowledgeBody(tasks: ids)
             ))
             .value
     }
