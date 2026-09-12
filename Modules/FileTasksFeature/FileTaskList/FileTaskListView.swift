@@ -86,19 +86,32 @@ public struct FileTaskListView: View {
 
     @ViewBuilder
     private func emptyView() -> some View {
-        if store.tasks.isEmpty, store.isLoaded {
-            ContentUnavailableView {
-                EmptyListView(systemImage: "tray", title: .fileTasksEmpty) {
-                    Text(.fileTasksEmptyDescription)
-                        .font(.subheadline)
-                        .foregroundStyle(Color.m3OnSurface)
-                        .multilineTextAlignment(.center)
+        Group {
+            if store.tasks.isEmpty, store.isLoaded {
+                ContentUnavailableView {
+                    EmptyListView(systemImage: "tray", title: .fileTasksEmpty) {
+                        Text(.fileTasksEmptyDescription)
+                            .font(.subheadline)
+                            .foregroundStyle(Color.m3OnSurface)
+                            .multilineTextAlignment(.center)
+                    }
                 }
+            } else if store.tasks.isEmpty {
+                // The first load, and every segment switch, which clears tasks and resets
+                // isLoaded: without this branch the view spoke only once isLoaded was true, so a
+                // slow fetch left the user looking at a blank list with no way to tell it apart
+                // from an empty segment. Both states live here so the next reader finds them in
+                // one place.
+                ZStack {
+                    ProgressView()
+                        .controlSize(.large)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            // Without this the overlay swallows the scroll and pull to refresh stops working on an
-            // empty list, which is exactly when it is wanted.
-            .allowsHitTesting(false)
         }
+        // Without this the overlay swallows the scroll and pull to refresh stops working while
+        // empty or loading, which is exactly when it is wanted.
+        .allowsHitTesting(false)
     }
 }
 

@@ -91,6 +91,22 @@ struct FileTaskListViewTests {
     }
 
     @Test
+    func testSnapshot_loading() async throws {
+        assertSnapshot(
+            of: FileTaskListView(
+                store: Store(
+                    initialState: FileTaskListReducer.State.testValue(tasks: [], isLoaded: false),
+                    reducer: {
+                        FileTaskListReducer()
+                    }
+                )
+            ),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "loading"
+        )
+    }
+
+    @Test
     func testSnapshot_failedDarkMode() async throws {
         assertSnapshot(
             of: FileTaskListView(
