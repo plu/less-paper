@@ -38,7 +38,7 @@ extension Effect where Action == FileTaskListReducer.Action {
 
         return .run { send in
             try await acknowledgeFileTask(id, server)
-            await send(.dismissFinished(id: id, .success(())))
+            await send(.dismissFinished(id: id, .success(())), animation: .default)
         } catch: { error, send in
             await send(.dismissFinished(id: id, .failure(error)))
         }
