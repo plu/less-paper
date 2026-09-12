@@ -6,7 +6,7 @@ import Foundation
 import Testing
 import TestSupport
 
-@Suite
+@Suite(.dependencies())
 struct FileTaskPayloadTests {
 
     // GET /api/tasks/?task_type=consume_file with `Accept: application/json; version=9`, recorded
