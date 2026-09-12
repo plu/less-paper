@@ -21,7 +21,10 @@ public struct FileTaskListView: View {
         } content: {
             VStack(spacing: .x0) {
                 Picker(String(localized: .fileTasks), selection: $store.segment) {
-                    ForEach(FileTaskStatus.allCases, id: \.self) { status in
+                    // Not .allCases: the enum stays alphabetical per repo convention, but the
+                    // spec's segment order is Failed, Complete, Started, Queued - matching the
+                    // web's tabs, with the problem segment first.
+                    ForEach(FileTaskListView.segments, id: \.self) { status in
                         Text(status.title).tag(status)
                     }
                 }
@@ -42,6 +45,8 @@ public struct FileTaskListView: View {
 
     @Bindable
     public var store: StoreOf<FileTaskListReducer>
+
+    private static let segments: [FileTaskStatus] = [.failed, .complete, .started, .queued]
 
     @ViewBuilder
     private func list() -> some View {

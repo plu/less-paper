@@ -15,7 +15,7 @@ struct FileTaskRowView: View {
             HStack(spacing: .x2) {
                 Image(systemName: task.status.systemImage)
                     .foregroundStyle(task.status.tint)
-                Text(task.fileName ?? String(localized: .fileTasks))
+                Text(task.fileName ?? String(localized: .fileTasksUnnamedFile))
                     .foregroundColor(Color.m3OnSurface)
                     .clipShape(Rectangle())
             }
@@ -42,7 +42,7 @@ struct FileTaskRowView: View {
 
     private var accessibilityValue: String {
         [
-            task.fileName,
+            task.fileName ?? String(localized: .fileTasksUnnamedFile),
             (task.dateDone ?? task.dateCreated).formatted(date: .abbreviated, time: .shortened),
             task.status == .failed ? task.message : nil
         ]

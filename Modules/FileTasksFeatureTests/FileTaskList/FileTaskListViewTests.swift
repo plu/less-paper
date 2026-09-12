@@ -56,7 +56,10 @@ struct FileTaskListViewTests {
                         segment: .complete,
                         tasks: [
                             .testValue(documentId: 42, fileName: "invoice.pdf", id: 1),
-                            .testValue(documentId: 43, fileName: "letter.pdf", id: 2)
+                            .testValue(documentId: 43, fileName: "letter.pdf", id: 2),
+                            // No file name: v9's task_file_name and v10's input_data.filename can
+                            // both be absent, so the row has to fall back to a placeholder.
+                            .testValue(documentId: 44, fileName: nil, id: 3)
                         ]
                     ),
                     reducer: {
