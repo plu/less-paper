@@ -15,7 +15,7 @@ struct FileTaskRowView: View {
             HStack(spacing: .x2) {
                 Image(systemName: task.status.systemImage)
                     .foregroundStyle(task.status.tint)
-                Text(task.fileName ?? String(localized: .fileTasksUnnamedFile))
+                Text(fileName)
                     .foregroundColor(Color.m3OnSurface)
                     .clipShape(Rectangle())
             }
@@ -40,9 +40,24 @@ struct FileTaskRowView: View {
         .swipeActions(content: swipeActions)
     }
 
+    // Anything this app uploaded arrives percent-encoded: the multipart encoder escapes the
+    // Content-Disposition filename, so `Sonos One.pdf` is recorded by paperless as `Sonos%20One.pdf`
+    // and this is the first screen to show it. Decoded here rather than fixed at the source, which
+    // masks the defect - see "Uploads record a percent-encoded file name" in docs/ideas.md. Safe both
+    // ways round: `100%.pdf` is uploaded as `100%25.pdf` and decodes back, and a malformed sequence
+    // returns nil so the raw name shows.
+    private var fileName: String {
+        guard let fileName = task.fileName else {
+            return String(localized: .fileTasksUnnamedFile)
+        }
+        return fileName.removingPercentEncoding ?? fileName
+    }
+
+    // Reads the same `fileName` as the row above: the spoken value and the visible one diverging is
+    // its own bug.
     private var accessibilityValue: String {
         [
-            task.fileName ?? String(localized: .fileTasksUnnamedFile),
+            fileName,
             (task.dateDone ?? task.dateCreated).formatted(date: .abbreviated, time: .shortened),
             task.status == .failed ? task.message : nil
         ]

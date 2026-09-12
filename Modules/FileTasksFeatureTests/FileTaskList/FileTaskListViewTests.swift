@@ -59,7 +59,11 @@ struct FileTaskListViewTests {
                             .testValue(documentId: 43, fileName: "letter.pdf", id: 2),
                             // No file name: v9's task_file_name and v10's input_data.filename can
                             // both be absent, so the row has to fall back to a placeholder.
-                            .testValue(documentId: 44, fileName: nil, id: 3)
+                            .testValue(documentId: 44, fileName: nil, id: 3),
+                            // What paperless records for a file this app uploaded with a space in
+                            // its name. The row has to read "sonos one.pdf", not "sonos%20one.pdf" -
+                            // see the comment on FileTaskRowView.fileName.
+                            .testValue(documentId: 45, fileName: "sonos%20one.pdf", id: 4)
                         ]
                     ),
                     reducer: {
