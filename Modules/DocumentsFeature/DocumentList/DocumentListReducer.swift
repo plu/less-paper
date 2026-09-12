@@ -477,14 +477,19 @@ public struct DocumentListReducer: Sendable {
                     // Refreshed on every appearance, not just the branches below that fetch: the
                     // failed-imports badge has to catch up when a document was sent in while the
                     // inbox was already loaded, which is the ordinary way this screen gets revisited.
+                    // Inbox only - DocumentListView shares this reducer and renders no badge, and on
+                    // a v9 server reading the count is a full unpaginated GET /api/tasks/.
+                    let refreshFailedFileTaskCount: Effect<Action> = state.filter.isInbox
+                        ? .runRefreshFailedFileTaskCount(server: state.server)
+                        : .none
                     guard state.documents.isEmpty else {
-                        return .runRefreshFailedFileTaskCount(server: state.server)
+                        return refreshFailedFileTaskCount
                     }
                     state.error = nil
                     state.rebuildInboxFilterIfNeeded()
                     guard !state.isInboxWithoutInboxTags else {
                         state.clearForEmptyInbox()
-                        return .runRefreshFailedFileTaskCount(server: state.server)
+                        return refreshFailedFileTaskCount
                     }
                     return .merge(
                         .runGetDocuments(
@@ -493,16 +498,20 @@ public struct DocumentListReducer: Sendable {
                             sortDirection: state.filter.input.sort.direction,
                             sortField: state.filter.input.sort.field
                         ),
-                        .runRefreshFailedFileTaskCount(server: state.server)
+                        refreshFailedFileTaskCount
                     )
                 case .onRefresh, .reloadButtonTapped:
+                    // Inbox only, for the reason given under .onAppear above.
+                    let refreshFailedFileTaskCount: Effect<Action> = state.filter.isInbox
+                        ? .runRefreshFailedFileTaskCount(server: state.server)
+                        : .none
                     state.error = nil
                     state.rebuildInboxFilterIfNeeded()
                     guard !state.isInboxWithoutInboxTags else {
                         state.clearForEmptyInbox()
                         return .merge(
                             .runRefreshStatistics(server: state.server),
-                            .runRefreshFailedFileTaskCount(server: state.server)
+                            refreshFailedFileTaskCount
                         )
                     }
                     return .merge(
@@ -513,7 +522,7 @@ public struct DocumentListReducer: Sendable {
                             sortField: state.filter.input.sort.field
                         ),
                         .runRefreshStatistics(server: state.server),
-                        .runRefreshFailedFileTaskCount(server: state.server)
+                        refreshFailedFileTaskCount
                     )
                 case let .onLayoutChanged(isSplit):
                     state.isSplitLayout = isSplit

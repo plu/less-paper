@@ -45,6 +45,42 @@ struct DocumentListFileTasksTests {
         #expect(store.state.path.count == 1)
     }
 
+    // The only thing that ever puts a number on the toolbar button, and the one call the rest of the
+    // suite cannot see: runRefreshFailedFileTaskCount sends no action, so an exhaustive TestStore
+    // notices neither its presence nor its absence. Also pins where it may fire - InboxView and
+    // DocumentListView share this reducer, the badge belongs to the inbox alone, and on a v9 server
+    // this read is a full unpaginated GET /api/tasks/ rather than a one-row page.
+    @Test
+    func test_refresh_readsTheFailedCountForTheInboxOnly() async {
+        let asked = LockIsolated<[Server]>([])
+
+        func refresh(filter: DocumentFilter) async {
+            let store = TestStore(
+                initialState: DocumentListReducer.State.testValue(filter: filter)
+            ) {
+                DocumentListReducer()
+            } withDependencies: {
+                $0.getDocuments.execute = { _, _ in .testValue() }
+                $0.getFailedFileTaskCount.execute = { server in
+                    asked.withValue { $0.append(server) }
+                    return 2
+                }
+                $0.getStatistics.execute = { _ in .testValue() }
+            }
+            store.exhaustivity = .off(showSkippedAssertions: false)
+
+            await store.send(.view(.onRefresh))
+            await store.finish()
+        }
+
+        await refresh(filter: .testValue(isInbox: true))
+        #expect(asked.value == [.testValue()])
+
+        await refresh(filter: .testValue())
+        // Still one: the documents list renders no badge, so it asks for no count.
+        #expect(asked.value == [.testValue()])
+    }
+
     @Test
     func test_fileTaskClose_dismissesTheSheet() async {
         let store = TestStore(
