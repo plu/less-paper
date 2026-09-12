@@ -857,8 +857,8 @@ struct GetFileTasksUseCaseTests {
             }
             $0.fileTaskRepository.getFileTasksV9 = { _ in
                 [
-                    .testValue(id: 1, dateCreated: .testValue(), status: "FAILURE", taskName: "consume_file"),
-                    .testValue(id: 2, dateCreated: .testValue(adding: 60), status: "FAILURE", taskName: "consume_file"),
+                    .testValue(dateCreated: .testValue(), id: 1, status: "FAILURE", taskName: "consume_file"),
+                    .testValue(dateCreated: .testValue().addingTimeInterval(60), id: 2, status: "FAILURE", taskName: "consume_file"),
                     .testValue(id: 3, status: "FAILURE", taskName: "train_classifier"),
                     .testValue(id: 4, status: "SUCCESS", taskName: "consume_file")
                 ]
@@ -965,8 +965,10 @@ extension FileTaskPayloadV10 {
 }
 ```
 
-Check whether `Date.testValue(adding:)` exists in `TestSupport`; if it does not, use
-`Date.testValue().addingTimeInterval(60)` in the sort assertion instead and drop the parameter.
+Note the argument order in those `testValue` calls: Swift requires declaration order, and
+`FileTaskPayloadV9.testValue` declares `dateCreated` before `id`. The same rule bites
+`FileTask.testValue`, whose order is `dateCreated, dateDone, documentId, fileName, id,
+isAcknowledged, message, status`.
 
 - [ ] **Step 2: Run the test and watch it fail**
 
@@ -1348,34 +1350,46 @@ struct GetFailedFileTaskCountUseCaseTests {
         }
     }
 
+    // The use case writes the badge's shared key itself, the way GetStatisticsUseCase writes
+    // inboxDocumentCount, so that no caller has to remember to.
     @Test
-    func refresh_writesTheSharedCount() async throws {
+    func execute_writesTheSharedCount() async throws {
         let server = Server.testValue()
+        @Shared(.apiVersion(server))
+        var apiVersion: Int?
+        $apiVersion.withLock { $0 = 10 }
+
         @Shared(.failedFileTaskCount(server))
         var failedFileTaskCount: Int
 
         #expect(failedFileTaskCount == 0)
 
-        await withDependencies {
-            $0.getFailedFileTaskCount.execute = { _ in 7 }
+        try await withDependencies {
+            $0.fileTaskRepository.getFailedFileTaskCountV10 = { _ in 7 }
         } operation: {
-            await refreshFailedFileTaskCount(server: server)
+            _ = try await GetFailedFileTaskCountUseCase.liveValue.execute(server: server)
         }
 
         #expect(failedFileTaskCount == 7)
     }
 
     // A server that cannot answer must not blank the badge: the last known number is better than a
-    // zero that means "we could not ask".
+    // zero that means "we could not ask". The swallowing happens in the free function, so that is
+    // what this drives.
     @Test
     func refresh_leavesTheCountAloneOnFailure() async throws {
         let server = Server.testValue()
+        @Shared(.apiVersion(server))
+        var apiVersion: Int?
+        $apiVersion.withLock { $0 = 10 }
+
         @Shared(.failedFileTaskCount(server))
         var failedFileTaskCount: Int
         $failedFileTaskCount.withLock { $0 = 4 }
 
         await withDependencies {
-            $0.getFailedFileTaskCount.execute = { _ in throw ApiError.testValue() }
+            $0.fileTaskRepository.getFailedFileTaskCountV10 = { _ in throw CancellationError() }
+            $0.getFailedFileTaskCount = .liveValue
         } operation: {
             await refreshFailedFileTaskCount(server: server)
         }
@@ -1473,20 +1487,31 @@ private extension GetFailedFileTaskCountUseCase {
         @Shared(.apiVersion(server))
         var apiVersion: Int?
 
-        let version = apiVersion ?? ApiVersion.minimumSupported
+        @Shared(.failedFileTaskCount(server))
+        var failedFileTaskCount: Int
 
-        guard version >= 10 else {
-            return try await repository.getFileTasksV9(server)
+        let version = apiVersion ?? ApiVersion.minimumSupported
+        let count: Int
+
+        if version >= 10 {
+            // status_counts/ exists here and would be one smaller request, but its `needs_attention`
+            // is not documented as "unacknowledged failures" and does not exist on v9 at all. `count`
+            // off a one-row page answers exactly the question being asked.
+            count = try await repository.getFailedFileTaskCountV10(server)
+        } else {
+            count = try await repository.getFileTasksV9(server)
                 .filter(\.isConsumeFile)
                 .map(\.asFileTask)
                 .filter { $0.status == .failed && !$0.isAcknowledged }
                 .count
         }
 
-        // status_counts/ exists here and would be one smaller request, but its `needs_attention` is
-        // not documented as "unacknowledged failures" and does not exist on v9 at all. `count` off a
-        // one-row page answers exactly the question being asked.
-        return try await repository.getFailedFileTaskCountV10(server)
+        // Written here rather than by the callers, exactly as GetStatisticsUseCase writes
+        // inboxDocumentCount: every caller then just runs the use case and discards the result, and
+        // no feature reducer has to touch a @Shared key.
+        $failedFileTaskCount.withLock { $0 = count }
+
+        return count
     }
 }
 ```
@@ -1499,18 +1524,15 @@ import Dependencies
 import Foundation
 import SwiftSharing
 
-// Shaped like refreshStatistics: fire and forget, swallow the error. A failed refresh leaves the last
-// known count in place, because a badge reading 0 for "we could not ask" is a lie.
+// Shaped like refreshStatistics, down to swallowing the error: the use case does the writing, so a
+// failed refresh simply leaves the last known count in place. A badge reading 0 because the request
+// failed is a lie.
 func refreshFailedFileTaskCount(server: Server) async {
     @Dependency(\.getFailedFileTaskCount.execute)
     var getFailedFileTaskCount
 
-    @Shared(.failedFileTaskCount(server))
-    var failedFileTaskCount: Int
-
     do {
-        let count = try await getFailedFileTaskCount(server)
-        $failedFileTaskCount.withLock { $0 = count }
+        _ = try await getFailedFileTaskCount(server)
     } catch {}
 }
 ```
@@ -1766,7 +1788,6 @@ In `Tuist/ProjectDescriptionHelpers/Module+Dependencies.swift`, add two entries 
                 .external(.dependenciesTestSupport),
                 .external(.snapshotTesting),
                 .target(.apiInterface),
-                .target(.apiTestSupport),
                 .target(.fileTasksFeature),
                 .target(.testSupport),
             ]
@@ -1880,7 +1901,8 @@ struct FileTaskListReducerTests {
             $0.getFileTasks.execute = { _, _, _ in .testValue(nextPage: nil, tasks: [second]) }
         }
         store.exhaustivity = .off(showSkippedAssertions: false)
-        store.state.nextPage = 2
+        // Seeded through the action, not by assigning store.state: a TestStore's state is read-only.
+        await store.send(.tasksLoaded(.success(FileTaskPage(nextPage: 2, tasks: [first]))))
 
         await store.send(.view(.onRowAppear(first)))
         await store.receive(\.moreTasksLoaded)
@@ -1920,6 +1942,8 @@ struct FileTaskListReducerTests {
         var failedFileTaskCount: Int
         $failedFileTaskCount.withLock { $0 = 1 }
 
+        let countRequested = LockIsolated(false)
+
         let store = TestStore(
             initialState: FileTaskListReducer.State(
                 segment: .failed,
@@ -1931,7 +1955,12 @@ struct FileTaskListReducerTests {
             FileTaskListReducer()
         } withDependencies: {
             $0.acknowledgeFileTask.execute = { _, _ in }
-            $0.getFailedFileTaskCount.execute = { _ in 0 }
+            // Stubbed, so nothing writes the shared key here - the use case does that, and Task 4
+            // covers it. What this asserts is that the dismiss asks for a fresh count at all.
+            $0.getFailedFileTaskCount.execute = { _ in
+                countRequested.setValue(true)
+                return 0
+            }
         }
         store.exhaustivity = .off(showSkippedAssertions: false)
 
@@ -1939,7 +1968,8 @@ struct FileTaskListReducerTests {
         await store.receive(\.dismissFinished)
 
         #expect(store.state.tasks.isEmpty)
-        #expect(failedFileTaskCount == 0)
+        #expect(countRequested.value)
+        #expect(failedFileTaskCount == 1)
     }
 
     @Test
@@ -1967,7 +1997,7 @@ struct FileTaskListReducerTests {
 
     @Test
     func test_rowTapped_delegatesADocumentItCanOpen() async {
-        let task = FileTask.testValue(id: 1, documentId: 42)
+        let task = FileTask.testValue(documentId: 42, id: 1)
         let store = TestStore(
             initialState: FileTaskListReducer.State(tasks: [task], isLoaded: true, server: .testValue())
         ) {
@@ -1980,7 +2010,7 @@ struct FileTaskListReducerTests {
 
     @Test
     func test_rowTapped_doesNothingWithoutADocument() async {
-        let task = FileTask.testValue(id: 1, documentId: nil, status: .queued)
+        let task = FileTask.testValue(documentId: nil, id: 1, status: .queued)
         let store = TestStore(
             initialState: FileTaskListReducer.State(tasks: [task], isLoaded: true, server: .testValue())
         ) {
@@ -2048,12 +2078,16 @@ public struct FileTaskListReducer: Reducer, Sendable {
         var canDismiss: Bool { permissions.can(.changePaperlessTask) }
 
         public init(server: Server) {
+            // Read through a local: every stored property has to be initialised before any of them
+            // can be read back, so `_failedCount.wrappedValue` here would not compile.
+            let failedCount = Shared(.failedFileTaskCount(server))
+
             self.server = server
             permissions = ServerPermissions(server: server)
-            _failedCount = Shared(.failedFileTaskCount(server))
+            _failedCount = failedCount
             // Opening onto an empty Failed list is a worse first impression than opening onto the
             // imports that did work.
-            segment = _failedCount.wrappedValue > 0 ? .failed : .complete
+            segment = failedCount.wrappedValue > 0 ? .failed : .complete
         }
 
         init(
@@ -2218,17 +2252,15 @@ extension Effect where Action == FileTaskListReducer.Action {
     }
 
     // The badge is re-read rather than decremented: the server is the only thing that knows how many
-    // failures are left, and arithmetic here would drift the moment anything else dismissed one.
+    // failures are left, and arithmetic here would drift the moment anything else dismissed one. The
+    // use case writes the shared key, so this discards the result - the same shape as
+    // DocumentListReducer+Effect.runRefreshStatistics.
     static func runRefreshFailedCount(server: Server) -> Self {
         @Dependency(\.getFailedFileTaskCount.execute)
         var getFailedFileTaskCount
 
         return .run { _ in
-            @Shared(.failedFileTaskCount(server))
-            var failedCount: Int
-
-            let count = try await getFailedFileTaskCount(server)
-            $failedCount.withLock { $0 = count }
+            _ = try await getFailedFileTaskCount(server)
         } catch: { _, _ in
             // A failed refresh keeps the last known number. A badge reading 0 because the request
             // failed is worse than one that is briefly stale.
@@ -2984,12 +3016,37 @@ In `InboxView.swift`, add the sheet beside the existing pattern in `DocumentList
         }
 ```
 
-Then call the refresh wherever `refreshStatistics` is already triggered for the inbox — find those
-call sites with `grep -rn "refreshStatistics" Modules` and add `refreshFailedFileTaskCount(server:)`
-beside each one that runs on inbox appear, pull to refresh and foreground. It lives in
-`ApiImplementation`, so if the call site is in a feature module, route it through the
-`getFailedFileTaskCount` use case and the shared key exactly as
-`FileTaskListReducer+Effect.runRefreshFailedCount` does.
+Then keep the badge fresh. Add a `runRefreshFailedFileTaskCount(server:)` to
+`Modules/DocumentsFeature/DocumentList/DocumentListReducer+Effect.swift`, beside the
+`runRefreshStatistics` already there (line 80) and shaped identically — call the use case, discard the
+result, swallow the error, `.cancellable`:
+
+```swift
+    static func runRefreshFailedFileTaskCount(server: Server) -> Self {
+        @Dependency(\.getFailedFileTaskCount.execute)
+        var getFailedFileTaskCount
+
+        return .run { _ in
+            _ = try await getFailedFileTaskCount(server)
+        } catch: { _, _ in
+            // Best-effort, like runRefreshStatistics above: the badge keeps its previous number
+            // rather than reporting zero for a request that failed.
+        }
+        .cancellable(id: CancelID.refreshFailedFileTaskCount, cancelInFlight: true)
+    }
+```
+
+Add the `CancelID` case, and merge the effect into the inbox's `onAppear` and `onRefresh` handling with
+`.merge(with:)` — find where `runRefreshStatistics` is returned in `DocumentListReducer` and follow
+whatever composition is already used there.
+
+The use case writes `@Shared(.failedFileTaskCount(server))` itself, so nothing else has to.
+
+**Not in this project: the foreground refresh.** It lives in `AppFeature` —
+`AppReducer+Effect.runRefreshStatistics`, reached from `AppView`'s `scenePhase` change. If adding a
+sibling call there is a one-line change beside the statistics one, take it; if it needs `AppFeature` to
+gain a dependency or an action, leave it and say so in the task report, because inbox appear, pull to
+refresh and post-dismiss already keep the badge honest while the app is in use.
 
 - [ ] **Step 6: Run the tests and watch them pass**
 
