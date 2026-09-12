@@ -54,6 +54,31 @@ struct GetFailedFileTaskCountUseCaseTests {
         }
     }
 
+    // Nothing negotiated yet reads as the oldest supported server, the same rule GetFileTasksUseCase
+    // follows: the newer shape has to be earned by a version this app has actually seen.
+    @Test
+    func execute_withNoNegotiatedVersion_usesTheOlderShape() async throws {
+        let server = Server.testValue()
+        let v9Requested = LockIsolated(false)
+        let v10Requested = LockIsolated(false)
+
+        try await withDependencies {
+            $0.fileTaskRepository.getFailedFileTaskCountV10 = { _ in
+                v10Requested.setValue(true)
+                return 0
+            }
+            $0.fileTaskRepository.getFileTasksV9 = { _ in
+                v9Requested.setValue(true)
+                return []
+            }
+        } operation: {
+            _ = try await GetFailedFileTaskCountUseCase.liveValue.execute(server: server)
+        }
+
+        #expect(v9Requested.value)
+        #expect(!v10Requested.value)
+    }
+
     // The use case writes the badge's shared key itself, the way GetStatisticsUseCase writes
     // inboxDocumentCount, so that no caller has to remember to.
     @Test

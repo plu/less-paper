@@ -314,8 +314,8 @@ extension Module {
                 .target(.apiInterface),
                 .target(.apiTestSupport),
                 .target(.components),
-                .target(.testSupport),
                 .target(.fileTasksFeature),
+                .target(.testSupport),
             ]
         case .forwardAuthFeature:
             [

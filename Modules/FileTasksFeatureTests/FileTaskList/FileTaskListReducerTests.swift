@@ -310,13 +310,17 @@ struct FileTaskListReducerTests {
     @Test
     func test_nextPageFailure_letsTheListAskAgain() async {
         let first = FileTask.testValue(id: 1)
+        let asked = LockIsolated(0)
         let toasts = LockIsolated<[Toast]>([])
         let store = TestStore(
             initialState: FileTaskListReducer.State(server: .testValue())
         ) {
             FileTaskListReducer()
         } withDependencies: {
-            $0.getFileTasks.execute = { _, _, _ in throw ApiError.testValue() }
+            $0.getFileTasks.execute = { _, _, _ in
+                asked.withValue { $0 += 1 }
+                throw ApiError.testValue()
+            }
             $0.toastPresenter.present = { value in
                 toasts.withValue { $0.append(value) }
             }
@@ -334,9 +338,38 @@ struct FileTaskListReducerTests {
             $0.isLoadingMore = false
         }
 
+        // The point of the test: the same row asks a second time and is served, which a standing
+        // isLoadingMore would have made impossible.
+        await store.send(.view(.onRowAppear(first))) {
+            $0.isLoadingMore = true
+        }
+        await store.receive(\.moreTasksLoaded) {
+            $0.isLoadingMore = false
+        }
+
+        #expect(asked.value == 2)
         #expect(store.state.tasks.map(\.id) == [1])
         #expect(store.state.nextPage == 2)
-        #expect(toasts.value == [.error("Something went wrong")])
+        #expect(toasts.value == [.error("Something went wrong"), .error("Something went wrong")])
+    }
+
+    // The swipe action is gated on changePaperlessTask, and ServerPermissions answers true for
+    // everything until a permission set has been fetched - so only a seeded, restricted one reaches
+    // the false branch at all. Without this, `if canDismiss` could be deleted and nothing would fail.
+    @Test
+    func test_canDismiss_followsTheChangePaperlessTaskPermission() async {
+        let server = Server.testValue()
+        @Shared(.currentUser(server))
+        var currentUser: User?
+        @Shared(.permissions(server))
+        var permissions: [Permission]?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+
+        $permissions.withLock { $0 = [.viewPaperlessTask, .changePaperlessTask] }
+        #expect(FileTaskListReducer.State(server: server).canDismiss)
+
+        $permissions.withLock { $0 = [.viewPaperlessTask] }
+        #expect(!FileTaskListReducer.State(server: server).canDismiss)
     }
 
     @Test

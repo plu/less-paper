@@ -56,6 +56,26 @@ struct AcknowledgeFileTaskUseCaseTests {
         #expect(!modern.value)
     }
 
+    // Nothing negotiated yet reads as the oldest supported server, and here that has a consequence a
+    // user would see: a first launch against a v8 or v9 server that guessed the new path would 404
+    // every dismiss.
+    @Test
+    func execute_withNoNegotiatedVersion_usesTheLegacyPath() async throws {
+        let server = Server.testValue()
+        let modern = LockIsolated(false)
+        let legacy = LockIsolated<FileTask.Id?>(nil)
+
+        try await withDependencies {
+            $0.fileTaskRepository.acknowledgeFileTask = { _, _ in modern.setValue(true) }
+            $0.fileTaskRepository.acknowledgeFileTaskLegacy = { id, _ in legacy.setValue(id) }
+        } operation: {
+            try await AcknowledgeFileTaskUseCase.liveValue.execute(id: 7, server: server)
+        }
+
+        #expect(legacy.value == 7)
+        #expect(!modern.value)
+    }
+
     // The count is re-read from the server rather than decremented locally, the same rule
     // GetFailedFileTaskCountUseCase's own tests drive from the other side.
     @Test

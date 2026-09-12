@@ -18,9 +18,11 @@ struct FileTaskStatusTests {
         #expect(FileTaskStatus(apiValue: "pending") == .queued)
     }
 
-    // A cancelled import is shown under Failed rather than dropped. The paperless web UI hides
-    // revoked tasks entirely, and a row that exists on the server but nowhere in the app is the
-    // worse of the two answers.
+    // A cancelled import reads as a failure rather than as an unknown state. This only reaches the
+    // Failed list on a v9 server, where the whole array is fetched and filtered in memory: v10 asks
+    // for `status=failure` (see apiQueryValue) so a revoked task is never fetched at all, and the
+    // badge misses it for the same reason. Mapping it here is still the right answer - it is what
+    // makes the v9 path show the row, and it costs nothing on v10.
     @Test
     func initApiValue_mapsRevokedToFailed() {
         #expect(FileTaskStatus(apiValue: "REVOKED") == .failed)
@@ -44,6 +46,19 @@ struct FileTaskStatusTests {
         )
 
         #expect(status == .queued)
+    }
+
+    // The middle branch of init(from:)'s fallback chain: a wire spelling is not a rawValue, so a
+    // cached or decoded `"success"` has to come back through init(apiValue:) rather than as .queued.
+    @Test
+    func decode_readsAWireSpelling() throws {
+        let json = #""success""#
+        let status = try JSONDecoder.apiDecoder.decode(
+            FileTaskStatus.self,
+            from: #require(json.data(using: .utf8))
+        )
+
+        #expect(status == .complete)
     }
 
     @Test
