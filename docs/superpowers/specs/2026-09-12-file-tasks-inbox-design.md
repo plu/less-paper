@@ -231,11 +231,12 @@ it: v9 sends `result: "Success. New document id 43 created"` even on success, wh
 display a message, the mapping stays dumb — it maps whatever the server sent — and the view decides
 when to show it.
 
-One trap the recorded fixtures exist to catch: `configureForApi` sets
-`keyDecodingStrategy = .convertFromSnakeCase`, which also rewrites the keys *inside* a decoded
-`[String: JSONValue]`. So v10's `result_data.document_id` is reachable as `documentId`, not
-`document_id`. The mapping accepts either spelling and the fixture test is what proves which one
-arrives.
+One trap the recorded fixtures exist to catch, and it runs the other way from how it looks at first
+glance: `configureForApi` sets `keyDecodingStrategy = .convertFromSnakeCase`, but that strategy never
+reaches *inside* a decoded `[String: JSONValue]` — it decodes through the stdlib `Dictionary`
+conformance, which Foundation exempts from key conversion. So v10's `result_data.document_id` stays
+`document_id`, not `documentId`. The mapping reads `document_id`, and the fixture test is what proves
+that spelling is the one that arrives.
 
 Alongside: an unknown status string maps to `.queued`, and a failure message is extracted without
 assuming a `result_data` key.

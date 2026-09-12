@@ -17,8 +17,9 @@ public struct FileTask: Codable, Equatable, Hashable, Identifiable, Sendable {
 
     public let isAcknowledged: Bool
 
-    // Whatever the server said about the outcome. v9 sends prose even on success, v10 sends nothing
-    // at all there, so this is mapped as it arrives and only the failed rows display it.
+    // Whatever the server said about the outcome, mapped as it arrives: v9 sends prose even on
+    // success, v10 falls back to the raw result JSON (e.g. `{"document_id":43}`) when nothing more
+    // specific is found. Only the failed rows display it.
     public let message: String?
 
     public let status: FileTaskStatus

@@ -58,12 +58,12 @@ extension FileTaskPayloadV10 {
         )
     }
 
-    // `configureForApi` sets convertFromSnakeCase, which rewrites the keys inside a decoded
-    // [String: JSONValue] as well - so the server's `document_id` arrives as `documentId`. Both
-    // spellings are accepted rather than betting on that behaviour surviving a Foundation update.
+    // `configureForApi` sets convertFromSnakeCase, but that strategy never reaches inside a decoded
+    // [String: JSONValue] - it decodes through the stdlib Dictionary conformance, which Foundation
+    // exempts from key conversion - so the server's `document_id` stays snake_case. Confirmed by the
+    // recorded fixture at FileTaskPayloadTests.swift:212.
     private var documentId: Document.Id? {
-        let fromResult = resultData?.objectValue?["documentId"]?.intValue
-            ?? resultData?.objectValue?["document_id"]?.intValue
+        let fromResult = resultData?.objectValue?["document_id"]?.intValue
 
         if let fromResult {
             return Document.Id(rawValue: fromResult)
