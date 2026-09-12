@@ -14,11 +14,6 @@ struct FileTaskRepository: Sendable {
         _ server: Server
     ) async throws -> Void
 
-    var acknowledgeFileTaskLegacy: @Sendable (
-        _ id: FileTask.Id,
-        _ server: Server
-    ) async throws -> Void
-
     var getFailedFileTaskCountV10: @Sendable (
         _ server: Server
     ) async throws -> Int
@@ -38,7 +33,6 @@ extension FileTaskRepository: TestDependencyKey {
 
     static let previewValue = Self(
         acknowledgeFileTask: { _, _ in },
-        acknowledgeFileTaskLegacy: { _, _ in },
         getFailedFileTaskCountV10: { _ in 0 },
         getFileTasksV10: { _, _, _ in .init() },
         getFileTasksV9: { _ in [] }
@@ -46,7 +40,6 @@ extension FileTaskRepository: TestDependencyKey {
 
     static let testValue = Self(
         acknowledgeFileTask: { _, _ in },
-        acknowledgeFileTaskLegacy: { _, _ in },
         getFailedFileTaskCountV10: { _ in 0 },
         getFileTasksV10: { _, _, _ in .init() },
         getFileTasksV9: { _ in [] }
@@ -58,9 +51,6 @@ extension FileTaskRepository: DependencyKey {
     static let liveValue = Self(
         acknowledgeFileTask: { id, server in
             try await acknowledge(id: id, path: "/api/tasks/acknowledge/", server: server)
-        },
-        acknowledgeFileTaskLegacy: { id, server in
-            try await acknowledge(id: id, path: "/api/acknowledge_tasks/", server: server)
         },
         getFailedFileTaskCountV10: getFailedFileTaskCountV10(server:),
         getFileTasksV10: getFileTasksV10(status:page:server:),

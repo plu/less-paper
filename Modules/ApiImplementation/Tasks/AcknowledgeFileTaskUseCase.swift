@@ -1,7 +1,6 @@
 import ApiInterface
 import Dependencies
 import Foundation
-import SwiftSharing
 
 extension AcknowledgeFileTaskUseCase: @retroactive DependencyKey {
 
@@ -12,6 +11,11 @@ extension AcknowledgeFileTaskUseCase: @retroactive DependencyKey {
 
 private extension AcknowledgeFileTaskUseCase {
 
+    // No version branch: measured against live servers, `/api/acknowledge_tasks/` (the legacy path
+    // this used to fall back to below API 10) answers 403 on both 2.15.3 (API 8) and 2.19.6 (API 9)
+    // — the entire supported range below 10 — and only works on API 3, which
+    // `ApiVersion.negotiated(from:)` rejects outright. `/api/tasks/acknowledge/` is the only path
+    // that has ever worked on a server this app supports, so it is the only one called.
     static func execute(
         id: FileTask.Id,
         server: Server
@@ -19,16 +23,7 @@ private extension AcknowledgeFileTaskUseCase {
         @Dependency(\.fileTaskRepository)
         var repository
 
-        @Shared(.apiVersion(server))
-        var apiVersion: Int?
-
-        let version = apiVersion ?? ApiVersion.minimumSupported
-
-        if version >= 10 {
-            try await repository.acknowledgeFileTask(id, server)
-        } else {
-            try await repository.acknowledgeFileTaskLegacy(id, server)
-        }
+        try await repository.acknowledgeFileTask(id, server)
 
         // The badge is read from the server so it cannot drift from it: a successful dismiss
         // re-reads the count rather than decrementing it locally, the same way DeleteDocumentsUseCase

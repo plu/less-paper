@@ -13,67 +13,56 @@ import TestSupport
 struct AcknowledgeFileTaskUseCaseTests {
 
     @Test
-    func execute_onVersion10_usesTheTasksSubresource() async throws {
+    func execute_onVersion10_usesTheModernPath() async throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
         var apiVersion: Int?
         $apiVersion.withLock { $0 = 10 }
 
         let modern = LockIsolated<FileTask.Id?>(nil)
-        let legacy = LockIsolated(false)
 
         try await withDependencies {
             $0.fileTaskRepository.acknowledgeFileTask = { id, _ in modern.setValue(id) }
-            $0.fileTaskRepository.acknowledgeFileTaskLegacy = { _, _ in legacy.setValue(true) }
         } operation: {
             try await AcknowledgeFileTaskUseCase.liveValue.execute(id: 7, server: server)
         }
 
         #expect(modern.value == 7)
-        #expect(!legacy.value)
     }
 
-    // 3.0.5 moved this endpoint. Older servers only have the top-level one, and calling the new path
-    // there falls through to a non-DRF view that answers 403.
+    // API 8 is the supported floor. Measured against 2.15.3: the legacy `/api/acknowledge_tasks/`
+    // answers 403 there, so the modern path is the only one that has ever worked here too.
     @Test
-    func execute_onVersion9_usesTheLegacyPath() async throws {
+    func execute_onVersion8_usesTheModernPath() async throws {
         let server = Server.testValue()
         @Shared(.apiVersion(server))
         var apiVersion: Int?
-        $apiVersion.withLock { $0 = 9 }
+        $apiVersion.withLock { $0 = 8 }
 
-        let modern = LockIsolated(false)
-        let legacy = LockIsolated<FileTask.Id?>(nil)
+        let modern = LockIsolated<FileTask.Id?>(nil)
 
         try await withDependencies {
-            $0.fileTaskRepository.acknowledgeFileTask = { _, _ in modern.setValue(true) }
-            $0.fileTaskRepository.acknowledgeFileTaskLegacy = { id, _ in legacy.setValue(id) }
+            $0.fileTaskRepository.acknowledgeFileTask = { id, _ in modern.setValue(id) }
         } operation: {
             try await AcknowledgeFileTaskUseCase.liveValue.execute(id: 7, server: server)
         }
 
-        #expect(legacy.value == 7)
-        #expect(!modern.value)
+        #expect(modern.value == 7)
     }
 
-    // Nothing negotiated yet reads as the oldest supported server, and here that has a consequence a
-    // user would see: a first launch against a v8 or v9 server that guessed the new path would 404
-    // every dismiss.
     @Test
-    func execute_withNoNegotiatedVersion_usesTheLegacyPath() async throws {
+    func execute_withNoNegotiatedVersion_usesTheModernPath() async throws {
         let server = Server.testValue()
-        let modern = LockIsolated(false)
-        let legacy = LockIsolated<FileTask.Id?>(nil)
+
+        let modern = LockIsolated<FileTask.Id?>(nil)
 
         try await withDependencies {
-            $0.fileTaskRepository.acknowledgeFileTask = { _, _ in modern.setValue(true) }
-            $0.fileTaskRepository.acknowledgeFileTaskLegacy = { id, _ in legacy.setValue(id) }
+            $0.fileTaskRepository.acknowledgeFileTask = { id, _ in modern.setValue(id) }
         } operation: {
             try await AcknowledgeFileTaskUseCase.liveValue.execute(id: 7, server: server)
         }
 
-        #expect(legacy.value == 7)
-        #expect(!modern.value)
+        #expect(modern.value == 7)
     }
 
     // The count is re-read from the server rather than decremented locally, the same rule
