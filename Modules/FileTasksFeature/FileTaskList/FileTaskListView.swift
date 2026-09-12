@@ -13,7 +13,7 @@ public struct FileTaskListView: View {
         Sheet(isScrollingEnabled: false, padding: .x0) {
             SheetHeader(title: {
                 Text(.fileTasks)
-            }, right: {
+            }, left: {
                 SheetCloseButton {
                     send(.closeButtonTapped)
                 }
