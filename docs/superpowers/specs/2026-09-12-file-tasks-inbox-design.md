@@ -56,6 +56,13 @@ reducer ever learns which server shape produced a row. `GetSavedViewsUseCase.swi
 precedent for reading `@Shared(.apiVersion(server))` and branching, including its rule that a version
 not yet negotiated reads as the oldest supported one.
 
+**The version branch lives in the use cases, not the repository.** `FileTaskRepository` exposes one
+function per wire shape and knows nothing about versions; `GetFileTasksUseCase.liveValue` and its two
+siblings read `@Shared(.apiVersion(server))` and pick. This is where `GetSavedViewsUseCase` puts it,
+and the reason is testability: `GetSavedViewsUseCaseTests.execute_onVersion9_usesPayloadFieldsAndSkipsUiSettings`
+stubs the repository, seeds the shared version and asserts which call was made. A branch inside the
+live repository would only be reachable over the network.
+
 **An unknown status can never break a page.** Paperless will add task states. The payload structs
 keep `status` as a plain `String`, so no unfamiliar value can fail the decode of a whole list; mapping
 to `FileTaskStatus` is a total function whose `default` is `.queued`; and `FileTaskStatus` gets a
@@ -123,7 +130,7 @@ ApiInterface
         ^
         |
 ApiImplementation
-  Tasks/FileTaskRepository              branches on @Shared(.apiVersion(server))         [new]
+  Tasks/FileTaskRepository              one function per wire shape, version-agnostic    [new]
   Tasks/FileTaskPayloadV9               bare array shape -> FileTask                    [new]
   Tasks/FileTaskPayloadV10              paginated shape -> FileTask                     [new]
   Tasks/RefreshFailedFileTaskCount      free function, shaped like refreshStatistics    [new]
@@ -149,9 +156,11 @@ it is meant to be independent of.
 
 ## Changes
 
-### `FileTaskRepository`
+### `FileTaskRepository` and its use cases
 
-Three calls, each branching once on the negotiated version:
+The repository exposes one function per wire shape — `getFileTasksV9`, `getFileTasksV10`,
+`acknowledgeFileTask`, `acknowledgeFileTaskLegacy` — and each use case branches once on the
+negotiated version:
 
 - **list**: v10 sends `task_type=consume_file`, `status=<segment>`, `ordering=-date_created`,
   `page`, `page_size=50` and returns `ListOutput`; v9 and below send `GET /api/tasks/` and filter to
@@ -187,7 +196,11 @@ which `swipeActions` and `refreshable` both require — with a `SheetHeader` tit
 `SheetCloseButton`. Below the header, a segmented `Picker` bound to `$store.segment`; below that the
 list.
 
-A row shows the file name, the relative time, and a status icon tinted from `DesignTokens`. A failed
+A row shows the file name, when it happened, and a status icon tinted from `DesignTokens`. The time is
+absolute — `formatted(date: .abbreviated, time: .shortened)`, as `TrashRowView.swift:20` formats
+`deletedAt` — not relative. A relative string is nicer to read on a screen about what just happened,
+but it is computed against `Date.now`, so every snapshot reference would drift out of date the day
+after it was recorded and fail for a reason that has nothing to do with the code. A failed
 row also shows the server's message inline, untruncated, with `.textSelection(.enabled)`: a reason
 the user can neither read nor copy is no better than no reason. Rows with a `documentId` are tappable;
 queued and started rows are not. The swipe reveals one Dismiss button, present only with
@@ -207,10 +220,25 @@ to refresh, and foreground.
 ## Testing
 
 **Recorded payloads, both shapes, one assertion.** `ApiImplementationTests/Tasks/FileTaskPayloadTests`
-follows `TrashPayloadTests`. The fixtures are real responses for the *same* consume_file tasks, taken
-from the dev instance at both `Accept: application/json; version=9` and version 10, and the test
-asserts the two decode to identical `FileTask` values. Alongside: an unknown status string maps to
-`.queued`, and a failure message is extracted without assuming a `result_data` key.
+follows `TrashPayloadTests`. The fixtures are real responses for the *same* consume_file tasks (ids
+267 and 264), taken from the dev instance at both `Accept: application/json; version=9` and version
+10, and the test asserts the two decode to the same id, file name, status, dates, document id and
+acknowledged flag.
+
+They are *not* identical in `message`, and the test asserts that difference rather than papering over
+it: v9 sends `result: "Success. New document id 43 created"` even on success, while v10's
+`result_data` for the same task is `{"document_id": 43}` with no prose at all. Since only failed rows
+display a message, the mapping stays dumb — it maps whatever the server sent — and the view decides
+when to show it.
+
+One trap the recorded fixtures exist to catch: `configureForApi` sets
+`keyDecodingStrategy = .convertFromSnakeCase`, which also rewrites the keys *inside* a decoded
+`[String: JSONValue]`. So v10's `result_data.document_id` is reachable as `documentId`, not
+`document_id`. The mapping accepts either spelling and the fixture test is what proves which one
+arrives.
+
+Alongside: an unknown status string maps to `.queued`, and a failure message is extracted without
+assuming a `result_data` key.
 
 **Reducer tests** for the behaviours the decisions turn on: a segment switch cancels the in-flight
 load, the last row pages, a dismiss marks then removes then re-reads the count, a failed dismiss
