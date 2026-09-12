@@ -68,7 +68,7 @@ struct GetFileTasksUseCaseTests {
     }
 
     // An old server cannot filter or page, so the use case does both jobs itself: consume tasks
-    // only, this status only, newest first, and nothing left to fetch.
+    // only, this status only, not already dismissed, newest first, and nothing left to fetch.
     @Test
     func execute_onVersion9_filtersSortsAndClaimsNoNextPage() async throws {
         let server = Server.testValue()
@@ -88,7 +88,10 @@ struct GetFileTasksUseCaseTests {
                     .testValue(dateCreated: .testValue(), id: 1, status: "FAILURE", taskName: "consume_file"),
                     .testValue(dateCreated: .testValue().addingTimeInterval(60), id: 2, status: "FAILURE", taskName: "consume_file"),
                     .testValue(id: 3, status: "FAILURE", taskName: "train_classifier"),
-                    .testValue(id: 4, status: "SUCCESS", taskName: "consume_file")
+                    .testValue(id: 4, status: "SUCCESS", taskName: "consume_file"),
+                    // Dismissed, so it is gone from the list as well as from the badge. Without this
+                    // the row a user swiped away would come straight back on the next refresh.
+                    .testValue(acknowledged: true, id: 5, status: "FAILURE", taskName: "consume_file")
                 ]
             }
         } operation: {

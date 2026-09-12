@@ -125,9 +125,10 @@ public struct FileTaskListReducer: Reducer, Sendable {
                 state.isLoadingMore = false
                 return .toast(error)
             case let .dismissFinished(id, .success):
-                // Removed rather than reloaded: the row is gone either way, and a reload would make
-                // the dismiss look slower than it was. The failure count is not touched here either
-                // - AcknowledgeFileTaskUseCase re-reads it from the server itself.
+                // Removed rather than reloaded: a reload would make the dismiss look slower than it
+                // was, and GetFileTasksUseCase filters acknowledged rows out of every segment, so
+                // the next refresh agrees. The failure count is not touched here either -
+                // AcknowledgeFileTaskUseCase re-reads it from the server itself.
                 state.isDismissing.remove(id)
                 state.tasks.remove(id: id)
                 return .none

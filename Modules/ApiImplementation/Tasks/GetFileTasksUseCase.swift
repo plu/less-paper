@@ -29,10 +29,13 @@ private extension GetFileTasksUseCase {
 
         guard version >= 10 else {
             let payloads = try await repository.getFileTasksV9(server)
+            // Dismissed rows are dropped on every segment, matching the acknowledged=false the v10
+            // query sends and the count query on both versions. A row the user swiped away has to
+            // stay away - otherwise a refresh brings it back while the badge still says it is gone.
             let tasks = payloads
                 .filter(\.isConsumeFile)
                 .map(\.asFileTask)
-                .filter { $0.status == status }
+                .filter { $0.status == status && !$0.isAcknowledged }
                 .sorted { $0.dateCreated > $1.dateCreated }
 
             // An unpaginated endpoint has already handed over everything it has.

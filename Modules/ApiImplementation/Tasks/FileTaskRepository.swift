@@ -134,6 +134,11 @@ private extension FileTaskRepository {
                 query: [
                     ("task_type", "consume_file"),
                     ("status", status.apiQueryValue),
+                    // Every segment hides dismissed rows, not just Failed. The server does not do
+                    // this by itself - 3.0.5 answers 173 consume tasks and 168 unacknowledged ones
+                    // for the same filter - so without this a row the user swiped away comes back on
+                    // the next refresh, and the badge and the list would mean different things.
+                    ("acknowledged", "false"),
                     ("ordering", "-date_created"),
                     ("page", String(page)),
                     ("page_size", String(pageSize))
