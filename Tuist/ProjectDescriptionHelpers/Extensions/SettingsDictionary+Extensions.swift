@@ -26,7 +26,7 @@ public extension SettingsDictionary {
      * - **String Catalogs**: Modern localization approach with symbol generation
      * - **Versioning**: Dynamic version numbers from build environment
      * - **Code Signing**: Environment-based configuration for different build contexts
-     * - **Warnings**: Promoted to errors when `TUIST_WARNINGS_AS_ERRORS` is set
+     * - **Warnings**: Always promoted to errors, locally as well as on CI
      *
      * - Returns: A configured SettingsDictionary with all necessary build settings
      */
@@ -45,22 +45,18 @@ public extension SettingsDictionary {
             "SWIFT_VERSION": "6",
         ]
 
-        // A warning nobody reads is a warning that stays. Locally the build stays warning-tolerant —
-        // a red build every time you leave an unused binding mid-edit is worse than the warning —
-        // so CI is where the line is drawn, by exporting TUIST_WARNINGS_AS_ERRORS around the steps
-        // that build.
+        // Everywhere, not only on CI. This used to be gated on TUIST_WARNINGS_AS_ERRORS so local
+        // builds stayed warning-tolerant, on the argument that a red build over an unused binding
+        // mid-edit is worse than the warning. What that actually bought was warnings discovered at
+        // the slowest possible moment: a green local run, a push, a review, and then a CI failure
+        // for something the compiler had known about all along. Paying attention to it at the
+        // keystroke is cheaper than paying attention to it after a round trip.
         //
         // These land in the project's base settings, so they reach this repository's own targets and
         // nothing else. Passing them to xcodebuild on the command line instead would also reach the
         // 72 external package targets, and a warning in somebody else's source is not one we can fix.
-        //
-        // Read at *generate* time, so it changes the fingerprint of every first-party target. That is
-        // free here: `tuist cache` warms `only-external` (see Tuist.swift), and selective testing
-        // compares CI runs against other CI runs, which all carry the flag.
-        if Environment.warningsAsErrors.getBoolean(default: false) {
-            settings["GCC_TREAT_WARNINGS_AS_ERRORS"] = "YES"
-            settings["SWIFT_TREAT_WARNINGS_AS_ERRORS"] = "YES"
-        }
+        settings["GCC_TREAT_WARNINGS_AS_ERRORS"] = "YES"
+        settings["SWIFT_TREAT_WARNINGS_AS_ERRORS"] = "YES"
 
         return settings
     }

@@ -69,7 +69,6 @@ jobs:
       - run: fnox exec -P ci -- mise ci:test:unit
         env:
           TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
-          TUIST_WARNINGS_AS_ERRORS: "true"
 
       - name: Upload test results
         if: failure()
@@ -113,7 +112,6 @@ jobs:
       - run: fnox exec -P ci -- mise ci:test:ui
         env:
           TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
-          TUIST_WARNINGS_AS_ERRORS: "true"
 
       # A failing XCUITest records the app's accessibility hierarchy and a video at the moment it
       # gave up. Without the bundle a UI failure reports only which assertion failed, which is
@@ -155,7 +153,5 @@ jobs:
       # shows up under optimisation has nowhere else to be caught. The price is that it can block an
       # upload — which is the trade this flag exists to make.
       - run: fnox exec -P ci -- mise ci:build
-        env:
-          TUIST_WARNINGS_AS_ERRORS: "true"
 
       - run: fnox exec -P ci -- mise ci:upload

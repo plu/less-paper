@@ -18,7 +18,7 @@ struct TipInvitationTests {
 
         await record(at: now, store: store)
 
-        await withDependencies {
+        withDependencies {
             $0.defaultAppStorage = store
         } operation: {
             @Shared(.tipAskFirstActiveAt) var firstActiveAt
@@ -39,7 +39,7 @@ struct TipInvitationTests {
         await record(at: first, store: store)
         await record(at: first.addingTimeInterval(5 * .day), store: store)
 
-        await withDependencies {
+        withDependencies {
             $0.defaultAppStorage = store
         } operation: {
             @Shared(.tipAskFirstActiveAt) var firstActiveAt
@@ -58,7 +58,7 @@ struct TipInvitationTests {
         await record(at: morning, store: store)
         await record(at: morning.addingTimeInterval(60 * 60), store: store)
 
-        #expect(await activeDays(in: store) == 1)
+        #expect(activeDays(in: store) == 1)
     }
 
     @Test
@@ -69,7 +69,7 @@ struct TipInvitationTests {
         await record(at: day, store: store)
         await record(at: day.addingTimeInterval(.day), store: store)
 
-        #expect(await activeDays(in: store) == 2)
+        #expect(activeDays(in: store) == 2)
     }
 
     // A clock set backwards, or a flight east across the date line, must not stall the counter
@@ -83,7 +83,7 @@ struct TipInvitationTests {
         await record(at: day, store: store)
         await record(at: day.addingTimeInterval(-2 * .day), store: store)
 
-        #expect(await activeDays(in: store) == 2)
+        #expect(activeDays(in: store) == 2)
     }
 
     // The count outlives the process that made it, which is the only reason it is in appStorage.
@@ -96,7 +96,7 @@ struct TipInvitationTests {
             await record(at: day.addingTimeInterval(Double(offset) * .day), store: store)
         }
 
-        #expect(await activeDays(in: store) == 4)
+        #expect(activeDays(in: store) == 4)
     }
 
     // The flip side of UTC day numbers, asserted so it is a known property rather than a surprise:
@@ -111,7 +111,7 @@ struct TipInvitationTests {
         await record(at: beforeMidnight, store: store)
         await record(at: beforeMidnight.addingTimeInterval(60 * 60), store: store)
 
-        #expect(await activeDays(in: store) == 2)
+        #expect(activeDays(in: store) == 2)
     }
 
     // 60 days of tenure and 15 distinct days of use. Both, because tenure alone asks someone who
@@ -119,21 +119,21 @@ struct TipInvitationTests {
     // enthusiastic migration.
     @Test
     func isEligible_withEnoughTenureAndUse_isTrue() async {
-        let store = await seed(activeDays: 15, tenure: 60, store: .inMemory)
+        let store = seed(activeDays: 15, tenure: 60, store: .inMemory)
 
         #expect(await isEligible(store: store, tenure: 60) == true)
     }
 
     @Test
     func isEligible_oneDayShortOfTheTenure_isFalse() async {
-        let store = await seed(activeDays: 15, tenure: 59, store: .inMemory)
+        let store = seed(activeDays: 15, tenure: 59, store: .inMemory)
 
         #expect(await isEligible(store: store, tenure: 59) == false)
     }
 
     @Test
     func isEligible_oneDayShortOfTheActiveDays_isFalse() async {
-        let store = await seed(activeDays: 14, tenure: 60, store: .inMemory)
+        let store = seed(activeDays: 14, tenure: 60, store: .inMemory)
 
         #expect(await isEligible(store: store, tenure: 60) == false)
     }
@@ -142,7 +142,7 @@ struct TipInvitationTests {
     // app must not be able to tell which happened.
     @Test
     func isEligible_afterSettling_isFalseForever() async {
-        let store = await seed(activeDays: 99, tenure: 999, store: .inMemory)
+        let store = seed(activeDays: 99, tenure: 999, store: .inMemory)
 
         await withDependencies {
             $0.defaultAppStorage = store
@@ -157,14 +157,14 @@ struct TipInvitationTests {
     // instead. Two different asks in one fortnight is nagging however carefully each was gated.
     @Test
     func isEligible_withinAFortnightOfAReviewPrompt_isFalse() async {
-        let store = await seed(activeDays: 15, tenure: 60, store: .inMemory, reviewAskedDaysAgo: 13)
+        let store = seed(activeDays: 15, tenure: 60, store: .inMemory, reviewAskedDaysAgo: 13)
 
         #expect(await isEligible(store: store, tenure: 60) == false)
     }
 
     @Test
     func isEligible_aFortnightAfterAReviewPrompt_isTrue() async {
-        let store = await seed(activeDays: 15, tenure: 60, store: .inMemory, reviewAskedDaysAgo: 14)
+        let store = seed(activeDays: 15, tenure: 60, store: .inMemory, reviewAskedDaysAgo: 14)
 
         #expect(await isEligible(store: store, tenure: 60) == true)
     }
@@ -184,8 +184,8 @@ struct TipInvitationTests {
         tenure: Double,
         store: UserDefaults,
         reviewAskedDaysAgo: Double? = nil
-    ) async -> UserDefaults {
-        await withDependencies {
+    ) -> UserDefaults {
+        withDependencies {
             $0.defaultAppStorage = store
         } operation: {
             @Shared(.tipAskFirstActiveAt) var firstActiveAt
@@ -223,8 +223,8 @@ struct TipInvitationTests {
         }
     }
 
-    private func activeDays(in store: UserDefaults) async -> Int {
-        await withDependencies {
+    private func activeDays(in store: UserDefaults) -> Int {
+        withDependencies {
             $0.defaultAppStorage = store
         } operation: {
             @Shared(.tipAskActiveDays) var activeDays

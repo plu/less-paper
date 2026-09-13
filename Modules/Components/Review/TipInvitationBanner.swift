@@ -27,8 +27,12 @@ public struct TipInvitationBanner: View {
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.m3OnSurface)
 
+                    // footnote / medium / m3Outline, matching the date, document type and storage
+                    // path on a document row exactly - the colour alone already did, but without
+                    // the weight it rendered lighter than the rows around it.
                     Text(.tipInvitationMessage)
                         .font(.footnote)
+                        .fontWeight(.medium)
                         .foregroundStyle(Color.m3Outline)
                         .fixedSize(horizontal: false, vertical: true)
                 }
