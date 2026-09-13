@@ -14,7 +14,7 @@ struct TipInvitationTests {
     @Test
     func recordActiveDay_onTheFirstCall_storesTheFirstActiveDate() async {
         let store = UserDefaults.inMemory
-        let now = Date(timeIntervalSince1970: 1_234_567_890)
+        let now = Date(timeIntervalSince1970: 1_600_000_000)
 
         await record(at: now, store: store)
 
@@ -34,7 +34,7 @@ struct TipInvitationTests {
     @Test
     func recordActiveDay_onALaterDay_keepsTheFirstActiveDate() async {
         let store = UserDefaults.inMemory
-        let first = Date(timeIntervalSince1970: 1_234_567_890)
+        let first = Date(timeIntervalSince1970: 1_600_000_000)
 
         await record(at: first, store: store)
         await record(at: first.addingTimeInterval(5 * .day), store: store)
@@ -47,11 +47,13 @@ struct TipInvitationTests {
         }
     }
 
-    // Foregrounding the app six times before lunch is one day of use, not six.
+    // Foregrounding the app six times before lunch is one day of use, not six. The fixture sits at
+    // midday UTC deliberately: a timestamp near the UTC midnight boundary would make "+1 hour" a
+    // different day and this test would be measuring the fixture rather than the code.
     @Test
     func recordActiveDay_twiceInOneDay_countsOnce() async {
         let store = UserDefaults.inMemory
-        let morning = Date(timeIntervalSince1970: 1_234_567_890)
+        let morning = Date(timeIntervalSince1970: 1_600_000_000)
 
         await record(at: morning, store: store)
         await record(at: morning.addingTimeInterval(60 * 60), store: store)
@@ -62,7 +64,7 @@ struct TipInvitationTests {
     @Test
     func recordActiveDay_onTheNextDay_countsAgain() async {
         let store = UserDefaults.inMemory
-        let day = Date(timeIntervalSince1970: 1_234_567_890)
+        let day = Date(timeIntervalSince1970: 1_600_000_000)
 
         await record(at: day, store: store)
         await record(at: day.addingTimeInterval(.day), store: store)
@@ -76,7 +78,7 @@ struct TipInvitationTests {
     @Test
     func recordActiveDay_afterTheClockGoesBackwards_stillCounts() async {
         let store = UserDefaults.inMemory
-        let day = Date(timeIntervalSince1970: 1_234_567_890)
+        let day = Date(timeIntervalSince1970: 1_600_000_000)
 
         await record(at: day, store: store)
         await record(at: day.addingTimeInterval(-2 * .day), store: store)
@@ -88,13 +90,28 @@ struct TipInvitationTests {
     @Test
     func recordActiveDay_countsAcrossSessions() async {
         let store = UserDefaults.inMemory
-        let day = Date(timeIntervalSince1970: 1_234_567_890)
+        let day = Date(timeIntervalSince1970: 1_600_000_000)
 
         for offset in 0 ..< 4 {
             await record(at: day.addingTimeInterval(Double(offset) * .day), store: store)
         }
 
         #expect(await activeDays(in: store) == 4)
+    }
+
+    // The flip side of UTC day numbers, asserted so it is a known property rather than a surprise:
+    // two activations an hour apart that straddle UTC midnight count as two days. Accepted - over
+    // the fifteen days this gate needs, one extra day either way changes nothing, and Calendar
+    // would drag time zones and DST into a counter that has no use for either.
+    @Test
+    func recordActiveDay_straddlingUtcMidnight_countsTwice() async {
+        let store = UserDefaults.inMemory
+        let beforeMidnight = Date(timeIntervalSince1970: 1_234_567_890)
+
+        await record(at: beforeMidnight, store: store)
+        await record(at: beforeMidnight.addingTimeInterval(60 * 60), store: store)
+
+        #expect(await activeDays(in: store) == 2)
     }
 
     private func record(at now: Date, store: UserDefaults) async {
