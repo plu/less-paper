@@ -73,16 +73,21 @@ private struct DocumentListTopLeadingToolbar: ViewModifier {
             } label: {
                 // An HStack rather than a badge overlay on the icon: an overlay on a toolbar item is
                 // clipped by the navigation bar on some heights, and this cannot be.
+                //
+                // Colour and weight carry the badge, not a pill. A toolbar button's label discards
+                // the background: `.capsule` used to be applied here and rendered as bare text, so
+                // three of its four arguments did nothing and a light foreground turned the count
+                // invisible against the navigation bar. Verified by snapshot - do not reintroduce a
+                // background here expecting it to draw. SwiftUI's own `.badge` is no help either: it
+                // is honoured on list rows and tab items only, with nothing for toolbar content.
                 HStack(spacing: .x1) {
                     Image(systemName: "tray.and.arrow.down")
                     if failedFileTaskCount > 0 {
                         Text(verbatim: String(failedFileTaskCount))
-                            .capsule(
-                                backgroundColor: .m3ErrorContainer,
-                                font: .caption2,
-                                foregroundColor: .m3OnErrorContainer,
-                                padding: .init(top: .x1, leading: .x2, bottom: .x1, trailing: .x2)
-                            )
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.m3Error)
+                            .lineLimit(1)
                     }
                 }
             }
