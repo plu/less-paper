@@ -13,6 +13,11 @@ See docs/superpowers/specs/2026-09-13-coverage-reporting-design.md.
 
 from __future__ import annotations
 
+import argparse
+import json
+import subprocess
+import sys
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -160,3 +165,72 @@ def render(modules: list[ModuleRow], files: list[FileRow]) -> str:
 
     lines.append("")
     return "\n".join(lines)
+
+
+def read_coverage(bundle: Path) -> dict:
+    result = subprocess.run(
+        ["xcrun", "xccov", "view", "--report", "--json", str(bundle)],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return json.loads(result.stdout)
+
+
+def read_executed_bundles(bundle: Path) -> list[str]:
+    result = subprocess.run(
+        [
+            "xcrun", "xcresulttool", "get", "test-results", "tests",
+            "--path", str(bundle), "--format", "json",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    return [
+        child["name"]
+        for plan in json.loads(result.stdout).get("testNodes", [])
+        for child in plan.get("children", [])
+        if child.get("nodeType") in {"Unit test bundle", "UI test bundle"}
+    ]
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--bundle", type=Path, required=True)
+    parser.add_argument("--repo-root", type=Path, required=True)
+    parser.add_argument(
+        "--changed-files",
+        type=Path,
+        help="file listing the pull request's changed paths, one per line",
+    )
+    args = parser.parse_args()
+
+    # No bundle means xcodebuild never ran. run_tests.sh already treats that as a legitimate
+    # outcome, and the comment still has to be rewritten to say so.
+    if not args.bundle.exists():
+        print(render([], []), end="")
+        return 0
+
+    coverage = read_coverage(args.bundle)
+    modules = module_rows(coverage, read_executed_bundles(args.bundle))
+
+    changed = []
+    if args.changed_files and args.changed_files.exists():
+        changed = args.changed_files.read_text().split()
+
+    listed = {module.name for module in modules}
+    files = file_rows(
+        coverage,
+        changed_source_files(changed, instrumented_modules(coverage)),
+        listed,
+        args.repo_root,
+    )
+
+    print(render(modules, files), end="")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
