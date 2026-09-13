@@ -31,6 +31,9 @@ struct FileTaskRowView: View {
         }
         .accessibilityElement()
         .accessibilityValue(accessibilityValue)
+        // The VStack sizes to its text, so the list's contentShape would cover only the file name
+        // and leave the rest of the row dead to taps - worst exactly when the name is shortest.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .listRowBackground(Color.m3SurfaceContainer)
         .opacity(isDismissing ? 0.5 : 1.0)
         .swipeActions(content: swipeActions)
