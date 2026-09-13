@@ -30,24 +30,38 @@ not a tip jar that chases you. The mechanism below is shaped entirely by making 
 The review ask is **not** retuned. Three imports as the trigger, and the 120-day cooldown, stay
 exactly as they are.
 
-### A bug found while designing this
+### A latent gap found while designing this
 
 `ReviewPrompt` reads `review-import-count` and `review-requested-at` through `@Shared(.appStorage)`,
 and **nothing points `defaultAppStorage` at the app group** in either shipping target — only the
 snapshot and UI-test bootstraps set it, and they set `.inMemory`. An app extension has its own
-`UserDefaults.standard`, and `DocumentImportReducer` — which fires `.requestReview(.documentImported)`
-— runs in the share extension as well as in the app.
+`UserDefaults.standard`, so any key written from both the app and the share extension is really two
+independent values today, one per process.
 
-So today there are two counters and two cooldown ledgers. The import count is split, which makes the
-three-import threshold take longer to reach than intended; worse, **the cooldown is not shared**, so
-the share extension can ask for a review and the app can ask again days later, each reading its own
-`review-requested-at`. That is the precise failure mode this feature exists to avoid, in the code
-that is already shipping.
+That is not, in fact, the review keys. `DocumentImportReducer` — which fires
+`.requestReview(.documentImported)` — is referenced only from `DocumentsFeature` and
+`SettingsFeature`; the share extension's own view tree runs `ShareExtensionReducer` directly, and
+that reducer never calls `requestReview`. The reducer's own comment says as much: *"It is caught
+here rather than in the share screen itself because the share extension runs that screen too, and
+this wrapper is only ever the app."* So the review import count and the review cooldown have only
+ever been written from the app process. They were never split, and this design does not fix a live
+bug in them.
 
-`docs/ideas.md` records the app-group gap under "`appStorage` does not use the app group" but calls
-it "currently latent rather than broken", naming `inboxDocumentCount` as the only key affected. That
-is wrong: the review keys are written from both processes today. This design fixes it and that entry
-is removed.
+`docs/ideas.md` records the app-group gap under "`appStorage` does not use the app group" and calls
+it "currently latent rather than broken", naming `inboxDocumentCount` as the only key affected today.
+That entry is correct as written. The keys that *are* written from both processes are the in-app
+badge counts — `inboxDocumentCount` and `failedFileTaskCount` — since `CreateDocumentUseCase` runs in
+the share extension and refreshes statistics there. Nothing currently reads those counts back from
+the extension process, so the gap has had no visible effect yet.
+
+This design still points `defaultAppStorage` at the app group in both targets, and still removes
+`docs/ideas.md`'s entry — but as a preventative fix, not a bug fix. `TipInvitation`'s own keys
+(tenure, active days, the settled flag) are about to become the first values this app reads back
+across the app/extension boundary in a way that matters, and it is better to put the storage on the
+correct footing before anything relies on it than to add a second latent gap alongside the first.
+Fixing it now, before it does anything, costs nothing; leaving it for a future feature to trip over
+would cost a debugging session. See `docs/ideas.md` for what the app-group switch changes for the
+existing keys and what is intentionally left open.
 
 ## Decisions
 
@@ -122,16 +136,23 @@ The StoreKit surface does not move.
 features which merely touch the path do not have to stub it. It is also what lets the 14-day
 separation check read `review-requested-at` without either module reaching into the other's storage.
 
-**`defaultAppStorage` points at the app group suite in both shipping targets, and nothing is
+**`defaultAppStorage` points at the app group suite in both shipping targets, and almost nothing is
 migrated.** `UserDefaults(suiteName: AppGroup.identifier)` in `LessPaperApp.init()` and in
 `ShareViewController`, set before the DEBUG snapshot and UI-test blocks so those keep overriding it
-with `.inMemory`. Existing `review-import-count` and `review-requested-at` values are left where they
-are and re-read as `0` and "never asked".
+with `.inMemory`. Existing `review-import-count` is left where it is and re-reads as `0`.
 
-The cost of not migrating is bounded and one-time: some users become eligible for a review prompt
-slightly earlier than their true history warrants, once. The cost of migrating is reading two suites,
-deciding how to combine two counts and two timestamps, and keeping that code forever, for a counter
-whose only job is to gate one prompt. Not worth it.
+`review-requested-at` is the one exception. Because the suite moves, every existing user's cooldown
+timestamp would otherwise read as absent, which asks for a review *sooner* than intended — the
+opposite of what a feature about restraint should do. `ReviewPrompt+Live.swift` gains a small,
+one-directional read-across: when the group-suite value is absent, it falls back to the value still
+sitting in `UserDefaults.standard` and adopts it. It is deletable once every install has launched
+post-update, and it is the only migration in this change — `review-import-count` is deliberately not
+touched, because losing it only ever *delays* the next ask, which errs the safe way.
+
+The cost of not migrating the import count is bounded and one-time: some users need one extra import
+before the count catches up. The cost of migrating it too would be reading two suites and combining
+two counts, and keeping that code forever, for a counter whose only job is to gate one prompt. Not
+worth it. The timestamp is different in kind: getting it wrong moves the ask earlier, not later.
 
 **Existing users start from zero, and nobody sees this for 60 days after the update ships.** There is
 no first-use date on disk to seed from, and nothing else is a trustworthy proxy — a server added
@@ -235,8 +256,8 @@ Sharing that gate was the point of putting this client in the same module.
 
 ### `Modules/Components/Review/TipInvitationBanner.swift` (new)
 
-A view with no store and no knowledge of tips: a title, a subtitle, a chevron, a close button, and
-`tapped` / `dismissed` closures.
+A view with no store and no knowledge of tips: a leading `cup.and.saucer` icon, a title, a subtitle,
+a chevron, a close button, and `tapped` / `dismissed` closures.
 
 It draws the same card `DocumentRowView` draws, because that is what "a list row, not a banner" means
 in *this* list. The document lists use `.listStyle(.plain)` with `listRowBackground(Color.clear)` and
@@ -244,7 +265,12 @@ in *this* list. The document lists use `.listStyle(.plain)` with `listRowBackgro
 `.overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))`,
 `.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))`, with `.padding(.x3)` applied by
 the call site. The banner copies that exactly, so it reads as one more card in the stack rather than
-as a panel bolted above it. Body font, `m3OnSurface` for the title, `m3Outline` for the message.
+as a panel bolted above it. Body font for the title, `m3OnSurface`; `.subheadline` for the message,
+`m3Outline` - a size step down from the title, the way a document row's metadata sits under its
+title. The chevron sits between the text and the close button, `m3Outline`, vertically centered
+rather than top-aligned like the icon, with its own trailing space so it reads as "this opens
+something" without crowding Dismiss beside it. Nothing here signals promotion: no accent colour, no
+badge, no animation - the icon and the chevron are the only two glyphs, and both are neutral.
 
 ### `Modules/Components/Resources/Localizable.xcstrings`
 
@@ -338,6 +364,9 @@ plain unit test with no simulator involved:
 - a review prompt 13 days ago suppresses it; 14 days ago does not
 - `settle()` suppresses it permanently, even with every other condition satisfied
 
+`ReviewPromptTests` gains one case for the read-across: the cooldown is honoured when
+`review-requested-at` exists only in `UserDefaults.standard`, not yet in the group suite.
+
 `DocumentsFeatureTests` covers the reducer wiring: an eligible client shows the row, both view
 actions hide it and settle, and the tapped one emits the delegate. `AppFeatureTests` covers the
 routing — the delegate from each of `documentList` and `inbox` lands on `selectedTab == .settings`
@@ -370,8 +399,9 @@ app-group change and a wrong entitlement would fail silently into `.standard`.
 
 ## Out of scope
 
-- **Retuning the review ask.** Three imports and 120 days stay. The only change to `ReviewPrompt` is
-  that its storage becomes shared, which is a bug fix.
+- **Retuning the review ask.** Three imports and 120 days stay. The only changes to `ReviewPrompt`
+  are that its storage moves to the app-group suite and that its cooldown timestamp is read across
+  from the old suite once, neither of which touches the policy.
 - **Asking for a review in the banner.** Pairing "rate us" with "tip us" in one row invites an App
   Review reading that ratings are being traded for money, and it is unnecessary: a tip already fires
   `.requestReview(.tipReceived)`.
@@ -381,8 +411,9 @@ app-group change and a wrong entitlement would fail silently into `.standard`.
   only signal available is App Store Connect revenue, and that is enough.
 - **The invitation anywhere else.** Not on favourites, not in the share extension, not after a
   successful import. One surface.
-- **Migrating the existing review counters**, and **seeding tenure from existing data**. Both
-  reasoned through in Decisions.
+- **Migrating `review-import-count`**, and **seeding tenure from existing data**. Both reasoned
+  through in Decisions. (`review-requested-at` is the one value read across, for the reason given
+  there.)
 - **Localizing beyond `de`.** The app ships `en` and `de`.
 
 ## Risks
@@ -402,9 +433,9 @@ row does not block use. Still a new surface in front of a reviewer who did not s
 data to derive them from. They are single constants in one file, and the first real information about
 whether they are right will arrive only as revenue, months later.
 
-**The no-migration reset gives some users an early review prompt.** Deliberate and bounded to once
-per user, but it is a small regression in a mechanism whose whole purpose is restraint, shipped in
-the change that was meant to tighten it.
+**The un-migrated import count delays some users' next review prompt.** Deliberate and bounded to
+once per user — an extra import before the threshold is reached, never an early ask. The timestamp
+is read across instead, precisely because the direction of its error would have been the wrong one.
 
 **A wrong or missing app group entitlement fails silently** into `.standard`, which is exactly
 today's broken behaviour and would look like success. Only the on-device check above catches it.

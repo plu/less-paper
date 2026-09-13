@@ -42,6 +42,28 @@ Surfaced during: `docs/superpowers/specs/2026-08-12-cross-tab-document-sync-desi
 
 ---
 
+## `appStorage` now uses the app group
+
+`defaultAppStorage` points at the app group suite in both targets as of
+`docs/superpowers/specs/2026-09-13-tip-invitation-design.md`, closing the gap this entry used to
+record under "`appStorage` does not use the app group" — accurately, at the time: nothing in the
+share extension read a value back across the boundary yet, so it was latent rather than broken.
+
+Existing values were not migrated, with one exception: `review-requested-at` is read across from
+`UserDefaults.standard` once, since a lost cooldown timestamp would make `ReviewPrompt` ask sooner
+than it should, and that is the one direction of error this whole feature exists to avoid.
+`review-import-count`, `inboxDocumentCount` and `failedFileTaskCount` are left to re-read as their
+defaults — each only delays a count catching up, which errs the safe way instead.
+
+Open: whether any other pre-existing `appStorage` key needs the same one-time read-across, or
+whether re-reading as a default is always the safe direction for it. Nobody has gone through the
+full key list against that question; `review-requested-at` was only caught because this feature
+happened to add the first thing that reads a pre-existing key back across the process boundary.
+
+Surfaced during: `docs/superpowers/specs/2026-09-13-tip-invitation-design.md`.
+
+---
+
 ## Two unmeasured CI leads
 
 Both plausible, neither timed:
