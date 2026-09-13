@@ -1,3 +1,4 @@
+import ApiInterface
 import ComposableArchitecture
 import Dependencies
 import ShareFeature
@@ -10,6 +11,7 @@ final class ShareViewController: UIViewController {
         super.viewDidLoad()
 
         prepareDependencies {
+            $0.defaultAppStorage = .appGroup
             $0.popupPresentationController = self
         }
 

@@ -577,6 +577,7 @@ extension Module {
                 .external(.composableArchitecture),
                 .external(.dependencies),
                 .target(.apiImplementation),
+                .target(.apiInterface),
                 .target(.shareFeature)
             ]
         case .shareFeature:
