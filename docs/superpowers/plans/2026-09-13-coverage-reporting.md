@@ -792,15 +792,24 @@ Run: `chmod +x mise/scripts/coverage_report.py`
 
 - [ ] **Step 3: Verify against the real bundle from Task 1**
 
+Task 1's Step 5 left `/tmp/ws-check.xcresult` behind — a real run of the workspace scheme. Use that
+one; it is the bundle shape CI produces. If it is missing, regenerate it with the command in
+Task 1's Step 5.
+
 Run:
 ```bash
-printf 'Modules/Logging/LogWriter.swift\nModules/Logging/LogClient.swift\n' > /tmp/changed.txt
+printf 'Modules/Logging/LogWriter.swift\nModules/Logging/LogClient.swift\nModules/LoggingTests/LogWriterTests.swift\n' > /tmp/changed.txt
 python3 mise/scripts/coverage_report.py \
-  --bundle /tmp/coverage-check.xcresult \
+  --bundle /tmp/ws-check.xcresult \
   --repo-root "$PWD" \
   --changed-files /tmp/changed.txt
 ```
-Expected: a `Logging` module row near `70.8% | 228/322`, and a changed-files table where `LogWriter.swift` is around `94.6%` and `LogClient.swift` is `0.0% | 0/24`.
+Expected, exactly:
+- a `Logging` module row reading `| Logging | 70.8% | 228/322 |`
+- a changed-files table with `| Modules/Logging/LogClient.swift | 0.0% | 0/24 |` and
+  `| Modules/Logging/LogWriter.swift | 94.6% | 105/111 |`
+- **no row for `Modules/LoggingTests/LogWriterTests.swift`** — `LoggingTests` is not an instrumented
+  target, so `changed_source_files` drops it. That absence is the point of the third path.
 
 - [ ] **Step 4: Verify the missing-bundle path**
 
