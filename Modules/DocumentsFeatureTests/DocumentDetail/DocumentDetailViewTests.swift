@@ -53,6 +53,13 @@ struct DocumentDetailViewTests {
 
     // Bare, DocumentDetailView has no NavigationStack ancestor, so SwiftUI drops the whole toolbar
     // — these two are what would actually catch the edit button reappearing on an offline snapshot.
+    //
+    // Their references show a blank page under a ghosted bar, and that is not a broken recording.
+    // Wrapping the view in a NavigationStack here while it states its own display mode leaves the
+    // host with no window to draw into, so the capture is of an unrealised hierarchy — neither a
+    // wait nor drawHierarchyInKeyWindow changes it, and the real app renders the page normally.
+    // What survives is the toolbar, which is the only thing these two are for: `···` plus `Edit`
+    // above, `···` alone below. The page itself is covered by testSnapshot_success.
     @Test
     func testSnapshot_toolbar_editable() async throws {
         let data = try Data.testValue()
