@@ -217,8 +217,12 @@ struct DocumentListReducerTests {
                 toasts.withValue { $0.append(value) }
             }
         }
+        // Off because the tip-invitation check races with this effect - see
+        // DocumentListTipInvitationTests for the check itself.
+        store.exhaustivity = .off
 
         await store.send(.view(.onAppear))
+        await store.receive(\.tipInvitationEligible)
         await store.receive(\.error) {
             $0.error = "Something went wrong"
         }
@@ -237,6 +241,8 @@ struct DocumentListReducerTests {
         }
 
         await store.send(.view(.onAppear))
+        // Checked on every appearance, including this one - see DocumentListTipInvitationTests.
+        await store.receive(\.tipInvitationEligible)
     }
 
     @Test
@@ -253,8 +259,12 @@ struct DocumentListReducerTests {
                 )
             }
         }
+        // Off because the tip-invitation check races with this effect - see
+        // DocumentListTipInvitationTests for the check itself.
+        store.exhaustivity = .off
 
         await store.send(.view(.onAppear))
+        await store.receive(\.tipInvitationEligible)
         await store.receive(\.replaceDocuments, .testValue(
             count: 77,
             results: [.testValue()]
@@ -299,10 +309,14 @@ struct DocumentListReducerTests {
                 return .testValue(count: 1, results: [.testValue()])
             }
         }
+        // Off because the tip-invitation check races with this effect - see
+        // DocumentListTipInvitationTests for the check itself.
+        store.exhaustivity = .off
 
         await store.send(.view(.onAppear)) {
             $0.filter = .inbox(server: server)
         }
+        await store.receive(\.tipInvitationEligible)
         await store.receive(\.replaceDocuments) {
             $0.documents = [.testValue()]
             $0.documentSelection.allLoadedDocuments = [1]
@@ -341,6 +355,8 @@ struct DocumentListReducerTests {
             $0.isLoaded = true
             $0.totalNumberOfDocuments = 0
         }
+        // Checked on every appearance, including this one - see DocumentListTipInvitationTests.
+        await store.receive(\.tipInvitationEligible)
     }
 
     @Test

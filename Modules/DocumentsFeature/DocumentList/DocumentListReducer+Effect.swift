@@ -1,4 +1,5 @@
 import ApiInterface
+import Components
 import ComposableArchitecture
 import Foundation
 
@@ -127,6 +128,24 @@ extension Effect where Action == DocumentListReducer.Action {
             // `state.error` and surface the empty-state view, which would be wrong.
         }
         .cancellable(id: CancelID.refreshDocuments)
+    }
+
+    static func runCheckTipInvitation() -> Self {
+        @Dependency(\.tipInvitation.isEligible)
+        var isEligible
+
+        return .run { send in
+            await send(.tipInvitationEligible(isEligible()), animation: .default)
+        }
+    }
+
+    static func runSettleTipInvitation() -> Self {
+        @Dependency(\.tipInvitation.settle)
+        var settle
+
+        return .run { _ in
+            await settle()
+        }
     }
 
     static func runSelectServer(server: Server) -> Self {
