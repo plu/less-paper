@@ -10,6 +10,7 @@ from pathlib import Path
 
 from coverage_report import (
     FileRow,
+    MARKER,
     ModuleRow,
     changed_source_files,
     file_rows,
@@ -19,6 +20,7 @@ from coverage_report import (
     module_rows,
     percent,
     relative_path,
+    render,
 )
 
 
@@ -218,6 +220,48 @@ class FileRowsTests(unittest.TestCase):
         )
 
         self.assertEqual(rows, [FileRow("Modules/Logging/LogClient.swift", 0, 24)])
+
+
+class RenderTests(unittest.TestCase):
+    def test_starts_with_the_marker_so_the_comment_can_be_found_again(self):
+        body = render([ModuleRow("Logging", 228, 322)], [])
+
+        self.assertTrue(body.startswith(MARKER))
+
+    def test_renders_a_module_row(self):
+        body = render([ModuleRow("Logging", 228, 322)], [])
+
+        self.assertIn("| Logging | 70.8% | 228/322 |", body)
+
+    def test_renders_a_changed_file_row(self):
+        body = render(
+            [ModuleRow("Logging", 228, 322)],
+            [FileRow("Modules/Logging/LogClient.swift", 0, 24)],
+        )
+
+        self.assertIn("| Modules/Logging/LogClient.swift | 0.0% | 0/24 |", body)
+
+    def test_renders_an_unmeasured_file_without_a_percentage(self):
+        body = render(
+            [ModuleRow("Logging", 228, 322)],
+            [FileRow("Modules/DesignTokens/Spacing.swift", None, None)],
+        )
+
+        self.assertIn("| Modules/DesignTokens/Spacing.swift | not measured |", body)
+        self.assertNotIn("0.0%", body)
+
+    def test_omits_the_file_section_when_no_source_files_changed(self):
+        body = render([ModuleRow("Logging", 228, 322)], [])
+
+        self.assertNotIn("Files changed", body)
+
+    # Selective testing finding nothing to do is a pass, not a failure - but the comment still has
+    # to be rewritten, because a table left standing from two pushes ago describes the wrong commit.
+    def test_says_so_when_nothing_was_tested(self):
+        body = render([], [])
+
+        self.assertTrue(body.startswith(MARKER))
+        self.assertIn("No modules were tested", body)
 
 
 if __name__ == "__main__":

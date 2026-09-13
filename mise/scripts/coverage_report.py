@@ -117,3 +117,46 @@ def file_rows(
             rows.append(FileRow(path, None, None))
 
     return rows
+
+
+def render(modules: list[ModuleRow], files: list[FileRow]) -> str:
+    lines = [MARKER, "", "## Coverage", ""]
+
+    if not modules:
+        lines += [
+            "No modules were tested in this run - selective testing found nothing whose",
+            "fingerprint changed.",
+            "",
+        ]
+        return "\n".join(lines)
+
+    lines += ["| Module | Coverage | Lines |", "| --- | ---: | ---: |"]
+    lines += [
+        f"| {module.name} | {percent(module.covered, module.executable)} "
+        f"| {module.covered}/{module.executable} |"
+        for module in modules
+    ]
+    lines += [
+        "",
+        "Only modules whose own tests ran are listed, and the numbers are suite-wide.",
+    ]
+
+    if files:
+        lines += [
+            "",
+            "### Files changed in this pull request",
+            "",
+            "| File | Coverage | Lines |",
+            "| --- | ---: | ---: |",
+        ]
+        for entry in files:
+            if entry.covered is None:
+                lines.append(f"| {entry.path} | not measured | |")
+            else:
+                lines.append(
+                    f"| {entry.path} | {percent(entry.covered, entry.executable)} "
+                    f"| {entry.covered}/{entry.executable} |"
+                )
+
+    lines.append("")
+    return "\n".join(lines)
