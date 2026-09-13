@@ -12,13 +12,9 @@ struct FileTaskRowView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: .x1) {
-            HStack(spacing: .x2) {
-                Image(systemName: task.status.systemImage)
-                    .foregroundStyle(task.status.tint)
-                Text(fileName)
-                    .foregroundColor(Color.m3OnSurface)
-                    .clipShape(Rectangle())
-            }
+            Text(fileName)
+                .foregroundColor(Color.m3OnSurface)
+                .clipShape(Rectangle())
             Text(verbatim: (task.dateDone ?? task.dateCreated)
                 .formatted(date: .abbreviated, time: .shortened))
                 .font(.caption)
@@ -76,33 +72,6 @@ struct FileTaskRowView: View {
             .accessibilityLabel(.fileTasksDismiss)
             .disabled(isDismissing)
             .tint(.m3Primary)
-        }
-    }
-}
-
-private extension FileTaskStatus {
-
-    var systemImage: String {
-        switch self {
-        case .complete:
-            "checkmark.circle.fill"
-        case .failed:
-            "exclamationmark.triangle.fill"
-        case .queued:
-            "clock"
-        case .started:
-            "arrow.triangle.2.circlepath"
-        }
-    }
-
-    var tint: Color {
-        switch self {
-        case .complete:
-            .m3Primary
-        case .failed:
-            .m3Error
-        case .queued, .started:
-            .m3Outline
         }
     }
 }
