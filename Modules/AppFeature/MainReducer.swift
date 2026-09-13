@@ -65,6 +65,10 @@ public struct MainReducer {
                 return .send(.inbox(.documentsDeleted(ids)))
             case let .inbox(.delegate(.documentsDeleted(ids))):
                 return .send(.documentList(.documentsDeleted(ids)))
+            case .documentList(.delegate(.tipInvitationTapped)),
+                 .inbox(.delegate(.tipInvitationTapped)):
+                state.selectedTab = .settings
+                return .send(.settingList(.openTipList))
             case let .selectedTab(tab):
                 state.selectedTab = tab
                 return .none

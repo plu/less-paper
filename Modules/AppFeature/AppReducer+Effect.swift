@@ -26,6 +26,15 @@ extension Effect where Action == AppReducer.Action {
         )
     }
 
+    static func runRecordActiveDay() -> Self {
+        @Dependency(\.tipInvitation.recordActiveDay)
+        var recordActiveDay
+
+        return .run { _ in
+            await recordActiveDay()
+        }
+    }
+
     static func runRefreshFavorites(server: Server) -> Self {
         @Dependency(\.refreshFavorites.execute) var refreshFavorites
 

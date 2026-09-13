@@ -122,10 +122,14 @@ public struct AppReducer {
                     .merge(with: .send(.logLaunchContext))
                     .merge(with: .runMemoryWarningObserver())
             case .didBecomeActive:
+                // Before the guard below: someone between servers is still using the app, and the
+                // day they did it still counts.
+                let recordActiveDay = Effect<Action>.runRecordActiveDay()
                 guard let server = state.main?.server else {
-                    return .none
+                    return recordActiveDay
                 }
-                return .runRefreshStatistics(server: server)
+                return recordActiveDay
+                    .merge(with: .runRefreshStatistics(server: server))
                     .merge(with: .runRefreshFavorites(server: server))
                     .merge(with: .runRefreshPermissions(server: server))
             case .logLaunchContext:
