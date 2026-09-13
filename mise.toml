@@ -25,7 +25,7 @@ TEST_SIMULATOR_OS = "26.5"
 postinstall = "brew bundle"
 
 [tools]
-"aqua:tuist" = "4.206.0"
+"aqua:tuist" = "4.208.0"
 git-lfs = "3.8.0"
 "github:a7ex/xcresultparser" = "2.2.0"
 "github:abiosoft/colima" = "0.10.3"
@@ -35,15 +35,16 @@ git-lfs = "3.8.0"
 # in XcodeBuildMCP fail with nothing printed. The "universal" tarball is the same build signed with
 # a Developer ID, so it runs straight out of the download.
 "github:cameroncooke/axe" = { version = "1.8.0", matching = "universal" }
+"github:cli/cli" = "2.100.0"
 "github:getsentry/XcodeBuildMCP" = "2.7.0"
-"github:jdx/aube" = "2.2.4"
-"github:jdx/fnox" = "1.34.1"
+"github:jdx/aube" = "2.2.14"
+"github:jdx/fnox" = "1.35.1"
 "github:lima-vm/lima" = "2.2.0"
 "github:nicklockwood/swiftformat" = "0.63.0"
 "github:realm/swiftlint" = "0.65.1"
-node = "26.8.1"
+node = "26.8.2"
 ruby = "3.4.10"
-"spm:mono0926/LicensePlist" = "3.28.0"
+"spm:mono0926/LicensePlist" = "3.28.2"
 swiftlint = "0.65.1"
 
 [settings]

@@ -3,39 +3,39 @@
 lockfile_version = 1
 
 [[tools."aqua:tuist"]]
-version = "4.206.0"
+version = "4.208.0"
 backend = "aqua:tuist"
-specifiers = ["4.206.0"]
+specifiers = ["4.208.0"]
 
 [tools."aqua:tuist"."platforms.linux-arm64"]
-checksum = "sha256:40e1100103b83c7eec3f575e32b8a0a2bd9bb0a36bb6057dc8f79544eed19d36"
-url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist-linux-aarch64.tar.gz"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681748"
+checksum = "sha256:3f5da57a2dcb1f63695a01de0c5a9761691d6f75db93a20148a98f686cea8195"
+url = "https://github.com/tuist/tuist/releases/download/4.208.0/tuist-linux-aarch64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/556973809"
 
 [tools."aqua:tuist"."platforms.linux-arm64-musl"]
-checksum = "sha256:40e1100103b83c7eec3f575e32b8a0a2bd9bb0a36bb6057dc8f79544eed19d36"
-url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist-linux-aarch64.tar.gz"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681748"
+checksum = "sha256:3f5da57a2dcb1f63695a01de0c5a9761691d6f75db93a20148a98f686cea8195"
+url = "https://github.com/tuist/tuist/releases/download/4.208.0/tuist-linux-aarch64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/556973809"
 
 [tools."aqua:tuist"."platforms.linux-x64"]
-checksum = "sha256:c014356ce188f8f53021c0d0eb810c7d60e526766ec9d7175de898883e16256e"
-url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist-linux-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681751"
+checksum = "sha256:3b13de0c3dda7c207e5aa097e490360911f00df707540d5686060d4bbcc71a96"
+url = "https://github.com/tuist/tuist/releases/download/4.208.0/tuist-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/556973807"
 
 [tools."aqua:tuist"."platforms.linux-x64-musl"]
-checksum = "sha256:c014356ce188f8f53021c0d0eb810c7d60e526766ec9d7175de898883e16256e"
-url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist-linux-x86_64.tar.gz"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681751"
+checksum = "sha256:3b13de0c3dda7c207e5aa097e490360911f00df707540d5686060d4bbcc71a96"
+url = "https://github.com/tuist/tuist/releases/download/4.208.0/tuist-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/556973807"
 
 [tools."aqua:tuist"."platforms.macos-arm64"]
-checksum = "sha256:4214560b37dc99713968ed26ed109cad6c854d501216092724717fe6125f8561"
-url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist.zip"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681746"
+checksum = "sha256:e9e720972a82da9423c8b197b812bc08ed1607b0acc75c66eb25350843a3ee9b"
+url = "https://github.com/tuist/tuist/releases/download/4.208.0/tuist.zip"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/556973806"
 
 [tools."aqua:tuist"."platforms.macos-x64"]
-checksum = "sha256:4214560b37dc99713968ed26ed109cad6c854d501216092724717fe6125f8561"
-url = "https://github.com/tuist/tuist/releases/download/4.206.0/tuist.zip"
-url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/537681746"
+checksum = "sha256:e9e720972a82da9423c8b197b812bc08ed1607b0acc75c66eb25350843a3ee9b"
+url = "https://github.com/tuist/tuist/releases/download/4.208.0/tuist.zip"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/556973806"
 
 [[tools.git-lfs]]
 version = "3.8.0"
@@ -170,13 +170,58 @@ checksum = "sha256:7b76340b72e90d0f211bc7c4636f15009076eff07acef2f2b632b175debd8
 url = "https://github.com/cameroncooke/AXe/releases/download/v1.8.0/AXe-macOS-v1.8.0-universal.tar.gz"
 url_api = "https://api.github.com/repos/cameroncooke/AXe/releases/assets/483428549"
 
+[[tools."github:cli/cli"]]
+version = "2.100.0"
+backend = "github:cli/cli"
+specifiers = ["2.100.0"]
+
+[tools."github:cli/cli"."platforms.linux-arm64"]
+checksum = "sha256:ea4e7a581a32ccad6cc7923cb1576ac5859ba4b9a16ab22eb8f8a96e78e2e961"
+url = "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/542974279"
+provenance = "github-attestations"
+
+[tools."github:cli/cli"."platforms.linux-arm64-musl"]
+checksum = "sha256:ea4e7a581a32ccad6cc7923cb1576ac5859ba4b9a16ab22eb8f8a96e78e2e961"
+url = "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/542974279"
+provenance = "github-attestations"
+
+[tools."github:cli/cli"."platforms.linux-x64"]
+checksum = "sha256:e4d4bb4498e8d007abe545b6568926793ace1b6447da598294a610018cb164be"
+url = "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/542974264"
+provenance = "github-attestations"
+
+[tools."github:cli/cli"."platforms.linux-x64-musl"]
+checksum = "sha256:e4d4bb4498e8d007abe545b6568926793ace1b6447da598294a610018cb164be"
+url = "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/542974264"
+provenance = "github-attestations"
+
+[tools."github:cli/cli"."platforms.macos-arm64"]
+checksum = "sha256:45f9a62da2f6e641a7fad57e2ce39656dfd7ef331372d80a2a2aed65abb01642"
+url = "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_macOS_arm64.zip"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/542974295"
+provenance = "github-attestations"
+provenance_verified = true
+
+[tools."github:cli/cli"."platforms.macos-x64"]
+checksum = "sha256:fcd7799e85eb575f3c7d2b1679bfbfedaefa1269d4bc7d096b51e10939b4812b"
+url = "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_macOS_amd64.zip"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/542974293"
+provenance = "github-attestations"
+
+[tools."github:cli/cli"."platforms.windows-x64"]
+checksum = "sha256:227e35230b25db3fa1b997bab7cf4d67df0470a3b75b99e4ee66bce1a7cd4e72"
+url = "https://github.com/cli/cli/releases/download/v2.100.0/gh_2.100.0_windows_amd64.zip"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/542974322"
+provenance = "github-attestations"
+
 [[tools."github:getsentry/XcodeBuildMCP"]]
 version = "2.7.0"
 backend = "github:getsentry/XcodeBuildMCP"
-specifiers = [
-    "2.7.0",
-    "latest",
-]
+specifiers = ["2.7.0"]
 
 [tools."github:getsentry/XcodeBuildMCP"."platforms.linux-arm64"]
 checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
@@ -214,91 +259,99 @@ url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcode
 url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
 
 [[tools."github:jdx/aube"]]
-version = "2.2.4"
+version = "2.2.14"
 backend = "github:jdx/aube"
-specifiers = ["2.2.4"]
+specifiers = ["2.2.14"]
 
 [tools."github:jdx/aube"."platforms.linux-arm64"]
-checksum = "sha256:ded66b083215124d196d918ce44506791c2153552f8f307786e07d9bb3f9221e"
-url = "https://github.com/aubepkg/aube/releases/download/v2.2.4/aube-v2.2.4-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/538160671"
+checksum = "sha256:5d9f70b243156d73f649fb670ab956d0ae090b0dc006467da36d5a4c223d7dfa"
+url = "https://github.com/aubepkg/aube/releases/download/v2.2.14/aube-v2.2.14-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/557687644"
+provenance = "github-attestations"
 
 [tools."github:jdx/aube"."platforms.linux-arm64-musl"]
-checksum = "sha256:07ad5c91d0c7ebb8e9092883ce4910284dc3c909d3aa3ef3c0041c8d25facb7b"
-url = "https://github.com/aubepkg/aube/releases/download/v2.2.4/aube-v2.2.4-aarch64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/538133294"
+checksum = "sha256:95e2bc01f7df981516ed177e4fe9692356d0aac76fc5a4793f78f28cb14af8ec"
+url = "https://github.com/aubepkg/aube/releases/download/v2.2.14/aube-v2.2.14-aarch64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/557672790"
+provenance = "github-attestations"
 
 [tools."github:jdx/aube"."platforms.linux-x64"]
-checksum = "sha256:20b8fda0f9f471500ee64814880bd84c1bc402ee7f6dece39bfae25cc93aa1d8"
-url = "https://github.com/aubepkg/aube/releases/download/v2.2.4/aube-v2.2.4-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/538149375"
+checksum = "sha256:9f91fc9f2879e07fbc94ff840837d827203fca39a07d3d2452033686ad3ef86c"
+url = "https://github.com/aubepkg/aube/releases/download/v2.2.14/aube-v2.2.14-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/557668024"
+provenance = "github-attestations"
 
 [tools."github:jdx/aube"."platforms.linux-x64-musl"]
-checksum = "sha256:ff864b3348d8aad6a1b50fe47e2234d53527797e80f190533c0456ef6255d6e4"
-url = "https://github.com/aubepkg/aube/releases/download/v2.2.4/aube-v2.2.4-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/538157265"
+checksum = "sha256:b59d5679eb14c7d6ab5c963c5e371783979b3cf46d9cb3680995b5a60016ee17"
+url = "https://github.com/aubepkg/aube/releases/download/v2.2.14/aube-v2.2.14-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/557666781"
+provenance = "github-attestations"
 
 [tools."github:jdx/aube"."platforms.macos-arm64"]
-checksum = "sha256:aa3f6e8e319c8d9c92393e797cd5576229eacc0740e8cf2b34d4c65bb1e61708"
-url = "https://github.com/aubepkg/aube/releases/download/v2.2.4/aube-v2.2.4-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/538155490"
+checksum = "sha256:0c00e7893042fe14cf4debeb6c4de13fe5316e2128ca0a995c3198c3179e1d7f"
+url = "https://github.com/aubepkg/aube/releases/download/v2.2.14/aube-v2.2.14-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/557677698"
+provenance = "github-attestations"
+provenance_verified = true
 
 [tools."github:jdx/aube"."platforms.macos-x64"]
-checksum = "sha256:ada4d37cc28ff03c1c7573105d9a149e0e9922abec8b2332d0ec11020b77ad2b"
-url = "https://github.com/aubepkg/aube/releases/download/v2.2.4/libaube-x86_64-apple-darwin.dylib"
-url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/538190348"
+checksum = "sha256:7455bd8a91fd8ab1948ed3558e4dbda92209953f1d77f9470c1ff9458b313509"
+url = "https://github.com/aubepkg/aube/releases/download/v2.2.14/libaube-x86_64-apple-darwin.dylib"
+url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/557688610"
+provenance = "github-attestations"
 
 [tools."github:jdx/aube"."platforms.windows-x64"]
-checksum = "sha256:b6ace0276285c6a0e0f0f2850f45bdcc4e51e1cc11fa005457c6fb83998a6d23"
-url = "https://github.com/aubepkg/aube/releases/download/v2.2.4/aube-v2.2.4-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/538150861"
+checksum = "sha256:1ed12d917865cef8426a1fc98706a0f85aab292b003e1e971c4e703a102dd687"
+url = "https://github.com/aubepkg/aube/releases/download/v2.2.14/aube-v2.2.14-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/aubepkg/aube/releases/assets/557685721"
+provenance = "github-attestations"
 
 [[tools."github:jdx/fnox"]]
-version = "1.34.1"
+version = "1.35.1"
 backend = "github:jdx/fnox"
-specifiers = ["1.34.1"]
+specifiers = ["1.35.1"]
 
 [tools."github:jdx/fnox"."platforms.linux-arm64"]
-checksum = "sha256:8a6a64c1f2367e6f61366a4cd206c4a8e2163aa72654c61ecb08de042afc8b06"
-url = "https://github.com/jdx/fnox/releases/download/v1.34.1/fnox-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/531310159"
+checksum = "sha256:d81a90ac6860947e24d6cfccb83102fab2899836c4144e1f8992f2c51749daab"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.1/fnox-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/546210948"
 provenance = "github-attestations"
 
 [tools."github:jdx/fnox"."platforms.linux-arm64-musl"]
-checksum = "sha256:f8ef80aaaf5f5eb50c172662a9f394cf2e1832c8d042577a1b53cb7adf0c5ead"
-url = "https://github.com/jdx/fnox/releases/download/v1.34.1/fnox-aarch64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/531310161"
+checksum = "sha256:ea87196c4169fdf6170a7246c3ee3643cf6e9fd57d38c39a0626ef05c2531d91"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.1/fnox-aarch64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/546210949"
 provenance = "github-attestations"
 
 [tools."github:jdx/fnox"."platforms.linux-x64"]
-checksum = "sha256:19961030a6580bc4e4153ab1d2ae112e28e09611971f3bcc0d2dc90ffd47603c"
-url = "https://github.com/jdx/fnox/releases/download/v1.34.1/fnox-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/531310192"
+checksum = "sha256:ecdbccd01cac2d5e32601636cc0a7b1d8b1501151b4683d660b1c024763ced45"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.1/fnox-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/546210980"
 provenance = "github-attestations"
 
 [tools."github:jdx/fnox"."platforms.linux-x64-musl"]
-checksum = "sha256:a789b6d16e579eafd1ee79d71dc52ed3708d921edc8cf49baa403fca4be9b9ea"
-url = "https://github.com/jdx/fnox/releases/download/v1.34.1/fnox-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/531310194"
+checksum = "sha256:491aaab498435e9edfdd8561ddc571a684cec49cee653f294544bcdf04857cca"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.1/fnox-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/546210978"
 provenance = "github-attestations"
 
 [tools."github:jdx/fnox"."platforms.macos-arm64"]
-checksum = "sha256:b9efa09f551470f8d664a2e040754d14993293e45dc08a69df4a9df782bbd1d4"
-url = "https://github.com/jdx/fnox/releases/download/v1.34.1/fnox-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/531310160"
+checksum = "sha256:9b733a2b9e3e893e73131cc3c7d64c8596de4c7210b47f3695ed4011d798a1e6"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.1/fnox-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/546210951"
 provenance = "github-attestations"
 provenance_verified = true
 
 [tools."github:jdx/fnox"."platforms.macos-x64"]
-checksum = "sha256:0fb69eeeface42801dc2a6f8f3266b1b6876f21f5d9951105506cbd539058f0a"
-url = "https://github.com/jdx/fnox/releases/download/v1.34.1/fnox-x86_64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/531310158"
+checksum = "sha256:77e920b21e42af9df0d6bf1bba58ad95cbf28557009f172c73db2fea651c9962"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.1/fnox-x86_64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/546210947"
 provenance = "github-attestations"
 
 [tools."github:jdx/fnox"."platforms.windows-x64"]
-checksum = "sha256:0128d894b2a1559c3d3155a6956751e01334a9dbdb6678519b82828b917ec9a7"
-url = "https://github.com/jdx/fnox/releases/download/v1.34.1/fnox-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/531310190"
+checksum = "sha256:4a8ac72394d0b678fc603add1559f7d4572212b0b08fc4884426b69af036d632"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.1/fnox-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/546210974"
 provenance = "github-attestations"
 
 [[tools."github:lima-vm/lima"]]
@@ -430,37 +483,37 @@ url = "https://github.com/realm/SwiftLint/releases/download/0.65.1/SwiftLint.amd
 url_api = "https://api.github.com/repos/realm/SwiftLint/releases/assets/524187612"
 
 [[tools.node]]
-version = "26.8.1"
+version = "26.8.2"
 backend = "core:node"
-specifiers = ["26.8.1"]
+specifiers = ["26.8.2"]
 
 [tools.node."platforms.linux-arm64"]
-checksum = "sha256:d5f973ce975e4bd03e6c2038260f7e9201615aa8e1ee293c72f8dcc2a6d9fddb"
-url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1-linux-arm64.tar.gz"
+checksum = "sha256:746cdbf21565b4ea06f77642bb0e85466de8bb722242be2c5e006f272c361c63"
+url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-arm64.tar.gz"
 
 [tools.node."platforms.linux-arm64-musl"]
-checksum = "sha256:0fe78afdeb4a4d273b14abbd4b946c772885c58994c9d23b1c8ae0a59a2f8a53"
-url = "https://unofficial-builds.nodejs.org/download/release/v26.8.1/node-v26.8.1-linux-arm64-musl.tar.gz"
+checksum = "sha256:125437a0b59d69592b8f4bb813a47245337afac8c973d15ab7720f0ec55d182d"
+url = "https://unofficial-builds.nodejs.org/download/release/v26.8.2/node-v26.8.2-linux-arm64-musl.tar.gz"
 
 [tools.node."platforms.linux-x64"]
-checksum = "sha256:b2b76660fa4ded4e0b2a41ee3c0c651cd52ea8170ead91ebac1e147ac3d55643"
-url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1-linux-x64.tar.gz"
+checksum = "sha256:badb3fe6a61b85e1352ca6564dc56b8b7bd5ecd5c474c52acc21dd0cdd586f35"
+url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-x64.tar.gz"
 
 [tools.node."platforms.linux-x64-musl"]
-checksum = "sha256:13135a6a2106f9d111fa9b48c8801ed119ad43e7e1d00de17d77a9c44899aada"
-url = "https://unofficial-builds.nodejs.org/download/release/v26.8.1/node-v26.8.1-linux-x64-musl.tar.gz"
+checksum = "sha256:696eb0180248a06c9893f3f07bcc4e2680891c83118c73aaf1de330efd053910"
+url = "https://unofficial-builds.nodejs.org/download/release/v26.8.2/node-v26.8.2-linux-x64-musl.tar.gz"
 
 [tools.node."platforms.macos-arm64"]
-checksum = "sha256:6e577fd0d9db776db82306629e441a9dace416702622aebdd171c9dfaa41f4d2"
-url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1-darwin-arm64.tar.gz"
+checksum = "sha256:974b6d5fb2fc7c33ff2354db0902b4e91c2de01ec8acc6de48e543c97e18c9e1"
+url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-darwin-arm64.tar.gz"
 
 [tools.node."platforms.macos-x64"]
-checksum = "sha256:fe9c6dbf9c8e1b4443803d75e2a20366e420dae650c747dbb116b22975751baf"
-url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1-darwin-x64.tar.gz"
+checksum = "sha256:adb8feb2d4987df3d72d2ec46f4fc4b58039c859b8c3f0e3cc2d3c6cbaf8629c"
+url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-darwin-x64.tar.gz"
 
 [tools.node."platforms.windows-x64"]
-checksum = "sha256:57693d8e93d1b04e7b7de46aca53ecd63e97564e73de36a68428d7ff08d83587"
-url = "https://nodejs.org/dist/v26.8.1/node-v26.8.1-win-x64.zip"
+checksum = "sha256:cf02f5d0c06c794b84f277177d5cf3743d0924ca49f6641cd435dd7cb6ee9085"
+url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-win-x64.zip"
 
 [[tools.ruby]]
 version = "3.4.10"
@@ -510,14 +563,14 @@ checksum = "sha256:ecee2d072a14f2d14347dd56dfd8fe5c3130abf5117bfaacbda0f4ef9cc42
 url = "https://cache.ruby-lang.org/pub/ruby/3.4/ruby-3.4.10.tar.gz"
 
 [[tools."spm:mono0926/LicensePlist"]]
-version = "3.28.0"
+version = "3.28.2"
 backend = "spm:mono0926/LicensePlist"
-specifiers = ["3.28.0"]
+specifiers = ["3.28.2"]
 
 [tools."spm:mono0926/LicensePlist"."platforms.macos-arm64"]
-checksum = "sha256:3e970cead9c34f5536ae5d455d91e924d8b9d7e33e5bcbf64b33b52cc29b7097"
-url = "https://github.com/mono0926/LicensePlist/releases/download/3.28.0/LicensePlistBinary-macos.artifactbundle.zip"
-url_api = "https://api.github.com/repos/mono0926/LicensePlist/releases/assets/492448776"
+checksum = "sha256:b7361afda76eaa56a71082a90462ee8493debd173914d80a3d34707415a544b7"
+url = "https://github.com/mono0926/LicensePlist/releases/download/3.28.2/LicensePlistBinary-macos.artifactbundle.zip"
+url_api = "https://api.github.com/repos/mono0926/LicensePlist/releases/assets/551827951"
 
 [[tools.swiftlint]]
 version = "0.65.1"
