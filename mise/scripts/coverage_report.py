@@ -31,6 +31,13 @@ class ModuleRow:
     executable: int
 
 
+@dataclass(frozen=True)
+class FileRow:
+    path: str
+    covered: int | None
+    executable: int | None
+
+
 def percent(covered: int, executable: int) -> str:
     if executable == 0:
         return "n/a"
@@ -66,13 +73,6 @@ def module_rows(coverage: dict, executed_bundles: list[str]) -> list[ModuleRow]:
     ]
 
     return sorted(rows, key=lambda row: row.name)
-
-
-@dataclass(frozen=True)
-class FileRow:
-    path: str
-    covered: int | None
-    executable: int | None
 
 
 def instrumented_modules(coverage: dict) -> set[str]:
@@ -128,11 +128,7 @@ def render(modules: list[ModuleRow], files: list[FileRow]) -> str:
     lines = [MARKER, "", "## Coverage", ""]
 
     if not modules:
-        lines += [
-            "No modules were tested in this run - selective testing found nothing whose",
-            "fingerprint changed.",
-            "",
-        ]
+        lines += ["No modules were tested in this run.", ""]
         return "\n".join(lines)
 
     lines += ["| Module | Coverage | Lines |", "| --- | ---: | ---: |"]

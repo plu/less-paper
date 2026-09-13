@@ -33,6 +33,18 @@ def target(name, covered, executable, files=None):
     }
 
 
+ROOT = Path("/repo")
+
+
+def source_file(path, covered, executable):
+    return {
+        "name": Path(path).name,
+        "path": path,
+        "coveredLines": covered,
+        "executableLines": executable,
+    }
+
+
 class PercentTests(unittest.TestCase):
     def test_rounds_to_one_decimal(self):
         self.assertEqual(percent(228, 322), "70.8%")
@@ -104,17 +116,6 @@ class ModuleRowsTests(unittest.TestCase):
     # rather than crash the report). Nothing to look up means nothing gets listed.
     def test_survives_a_coverage_report_with_no_targets(self):
         self.assertEqual(module_rows({}, ["LoggingTests"]), [])
-
-ROOT = Path("/repo")
-
-
-def source_file(path, covered, executable):
-    return {
-        "name": Path(path).name,
-        "path": path,
-        "coveredLines": covered,
-        "executableLines": executable,
-    }
 
 
 class InstrumentedModulesTests(unittest.TestCase):
