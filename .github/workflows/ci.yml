@@ -36,10 +36,14 @@ env:
 
 jobs:
   test_unit:
-    # Every label reaches this workflow now, but only the two that gate a job below deserve a run.
-    # One guard is enough for all three jobs: test_ui and upload need this one, and a job whose
-    # dependency was skipped is skipped too. A push carries no `action`, so main is unaffected.
-    if: github.event.action != 'labeled' || github.event.label.name == 'TestFlight' || github.event.label.name == 'UITests'
+    # Every label reaches this workflow now, but only the three that change what a job does deserve
+    # a run. One guard is enough for all three jobs: test_ui and upload need this one, and a job
+    # whose dependency was skipped is skipped too. A push carries no `action`, so main is unaffected.
+    #
+    # FullTests belongs here for the same reason as the other two: without it, labelling an open
+    # pull request would do nothing until the next push, which is exactly when nobody is watching
+    # for it.
+    if: github.event.action != 'labeled' || github.event.label.name == 'TestFlight' || github.event.label.name == 'UITests' || github.event.label.name == 'FullTests'
     name: Unit Tests
     runs-on: [self-hosted, macOS]
     timeout-minutes: 60
@@ -69,6 +73,10 @@ jobs:
       - run: fnox exec -P ci -- mise ci:test:unit
         env:
           TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
+          # Selective testing runs only the modules whose fingerprint changed. FullTests turns that
+          # off for this run without touching which jobs run - pair it with UITests to get
+          # genuinely everything.
+          FULL_TEST_RUN: ${{ contains(github.event.pull_request.labels.*.name, 'FullTests') }}
 
       # The one thing in this repository that reports to the pull request conversation rather than
       # to the run that produced it. A step summary on a green check is something nobody opens, and
@@ -130,6 +138,7 @@ jobs:
       - run: fnox exec -P ci -- mise ci:test:ui
         env:
           TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
+          FULL_TEST_RUN: ${{ contains(github.event.pull_request.labels.*.name, 'FullTests') }}
 
       # A failing XCUITest records the app's accessibility hierarchy and a video at the moment it
       # gave up. Without the bundle a UI failure reports only which assertion failed, which is

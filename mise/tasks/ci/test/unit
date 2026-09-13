@@ -5,4 +5,14 @@ tuist install
 
 # Everything except the two XCUITest targets. Runs on every push and pull request: it needs no
 # container, no simulator app install, and finishes in a couple of minutes.
-"$MISE_PROJECT_ROOT/mise/scripts/run_tests.sh" test-unit.xcresult --skip-ui-tests
+args=(test-unit.xcresult --skip-ui-tests)
+
+# A pull request labelled FullTests asks for the whole suite rather than the slice selective testing
+# picks. Passed as a flag rather than through TUIST_TEST_SELECTIVE_TESTING, because tuist accepts
+# any value for that variable without complaint - a misspelling included - so setting it there could
+# leave selective testing quietly on while looking like it had been turned off.
+if [ "${FULL_TEST_RUN:-}" = "true" ]; then
+  args+=(--no-selective-testing)
+fi
+
+"$MISE_PROJECT_ROOT/mise/scripts/run_tests.sh" "${args[@]}"

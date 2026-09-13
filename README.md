@@ -110,6 +110,10 @@ The API layer is tested against a live paperless-ngx container rather than mocks
 
 UI tests live in `AppUITests` and drive the assembled app end to end — onboarding, server management, settings, the create/edit/delete lifecycle of each entity, custom fields, and document browsing and editing — rather than a harness app per feature. Each test creates its own paperless user, so what it makes is invisible to every other test and the lists it opens start empty. The journeys run serially and take several minutes; they are the slow part of the suite, so CI reserves them for `main` and for pull requests labelled `UITests` or `TestFlight`.
 
+CI runs only the modules whose fingerprint changed, so most pull requests test a slice of the suite rather than all of it. A pull request labelled `FullTests` turns that off and runs everything the job covers — it does not pull in the UI tests, so pair it with `UITests` to run genuinely everything.
+
+Every pull request also gets a comment reporting coverage for each module whose own tests ran, and for the files the pull request changed.
+
 ## Contributing
 
 Conventions for this codebase — comment style, TCA patterns, the confirmation-popup rule and more — live in [AGENTS.md](AGENTS.md). Please read it before opening a pull request. Releasing to the App Store is a maintainer task, documented in [docs/releasing.md](docs/releasing.md).

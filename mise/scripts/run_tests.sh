@@ -25,6 +25,9 @@ rm -rf "$bundle"
 # produced a green run on main that executed zero tests. What has changed is that the run is no
 # longer silent: the server records what was selected, and a run that tested nothing now says so
 # here instead of printing an empty summary.
+#
+# A pull request that wants the whole suite regardless can carry the FullTests label, which reaches
+# this script as --no-selective-testing from ci:test:unit and ci:test:ui.
 set +e
 # -o pins the runtime as well as the device. A machine can carry more than one iOS, and the name
 # alone would let xcodebuild pick whichever it liked - which the snapshot tests would notice and
