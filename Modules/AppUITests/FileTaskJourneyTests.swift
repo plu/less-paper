@@ -68,7 +68,43 @@ final class FileTaskJourneyTests: UITestCase {
             "The uploaded file never appeared under Complete"
         )
 
-        app.tapSwipeAction("Dismiss", in: row, timeout: timeout)
+        // Deliberately not the row's centre. The row's content is a VStack that sizes to its text,
+        // so a centre tap lands on the file name and passes even when the rest of the row is dead
+        // to taps - which is what this is here to catch. The trailing edge is past the longest
+        // label, so it only hits if the row fills its width.
+        row.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+
+        let detailBar = app.navigationBars.firstMatch
+        XCTAssertTrue(
+            detailBar.waitForExistence(timeout: timeout),
+            "Tapping the trailing edge of the row did not open the document"
+        )
+
+        // A large title roughly doubles the bar: inline is one row of chrome, large adds a second
+        // line beneath it. Opening from this sheet used to arrive large, because the sheet is
+        // dismissed in the same mutation that pushes the detail and `.automatic` had no settled
+        // bar to inherit from. Asserting the height is blunt, but it is the only part of the
+        // difference XCUITest can see.
+        XCTAssertLessThan(
+            detailBar.frame.height,
+            Self.largeTitleBarMinimumHeight,
+            "The document opened with a large navigation title instead of an inline one"
+        )
+
+        let backButton = detailBar.buttons.firstMatch
+        XCTAssertTrue(backButton.waitUntilHittable(timeout: timeout), "No back button on the document")
+        backButton.tap()
+
+        // The sheet is gone once the document opens, so dismissing the task means going back in.
+        XCTAssertTrue(fileTasksButton.waitUntilHittable(timeout: timeout), "Never returned to the inbox")
+        fileTasksButton.tap()
+        XCTAssertTrue(completeSegment.waitUntilHittable(timeout: timeout), "The sheet did not reopen")
+        completeSegment.tap()
+
+        let rowAgain = app.cells.containing(.staticText, identifier: fileName).firstMatch
+        XCTAssertTrue(rowAgain.waitForExistence(timeout: timeout), "The row was gone after reopening the sheet")
+
+        app.tapSwipeAction("Dismiss", in: rowAgain, timeout: timeout)
 
         // The row is removed only once the server has acknowledged the task — a failed dismiss
         // leaves it standing and raises a toast — so its disappearance is the server's answer, not
@@ -88,6 +124,10 @@ final class FileTaskJourneyTests: UITestCase {
 
         try await super.tearDown()
     }
+
+    // An inline bar is one 44pt row plus the status area; a large-title bar adds a second line of
+    // about the same again. Anything under this is inline on every simulator the suite runs on.
+    private static let largeTitleBarMinimumHeight: CGFloat = 80
 
     private var documentId: Document.Id?
 }
