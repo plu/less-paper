@@ -194,13 +194,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Less Paper ist kostenlos und bleibt es. Es gibt ein Trinkgeldglas, falls dir danach ist – es schaltet nichts frei."
+            "value": "Less Paper hat ein Trinkgeldglas in den Einstellungen. Kostenlos bleibt die App so oder so, und Trinkgeld schaltet nichts frei."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Less Paper is free and stays free. There is a tip jar if you ever feel like it — it unlocks nothing."
+            "value": "Less Paper has a tip jar in Settings. It stays free either way, and tipping unlocks nothing."
           }
         }
       }
@@ -211,13 +211,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Du sortierst hier schon eine Weile"
+            "value": "Einmal gesagt, nie wieder"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "You have been filing things here a while"
+            "value": "Said once, never again"
           }
         }
       }

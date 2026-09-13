@@ -10,9 +10,12 @@ public struct DocumentListView: View {
         AdaptiveNavigationView(path: $store.scope(state: \.path, action: \.path)) {
             List {
                 if store.isTipInvitationVisible {
+                    // Animated on both paths: the row is answered at most once in a user's
+                    // lifetime, and having it vanish between two frames reads as a glitch rather
+                    // than as the app acknowledging what they just did.
                     TipInvitationBanner(
-                        tapped: { send(.tipInvitationTapped) },
-                        dismissed: { send(.tipInvitationDismissed) }
+                        tapped: { send(.tipInvitationTapped, animation: .default) },
+                        dismissed: { send(.tipInvitationDismissed, animation: .default) }
                     )
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())
