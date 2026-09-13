@@ -84,7 +84,7 @@ class ModuleRowsTests(unittest.TestCase):
     def test_omits_a_test_bundle_with_no_instrumented_target(self):
         coverage = {"targets": [target("Logging.framework", 228, 322)]}
 
-        rows = module_rows(coverage, ["LoggingTests", "ShareAppTests"])
+        rows = module_rows(coverage, ["LoggingTests", "TestSupportTests"])
 
         self.assertEqual([row.name for row in rows], ["Logging"])
 
@@ -99,6 +99,11 @@ class ModuleRowsTests(unittest.TestCase):
         rows = module_rows(coverage, ["TagsFeatureTests", "ApiInterfaceTests"])
 
         self.assertEqual([row.name for row in rows], ["ApiInterface", "TagsFeature"])
+
+    # read_coverage returns {} for a bundle that exists but holds no coverage data (xccov exits 1
+    # rather than crash the report). Nothing to look up means nothing gets listed.
+    def test_survives_a_coverage_report_with_no_targets(self):
+        self.assertEqual(module_rows({}, ["LoggingTests"]), [])
 
 ROOT = Path("/repo")
 
@@ -122,6 +127,11 @@ class InstrumentedModulesTests(unittest.TestCase):
         }
 
         self.assertEqual(instrumented_modules(coverage), {"Logging", "DesignTokens"})
+
+    # Same empty-report seam as module_rows: an empty dict means nothing is instrumented, not an
+    # error.
+    def test_survives_a_coverage_report_with_no_targets(self):
+        self.assertEqual(instrumented_modules({}), set())
 
 
 class RelativePathTests(unittest.TestCase):

@@ -168,12 +168,20 @@ def render(modules: list[ModuleRow], files: list[FileRow]) -> str:
 
 
 def read_coverage(bundle: Path) -> dict:
-    result = subprocess.run(
-        ["xcrun", "xccov", "view", "--report", "--json", str(bundle)],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
+    try:
+        result = subprocess.run(
+            ["xcrun", "xccov", "view", "--report", "--json", str(bundle)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        # A bundle that exists but was never fed a completed test run (xcodebuild created it,
+        # then died before any test produced coverage) makes xccov exit 1 with "No coverage data
+        # in result bundle". That is the same legitimate outcome as no bundle at all - not a
+        # reason to crash the report - so it flows through module_rows/instrumented_modules
+        # exactly like the empty coverage of a bundle that was never written.
+        return {}
     return json.loads(result.stdout)
 
 
@@ -192,7 +200,7 @@ def read_executed_bundles(bundle: Path) -> list[str]:
         child["name"]
         for plan in json.loads(result.stdout).get("testNodes", [])
         for child in plan.get("children", [])
-        if child.get("nodeType") in {"Unit test bundle", "UI test bundle"}
+        if child.get("nodeType") == "Unit test bundle"
     ]
 
 
@@ -218,7 +226,7 @@ def main() -> int:
 
     changed = []
     if args.changed_files and args.changed_files.exists():
-        changed = args.changed_files.read_text().split()
+        changed = args.changed_files.read_text().splitlines()
 
     listed = {module.name for module in modules}
     files = file_rows(
