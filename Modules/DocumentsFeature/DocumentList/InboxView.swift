@@ -10,6 +10,16 @@ public struct InboxView: View {
     public var body: some View {
         AdaptiveNavigationView(path: $store.scope(state: \.path, action: \.path)) {
             List {
+                if store.isTipInvitationVisible {
+                    TipInvitationBanner(
+                        tapped: { send(.tipInvitationTapped) },
+                        dismissed: { send(.tipInvitationDismissed) }
+                    )
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .padding(.x3)
+                }
                 // Rows default to `systemBackground`, which is black in dark mode and so paints over
                 // the list's `m3SurfaceContainerLowest`. Invisible in light mode, where both are white.
                 ForEach(Array(store.scope(state: \.documents, action: \.documents))) { store in

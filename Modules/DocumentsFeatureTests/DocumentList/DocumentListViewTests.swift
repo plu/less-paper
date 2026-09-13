@@ -123,4 +123,24 @@ struct DocumentListViewTests {
             as: .image(layout: .device(config: .iPhone12))
         )
     }
+
+    // The invitation is the only thing in the app that mentions the tip jar outside Settings, and it
+    // has to read as one more card in the stack rather than a panel bolted above it.
+    @Test
+    func testSnapshot_withTipInvitation() async throws {
+        var state = DocumentListReducer.State.testValue()
+        state.isTipInvitationVisible = true
+
+        assertSnapshot(
+            of: DocumentListView(
+                store: Store(
+                    initialState: state,
+                    reducer: {
+                        DocumentListReducer()
+                    }
+                )
+            ),
+            as: .image(layout: .device(config: .iPhone12))
+        )
+    }
 }
