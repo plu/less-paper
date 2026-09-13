@@ -18,6 +18,10 @@ struct FileTaskRepository: Sendable {
         _ server: Server
     ) async throws -> Int
 
+    var getFailedFileTaskPayloadsV9: @Sendable (
+        _ server: Server
+    ) async throws -> [FileTaskPayloadV9]
+
     var getFileTasksV10: @Sendable (
         _ status: FileTaskStatus,
         _ page: Int,
@@ -34,6 +38,7 @@ extension FileTaskRepository: TestDependencyKey {
     static let previewValue = Self(
         acknowledgeFileTasks: { _, _ in },
         getFailedFileTaskCountV10: { _ in 0 },
+        getFailedFileTaskPayloadsV9: { _ in [] },
         getFileTasksV10: { _, _, _ in .init() },
         getFileTasksV9: { _ in [] }
     )
@@ -41,6 +46,7 @@ extension FileTaskRepository: TestDependencyKey {
     static let testValue = Self(
         acknowledgeFileTasks: { _, _ in },
         getFailedFileTaskCountV10: { _ in 0 },
+        getFailedFileTaskPayloadsV9: { _ in [] },
         getFileTasksV10: { _, _, _ in .init() },
         getFileTasksV9: { _ in [] }
     )
@@ -53,6 +59,7 @@ extension FileTaskRepository: DependencyKey {
             try await acknowledge(ids: ids, path: "/api/tasks/acknowledge/", server: server)
         },
         getFailedFileTaskCountV10: getFailedFileTaskCountV10(server:),
+        getFailedFileTaskPayloadsV9: getFailedFileTaskPayloadsV9(server:),
         getFileTasksV10: getFileTasksV10(status:page:server:),
         getFileTasksV9: getFileTasksV9(server:)
     )
@@ -109,6 +116,35 @@ private extension FileTaskRepository {
             ))
             .value
             .count
+    }
+
+    // A separate request from getFileTasksV9 below rather than a shared one: the list path needs all
+    // four statuses, and this one exists purely to keep the badge cheap. On the dev instance the
+    // unfiltered list is ~1000 rows on every inbox appearance; this narrows the response to the rows
+    // that could possibly count.
+    //
+    // The status value is UPPERCASE and deliberately not FileTaskStatus.apiQueryValue, which is
+    // lower case and belongs to v10 only. Measured live against 2.15.3 and 2.19.6: `status=FAILURE`
+    // returns the true unacknowledged failure count, `status=failure` returns zero. Using
+    // apiQueryValue here would make the badge silently read 0 forever.
+    //
+    // The result is still run through the same in-memory filter as v9's list path: task_type is not
+    // provably honoured by every server (every fixture row was consume_file, so that could not be
+    // tested), and paperless 2.0.x ignores query parameters entirely. This query is an optimisation,
+    // not the source of truth.
+    static func getFailedFileTaskPayloadsV9(server: Server) async throws -> [FileTaskPayloadV9] {
+        try await APIClient
+            .client(server: server)
+            .send(.init(
+                path: "/api/tasks/",
+                method: .get,
+                query: [
+                    ("task_type", "consume_file"),
+                    ("status", "FAILURE"),
+                    ("acknowledged", "false")
+                ]
+            ))
+            .value
     }
 
     static func getFileTasksV10(

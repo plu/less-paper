@@ -33,7 +33,10 @@ private extension GetFailedFileTaskCountUseCase {
             // off a one-row page answers exactly the question being asked.
             count = try await repository.getFailedFileTaskCountV10(server)
         } else {
-            count = try await repository.getFileTasksV9(server)
+            // Server-filtered for cost, then filtered again in memory: the query is an
+            // optimisation, and the in-memory pass is what keeps the answer correct on a server
+            // that ignores it.
+            count = try await repository.getFailedFileTaskPayloadsV9(server)
                 .filter(\.isConsumeFile)
                 .map(\.asFileTask)
                 .filter { $0.status == .failed && !$0.isAcknowledged }

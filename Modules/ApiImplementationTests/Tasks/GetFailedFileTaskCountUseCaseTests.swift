@@ -29,7 +29,9 @@ struct GetFailedFileTaskCountUseCaseTests {
     }
 
     // Only unacknowledged failures count: a dismissed failure is one the user has dealt with, and
-    // the badge is there to ask for something.
+    // the badge is there to ask for something. The fixture also stands in for a server that does not
+    // honour the query at all (paperless 2.0.x): the in-memory filter still has to throw out the
+    // acknowledged row and the non-consume_file row on its own.
     @Test
     func execute_onVersion9_countsUnacknowledgedFailedConsumeTasks() async throws {
         let server = Server.testValue()
@@ -38,7 +40,7 @@ struct GetFailedFileTaskCountUseCaseTests {
         $apiVersion.withLock { $0 = 9 }
 
         try await withDependencies {
-            $0.fileTaskRepository.getFileTasksV9 = { _ in
+            $0.fileTaskRepository.getFailedFileTaskPayloadsV9 = { _ in
                 [
                     .testValue(id: 1, status: "FAILURE", taskName: "consume_file"),
                     .testValue(id: 2, status: "FAILURE", taskName: "consume_file"),
@@ -54,6 +56,38 @@ struct GetFailedFileTaskCountUseCaseTests {
         }
     }
 
+    // The count path calls its own filtered endpoint rather than the unpaginated list endpoint
+    // GetFileTasksUseCase uses - the whole point of this use case's v9 branch is to avoid pulling
+    // ~1000 rows on every inbox appearance just to count them.
+    @Test
+    func execute_onVersion9_asksTheFilteredCountEndpointRatherThanTheFullList() async throws {
+        let server = Server.testValue()
+        @Shared(.apiVersion(server))
+        var apiVersion: Int?
+        $apiVersion.withLock { $0 = 9 }
+
+        let filteredEndpointAsked = LockIsolated(false)
+        let fullListAsked = LockIsolated(false)
+
+        try await withDependencies {
+            $0.fileTaskRepository.getFailedFileTaskPayloadsV9 = { _ in
+                filteredEndpointAsked.setValue(true)
+                return [.testValue(id: 1, status: "FAILURE", taskName: "consume_file")]
+            }
+            $0.fileTaskRepository.getFileTasksV9 = { _ in
+                fullListAsked.setValue(true)
+                return []
+            }
+        } operation: {
+            let count = try await GetFailedFileTaskCountUseCase.liveValue.execute(server: server)
+
+            #expect(count == 1)
+        }
+
+        #expect(filteredEndpointAsked.value)
+        #expect(!fullListAsked.value)
+    }
+
     // Nothing negotiated yet reads as the oldest supported server, the same rule GetFileTasksUseCase
     // follows: the newer shape has to be earned by a version this app has actually seen.
     @Test
@@ -67,7 +101,7 @@ struct GetFailedFileTaskCountUseCaseTests {
                 v10Requested.setValue(true)
                 return 0
             }
-            $0.fileTaskRepository.getFileTasksV9 = { _ in
+            $0.fileTaskRepository.getFailedFileTaskPayloadsV9 = { _ in
                 v9Requested.setValue(true)
                 return []
             }
