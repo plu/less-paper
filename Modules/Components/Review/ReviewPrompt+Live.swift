@@ -31,6 +31,16 @@ private extension ReviewPrompt {
         @Shared(.reviewRequestedAt)
         var requestedAt
 
+        // The suite moved from `.standard` to the app group, so an existing install's cooldown
+        // timestamp reads as absent here even though a review was already requested. Adopting the
+        // old value once avoids asking sooner than intended; delete this once every install has
+        // launched post-update. `review-import-count` gets no equivalent read-across - losing it
+        // only ever delays the next ask, which errs the safe way.
+        if requestedAt == nil,
+           let legacyRequestedAt = UserDefaults.standard.object(forKey: "review-requested-at") as? Double {
+            $requestedAt.withLock { $0 = legacyRequestedAt }
+        }
+
         switch moment {
         case .documentImported:
             $importCount.withLock { $0 += 1 }

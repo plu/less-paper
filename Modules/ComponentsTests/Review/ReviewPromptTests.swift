@@ -106,6 +106,29 @@ struct ReviewPromptTests {
         #expect(asked.value == 2)
     }
 
+    // The suite moved from `.standard` to the app group, so an install that already had a cooldown
+    // recorded under the old key must not have it read as absent - that would ask again before the
+    // 120 days are up, which is the exact regression this feature exists to avoid.
+    @Test
+    func cooldownRecordedOnlyInTheOldSuite_isStillHonoured() async {
+        let asked = LockIsolated(0)
+        let store = UserDefaults.inMemory
+        let firstAsk = Date(timeIntervalSince1970: 1234567890)
+
+        UserDefaults.standard.set(firstAsk.timeIntervalSince1970, forKey: "review-requested-at")
+        defer { UserDefaults.standard.removeObject(forKey: "review-requested-at") }
+
+        await withDependencies {
+            $0.appStoreReviewRequester.request = { asked.withValue { $0 += 1 }; return true }
+            $0.date = .constant(firstAsk.addingTimeInterval(119 * .day))
+            $0.defaultAppStorage = store
+        } operation: {
+            await ReviewPrompt.liveValue.record(.tipReceived)
+        }
+
+        #expect(asked.value == 0)
+    }
+
     // The app can go to the background while the prompt waits for its moment to settle, and
     // StoreKit then has no scene to show anything in. Spending four months of cooldown on a prompt
     // nobody saw is the one failure this gate cannot afford.
