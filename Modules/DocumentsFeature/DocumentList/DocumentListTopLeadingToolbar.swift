@@ -71,26 +71,14 @@ private struct DocumentListTopLeadingToolbar: ViewModifier {
             Button {
                 send(.fileTasksButtonTapped)
             } label: {
-                // An HStack rather than a badge overlay on the icon: an overlay on a toolbar item is
-                // clipped by the navigation bar on some heights, and this cannot be.
-                //
-                // Colour and weight carry the badge, not a pill. A toolbar button's label discards
-                // the background: `.capsule` used to be applied here and rendered as bare text, so
-                // three of its four arguments did nothing and a light foreground turned the count
-                // invisible against the navigation bar. Verified by snapshot - do not reintroduce a
-                // background here expecting it to draw. SwiftUI's own `.badge` is no help either: it
-                // is honoured on list rows and tab items only, with nothing for toolbar content.
-                HStack(spacing: .x1) {
-                    Image(systemName: "tray.and.arrow.down")
-                    if failedFileTaskCount > 0 {
-                        Text(verbatim: String(failedFileTaskCount))
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color.m3Error)
-                            .lineLimit(1)
-                    }
-                }
+                Image(systemName: "tray.and.arrow.down")
             }
+            // The system badge, the same one the inbox tab draws from inboxDocumentCount. From iOS
+            // 26 `.badge` is honoured on toolbar items too, not just list rows and tab bars, so the
+            // count no longer has to be hand-drawn: a capsule here rendered as bare text, because
+            // the toolbar's own button chrome overrides a background. Zero draws nothing, which is
+            // why there is no count check around it.
+            .badge(failedFileTaskCount)
             .accessibilityLabel(.fileTasks)
             .accessibilityValue(
                 failedFileTaskCount > 0
