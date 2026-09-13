@@ -74,9 +74,9 @@ extension CreateDocumentInput {
                 ))
             }
 
-            return try MultipartFormData.Builder.build(
-                with: parts,
-                willSeparateBy: RandomBoundaryGenerator.generate()
+            return try MultipartFormData.build(
+                parts: parts,
+                boundary: RandomBoundaryGenerator.generate()
             )
         }
     }

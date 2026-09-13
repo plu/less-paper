@@ -71,6 +71,49 @@ struct DocumentsRepositoryTests {
     }
 
     @Test
+    func formData_sendsAFilenameWithASpaceVerbatim() throws {
+        let tempURL = try createTempTestFile(named: "Sonos One.pdf")
+        let input = CreateDocumentInput(
+            archiveSerialNumber: nil,
+            correspondent: nil,
+            createdDate: Date(timeIntervalSince1970: 1609459200),
+            documentType: nil,
+            storagePath: nil,
+            tags: [],
+            title: "Spaced Document",
+            url: tempURL
+        )
+
+        let bodyString = String(decoding: try input.formData.body, as: UTF8.self)
+
+        #expect(bodyString.contains(#"filename="Sonos One.pdf""#))
+        #expect(!bodyString.contains("%"))
+    }
+
+    @Test
+    func formData_sendsANonASCIIFilenameVerbatim() throws {
+        let tempURL = try createTempTestFile(named: "Rechnung März.pdf")
+        let input = CreateDocumentInput(
+            archiveSerialNumber: nil,
+            correspondent: nil,
+            createdDate: Date(timeIntervalSince1970: 1609459200),
+            documentType: nil,
+            storagePath: nil,
+            tags: [],
+            title: "Umlaut Document",
+            url: tempURL
+        )
+
+        let bodyString = String(decoding: try input.formData.body, as: UTF8.self)
+
+        // `lastPathComponent` hands back the decomposed form, so the bytes on the wire spell the
+        // umlaut as "a" plus a combining diaeresis. This still matches the composed literal because
+        // Swift compares strings by canonical equivalence - a byte-wise comparison would not.
+        #expect(bodyString.contains(#"filename="Rechnung März.pdf""#))
+        #expect(!bodyString.contains("%"))
+    }
+
+    @Test
     func formData_withAllFields() async throws {
         let tempURL = try createTempTestFile(content: "Full document content")
         let date = Date(timeIntervalSince1970: 1609459200)
@@ -717,9 +760,12 @@ struct DocumentsRepositoryTests {
         try await storagePathsRepository.deleteStoragePath(id: storagePath.id, server: .testValue())
     }
 
-    private func createTempTestFile(content: String = "Test PDF content") throws -> URL {
+    private func createTempTestFile(
+        content: String = "Test PDF content",
+        named name: String = "test.pdf"
+    ) throws -> URL {
         let tempDir = FileManager.default.temporaryDirectory
-        let tempFile = tempDir.appendingPathComponent("test.pdf")
+        let tempFile = tempDir.appendingPathComponent(name)
 
         try content.data(using: .utf8)!.write(to: tempFile)
 
