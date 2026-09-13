@@ -28,6 +28,63 @@ struct FileTaskListReducerTests {
         }
     }
 
+    // The sheet is the only place the count can go stale without one of the other three triggers
+    // catching it: a segment switch inside an already-open sheet touches only the list. Without this,
+    // switching to Failed and seeing the row would never move the toolbar badge off zero.
+    @Test
+    func test_onAppear_refreshesTheFailedCount() async {
+        let refreshed = LockIsolated(false)
+        let store = TestStore(initialState: FileTaskListReducer.State(server: .testValue())) {
+            FileTaskListReducer()
+        } withDependencies: {
+            $0.getFileTasks.execute = { _, _, _ in .testValue(nextPage: nil, tasks: []) }
+            $0.getFailedFileTaskCount.execute = { _ in
+                refreshed.setValue(true)
+                return 0
+            }
+        }
+
+        await store.send(.view(.onAppear))
+        await store.receive(\.tasksLoaded) {
+            $0.isLoaded = true
+        }
+
+        #expect(refreshed.value)
+    }
+
+    // AcknowledgeFileTaskUseCase.liveValue already refreshes the count after a successful
+    // acknowledge; a second refresh from the reducer would fire two identical requests per dismiss.
+    @Test
+    func test_dismiss_doesNotRefreshTheFailedCountFromTheReducer() async {
+        let refreshCount = LockIsolated(0)
+        let store = TestStore(
+            initialState: FileTaskListReducer.State(
+                segment: .failed,
+                tasks: [.testValue(id: 1, status: .failed)],
+                isLoaded: true,
+                server: .testValue()
+            )
+        ) {
+            FileTaskListReducer()
+        } withDependencies: {
+            $0.acknowledgeFileTask.execute = { _, _ in }
+            $0.getFailedFileTaskCount.execute = { _ in
+                refreshCount.withValue { $0 += 1 }
+                return 0
+            }
+        }
+
+        await store.send(.view(.dismissButtonTapped(1))) {
+            $0.isDismissing = [1]
+        }
+        await store.receive(\.dismissFinished) {
+            $0.isDismissing = []
+            $0.tasks = []
+        }
+
+        #expect(refreshCount.value == 0)
+    }
+
     // The sheet opens on the problem when there is one, and on the newest imports when there is not.
     @Test
     func test_initialSegment_followsTheFailureCount() async {

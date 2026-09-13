@@ -175,7 +175,13 @@ public struct FileTaskListReducer: Reducer, Sendable {
                     // Reloading from page one cancels a next page in flight, so the flag it set has
                     // to come off with it.
                     state.isLoadingMore = false
-                    return .runLoadFileTasks(server: state.server, status: state.segment, page: 1)
+                    // The sheet's own refresh trigger for the badge: switching to Failed and seeing
+                    // the row there is not one of the three places that otherwise update it, so
+                    // without this the toolbar badge can go stale while the sheet is open.
+                    return .merge(
+                        .runLoadFileTasks(server: state.server, status: state.segment, page: 1),
+                        .runRefreshFailedCount(server: state.server)
+                    )
                 case let .onRowAppear(task):
                     guard let nextPage = state.nextPage,
                           !state.isLoadingMore,
