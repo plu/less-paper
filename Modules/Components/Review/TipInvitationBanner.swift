@@ -58,7 +58,10 @@ public struct TipInvitationBanner: View {
         .background(Color.m3SurfaceContainer)
         .contentShape(Rectangle())
         .onTapGesture { tapped() }
-        .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3Primary, lineWidth: 1))
+        // `strokeBorder`, not `stroke`: the clipShape below trims anything outside the rounded
+        // rectangle, and a centred stroke puts half its width there - so a 2pt `stroke` would
+        // render as 1pt. `strokeBorder` insets the line so the whole 2pt survives the clip.
+        .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).strokeBorder(Color.m3Primary, lineWidth: 2))
         .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
     }
 

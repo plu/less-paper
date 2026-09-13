@@ -22,6 +22,18 @@ public struct SettingListView: View {
     public var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
             List {
+                // Its own section at the top rather than buried alphabetically among Diagnostics
+                // and Licenses: the tip invitation sends people here once and never again, so the
+                // row it lands them beside has to be the one they remember.
+                Section {
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.tipList(TipListReducer.State())
+                    ) {
+                        Label(.tips, systemImage: "cup.and.saucer")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+                }
+
                 Section {
                     NavigationLink(
                         state: SettingListReducer.Path.State.serverList(ServerListReducer.State())
@@ -177,13 +189,6 @@ public struct SettingListView: View {
                         } icon: {
                             Image(systemName: "star")
                         }
-                    }
-                    .listRowBackground(Color.m3SurfaceContainer)
-
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.tipList(TipListReducer.State())
-                    ) {
-                        Label(.tips, systemImage: "cup.and.saucer")
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
                 } footer: {
