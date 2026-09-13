@@ -171,6 +171,57 @@
         }
       }
     },
+    "tipInvitationDismiss": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ausblenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dismiss"
+          }
+        }
+      }
+    },
+    "tipInvitationMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Less Paper ist kostenlos und bleibt es. Es gibt ein Trinkgeldglas, falls dir danach ist – es schaltet nichts frei."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Less Paper is free and stays free. There is a tip jar if you ever feel like it — it unlocks nothing."
+          }
+        }
+      }
+    },
+    "tipInvitationTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du sortierst hier schon eine Weile"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You have been filing things here a while"
+          }
+        }
+      }
+    },
     "title": {
       "extractionState": "manual",
       "localizations": {
