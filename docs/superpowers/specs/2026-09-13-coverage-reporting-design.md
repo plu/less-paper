@@ -128,12 +128,13 @@ answers the question a reviewer actually has, which is not "where does this proj
 this pull request test what it added". A new file landing at 0% is invisible inside a module-level
 percentage and unmissable here.
 
-The diff is taken against `github.event.pull_request.base.sha`, passed in to the script, rather than
-against `origin/main`. `actions/checkout` fetches to depth 1, so `origin/main` is not a ref the
-runner can be relied on to have — it happens to survive on this self-hosted runner because `ci.yml`
-checks out with `clean: false`, which is an accident of the runner rather than something to build
-on. Deletions are filtered out with the test sources: a removed file has no coverage to report and
-is not a gap in what the pull request tested.
+The changed files come from `repos/{owner}/{repo}/pulls/{number}/files`, not from `git diff`.
+`actions/checkout` fetches to depth 1, so neither `origin/main` nor the base commit is an object the
+runner can be relied on to have — they happen to survive here because `ci.yml` checks out with
+`clean: false`, which is an accident of a reused self-hosted workspace rather than something to
+build on. Asking GitHub needs no git objects at all, and it carries each file's status, so
+deletions are dropped without a second rule: a removed file has no coverage to report and is not a
+gap in what the pull request tested.
 
 A changed file whose module has no coverage row is reported as not measured, never as 0%. The live
 case is `DesignTokens`, which is instrumented but has no test target, so its files are never covered
