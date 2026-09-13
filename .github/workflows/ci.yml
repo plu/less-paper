@@ -70,6 +70,18 @@ jobs:
         env:
           TUIST_PAPERLESS_TEST_URL: http://192.168.64.1:9000
 
+      # The one thing in this repository that reports to the pull request conversation rather than
+      # to the run that produced it. A step summary on a green check is something nobody opens, and
+      # the audience here is a reviewer who was not looking for coverage.
+      #
+      # Runs even when the tests failed, so the comment always describes the current head. Leaving
+      # a table standing from two pushes ago would be read as describing this one.
+      - name: Coverage
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        run: mise ci:coverage
+        env:
+          COVERAGE_PR_NUMBER: ${{ github.event.pull_request.number }}
+
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v7
