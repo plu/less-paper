@@ -6,13 +6,19 @@ read_coverage/read_executed_bundles and is exercised by running the script for r
 """
 
 import unittest
+from pathlib import Path
 
 from coverage_report import (
+    FileRow,
     ModuleRow,
+    changed_source_files,
+    file_rows,
+    instrumented_modules,
     module_for_target,
     module_for_test_bundle,
     module_rows,
     percent,
+    relative_path,
 )
 
 
@@ -91,6 +97,127 @@ class ModuleRowsTests(unittest.TestCase):
         rows = module_rows(coverage, ["TagsFeatureTests", "ApiInterfaceTests"])
 
         self.assertEqual([row.name for row in rows], ["ApiInterface", "TagsFeature"])
+
+ROOT = Path("/repo")
+
+
+def source_file(path, covered, executable):
+    return {
+        "name": Path(path).name,
+        "path": path,
+        "coveredLines": covered,
+        "executableLines": executable,
+    }
+
+
+class InstrumentedModulesTests(unittest.TestCase):
+    def test_reads_the_module_set_out_of_the_coverage_report(self):
+        coverage = {
+            "targets": [
+                target("Logging.framework", 1, 2),
+                target("DesignTokens.framework", 0, 30),
+            ]
+        }
+
+        self.assertEqual(instrumented_modules(coverage), {"Logging", "DesignTokens"})
+
+
+class RelativePathTests(unittest.TestCase):
+    def test_makes_a_build_path_repository_relative(self):
+        self.assertEqual(
+            relative_path("/repo/Modules/Logging/LogWriter.swift", ROOT),
+            "Modules/Logging/LogWriter.swift",
+        )
+
+    # Coverage reports carry paths into the SPM checkouts too. They belong to nobody's module.
+    def test_ignores_a_path_outside_the_repository(self):
+        self.assertIsNone(relative_path("/elsewhere/Vendor/Thing.swift", ROOT))
+
+
+class ChangedSourceFilesTests(unittest.TestCase):
+    def test_keeps_swift_sources_in_an_instrumented_module(self):
+        changed = ["Modules/Logging/LogWriter.swift"]
+
+        self.assertEqual(
+            changed_source_files(changed, {"Logging"}),
+            ["Modules/Logging/LogWriter.swift"],
+        )
+
+    # LoggingTests is not instrumented, so its sources never reach the set and drop out here
+    # without a second rule naming test modules.
+    def test_drops_sources_in_a_module_that_is_not_instrumented(self):
+        changed = ["Modules/LoggingTests/LogWriterTests.swift"]
+
+        self.assertEqual(changed_source_files(changed, {"Logging"}), [])
+
+    def test_drops_files_outside_modules(self):
+        changed = [".github/workflows/ci.yml", "Workspace.swift"]
+
+        self.assertEqual(changed_source_files(changed, {"Logging"}), [])
+
+    def test_drops_non_swift_files(self):
+        changed = ["Modules/Logging/Resources/en.lproj/Localizable.strings"]
+
+        self.assertEqual(changed_source_files(changed, {"Logging"}), [])
+
+
+class FileRowsTests(unittest.TestCase):
+    def test_reports_coverage_for_a_changed_file_in_a_listed_module(self):
+        coverage = {
+            "targets": [
+                target(
+                    "Logging.framework",
+                    228,
+                    322,
+                    [source_file("/repo/Modules/Logging/LogWriter.swift", 105, 111)],
+                )
+            ]
+        }
+
+        rows = file_rows(
+            coverage, ["Modules/Logging/LogWriter.swift"], {"Logging"}, ROOT
+        )
+
+        self.assertEqual(rows, [FileRow("Modules/Logging/LogWriter.swift", 105, 111)])
+
+    # DesignTokens is instrumented but has no DesignTokensTests, so it can never be listed. Its
+    # files must read as unmeasured - rendering 0% would read as a regression this pull request
+    # caused, which is the one thing this report must not do.
+    def test_reports_a_file_in_an_unlisted_module_as_not_measured(self):
+        coverage = {
+            "targets": [
+                target(
+                    "DesignTokens.framework",
+                    0,
+                    30,
+                    [source_file("/repo/Modules/DesignTokens/Spacing.swift", 0, 30)],
+                )
+            ]
+        }
+
+        rows = file_rows(
+            coverage, ["Modules/DesignTokens/Spacing.swift"], set(), ROOT
+        )
+
+        self.assertEqual(rows, [FileRow("Modules/DesignTokens/Spacing.swift", None, None)])
+
+    def test_reports_a_brand_new_untested_file_as_zero_not_as_unmeasured(self):
+        coverage = {
+            "targets": [
+                target(
+                    "Logging.framework",
+                    228,
+                    322,
+                    [source_file("/repo/Modules/Logging/LogClient.swift", 0, 24)],
+                )
+            ]
+        }
+
+        rows = file_rows(
+            coverage, ["Modules/Logging/LogClient.swift"], {"Logging"}, ROOT
+        )
+
+        self.assertEqual(rows, [FileRow("Modules/Logging/LogClient.swift", 0, 24)])
 
 
 if __name__ == "__main__":
