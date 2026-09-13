@@ -229,15 +229,22 @@ is at least `tenureBeforeAsking` ago; `activeDays >= activeDaysBeforeAsking`; an
 | `tip-ask-last-active-day` | `Int?` | absent |
 | `tip-ask-settled` | `Bool` | `false` |
 
-`reviewRequestedAt` is declared `private` to `ReviewPrompt+Live.swift` today and becomes
-`internal` so the new file can read it. Same module, same folder, and the point of putting this
-client there was to share that gate.
+`reviewRequestedAt` needs no change: its extension in `ReviewPrompt+Live.swift` carries no access
+modifier, so the key is already internal to `Components` and the new file can read it as it stands.
+Sharing that gate was the point of putting this client in the same module.
 
 ### `Modules/Components/Review/TipInvitationBanner.swift` (new)
 
 A view with no store and no knowledge of tips: a title, a subtitle, a chevron, a close button, and
-`tapped` / `dismissed` closures. Styled as a list row — `m3SurfaceContainer` via `listRowBackground`
-at the call site, body font, `m3OnSurface` text, `m3Outline` for the subtitle.
+`tapped` / `dismissed` closures.
+
+It draws the same card `DocumentRowView` draws, because that is what "a list row, not a banner" means
+in *this* list. The document lists use `.listStyle(.plain)` with `listRowBackground(Color.clear)` and
+`listRowInsets(EdgeInsets())`, and each row paints its own card: `.background(Color.m3SurfaceContainer)`,
+`.overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))`,
+`.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))`, with `.padding(.x3)` applied by
+the call site. The banner copies that exactly, so it reads as one more card in the stack rather than
+as a panel bolted above it. Body font, `m3OnSurface` for the title, `m3Outline` for the message.
 
 ### `Modules/Components/Resources/Localizable.xcstrings`
 
@@ -337,9 +344,21 @@ routing — the delegate from each of `documentList` and `inbox` lands on `selec
 with `settingList.path == [.tipList]`. `SettingsFeatureTests` covers `openTipList` replacing a
 non-empty path rather than appending.
 
-Snapshots: the banner in the inbox and in the document list, light and dark, plus German — the
-message is long enough to wrap, and German is where it will wrap worst. Existing document list
-references must **not** change, since `isTipInvitationVisible` defaults to `false`.
+Snapshots: the banner in the inbox and in the document list, light and dark, plus one at
+`preferredContentSizeCategory: .accessibilityLarge` — the message is long enough to wrap, and that is
+where it wraps worst.
+
+**Not German**, despite the message being the longest new string: no unit snapshot test in this
+repo renders a non-English locale, because `LocalizedStringResource` resolves against the test
+process's own bundle language and `UITraitCollection` cannot change it. German rendering is covered
+only by the `MarketingKit` screenshot pipeline, and the banner will never appear there — those run on
+fixtures where nothing is eligible. So the German copy's length is reviewed by reading it, and the
+accessibility-size snapshot is what proves the layout survives a long message. Stated plainly because
+AGENTS.md records 14 German references once recorded showing English captions, and this is the same
+trap.
+
+Existing document list references must **not** change, since `isTipInvitationVisible` defaults to
+`false`.
 
 `mise exec -- tuist test Components -d "iPhone 17 Pro"`, the same for `DocumentsFeature`, `AppFeature`
 and `SettingsFeature`, and `mise run ci:lint`.
