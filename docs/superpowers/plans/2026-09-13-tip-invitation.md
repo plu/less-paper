@@ -37,15 +37,30 @@ Tuist.
   `$0.date = .constant(...)`. Never let a test read the real `UserDefaults`.
 - **Tips unlock nothing.** `tip-ask-settled` must be written identically whether the user tipped or
   dismissed. The app must not be able to tell which happened.
-- **Run a module's tests with** `mise exec -- tuist test <Module> -d "iPhone 17 Pro"`.
+- **Run a module's tests with** `mise exec -- tuist test <Module> -d "iPhone 17 Pro" --no-selective-testing`.
+  **`--no-selective-testing` is mandatory.** Without it, Tuist's remote cache can decide nothing
+  changed and print *"The scheme <Module>'s test action has no tests to run, finishing early"* —
+  then exit 0 having run **zero** tests, which is indistinguishable from success. **Always confirm
+  the output names the tests that actually ran**; an exit code is not evidence.
+  Do **not** add `--no-binary-cache`: it conflicts with already-cached DerivedData and fails the
+  build outright (`no such file or directory: ... UIKitNavigationShim.framework`). It is only
+  usable after clearing DerivedData, which no task here needs.
 - **Lint with** `mise run ci:lint` before each commit.
 
 ---
 
 ### Task 1: Share `appStorage` between the app and the share extension
 
-Closes the bug found while designing this: `ReviewPrompt`'s counters live in each process's own
-`UserDefaults.standard`, so the import count is split and the review cooldown is **not** shared.
+Closes a latent storage gap: nothing points `defaultAppStorage` at the app group, so each process
+reads its own `UserDefaults.standard`.
+
+**Corrected after this branch shipped.** This task was originally justified as fixing a live bug —
+that `ReviewPrompt`'s counters were split across the app and the share extension. That was wrong:
+`DocumentImportReducer`, the only caller of `.requestReview(.documentImported)`, never runs in the
+extension (`ShareViewController` instantiates `ShareExtensionReducer`), and the reducer's own
+comment says so. The review keys were never written from the extension. The change is still worth
+making — it puts the storage right before anything starts relying on it — but it fixes nothing that
+was broken. The spec carries the corrected reasoning.
 
 **Files:**
 - Create: `Modules/ApiInterface/Shared/UserDefaults+AppGroup.swift`
@@ -72,28 +87,39 @@ import Testing
 @Suite
 struct UserDefaultsAppGroupTests {
 
-    // The whole point of the accessor is that both processes land on the same suite. A silent
-    // fallback to .standard is exactly today's bug, so the identity of what comes back is the
-    // assertion, not merely that something came back.
+    // The whole point of the accessor is that two separately opened handles land on the same
+    // backing store, which is what makes the app and the share extension agree. Asserting on
+    // instance identity would not do: Foundation never documents that UserDefaults(suiteName:)
+    // returns a cached instance, so == could fail for a correct implementation. A round trip
+    // across two handles proves the store, not the pointer.
     @Test
-    func appGroup_isTheGroupSuite() {
-        #expect(UserDefaults.appGroup == UserDefaults(suiteName: AppGroup.identifier))
-    }
-
-    @Test
-    func appGroup_roundTripsAValue() {
+    func appGroup_isReadableThroughASeparatelyOpenedHandle() throws {
         let key = "app-group-round-trip-\(UUID().uuidString)"
+        let other = try #require(UserDefaults(suiteName: AppGroup.identifier))
+
         UserDefaults.appGroup.set(7, forKey: key)
         defer { UserDefaults.appGroup.removeObject(forKey: key) }
 
-        #expect(UserDefaults.appGroup.integer(forKey: key) == 7)
+        #expect(other.integer(forKey: key) == 7)
+    }
+
+    // The fallback is deliberate rather than a bug, but it must never be what a developer machine
+    // silently gets, because it is indistinguishable from working.
+    @Test
+    func appGroup_isNotTheStandardSuite() {
+        let key = "app-group-isolation-\(UUID().uuidString)"
+
+        UserDefaults.appGroup.set(7, forKey: key)
+        defer { UserDefaults.appGroup.removeObject(forKey: key) }
+
+        #expect(UserDefaults.standard.object(forKey: key) == nil)
     }
 }
 ```
 
 - [ ] **Step 2: Run the test and confirm it fails**
 
-Run: `mise exec -- tuist test ApiInterface -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test ApiInterface -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: FAIL to compile — `type 'UserDefaults' has no member 'appGroup'`.
 
@@ -106,8 +132,8 @@ import Foundation
 
 public extension UserDefaults {
 
-    // The suite both the app and the share extension read, so one import count and one review
-    // cooldown exist rather than one per process. Falling back to `standard` rather than trapping:
+    // The suite both the app and the share extension read, so a key written by either is seen by
+    // both. Falling back to `standard` rather than trapping:
     // a missing app group entitlement is a build configuration problem, and degrading to the old
     // per-process behaviour beats crashing on launch over something that only gates a prompt.
     static let appGroup = UserDefaults(suiteName: AppGroup.identifier) ?? .standard
@@ -116,9 +142,11 @@ public extension UserDefaults {
 
 - [ ] **Step 4: Run the test and confirm it passes**
 
-Run: `mise exec -- tuist test ApiInterface -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test ApiInterface -d "iPhone 17 Pro" --no-selective-testing`
 
-Expected: PASS, 2 tests.
+Expected: PASS, 2 tests. If `appGroup_isNotTheStandardSuite` fails, the app group entitlement
+is missing from the test host and `.appGroup` fell back to `.standard` — fix the entitlement
+rather than the test.
 
 - [ ] **Step 5: Point the app at the group suite**
 
@@ -127,9 +155,8 @@ In `Modules/App/LessPaperApp.swift`, `init()` becomes — note the new block goe
 
 ```swift
     init() {
-        // Before the DEBUG overrides below, which replace this with an in-memory store: the share
-        // extension writes the same keys, and two processes reading their own UserDefaults.standard
-        // is two review cooldowns rather than one.
+        // Before the DEBUG overrides below, which replace this with an in-memory store: the app
+        // and the extension would otherwise each read their own UserDefaults.standard.
         prepareDependencies {
             $0.defaultAppStorage = .appGroup
         }
@@ -165,7 +192,7 @@ its trailing `---` separator, leaving the surrounding entries and their separato
 
 - [ ] **Step 8: Build both targets and run the suite**
 
-Run: `mise exec -- tuist test ApiInterface -d "iPhone 17 Pro"` and `mise run ci:lint`
+Run: `mise exec -- tuist test ApiInterface -d "iPhone 17 Pro" --no-selective-testing` and `mise run ci:lint`
 
 Expected: PASS, clean lint. If `tuist` reports a missing file, run `mise exec -- tuist generate` —
 a newly created source file needs the project regenerated.
@@ -333,7 +360,7 @@ private extension TimeInterval {
 
 - [ ] **Step 2: Run the tests and confirm they fail**
 
-Run: `mise exec -- tuist test Components -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test Components -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: FAIL to compile — `cannot find 'TipInvitation' in scope`.
 
@@ -477,7 +504,7 @@ extension SharedReaderKey where Self == AppStorageKey<Bool>.Default {
 
 - [ ] **Step 5: Run the tests and confirm they pass**
 
-Run: `mise exec -- tuist test Components -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test Components -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: PASS, 6 new tests. Run `mise exec -- tuist generate` first if `tuist` cannot see the new
 files.
@@ -615,7 +642,7 @@ Append to `TipInvitationTests.swift`, inside the suite:
 
 - [ ] **Step 2: Run the tests and confirm they fail**
 
-Run: `mise exec -- tuist test Components -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test Components -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: the seven new tests FAIL — `isEligible` is still the `{ false }` stub, so the two that
 expect `true` fail, and `settle()` writes nothing.
@@ -697,7 +724,7 @@ private extension TipInvitation {
 
 - [ ] **Step 4: Run the tests and confirm they pass**
 
-Run: `mise exec -- tuist test Components -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test Components -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: PASS, 13 tests in `TipInvitationTests`.
 
@@ -858,7 +885,7 @@ struct TipInvitationBannerTests {
 
 - [ ] **Step 3: Run the test and confirm it fails**
 
-Run: `mise exec -- tuist test Components -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test Components -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: FAIL to compile — `cannot find 'TipInvitationBanner' in scope`.
 
@@ -925,7 +952,7 @@ public struct TipInvitationBanner: View {
 
 - [ ] **Step 5: Run the test twice and inspect what was recorded**
 
-Run: `mise exec -- tuist test Components -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test Components -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: FAIL — swift-snapshot-testing writes three new references and fails on the first run
 because none existed. Run it again: PASS.
@@ -1088,7 +1115,7 @@ struct DocumentListTipInvitationTests {
 
 - [ ] **Step 2: Run the tests and confirm they fail**
 
-Run: `mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: FAIL to compile — `isTipInvitationVisible` and `tipInvitationEligible` do not exist.
 
@@ -1207,7 +1234,7 @@ and re-checking there would let the row appear under the user's thumb mid-gestur
 
 - [ ] **Step 5: Run the tests and confirm they pass**
 
-Run: `mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: PASS, 5 new tests, and every pre-existing `DocumentsFeature` test still passing —
 `isTipInvitationVisible` defaults to `false` and `tipInvitation.testValue.isEligible` returns `false`,
@@ -1291,7 +1318,7 @@ two views share every style decision) to the existing
 
 - [ ] **Step 2: Run and confirm it fails**
 
-Run: `mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: references are written for the new tests and they fail on the first run, but the recorded
 images show **no banner** — the views do not render it yet. Delete the references just recorded so the
@@ -1325,7 +1352,7 @@ not styled specially, it is styled identically.
 
 - [ ] **Step 4: Run twice, then inspect**
 
-Run: `mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro"` — first run records and fails,
+Run: `mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro" --no-selective-testing` — first run records and fails,
 second run passes.
 
 **Open the three new PNGs.** Check: the banner sits above the first document; its card is
@@ -1425,7 +1452,7 @@ Both initialisers are verified against the tree: `LicenseListReducer.State()` ta
 
 - [ ] **Step 2: Run and confirm it fails**
 
-Run: `mise exec -- tuist test SettingsFeature -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test SettingsFeature -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: FAIL to compile — `type 'SettingListReducer.Action' has no member 'openTipList'`.
 
@@ -1449,7 +1476,7 @@ and handle it in the reducer's `switch`:
 
 - [ ] **Step 4: Run and confirm it passes**
 
-Run: `mise exec -- tuist test SettingsFeature -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test SettingsFeature -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: PASS, 2 new tests.
 
@@ -1568,7 +1595,7 @@ struct AppReducerTipInvitationTests {
 
 - [ ] **Step 2: Run and confirm it fails**
 
-Run: `mise exec -- tuist test AppFeature -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test AppFeature -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: FAIL — the two routing tests find `selectedTab` unchanged, and the two recording tests find
 `recorded.value == 0`.
@@ -1618,7 +1645,7 @@ In `Modules/AppFeature/MainReducer.swift`, beside the existing cross-child routi
 
 - [ ] **Step 5: Run and confirm it passes**
 
-Run: `mise exec -- tuist test AppFeature -d "iPhone 17 Pro"`
+Run: `mise exec -- tuist test AppFeature -d "iPhone 17 Pro" --no-selective-testing`
 
 Expected: PASS, 4 new tests, and every pre-existing `AppFeature` test still green — in particular
 `AppReducerTests`' `didBecomeActive` coverage, which now sees one extra effect.
@@ -1672,3 +1699,15 @@ prove.
   `activeDaysBeforeAsking` to `0`, run on a device, confirm the row renders correctly in light and
   dark, that tapping lands on the tip list with Back going to the Settings root, that the close button
   removes it, and that after either it never returns. **Restore both constants before committing.**
+- [ ] **Tapping ✕ must NOT open the tip jar.** Check this on its own, deliberately, because it is the
+  one defect no automated test in this plan can catch and the worst one for this feature: the card
+  carries an `onTapGesture` that navigates, and the dismiss `Button` sits inside it. Standard SwiftUI
+  hit-testing gives the `Button` priority within its own bounds, and `.buttonStyle(.borderless)` is
+  what keeps a button independently tappable inside a `List` row — but this is the first place in
+  this codebase where a `Button` sits inside a visibly tap-gestured container, so the precedent is
+  reasoned rather than observed. Tap the ✕ and confirm the row disappears **and the Settings tab does
+  not open**. If it navigates, the fix is to move the navigation off the container's `onTapGesture`
+  and onto its own `Button` wrapping only the icon-and-text region. The chevron added in the final
+  fix wave now sits directly beside the ✕, so aim for the ✕ deliberately rather than near it — and
+  if the two feel crowded on a real device, widen the gap; a mis-tap here is the failure this check
+  exists for.
