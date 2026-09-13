@@ -43,8 +43,9 @@ struct DocumentListTipInvitationTests {
         #expect(store.state.isTipInvitationVisible == false)
     }
 
-    // Tapping it is an answer, so it settles. The delegate is what MainReducer turns into a tab
-    // switch - this reducer deliberately does not know where the tip jar lives.
+    // Tapping it is an answer, so it settles. Both delegates fire: .tipInvitationSettled is what
+    // clears the sibling list (inbox vs documents), and .tipInvitationTapped is what MainReducer
+    // turns into a tab switch - this reducer deliberately does not know where the tip jar lives.
     @Test
     func tipInvitationTapped_settlesAndDelegates() async {
         let settled = LockIsolated(0)
@@ -61,14 +62,16 @@ struct DocumentListTipInvitationTests {
         await store.send(.view(.tipInvitationTapped)) {
             $0.isTipInvitationVisible = false
         }
+        await store.receive(\.delegate, .tipInvitationSettled)
         await store.receive(\.delegate, .tipInvitationTapped)
 
         #expect(settled.value == 1)
     }
 
-    // Dismissing settles identically to tipping. The app must not be able to tell which happened.
+    // Dismissing settles identically to tipping, and must delegate identically too - the sibling
+    // list has no other way to learn the invitation was answered here.
     @Test
-    func tipInvitationDismissed_settlesAndEmitsNoDelegate() async {
+    func tipInvitationDismissed_settlesAndDelegatesSettled() async {
         let settled = LockIsolated(0)
         let store = TestStore(
             initialState: DocumentListReducer.State.testValue(isLoaded: true)
@@ -84,6 +87,7 @@ struct DocumentListTipInvitationTests {
         await store.send(.view(.tipInvitationDismissed)) {
             $0.isTipInvitationVisible = false
         }
+        await store.receive(\.delegate, .tipInvitationSettled)
 
         #expect(settled.value == 1)
     }

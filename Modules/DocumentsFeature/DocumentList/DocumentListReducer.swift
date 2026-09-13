@@ -31,6 +31,7 @@ public struct DocumentListReducer: Sendable {
 
         public enum Delegate: Equatable {
             case documentsDeleted(Set<Document.Id>)
+            case tipInvitationSettled
             case tipInvitationTapped
         }
 
@@ -580,13 +581,18 @@ public struct DocumentListReducer: Sendable {
                     return .runSelectServer(server: server)
                 case .tipInvitationDismissed:
                     state.isTipInvitationVisible = false
+                    // The sibling list (inbox vs documents) has its own copy of this flag, and
+                    // nothing else tells it the invitation was answered here - without this delegate
+                    // it would still render, and still be tappable, until its own onAppear catches up.
                     return .runSettleTipInvitation()
+                        .concatenate(with: .send(.delegate(.tipInvitationSettled)))
                 case .tipInvitationTapped:
                     state.isTipInvitationVisible = false
                     // Concatenate, not merge: the delegate can make the parent switch tabs and
                     // tear down this store, which would cancel a still-in-flight settle running
                     // concurrently and let the invitation come back on the next visit.
                     return .runSettleTipInvitation()
+                        .concatenate(with: .send(.delegate(.tipInvitationSettled)))
                         .concatenate(with: .send(.delegate(.tipInvitationTapped)))
                 case .toggleSelectionModeButtonTapped:
                     return .send(.documentSelection(.toggleSelectionModeButtonTapped(state.filter)))
