@@ -344,7 +344,7 @@ public struct MarketingScreenshot: View {
 Recording writes the references; it always reports a failure while doing so, which is expected.
 
 ```bash
-mise exec -- tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing -- TEST_RUNNER_SNAPSHOT_RECORD=all
+mise run snapshots:record MarketingKit
 ```
 
 Then run again without recording:
@@ -594,7 +594,7 @@ set -euo pipefail
 
 # Reads Screenshots/Captures and writes fastlane/screenshots. No simulator app, no container: this
 # is a pure image transform, which is why it takes seconds where capturing takes an hour.
-tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing -- TEST_RUNNER_MARKETING_RENDER=true
+TEST_RUNNER_MARKETING_RENDER=true tuist test MarketingKit -d "iPhone 17 Pro" --no-selective-testing
 ```
 
 Make it executable: `chmod +x mise/tasks/screenshots/frame`.

@@ -19,7 +19,7 @@
 - **Search sends `title__icontains`, not `title_search`.** Verified identical with `ordering=-created`; `FilterRuleType.title` already produces it.
 - **Document ids serialize as JSON numbers** inside the `contains` array. A bare int is a 400.
 - **Run tests with** `tuist test DocumentsFeature -d "iPhone 17 Pro" --no-selective-testing`. Selective testing skips unchanged targets and will silently not run your new tests.
-- **Snapshots:** `record: .environment` defaults to `.missing`. The **first** run after adding a snapshot test records the reference and fails; the **second** passes. Both runs are steps. To re-record an existing snapshot, delete the `.png` and run twice — `SNAPSHOT_RECORD` is a scheme variable and does not pick up a shell export.
+- **Snapshots:** `record: .environment` defaults to `.missing`. The **first** run after adding a snapshot test records the reference and fails; the **second** passes. Both runs are steps. To re-record an existing snapshot, run `mise run snapshots:record DocumentsFeature` — a bare `SNAPSHOT_RECORD=all` shell export does not reach the test process, but the `TEST_RUNNER_SNAPSHOT_RECORD=all` the task exports does.
 
 ---
 

@@ -498,16 +498,44 @@ the old devices behind on the old one. `simctl delete unavailable` at the top of
 clears those, and it matters beyond tidiness: an orphaned device keeps its name while being
 unbootable, which is enough for a by-name lookup to find it and fail.
 
-## Recording a snapshot reference means editing the scheme
+## Recording a snapshot reference
 
-References live under `Snapshots/`, and `SNAPSHOT_RECORD` decides whether a run writes them. The
-variable is declared in `Tuist/ProjectDescriptionHelpers/Extensions/Dictionary+Extensions.swift`
-with `isEnabled: false`.
+References live under `Snapshots/`, and `SNAPSHOT_RECORD` decides whether a run writes them. To
+re-record one scheme:
 
-**Passing it on the command line does not work.** Neither `SNAPSHOT_RECORD=all tuist test` nor
-xcodebuild's `TEST_RUNNER_SNAPSHOT_RECORD=all` reaches the test process, and the run then passes
-having recorded nothing — which reads exactly like success. To re-record: flip `isEnabled` to
-`true`, `tuist generate`, run the tests, flip it back, and regenerate. Never leave it enabled.
+```sh
+mise run snapshots:record Components              # a whole scheme
+mise run snapshots:record Components --only ComponentsTests/ColorTests
+```
+
+**The run ends in `TEST FAILED`, and that is the success case.** In record mode
+swift-snapshot-testing writes the reference and then raises "Record mode is on" on every assertion,
+so every snapshot test that ran is a failed test. The task inverts that for you: it reads the result
+bundle, prints what changed, and *fails* on the two ways a run can record nothing while looking
+fine — no test ran at all (the build stopped short), or tests ran and none failed (the scheme has no
+snapshot tests, or `--only` selected none). Recording nothing while reporting success is the trap
+this whole area sets.
+
+`SNAPSHOT_RECORD` reaches the test process through xcodebuild, which copies every variable in its
+own environment named `TEST_RUNNER_<NAME>` into the test process as `<NAME>`. Two ways to get that
+wrong, both of which record nothing and then *pass*:
+
+- `SNAPSHOT_RECORD=all tuist test` — no `TEST_RUNNER_` prefix, so nothing forwards it. The test
+  bundle is launched by xcodebuild, not by your shell.
+- `tuist test … -- TEST_RUNNER_SNAPSHOT_RECORD=all` — after `--` this is an argument, and xcodebuild
+  parses it as a build setting override rather than an environment variable. The prefix only works
+  on a variable exported *before* the command. This form is the one that was tried in #9, and it is
+  why this file claimed for weeks that passing it on the command line does not work at all.
+
+Selective testing has to be off, which the task handles. It picks targets by fingerprint, and a
+scheme whose sources have not changed — the normal case, since a stale reference is usually the only
+thing that has — is skipped entirely, recording nothing and exiting 0.
+
+The scheme variable in `Tuist/ProjectDescriptionHelpers/Extensions/Dictionary+Extensions.swift` is
+declared with `isEnabled: false` and stays that way. It is there for recording from inside Xcode,
+where there is no `TEST_RUNNER_` route: tick it in the scheme editor, run, untick it. The generated
+project is not committed, so that tick is local and temporary — but the declaration is committed, so
+never flip `isEnabled` there to get a recording done.
 
 A test with **no** reference yet is a different case: swift-snapshot-testing writes one on the first
 run and fails, and the second run passes against it. Nothing had to be enabled, so nothing warns
@@ -567,8 +595,11 @@ to know about it:
   its own locale is ignored — and one render loop writing both languages then puts English captions
   on the German screenshots. It shipped that way once.
 - **The render is asked for with a `.marketing-render` marker file, not an environment variable.**
-  `TEST_RUNNER_`-prefixed variables do not reach the test process here, for the same reason
-  re-recording a snapshot means editing the scheme (above). `mise run screenshots:frame` writes the marker and removes it again.
+  That was chosen on the belief that `TEST_RUNNER_`-prefixed variables do not reach the test process
+  here. They do — see "Recording a snapshot reference" above — so this could be a variable, and the
+  marker is a workaround for a problem that was never there. It works, and `mise run
+  screenshots:frame` writes it and removes it again, so it stays until something else makes it worth
+  changing.
 
 The README shows `docs/images/screenshots.png`, a strip of four English iPhone screens rebuilt by
 `mise run screenshots:readme` after a re-frame. It is the one committed PNG kept **out** of LFS, so

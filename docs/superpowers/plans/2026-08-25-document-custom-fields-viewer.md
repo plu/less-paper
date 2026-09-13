@@ -35,7 +35,7 @@ single `Field`, which collides with its border because `Field` offsets its input
 - **`@ViewAction` views send with `send`, never `store.send`.** (`AGENTS.md`)
 - **Confirmations go through `ConfirmationPopupView`** — not relevant here, but no `.alert`/`.confirmationDialog` may be introduced.
 - **Unit tests** use Swift Testing (`@Suite`, `@Test`, `#expect`, `expectNoDifference`) with the `.dependencies()` trait from `TestSupport`.
-- **Snapshot tests** follow `DocumentFormCustomFieldsViewTests`, with `.snapshots(record: .environment)` and `.tags(.snapshotTests)`. Record with `TEST_RUNNER_SNAPSHOT_RECORD=all`.
+- **Snapshot tests** follow `DocumentFormCustomFieldsViewTests`, with `.snapshots(record: .environment)` and `.tags(.snapshotTests)`. Record with `mise run snapshots:record DocumentsFeature`.
 - **Localised strings** live in `Shared/Framework/Resources/Localizable.xcstrings`, `version` 1.1, `sourceLanguage` en. Every new key needs both `en` and `de` with `"state": "translated"`.
 - **Run tests** with `mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro"`. After editing `Tuist/ProjectDescriptionHelpers/`, regenerate first — no such edit is expected here.
 - **Definitions** come from `@Shared(.customFields(server))`. Never fetch them.
@@ -739,7 +739,7 @@ struct DocumentCustomFieldsView: View {
 - [ ] **Step 4: Record the snapshots and look at them**
 
 ```bash
-TEST_RUNNER_SNAPSHOT_RECORD=all mise exec -- tuist test DocumentsFeature -d "iPhone 17 Pro" --no-selective-testing
+mise run snapshots:record DocumentsFeature
 ```
 
 Then open the three new files under

@@ -38,10 +38,10 @@ that type and `PermissionsQuery` delegates to it, so the rule has one implementa
   The flag is required: a plain `tuist test` can exit 0 having run **zero** tests, which is
   indistinguishable from success.
 - **Also run `mise run ci:lint`** — formatting, `swiftlint --strict`, implicit-dependency check.
-- **Re-recording a snapshot means editing the scheme.** `SNAPSHOT_RECORD=all tuist test` does **not**
-  reach the test process; the run then passes having recorded nothing. Flip `isEnabled` to `true` in
-  `Tuist/ProjectDescriptionHelpers/Extensions/Dictionary+Extensions.swift`, `tuist generate`, record,
-  flip back, regenerate. See `AGENTS.md:461`.
+- **Re-record with `mise run snapshots:record <Scheme>`.** A bare `SNAPSHOT_RECORD=all tuist test`
+  does **not** reach the test process — it needs the `TEST_RUNNER_` prefix and an export, which the
+  task does — and the run then passes having recorded nothing. Recording ends in `TEST FAILED`; that
+  is the success case. See the "Recording a snapshot reference" section of `AGENTS.md`.
 - **New `.swift` files need no Tuist edit** — targets glob their module directory. This plan adds no
   new modules and needs no `Module+Dependencies.swift` change.
 

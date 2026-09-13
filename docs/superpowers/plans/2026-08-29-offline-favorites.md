@@ -1825,7 +1825,7 @@ Add `isOfflineSnapshot: Bool = false` to `DocumentDetailReducer.State`. In `Docu
 
 - [ ] **Step 7: Run tests; re-record the row snapshots**
 
-The context menu is not in the row's snapshot (it renders on long press), so references should be unchanged. Confirm with `git status Snapshots/`. If the detail snapshots changed, re-record with the `SNAPSHOT_RECORD` procedure and look at them.
+The context menu is not in the row's snapshot (it renders on long press), so references should be unchanged. Confirm with `git status Snapshots/`. If the detail snapshots changed, re-record with `mise run snapshots:record FavoritesFeature` and look at them.
 
 - [ ] **Step 8: Commit**
 
@@ -2033,7 +2033,7 @@ NavigationLink(
 
 - [ ] **Step 6: Run tests; re-record the Settings snapshot**
 
-The new row changes `SettingListViewTests.testSnapshot`. Re-record with the `SNAPSHOT_RECORD` procedure and look at the result: Diagnostics, Favorites, GitHub, Licenses, Tip jar.
+The new row changes `SettingListViewTests.testSnapshot`. Re-record with `mise run snapshots:record SettingsFeature` and look at the result: Diagnostics, Favorites, GitHub, Licenses, Tip jar.
 
 - [ ] **Step 7: Commit**
 

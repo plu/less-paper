@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+#MISE description="Re-record the snapshot references for one scheme"
+#USAGE arg "<scheme>" help="Scheme whose references to re-record, e.g. Components"
+#USAGE flag "--only <only>" help="Restrict the run to one suite or test, e.g. ComponentsTests/ColorTests"
+set -eou pipefail
+
+: "${TEST_SIMULATOR:?not set - it comes from mise.toml, so run this through mise}"
+: "${TEST_SIMULATOR_OS:?not set - it comes from mise.toml, so run this through mise}"
+
+# The test bundle is launched by xcodebuild, not by this shell, so exporting SNAPSHOT_RECORD here
+# would not reach it. What does reach it is the TEST_RUNNER_ prefix: xcodebuild copies every
+# variable in its own environment named TEST_RUNNER_<NAME> into the test process as <NAME>.
+#
+# The prefix only works on an environment variable. Written as a trailing argument instead -
+# `tuist test … -- TEST_RUNNER_SNAPSHOT_RECORD=all` - xcodebuild parses it as a build setting
+# override, nothing reaches the test process, and the run passes having recorded nothing. That is
+# why this task exists rather than a line in the documentation for people to retype.
+export TEST_RUNNER_SNAPSHOT_RECORD=all
+
+# Expanded below as ${only[@]+"${only[@]}"} rather than "${only[@]}": macOS ships bash 3.2, where an
+# empty array under `set -u` is an unbound variable rather than nothing at all.
+only=()
+if [ -n "${usage_only:-}" ]; then
+    only=("-only-testing:$usage_only")
+fi
+
+# Recording always ends non-zero (see below), so the exit code alone cannot tell a run that
+# recorded from a build that fell over before testing - both are just "not 0". The result bundle
+# can, but only by its contents: tuist writes one either way, and a bundle from a failed build is
+# an empty shell reporting no tests at all. Under a temporary directory because it is worth nothing
+# after this run - unlike the CI bundles, which are read back by xcresultparser.
+work_dir=$(mktemp -d)
+trap 'rm -rf "$work_dir"' EXIT
+bundle="$work_dir/record.xcresult"
+
+# Selective testing has to be off. It picks targets by fingerprint, and a scheme whose sources have
+# not changed - the normal case, because a stale reference is usually the only thing that has - is
+# skipped entirely. That run records nothing and exits 0, which is indistinguishable from a
+# re-record that worked.
+#
+# -o pins the runtime as well as the device, matching mise/scripts/run_tests.sh. References are
+# compared against images recorded on this exact pairing, so they have to be recorded on it too.
+set +e
+tuist test "$usage_scheme" \
+    -d "$TEST_SIMULATOR" \
+    -o "$TEST_SIMULATOR_OS" \
+    --no-selective-testing \
+    -T "$bundle" \
+    -- -testLanguage en -testRegion DE ${only[@]+"${only[@]}"}
+set -e
+
+summary=$(xcrun xcresulttool get test-results summary --path "$bundle" 2>/dev/null || echo '{}')
+ran=$(echo "$summary" | jq '[.passedTests, .failedTests, .skippedTests] | map(. // 0) | add')
+failed=$(echo "$summary" | jq '.failedTests // 0')
+
+if [ "$ran" -eq 0 ]; then
+    echo >&2
+    echo "No tests ran, so nothing was recorded - the run did not get as far as testing." >&2
+    echo "Scroll up for the build error." >&2
+    exit 1
+fi
+
+# In record mode swift-snapshot-testing writes the reference and then raises "Record mode is on.
+# Automatically recorded snapshot" on every single assertion. So every snapshot test that ran is a
+# failed test here, and zero failures means no snapshot assertion executed at all - a scheme
+# without snapshot tests, or an --only that selected none of them. Reporting that as success is the
+# one failure this task exists to make impossible.
+if [ "$failed" -eq 0 ]; then
+    echo >&2
+    echo "$ran test(s) ran and none failed, so nothing was recorded." >&2
+    echo "In record mode every snapshot assertion fails by design; a passing run executed none." >&2
+    echo "Check that \"$usage_scheme\" has snapshot tests${usage_only:+ and that --only \"$usage_only\" selects one}." >&2
+    exit 1
+fi
+
+echo
+changed=$(git status --porcelain Snapshots/)
+if [ -z "$changed" ]; then
+    echo "Recorded. No reference changed - they already matched what the code renders."
+else
+    echo "Recorded:"
+    echo "$changed"
+    echo
+    # A reference records whatever the code produced, bug included. Looking at the images is the
+    # only check there is.
+    echo "Look at them before committing: mise run snapshots:diff"
+fi
