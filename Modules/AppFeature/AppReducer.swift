@@ -121,6 +121,11 @@ public struct AppReducer {
                     .merge(with: .runTipObserver())
                     .merge(with: .send(.logLaunchContext))
                     .merge(with: .runMemoryWarningObserver())
+                    // A cold launch never reaches didBecomeActive - onChange(of: scenePhase) does
+                    // not fire for the phase the app launched into - so the day a fresh launch
+                    // starts would otherwise never be counted. The same-day check inside
+                    // recordActiveDay makes the overlap with a later foreground harmless.
+                    .merge(with: .runRecordActiveDay())
             case .didBecomeActive:
                 // Before the guard below: someone between servers is still using the app, and the
                 // day they did it still counts.

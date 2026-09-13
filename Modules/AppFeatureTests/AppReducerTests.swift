@@ -151,7 +151,7 @@ struct AppReducerTests {
     }
 
     @Test
-    func test_didBecomeActive_withoutServer_doesNothing() async {
+    func test_didBecomeActive_withoutServer_skipsServerRefreshes() async {
         let store = TestStore(
             initialState: AppReducer.State(),
             reducer: { AppReducer() }

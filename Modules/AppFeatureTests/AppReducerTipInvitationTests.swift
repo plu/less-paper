@@ -12,6 +12,37 @@ import TestSupport
 )
 struct AppReducerTipInvitationTests {
 
+    // A cold launch never reaches didBecomeActive - onChange(of: scenePhase) does not fire for the
+    // phase the app launched into - so bootstrap has to record the day too, or the very session a
+    // fresh launch starts would never count.
+    @Test
+    func bootstrap_recordsTheDay() async {
+        let recorded = LockIsolated(0)
+        let store = TestStore(
+            initialState: AppReducer.State(),
+            reducer: { AppReducer() },
+            withDependencies: {
+                // bootstrap also starts the tip observer, and an unstubbed TipJar.updates reports
+                // an "Unimplemented" issue the moment it is called.
+                $0.tipJar.updates = { AsyncStream { $0.finish() } }
+                $0.tipInvitation.recordActiveDay = { recorded.withValue { $0 += 1 } }
+            }
+        )
+        // bootstrap fans out into several never-ending observer effects alongside
+        // runRecordActiveDay(), so this cannot await store.finish() - it would hang forever.
+        store.exhaustivity = .off(showSkippedAssertions: true)
+
+        let bootstrap = await store.send(.bootstrap)
+
+        for _ in 1 ... 200 where recorded.value == 0 {
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+
+        await bootstrap.cancel()
+
+        #expect(recorded.value == 1)
+    }
+
     // Every foreground counts, including one with no server selected: someone between servers is
     // still using the app, and didBecomeActive's server guard would otherwise swallow the count.
     @Test
