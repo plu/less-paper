@@ -24,6 +24,8 @@ body="$(python3 "$MISE_PROJECT_ROOT/mise/scripts/coverage_report.py" \
 #
 # Taken with a parameter expansion rather than `head -1`, which would close the pipe under
 # `set -o pipefail` and fail the step on any pull request with more than one page of comments.
+# Kept in sync by hand with MARKER in mise/scripts/coverage_report.py - it has to be a literal
+# here because it is baked into the jq filter, not read from the script.
 ids="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${COVERAGE_PR_NUMBER}/comments" \
   --jq '.[] | select(.body | contains("<!-- coverage-report -->")) | .id')"
 id="${ids%%$'\n'*}"

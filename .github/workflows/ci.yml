@@ -76,8 +76,14 @@ jobs:
       #
       # Runs even when the tests failed, so the comment always describes the current head. Leaving
       # a table standing from two pushes ago would be read as describing this one.
+      #
+      # continue-on-error: whether the job is green is entirely a question of whether the tests
+      # passed, never of whether the comment could be posted. A fork pull request gets a read-only
+      # GITHUB_TOKEN no matter what `permissions:` says, so the POST 403s there every time - and a
+      # transient API error must not turn a green test run red either.
       - name: Coverage
         if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        continue-on-error: true
         run: mise ci:coverage
         env:
           COVERAGE_PR_NUMBER: ${{ github.event.pull_request.number }}
