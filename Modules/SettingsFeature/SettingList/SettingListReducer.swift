@@ -41,6 +41,9 @@ public struct SettingListReducer {
     public enum Path {
         case correspondentList(CorrespondentListReducer)
         case customFieldList(CustomFieldListReducer)
+        #if DEBUG && targetEnvironment(simulator)
+        case debugSettings(DebugSettingsReducer)
+        #endif
         case diagnosticsList(DiagnosticsListReducer)
         case documentTypeList(DocumentTypeListReducer)
         case favoriteSettings(FavoriteSettingsReducer)

@@ -134,3 +134,22 @@ extension SharedReaderKey where Self == AppStorageKey<Bool>.Default {
         Self[.appStorage("tip-ask-settled"), default: false]
     }
 }
+
+#if DEBUG
+// The thresholds, in days, for the simulator-only debug screen. They stay `private` above so
+// nothing in the app can branch on them; this is the one reader, and it only displays them.
+extension TipInvitation {
+
+    static var debugTenureDaysBeforeAsking: Int {
+        Int(tenureBeforeAsking / (24 * 60 * 60))
+    }
+
+    static var debugActiveDaysBeforeAsking: Int {
+        activeDaysBeforeAsking
+    }
+
+    static var debugDaysClearOfReviewPrompt: Int {
+        Int(separationFromReviewAsk / (24 * 60 * 60))
+    }
+}
+#endif
