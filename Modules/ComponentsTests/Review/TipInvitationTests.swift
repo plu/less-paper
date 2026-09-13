@@ -114,6 +114,106 @@ struct TipInvitationTests {
         #expect(await activeDays(in: store) == 2)
     }
 
+    // 60 days of tenure and 15 distinct days of use. Both, because tenure alone asks someone who
+    // installed the app in March and opened it twice, and use alone asks someone four days into an
+    // enthusiastic migration.
+    @Test
+    func isEligible_withEnoughTenureAndUse_isTrue() async {
+        let store = await seed(activeDays: 15, tenure: 60, store: .inMemory)
+
+        #expect(await isEligible(store: store, tenure: 60) == true)
+    }
+
+    @Test
+    func isEligible_oneDayShortOfTheTenure_isFalse() async {
+        let store = await seed(activeDays: 15, tenure: 59, store: .inMemory)
+
+        #expect(await isEligible(store: store, tenure: 59) == false)
+    }
+
+    @Test
+    func isEligible_oneDayShortOfTheActiveDays_isFalse() async {
+        let store = await seed(activeDays: 14, tenure: 60, store: .inMemory)
+
+        #expect(await isEligible(store: store, tenure: 60) == false)
+    }
+
+    // Nothing ever unsets this. Dismissed and tipped are the same outcome here, deliberately: the
+    // app must not be able to tell which happened.
+    @Test
+    func isEligible_afterSettling_isFalseForever() async {
+        let store = await seed(activeDays: 99, tenure: 999, store: .inMemory)
+
+        await withDependencies {
+            $0.defaultAppStorage = store
+        } operation: {
+            await TipInvitation.liveValue.settle()
+        }
+
+        #expect(await isEligible(store: store, tenure: 999) == false)
+    }
+
+    // The review prompt has a real budget and is never delayed for this; the invitation stands down
+    // instead. Two different asks in one fortnight is nagging however carefully each was gated.
+    @Test
+    func isEligible_withinAFortnightOfAReviewPrompt_isFalse() async {
+        let store = await seed(activeDays: 15, tenure: 60, store: .inMemory, reviewAskedDaysAgo: 13)
+
+        #expect(await isEligible(store: store, tenure: 60) == false)
+    }
+
+    @Test
+    func isEligible_aFortnightAfterAReviewPrompt_isTrue() async {
+        let store = await seed(activeDays: 15, tenure: 60, store: .inMemory, reviewAskedDaysAgo: 14)
+
+        #expect(await isEligible(store: store, tenure: 60) == true)
+    }
+
+    // A fresh install: no first-active date at all, because recordActiveDay has not run yet.
+    @Test
+    func isEligible_beforeTheFirstActivation_isFalse() async {
+        #expect(await isEligible(store: .inMemory, tenure: 0) == false)
+    }
+
+    // `now` is pinned to the same instant the helpers below used, so "tenure" means exactly the
+    // number of days asked for.
+    private static let now = Date(timeIntervalSince1970: 1_600_000_000)
+
+    private func seed(
+        activeDays: Int,
+        tenure: Double,
+        store: UserDefaults,
+        reviewAskedDaysAgo: Double? = nil
+    ) async -> UserDefaults {
+        await withDependencies {
+            $0.defaultAppStorage = store
+        } operation: {
+            @Shared(.tipAskFirstActiveAt) var firstActiveAt
+            @Shared(.tipAskActiveDays) var days
+            @Shared(.reviewRequestedAt) var reviewRequestedAt
+
+            $firstActiveAt.withLock {
+                $0 = Self.now.addingTimeInterval(-tenure * .day).timeIntervalSince1970
+            }
+            $days.withLock { $0 = activeDays }
+            if let reviewAskedDaysAgo {
+                $reviewRequestedAt.withLock {
+                    $0 = Self.now.addingTimeInterval(-reviewAskedDaysAgo * .day).timeIntervalSince1970
+                }
+            }
+        }
+        return store
+    }
+
+    private func isEligible(store: UserDefaults, tenure: Double) async -> Bool {
+        await withDependencies {
+            $0.date = .constant(Self.now)
+            $0.defaultAppStorage = store
+        } operation: {
+            await TipInvitation.liveValue.isEligible()
+        }
+    }
+
     private func record(at now: Date, store: UserDefaults) async {
         await withDependencies {
             $0.date = .constant(now)

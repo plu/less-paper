@@ -6,12 +6,65 @@ extension TipInvitation: DependencyKey {
 
     public static let liveValue = Self(
         recordActiveDay: recordActiveDay,
-        isEligible: { false },
-        settle: {}
+        isEligible: isEligible,
+        settle: settle
     )
 }
 
 private extension TipInvitation {
+
+    // Two months, so "a while" means a stretch of calendar rather than a burst of activity.
+    static let tenureBeforeAsking: TimeInterval = 60 * 24 * 60 * 60
+
+    // Distinct days the app was opened. Fifteen cannot happen in under fifteen days, which is what
+    // stops one enthusiastic week of migrating paperwork from reading as a habit.
+    static let activeDaysBeforeAsking = 15
+
+    // The review prompt has a real budget and must never be delayed for this, so this stands down
+    // instead. Two different asks in one fortnight is nagging however carefully each was gated.
+    static let separationFromReviewAsk: TimeInterval = 14 * 24 * 60 * 60
+
+    static func isEligible() async -> Bool {
+        @Dependency(\.date.now)
+        var now
+
+        @Shared(.tipAskSettled)
+        var settled
+
+        @Shared(.tipAskFirstActiveAt)
+        var firstActiveAt
+
+        @Shared(.tipAskActiveDays)
+        var activeDays
+
+        @Shared(.reviewRequestedAt)
+        var reviewRequestedAt
+
+        guard !settled else {
+            return false
+        }
+
+        guard let firstActiveAt,
+              now.timeIntervalSince1970 - firstActiveAt >= tenureBeforeAsking,
+              activeDays >= activeDaysBeforeAsking
+        else {
+            return false
+        }
+
+        if let reviewRequestedAt,
+           now.timeIntervalSince1970 - reviewRequestedAt < separationFromReviewAsk {
+            return false
+        }
+
+        return true
+    }
+
+    static func settle() async {
+        @Shared(.tipAskSettled)
+        var settled
+
+        $settled.withLock { $0 = true }
+    }
 
     static func recordActiveDay() async {
         @Dependency(\.date.now)
