@@ -30,7 +30,11 @@ struct AppReducerTipInvitationTests {
         )
         // bootstrap fans out into several never-ending observer effects alongside
         // runRecordActiveDay(), so this cannot await store.finish() - it would hang forever.
-        store.exhaustivity = .off(showSkippedAssertions: true)
+        // showSkippedAssertions is false, not true: bootstrap's other effects are deliberately not
+        // this test's business, and a known issue here would cost the suite its "passed" summary
+        // line in CI output (a suite with a known-issue test loses both that test's line and its
+        // own).
+        store.exhaustivity = .off(showSkippedAssertions: false)
 
         let bootstrap = await store.send(.bootstrap)
 
