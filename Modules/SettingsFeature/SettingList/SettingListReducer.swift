@@ -24,6 +24,7 @@ public struct SettingListReducer {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
         case documentImport(DocumentImportReducer.Action)
+        case openTipList
         case path(StackActionOf<Path>)
         case view(View)
 
@@ -114,6 +115,11 @@ public struct SettingListReducer {
                 }
             case let .path(.element(_, action: .licenseList(.view(.licenseSelected(license))))):
                 state.path.append(.license(license))
+                return .none
+            case .openTipList:
+                // Replaced rather than appended: someone three levels deep in Settings must still
+                // land on the tip list with Back going to the root, where the Tips row is.
+                state.path = StackState([.tipList(TipListReducer.State())])
                 return .none
             case .binding, .destination, .documentImport, .path:
                 return .none
