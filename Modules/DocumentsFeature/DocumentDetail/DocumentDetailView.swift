@@ -25,6 +25,11 @@ public struct DocumentDetailView: View {
                     .onAppear { send(.onAppear) }
             }
         }
+        // Stated rather than inherited. `.automatic` adopts the previous navigation item's mode,
+        // which is inline from either document list - but opening a document from the file tasks
+        // sheet dismisses that sheet in the same mutation that pushes this view, and the mode
+        // resolves against a bar that has not settled, so the title arrives large.
+        .navigationBarTitleDisplayMode(.inline)
         .navigationTitle(store.document.title)
         .quickLookPreview($store.quickLookPreview)
         .sheet(
