@@ -1,0 +1,7 @@
+Finde heraus, was aus den Dokumenten geworden ist, die du gesendet hast.
+
+• Der Knopf in der Symbolleiste des Posteingangs öffnet die Dateiaufgaben: jeder Import, den paperless für dein Konto ausgeführt hat, aufgeteilt in Fehlgeschlagen, Fertig, Läuft und Warteschlange.
+• Fehlgeschlagene Importe werden direkt am Knopf gezählt, und eine fehlgeschlagene Zeile zeigt die Begründung des Servers vollständig – ein Dokument, das an einer Dublettenprüfung hängen blieb oder einen Workflow ausgelöst hat, verschwindet nicht mehr einfach stillschweigend.
+• Wische eine Aufgabe weg, wenn du dich darum gekümmert hast, oder blende die angezeigten in einem Schritt aus. Ein Tipp auf eine Zeile öffnet das Dokument, das der Import angelegt hat.
+
+Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.

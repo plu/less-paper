@@ -10,7 +10,7 @@ READ IT WITH NO SERVER IN REACH
 Favorite a document and it is kept on the device in full — the PDF, its notes, metadata and custom fields. The Favorites tab reads those stored copies, so it works on a plane, in a basement, or anywhere your server is not. Pull to refresh and only the documents that actually changed are fetched again.
 
 GET DOCUMENTS IN
-Send anything on your device to paperless-ngx from the share sheet. Password-protected PDFs are unlocked on import, and the password is kept in the keychain so the next document from the same source opens without asking.
+Send anything on your device to paperless-ngx from the share sheet. Password-protected PDFs are unlocked on import, and the password is kept in the keychain so the next document from the same source opens without asking. The inbox then says what became of each one: File Tasks lists every import — which finished, which are still running, and which failed and why — and a failure can be dismissed once you have dealt with it.
 
 BUILT FOR REAL SETUPS
 Connect as many servers as you like and switch between them. Sign in with a password, or with the single sign-on provider your server is configured with. Client certificates, custom HTTP headers and reverse proxies such as Authelia are all supported. A restricted account works too: the app follows your user's permissions and simply does not show what you may not do. When something does go wrong, a local error log — with anything credential-shaped redacted out of it — is there to read and share, and nothing leaves the device unless you send it.

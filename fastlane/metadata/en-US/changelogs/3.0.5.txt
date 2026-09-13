@@ -1,0 +1,7 @@
+Find out what happened to the documents you sent.
+
+• The inbox's toolbar button opens File Tasks: every import paperless has run for your account, split into Failed, Complete, Started and Queued.
+• Failed imports are counted on the button itself, and a failed row shows the server's own reason in full — a document that hit a duplicate check or tripped a workflow no longer just quietly disappears.
+• Swipe a task away once you have dealt with it, or dismiss the ones on screen in one go. Tapping a row opens the document the import created.
+
+If you hit a problem, please open an issue at https://github.com/plu/less-paper/issues — it is the quickest way to get it fixed.
