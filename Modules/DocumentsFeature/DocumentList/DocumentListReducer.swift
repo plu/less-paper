@@ -583,8 +583,11 @@ public struct DocumentListReducer: Sendable {
                     return .runSettleTipInvitation()
                 case .tipInvitationTapped:
                     state.isTipInvitationVisible = false
+                    // Concatenate, not merge: the delegate can make the parent switch tabs and
+                    // tear down this store, which would cancel a still-in-flight settle running
+                    // concurrently and let the invitation come back on the next visit.
                     return .runSettleTipInvitation()
-                        .merge(with: .send(.delegate(.tipInvitationTapped)))
+                        .concatenate(with: .send(.delegate(.tipInvitationTapped)))
                 case .toggleSelectionModeButtonTapped:
                     return .send(.documentSelection(.toggleSelectionModeButtonTapped(state.filter)))
                 }

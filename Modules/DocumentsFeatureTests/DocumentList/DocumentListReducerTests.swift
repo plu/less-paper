@@ -218,8 +218,9 @@ struct DocumentListReducerTests {
             }
         }
         // Off because the tip-invitation check races with this effect - see
-        // DocumentListTipInvitationTests for the check itself.
-        store.exhaustivity = .off
+        // DocumentListTipInvitationTests for the check itself. Skipped assertions still print,
+        // so a real ordering regression shows up in the log instead of passing silently.
+        store.exhaustivity = .off(showSkippedAssertions: true)
 
         await store.send(.view(.onAppear))
         await store.receive(\.tipInvitationEligible)
@@ -260,8 +261,9 @@ struct DocumentListReducerTests {
             }
         }
         // Off because the tip-invitation check races with this effect - see
-        // DocumentListTipInvitationTests for the check itself.
-        store.exhaustivity = .off
+        // DocumentListTipInvitationTests for the check itself. Skipped assertions still print,
+        // so a real ordering regression shows up in the log instead of passing silently.
+        store.exhaustivity = .off(showSkippedAssertions: true)
 
         await store.send(.view(.onAppear))
         await store.receive(\.tipInvitationEligible)
@@ -310,8 +312,9 @@ struct DocumentListReducerTests {
             }
         }
         // Off because the tip-invitation check races with this effect - see
-        // DocumentListTipInvitationTests for the check itself.
-        store.exhaustivity = .off
+        // DocumentListTipInvitationTests for the check itself. Skipped assertions still print,
+        // so a real ordering regression shows up in the log instead of passing silently.
+        store.exhaustivity = .off(showSkippedAssertions: true)
 
         await store.send(.view(.onAppear)) {
             $0.filter = .inbox(server: server)

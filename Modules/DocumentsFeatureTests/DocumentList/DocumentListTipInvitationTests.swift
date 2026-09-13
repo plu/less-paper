@@ -20,7 +20,6 @@ struct DocumentListTipInvitationTests {
         } withDependencies: {
             $0.tipInvitation.isEligible = { true }
         }
-        store.exhaustivity = .off
 
         await store.send(.view(.onAppear))
         await store.receive(\.tipInvitationEligible) {
@@ -37,7 +36,6 @@ struct DocumentListTipInvitationTests {
         } withDependencies: {
             $0.tipInvitation.isEligible = { false }
         }
-        store.exhaustivity = .off
 
         await store.send(.view(.onAppear))
         await store.receive(\.tipInvitationEligible)
@@ -56,8 +54,9 @@ struct DocumentListTipInvitationTests {
         } withDependencies: {
             $0.tipInvitation.settle = { settled.withValue { $0 += 1 } }
         }
-        store.exhaustivity = .off
-        await store.send(.set(\.isTipInvitationVisible, true))
+        await store.send(.set(\.isTipInvitationVisible, true)) {
+            $0.isTipInvitationVisible = true
+        }
 
         await store.send(.view(.tipInvitationTapped)) {
             $0.isTipInvitationVisible = false
@@ -78,8 +77,9 @@ struct DocumentListTipInvitationTests {
         } withDependencies: {
             $0.tipInvitation.settle = { settled.withValue { $0 += 1 } }
         }
-        store.exhaustivity = .off
-        await store.send(.set(\.isTipInvitationVisible, true))
+        await store.send(.set(\.isTipInvitationVisible, true)) {
+            $0.isTipInvitationVisible = true
+        }
 
         await store.send(.view(.tipInvitationDismissed)) {
             $0.isTipInvitationVisible = false
@@ -100,10 +100,11 @@ struct DocumentListTipInvitationTests {
         } withDependencies: {
             $0.tipInvitation.isEligible = { asked.withValue { $0 += 1 }; return true }
         }
-        store.exhaustivity = .off
 
         await store.send(.view(.onAppear))
-        await store.receive(\.tipInvitationEligible)
+        await store.receive(\.tipInvitationEligible) {
+            $0.isTipInvitationVisible = true
+        }
 
         #expect(asked.value == 1)
     }
