@@ -96,13 +96,13 @@ final class SnapshotTests: XCTestCase, UITestNavigation {
         continueAfterFailure = false
     }
 
-    // MARK: - Private
-
     // setupSnapshot fills Snapshot.deviceLanguage from the language fastlane is currently
     // capturing, so the labels follow the run rather than needing a switch of their own.
     var labels: SnapshotLabels {
         SnapshotLabels.current(Snapshot.deviceLanguage)
     }
+
+    // MARK: - Private
 
     private func launch() -> XCUIApplication {
         let app = makeApp()
