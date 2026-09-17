@@ -613,7 +613,7 @@ Delete the `SnapshotEnvironment` enum at the top (it moved), and delete `timeout
 
 - [ ] **Step 4: Verify the screenshot target still builds**
 
-Run: `mise run generate && xcodebuild build-for-testing -workspace LessPaper.xcworkspace -scheme Snapshots -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' | xcbeautify`
+Run: `tuist install && tuist generate --no-open && xcodebuild build-for-testing -workspace LessPaper.xcworkspace -scheme Snapshots -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' | xcbeautify`
 Expected: BUILD SUCCEEDED. This is a pure move — no behaviour changed, so a clean build is the whole check.
 
 - [ ] **Step 5: Verify one capture still captures**
@@ -790,7 +790,7 @@ skip_testing(["AppSnapshots/AppPreviewTests"])
 
 Run:
 ```bash
-mise run generate
+tuist install && tuist generate --no-open
 xcodebuild test-without-building -workspace LessPaper.xcworkspace -scheme Snapshots \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' \
   -only-testing:AppSnapshots/AppPreviewTests | tee /tmp/preview.log | xcbeautify
