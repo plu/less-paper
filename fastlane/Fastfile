@@ -9,6 +9,10 @@ default_platform(:ios)
 # What deliver uploads. Written by `mise run screenshots:frame`, not by fastlane, and not committed.
 SCREENSHOTS = File.expand_path("screenshots", __dir__)
 
+# What deliver uploads as the app preview. Committed, unlike SCREENSHOTS, because there is no
+# framing step between the recording and the thing that ships.
+APP_PREVIEWS = File.expand_path("app_previews", __dir__)
+
 # Where the capture writes, and the only committed half: an hour of simulator time is worth keeping,
 # and everything rendered from it takes seconds.
 CAPTURES = File.expand_path("../Screenshots/Captures", __dir__)
@@ -62,6 +66,29 @@ platform :ios do
       skip_metadata: true,
       skip_screenshots: false,
       sync_screenshots: true
+    )
+  end
+
+  # Previews only. The build ships through altool in mise/tasks/ci/upload and the text through
+  # upload_metadata, so this touches neither - the same separation those two keep from each other.
+  desc "Upload the App Store preview video to App Store Connect"
+  lane :upload_previews do
+    deliver(
+      # Setting this is what turns on Deliver::SyncAppPreviews; there is no skip_previews to pair
+      # with it, so the path's presence is the whole switch.
+      app_previews_path: APP_PREVIEWS,
+      # 0:18 is the middle of the beat holding the rendered PDF. Apple's 5s default lands
+      # mid-transition, while the filter sheet is still rising.
+      preview_frame_time_code: "00:00:18:00",
+      overwrite_preview_videos: true,
+      # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
+      force: true,
+      # As with the screenshot upload: a preview upload must not decide how the version rolls out.
+      automatic_release: nil,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: true,
+      run_precheck_before_submit: false
     )
   end
 

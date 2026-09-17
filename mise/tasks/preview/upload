@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#MISE description="Upload the App Store preview video to App Store Connect"
+set -euo pipefail
+
+# The same App Store Connect key mise/tasks/ci/upload uses for altool. deliver is told to skip the
+# binary, the metadata and the screenshots, so this touches nothing but the preview.
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
+# Checked here as well as at record time: this is the last gate before the file leaves the machine,
+# and the committed file may not be the one this checkout just recorded.
+python3 "$MISE_PROJECT_ROOT/mise/scripts/preview_check.py" \
+  "$MISE_PROJECT_ROOT/fastlane/app_previews/en-US/01_IPHONE_67.mp4"
+
+ASC_KEY_ID="$ALTOOL_KEY_ID" \
+ASC_ISSUER_ID="$ALTOOL_ISSUER_ID" \
+ASC_AUTH_KEY="$ALTOOL_AUTH_KEY" \
+  bundle exec fastlane upload_previews
