@@ -1,3 +1,5 @@
 brew "docker"
 brew "docker-compose"
+brew "ffmpeg"
 brew "imagemagick"
+brew "xcbeautify"

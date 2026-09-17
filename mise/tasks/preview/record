@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+#MISE description="Record the App Store preview into fastlane/app_previews"
+set -euo pipefail
+
+# Runs against the fixtures in Screenshots/, never a server, so no container is needed - the same
+# SNAPSHOT_MODE the screenshots use.
+#
+# simctl records from out here while the choreography runs in there, so the two are stitched by the
+# markers AppPreviewTests prints rather than by assumption. See the design doc for why.
+
+DEVICE="iPhone 17 Pro Max"
+SCRIPTS="$MISE_PROJECT_ROOT/mise/scripts"
+OUT="$MISE_PROJECT_ROOT/fastlane/app_previews/en-US/01_IPHONE_67.mp4"
+WORK=$(mktemp -d)
+trap 'rm -rf "$WORK"' EXIT
+
+tuist install
+tuist generate --no-open
+
+# Built first and separately: a build inside the recorded window would put minutes of a static
+# simulator into the file, and its duration would depend on the state of the derived data.
+xcodebuild build-for-testing \
+  -workspace "$MISE_PROJECT_ROOT/LessPaper.xcworkspace" \
+  -scheme Snapshots \
+  -destination "platform=iOS Simulator,name=$DEVICE" | xcbeautify
+
+udid=$(xcrun simctl list devices -j | jq -r --arg name "$DEVICE" '
+  [.devices[][] | select(.name == $name and .isAvailable)] | first.udid // ""
+')
+[ -n "$udid" ] && [ "$udid" != "null" ] || {
+  echo "error: no available simulator named $DEVICE - run 'mise run simulators:prepare'" >&2
+  exit 1
+}
+
+xcrun simctl boot "$udid" 2>/dev/null || true
+xcrun simctl bootstatus "$udid" -b
+
+# 9:41, full bars, full battery. The Snapfile asks fastlane for this on a screenshot run; nothing
+# does it for a run driven by hand.
+xcrun simctl status_bar "$udid" override \
+  --time "9:41" --batteryState charged --batteryLevel 100 \
+  --cellularMode active --cellularBars 4 --wifiMode active --wifiBars 3
+
+# --mask ignored gives a plain rectangle. With the mask applied the corners come out rounded and
+# transparent, which is not what the store slot wants.
+started=$(python3 -c 'import time; print(time.time())')
+xcrun simctl io "$udid" recordVideo --codec h264 --mask ignored --force "$WORK/raw.mov" &
+recorder=$!
+
+# The recorder needs a moment to attach before the first frame is real.
+sleep 2
+
+set +e
+xcodebuild test-without-building \
+  -workspace "$MISE_PROJECT_ROOT/LessPaper.xcworkspace" \
+  -scheme Snapshots \
+  -destination "platform=iOS Simulator,name=$DEVICE" \
+  -only-testing:AppSnapshots/AppPreviewTests > "$WORK/xcodebuild.log" 2>&1
+status=$?
+set -e
+
+# SIGINT rather than SIGKILL: simctl finalises the container on interrupt, and a killed recorder
+# leaves an unreadable file.
+kill -INT "$recorder" 2>/dev/null || true
+wait "$recorder" 2>/dev/null || true
+
+xcrun simctl status_bar "$udid" clear
+
+if [ "$status" -ne 0 ]; then
+  echo "error: the choreography failed - the last lines of its log:" >&2
+  tail -40 "$WORK/xcodebuild.log" >&2
+  exit "$status"
+fi
+
+grep PREVIEW_OVERRUN "$WORK/xcodebuild.log" || true
+
+# Assigned first, then split: a bare assignment propagates the child's exit status under set -e,
+# where `read < <(...)` does not - and a swallowed failure here hands ffmpeg an empty -ss.
+window=$(python3 "$SCRIPTS/preview_window.py" "$WORK/xcodebuild.log" "$started")
+read -r offset duration <<< "$window"
+echo "Trimming from ${offset}s for ${duration}s."
+
+mkdir -p "$(dirname "$OUT")"
+
+# scale then crop, never pad: 1320x2868 scaled to width 886 is 1926, six pixels too tall, and three
+# rows off each end is invisible where black bars down a store listing would not be.
+#
+# anullsrc supplies the silent stereo track. Apple requires an enabled audio track and a simulator
+# recording has none, which is the single most common reason a preview is refused.
+ffmpeg -y -loglevel error \
+  -ss "$offset" -i "$WORK/raw.mov" -t "$duration" \
+  -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+  -vf "scale=886:-2,crop=886:1920" \
+  -c:v libx264 -profile:v high -level 4.0 -pix_fmt yuv420p \
+  -r 30 -b:v 11M -maxrate 12M -bufsize 24M \
+  -c:a aac -b:a 256k -ar 44100 -ac 2 \
+  -movflags +faststart -shortest \
+  "$OUT"
+
+python3 "$SCRIPTS/preview_check.py" "$OUT"
+echo "Wrote $OUT"
