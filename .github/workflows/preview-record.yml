@@ -47,7 +47,7 @@ jobs:
 
       - run: mise simulators:prepare
 
-      - run: mise run ci:preview:record
+      - run: mise ci:preview:record
 
       - name: Upload the preview artifact
         if: always()

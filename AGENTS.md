@@ -564,6 +564,12 @@ requires. It needs no paperless instance: the app is launched with `SNAPSHOT_MOD
 the API use cases for the payloads in `Screenshots/Fixtures` and the thumbnails in
 `Screenshots/Thumbnails`.
 
+`SnapshotBootstrap.swift`'s `getDocuments` stub also honours a `.titleContent` filter rule now,
+narrowing the corpus by a case-insensitive substring match on the title. Every other filter rule
+still falls through unhandled — this one exists because the preview pipeline below drives a typed
+search, and a stub that ignored the query would type it and then show the same list, recording a
+filter that visibly does nothing.
+
 Those fixtures are the raw API responses, downloaded once from a seeded instance by
 `mise run screenshots:fixtures -- --url <instance>`. **Re-fetch them rather than editing them** —
 they are the seed's output, and hand-edits are lost on the next fetch. Something the fixtures should
@@ -608,6 +614,44 @@ that it renders wherever the README is read.
 `Screenshots/contact_sheet.py` tiles a directory of screenshots into one image for a workflow's step
 summary. It needs Homebrew's ImageMagick (`brew install imagemagick`), which is not a mise tool
 because the only backends for it build from source.
+
+## The App Store preview video is recorded, never assembled
+
+Structurally the same pipeline as screenshots, one stage shorter because there is no separate framing
+step:
+
+| Stage | Command | Cost | Output |
+|---|---|---|---|
+| Record | `mise run preview:record` | ~1 minute | `fastlane/app_previews/en-US/01_IPHONE_67.mp4` — **committed** |
+| Upload | `mise run preview:upload` | minutes | App Store Connect |
+
+`mise run ci:preview:record` is the CI entry point behind `.github/workflows/preview-record.yml`,
+manual-only and shaped like `screenshots-record.yml`: it opens a pull request with the new `.mp4`
+rather than pushing to `main`, because a re-record changes what the store shows and deserves the same
+look a code change gets. The `.mp4` is LFS (`.gitattributes`), same as the PNGs it sits beside.
+
+Record drives one choreographed journey — `AppPreviewTests` — through the app under the same
+`SNAPSHOT_MODE` fixtures the screenshots use, while `simctl io recordVideo` captures the simulator
+from outside. The two sides are stitched by markers the test prints to the `xcodebuild` log rather
+than by a guessed lead-in, and `mise/scripts/preview_window.py` turns those markers into the offset
+and duration ffmpeg trims to.
+
+Two Python validators guard the result, each catching a different class of rejection before it
+reaches Apple:
+
+- `mise/scripts/preview_window.py` refuses a choreography that measured outside 15–30 seconds,
+  *before* anything is trimmed. **A run outside that band fails the task; it is never truncated to
+  fit.** Shipping a shortened story that stops before its own ending would be worse than failing loud.
+- `mise/scripts/preview_check.py` refuses the finished file unless the resolution, duration, frame
+  rate, H.264 profile and level, and audio track match what App Store Connect's specification
+  requires, and the filename carries `IPHONE_67` — the same instinct as `verify_captures.py`: every
+  limit here is published and stable, so the rejection belongs on a laptop, not a week into review.
+
+Uploading is `mise run preview:upload` → `upload_previews` → `deliver`, and it is **not** wired into
+`release:submit` or any other release flow. It is a deliberate, separate act, taken once someone has
+watched the recording — the same reasoning that keeps the screenshots upload off the binary upload
+lane, sharpened by the fact that whether Apple accepts simulator-captured footage at all is still an
+open question the first upload settles.
 
 ## `docker:seed` also seeds the permission scenario users
 

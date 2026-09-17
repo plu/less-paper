@@ -107,24 +107,33 @@ One method, `testRecordPreview`, running the approved beat sheet:
 
 | Beat ends at | Beat | Waits for |
 |----|------|-----------|
-| 0:04 | Documents list, slow scroll | first cell |
-| 0:08 | Filter button → sheet rises | title-and-content field |
-| 0:12 | Tap Tag → picker → choose one | "Not assigned" button |
-| 0:16 | Apply → list narrows | first cell |
+| 0:03 | Documents list, slow scroll | first cell |
+| 0:07 | Filter button → sheet rises | title-and-content field |
+| 0:11 | Type "Sonos" into the search field | — (field is already present) |
+| 0:15 | Close sheet → list narrows | first cell |
 | 0:20 | Tap first row → PDF renders | `otherElements["PDF"]` |
 | 0:24 | Edit → sheet | "Edit document" static text |
-| 0:26 | Hold on the edited document | — |
+| 0:27 | Hold on the edited document | — |
+
+**The tag picker was replaced with a typed search mid-execution.** The beat sheet above originally
+read "Tap Tag → picker → choose one" between the filter sheet and the narrowed list, ending the video
+at 0:26. Measured end to end it ran 35.7 seconds against the 30-second ceiling: the picker cost a
+whole extra sheet round trip — open it, wait for it, tap a tag, wait for the sheet to close — that a
+typed search does not. `SnapshotBootstrap.swift`'s fixture stub gained a `.titleContent` filter rule
+for it: typing "Sonos" into the field the filter sheet is already built around matches two of the
+eight fixture documents (Sonos Era 300, Sonos Sub), which narrows the list visibly without emptying
+it, for the cost of one `typeText` in a sheet that was already open.
 
 **Beats are scheduled against `T_start`, not chained.** Each beat waits for its element and then
 sleeps until the elapsed time from `T_start` reaches its mark in the first column. This is the
-difference between a video that is 26 seconds long and one that is 26 seconds *plus* however long six
+difference between a video that is 27 seconds long and one that is 27 seconds *plus* however long six
 screens took to settle — chained dwells would make the total a function of runner load, and with a
 30-second ceiling that is a coin flip rather than a design. Scheduled beats put the whole cost of a
-slow settle inside that beat's own slot: the video still ends at 0:26, that one beat is just held for
+slow settle inside that beat's own slot: the video still ends at 0:27, that one beat is just held for
 less time. A settle that overruns its slot entirely is logged with its overrun, which is the signal to
 retune the marks.
 
-26 seconds leaves four seconds of headroom under the ceiling and eleven over the floor, so a run has
+27 seconds leaves three seconds of headroom under the ceiling and twelve over the floor, so a run has
 to go badly wrong in a way worth failing over before it goes out of range.
 
 The markers are printed, not attached: `print` from a test reaches the `xcodebuild` log, which the
@@ -246,6 +255,8 @@ from a real device.
 server-side and has been known to ignore the requested timecode. If it does, the fallback is to pick a
 beat that reads well at 5 seconds rather than fighting it.
 
-**LFS weight.** At 11 Mbps a 26-second preview is roughly 36 MB, and every re-record adds another copy
-that LFS keeps forever. Two or three re-records are unremarkable; a habit of re-recording weekly would
-not be.
+**LFS weight.** `-b:v 11M -maxrate 12M` is a ceiling, not the average the encoder settles at: mostly
+static UI over a fixed 27-second journey compresses well under it, and the committed file is 7 MB, not
+the roughly 36 MB a naive bitrate × duration calculation suggests. Every re-record still adds another
+copy that LFS keeps forever, just a cheaper one than expected. Two or three re-records are
+unremarkable; a habit of re-recording weekly would not be.

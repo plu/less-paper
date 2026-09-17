@@ -17,13 +17,14 @@ trap 'rm -rf "$WORK"' EXIT
 tuist install
 tuist generate --no-open
 
-# Built first and separately: a build inside the recorded window would put minutes of a static
-# simulator into the file, and its duration would depend on the state of the derived data.
-xcodebuild build-for-testing \
-  -workspace "$MISE_PROJECT_ROOT/LessPaper.xcworkspace" \
-  -scheme Snapshots \
-  -destination "platform=iOS Simulator,name=$DEVICE" | xcbeautify
-
+# Resolved to a UDID once, up front, and used everywhere below - never by "-destination
+# platform=iOS Simulator,name=$DEVICE" again. Two xcodebuild invocations each resolving the name
+# independently is how AGENTS.md:483-487's two-runtimes-after-an-Xcode-upgrade hazard turns silent
+# here: with two iOS runtimes each carrying an "iPhone 17 Pro Max", build-for-testing could pick one
+# and test-without-building the other, so simctl records an idle simulator while the choreography
+# runs, unseen, on a device nothing is watching. The markers still print and preview_check.py still
+# passes - it validates the container, not the content - so this is the one failure in the pipeline
+# that would ship silently. A single UDID looked up once cannot diverge from itself.
 udid=$(xcrun simctl list devices -j | jq -r --arg name "$DEVICE" '
   [.devices[][] | select(.name == $name and .isAvailable)] | first.udid // ""
 ')
@@ -31,6 +32,13 @@ udid=$(xcrun simctl list devices -j | jq -r --arg name "$DEVICE" '
   echo "error: no available simulator named $DEVICE - run 'mise run simulators:prepare'" >&2
   exit 1
 }
+
+# Built first and separately: a build inside the recorded window would put minutes of a static
+# simulator into the file, and its duration would depend on the state of the derived data.
+xcodebuild build-for-testing \
+  -workspace "$MISE_PROJECT_ROOT/LessPaper.xcworkspace" \
+  -scheme Snapshots \
+  -destination "platform=iOS Simulator,id=$udid" | xcbeautify
 
 xcrun simctl boot "$udid" 2>/dev/null || true
 xcrun simctl bootstatus "$udid" -b
@@ -43,7 +51,6 @@ xcrun simctl status_bar "$udid" override \
 
 # --mask ignored gives a plain rectangle. With the mask applied the corners come out rounded and
 # transparent, which is not what the store slot wants.
-started=$(python3 -c 'import time; print(time.time())')
 xcrun simctl io "$udid" recordVideo --codec h264 --mask ignored --force "$WORK/raw.mov" &
 recorder=$!
 
@@ -54,7 +61,7 @@ set +e
 xcodebuild test-without-building \
   -workspace "$MISE_PROJECT_ROOT/LessPaper.xcworkspace" \
   -scheme Snapshots \
-  -destination "platform=iOS Simulator,name=$DEVICE" \
+  -destination "platform=iOS Simulator,id=$udid" \
   -only-testing:AppSnapshots/AppPreviewTests > "$WORK/xcodebuild.log" 2>&1
 status=$?
 set -e
@@ -64,7 +71,22 @@ set -e
 kill -INT "$recorder" 2>/dev/null || true
 wait "$recorder" 2>/dev/null || true
 
-xcrun simctl status_bar "$udid" clear
+# Stamping t=0 from the moment the recorder started looked exact - the simulator shares the host's
+# clock - but "started" is when we launched simctl, not when it actually began writing frames, and
+# the gap between the two is however long simctl takes to attach. Measured on a real run, that
+# latency was ~2.4s: the offset computed from a too-early t=0 pointed 2.4s further into the file
+# than it should have, so trimming for the choreography's real duration ran off the end and ffmpeg
+# quietly handed back a short file. Both "stopped" and the file's own duration are measured after
+# the fact, once recordVideo has actually finished, so working backwards from the end cancels the
+# attach latency out instead of guessing at it.
+stopped=$(python3 -c 'import time; print(time.time())')
+raw_duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$WORK/raw.mov")
+t0=$(python3 -c 'import sys; print(float(sys.argv[1]) - float(sys.argv[2]))' "$stopped" "$raw_duration")
+
+# || true: this is cleanup after a recording that may already have succeeded, and set -e turning a
+# failure here into an EXIT trap that rm -rf's $WORK would throw away a good four-minute recording
+# behind a misleading error. A cleanup step must never be able to cost more than it saves.
+xcrun simctl status_bar "$udid" clear || true
 
 if [ "$status" -ne 0 ]; then
   echo "error: the choreography failed - the last lines of its log:" >&2
@@ -76,7 +98,7 @@ grep PREVIEW_OVERRUN "$WORK/xcodebuild.log" || true
 
 # Assigned first, then split: a bare assignment propagates the child's exit status under set -e,
 # where `read < <(...)` does not - and a swallowed failure here hands ffmpeg an empty -ss.
-window=$(python3 "$SCRIPTS/preview_window.py" "$WORK/xcodebuild.log" "$started")
+window=$(python3 "$SCRIPTS/preview_window.py" "$WORK/xcodebuild.log" "$t0")
 read -r offset duration <<< "$window"
 echo "Trimming from ${offset}s for ${duration}s."
 
@@ -87,15 +109,33 @@ mkdir -p "$(dirname "$OUT")"
 #
 # anullsrc supplies the silent stereo track. Apple requires an enabled audio track and a simulator
 # recording has none, which is the single most common reason a preview is refused.
+#
+# -t after the LAST -i is load-bearing: ffmpeg applies an option to whichever input precedes it, so
+# a -t between the two -i's would trim the anullsrc input rather than the output, and the real
+# duration would then fall out only as a side effect of -shortest ending the file when the (untrimmed)
+# audio runs dry. Placed here, after both inputs, it is an output option and trims the mux itself -
+# -shortest stays as a second, independent guarantee that neither stream can outrun the other.
 ffmpeg -y -loglevel error \
-  -ss "$offset" -i "$WORK/raw.mov" -t "$duration" \
+  -ss "$offset" -i "$WORK/raw.mov" \
   -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+  -t "$duration" \
   -vf "scale=886:-2,crop=886:1920" \
   -c:v libx264 -profile:v high -level 4.0 -pix_fmt yuv420p \
   -r 30 -b:v 11M -maxrate 12M -bufsize 24M \
   -c:a aac -b:a 256k -ar 44100 -ac 2 \
   -movflags +faststart -shortest \
   "$OUT"
+
+# Belt and braces on top of -shortest: this catches truncation from any cause, not only a misplaced
+# -t, including a recorder that attached later than the 2s sleep above assumed. preview_check.py
+# only enforces the 15-30s band, so a few seconds shaved off the end would otherwise pass it and ship.
+actual=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUT")
+python3 -c '
+import sys
+actual, expected = float(sys.argv[1]), float(sys.argv[2])
+if abs(actual - expected) > 0.5:
+    sys.exit(f"error: {sys.argv[3]} is {actual:.3f}s long, expected {expected:.3f}s - ffmpeg truncated the output")
+' "$actual" "$duration" "$OUT"
 
 python3 "$SCRIPTS/preview_check.py" "$OUT"
 echo "Wrote $OUT"

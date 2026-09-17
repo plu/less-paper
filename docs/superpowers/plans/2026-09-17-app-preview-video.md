@@ -750,7 +750,7 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
     // Beats are scheduled against the start, never chained. Chaining would make the total duration
     // the sum of the dwells *plus* however long six screens took to settle, which on a loaded runner
     // is a coin flip against the 30s ceiling. Scheduling puts the cost of a slow settle inside that
-    // beat's own slot: the video still ends at 0:26, that beat is just held for less.
+    // beat's own slot: the video still ends at 0:27, that beat is just held for less.
     private func hold(until elapsed: TimeInterval, from start: Date, beat: String) {
         let remaining = elapsed - Date().timeIntervalSince(start)
         guard remaining > 0 else {
