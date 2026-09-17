@@ -27,3 +27,8 @@ clear_previous_screenshots(false)
 override_status_bar(true)
 
 concurrent_simulators(false)
+
+# The preview choreography lives in the same target because it needs the same fixtures and the same
+# navigation. It captures nothing, so a screenshot run would spend two minutes on it four times over
+# - twice per device, twice per language - for no image.
+skip_testing(["AppSnapshots/AppPreviewTests"])
