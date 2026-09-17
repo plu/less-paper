@@ -20,6 +20,7 @@ DURATION = (15.0, 30.0)
 MAX_FPS = 30
 MAX_LEVEL = 40
 SAMPLE_RATES = {"44100", "48000"}
+MIN_BITRATE = 192000
 
 # There is no IPHONE_69 preview type: spaceship's enumeration stops at IPHONE_67 and maps it to
 # 886x1920, which is the 6.9" size. deliver matches the type by substring, so a name without it
@@ -71,6 +72,10 @@ def problems(probe, name):
             )
         if not audio.get("disposition", {}).get("default"):
             found.append("the audio track is not enabled, and every track must be")
+        if audio.get("bit_rate"):
+            bitrate = int(audio.get("bit_rate"))
+            if bitrate < MIN_BITRATE:
+                found.append(f"the audio bitrate is {bitrate}, and must be at least 192000")
 
     duration = float(probe.get("format", {}).get("duration", 0))
     if not DURATION[0] <= duration <= DURATION[1]:

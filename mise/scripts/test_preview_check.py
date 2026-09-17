@@ -29,6 +29,7 @@ def probe(**overrides):
         "channels": 2,
         "sample_rate": "44100",
         "disposition": {"default": 1},
+        "bit_rate": "256000",
     }
     video.update(overrides.pop("video", {}))
     audio.update(overrides.pop("audio", {}))
@@ -84,6 +85,15 @@ class ProblemsTests(unittest.TestCase):
     def test_every_problem_is_reported_not_just_the_first(self):
         found = problems(probe(video={"width": 100}, duration="99.0", no_audio=True), "x.mp4")
         self.assertEqual(len(found), 4)
+
+    def test_conforming_bitrate_is_accepted(self):
+        self.assertEqual(problems(probe(), NAME), [])
+
+    def test_low_bitrate_is_refused(self):
+        self.assertIn("bitrate", problems(probe(audio={"bit_rate": "96000"}), NAME)[0])
+
+    def test_missing_bitrate_is_accepted(self):
+        self.assertEqual(problems(probe(audio={}), NAME), [])
 
 
 if __name__ == "__main__":
