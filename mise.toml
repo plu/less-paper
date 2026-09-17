@@ -25,6 +25,7 @@ TEST_SIMULATOR_OS = "26.5"
 postinstall = "brew bundle"
 
 [tools]
+"aqua:cpisciotta/xcbeautify" = "3.2.1"
 "aqua:tuist" = "4.208.0"
 git-lfs = "3.8.0"
 "github:a7ex/xcresultparser" = "2.2.0"
