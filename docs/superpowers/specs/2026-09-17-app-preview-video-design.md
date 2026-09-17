@@ -107,17 +107,16 @@ One method, `testRecordPreview`, running the approved beat sheet:
 
 | Beat ends at | Beat | Waits for |
 |----|------|-----------|
-| 0:03 | Documents list, slow scroll | first cell |
-| 0:07 | Filter button → sheet rises | title-and-content field |
-| 0:11 | Type "Sonos" into the search field | — (field is already present) |
-| 0:15 | Close sheet → list narrows | first cell |
-| 0:20 | Tap first row → PDF renders | `otherElements["PDF"]` |
-| 0:24 | Edit → sheet | "Edit document" static text |
-| 0:27 | Hold on the edited document | — |
+| 0:01 | Documents list, held | first cell |
+| 0:06 | Filter button → sheet rises | title-and-content field |
+| 0:08 | Type "Sonos" into the search field | — (field is already present) |
+| 0:12 | Close sheet → list narrows | first cell |
+| 0:17 | Tap first row → PDF renders | `otherElements["PDF"]` |
+| 0:21 | Edit → sheet | "Edit document" static text |
+| 0:24 | Hold on the edited document | — |
 
 **The tag picker was replaced with a typed search mid-execution.** The beat sheet above originally
-read "Tap Tag → picker → choose one" between the filter sheet and the narrowed list, ending the video
-at 0:26. Measured end to end it ran 35.7 seconds against the 30-second ceiling: the picker cost a
+read "Tap Tag → picker → choose one" between the filter sheet and the narrowed list. Measured end to end it ran 35.7 seconds against the 30-second ceiling: the picker cost a
 whole extra sheet round trip — open it, wait for it, tap a tag, wait for the sheet to close — that a
 typed search does not. `SnapshotBootstrap.swift`'s fixture stub gained a `.titleContent` filter rule
 for it: typing "Sonos" into the field the filter sheet is already built around matches two of the
@@ -129,7 +128,7 @@ sleeps until the elapsed time from `T_start` reaches its mark in the first colum
 difference between a video that is 27 seconds long and one that is 27 seconds *plus* however long six
 screens took to settle — chained dwells would make the total a function of runner load, and with a
 30-second ceiling that is a coin flip rather than a design. Scheduled beats put the whole cost of a
-slow settle inside that beat's own slot: the video still ends at 0:27, that one beat is just held for
+slow settle inside that beat's own slot: the video still ends at 0:24, that one beat is just held for
 less time. A settle that overruns its slot entirely is logged with its overrun, which is the signal to
 retune the marks.
 
@@ -186,7 +185,7 @@ published limits are stable, so a rejection belongs on a laptop rather than a da
 lane :upload_previews do
   deliver(
     app_previews_path: APP_PREVIEWS,
-    preview_frame_time_code: "00:00:18:00",
+    preview_frame_time_code: "00:00:14:00",
     overwrite_preview_videos: true,
     force: true,
     skip_binary_upload: true,
@@ -203,8 +202,8 @@ and precheck is off for the same reason the other upload lanes leave it off — 
 and no text, so there is nothing for it to check.
 
 `app_previews_path` being set is what triggers `Deliver::SyncAppPreviews` (`deliver/lib/deliver/runner.rb:170`).
-The poster frame is set to 0:18, in the middle of the beat that holds the rendered PDF rather than at
-its 0:20 boundary; Apple's 5-second default lands mid-transition while the filter sheet is rising.
+The poster frame is set to 0:14, in the middle of the beat that holds the rendered PDF rather than at
+its 0:17 boundary; Apple's 5-second default lands mid-transition while the filter sheet is rising.
 
 ### `.gitattributes`, `Brewfile`
 

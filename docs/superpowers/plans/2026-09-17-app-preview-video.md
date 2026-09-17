@@ -19,7 +19,7 @@
 - The output filename must contain the literal string **`IPHONE_67`**. There is no `IPHONE_69` preview type; `IPHONE_67` is the 6.9" slot.
 - Comments are `//` only, never `///` or `/** */`. See `AGENTS.md`.
 - Committed path: `fastlane/app_previews/en-US/01_IPHONE_67.mp4`.
-- Poster frame timecode: `00:00:18:00`.
+- Poster frame timecode: `00:00:14:00`.
 
 ## Deviations from the spec
 
@@ -750,7 +750,7 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
     // Beats are scheduled against the start, never chained. Chaining would make the total duration
     // the sum of the dwells *plus* however long six screens took to settle, which on a loaded runner
     // is a coin flip against the 30s ceiling. Scheduling puts the cost of a slow settle inside that
-    // beat's own slot: the video still ends at 0:27, that beat is just held for less.
+    // beat's own slot: the video still ends at 0:24, that beat is just held for less.
     private func hold(until elapsed: TimeInterval, from start: Date, beat: String) {
         let remaining = elapsed - Date().timeIntervalSince(start)
         guard remaining > 0 else {
@@ -998,9 +998,9 @@ lane :upload_previews do
     # Setting this is what turns on Deliver::SyncAppPreviews; there is no skip_previews to pair
     # with it, so the path's presence is the whole switch.
     app_previews_path: APP_PREVIEWS,
-    # 0:18 is the middle of the beat holding the rendered PDF. Apple's 5s default lands
+    # 0:14 is the middle of the beat holding the rendered PDF. Apple's 5s default lands
     # mid-transition, while the filter sheet is still rising.
-    preview_frame_time_code: "00:00:18:00",
+    preview_frame_time_code: "00:00:14:00",
     overwrite_preview_videos: true,
     # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
     force: true,

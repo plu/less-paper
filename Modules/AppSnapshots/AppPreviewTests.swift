@@ -19,19 +19,15 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         let start = Date()
         mark("start", at: start)
 
-        // Beat 1 - the list, scrolled. press-then-drag rather than swipeUp: a swipe is flung and
-        // lands in a blur, which reads as a glitch at thumbnail size.
-        //
-        // Coordinates rather than elements: a drag from a cell to itself covers no distance and
-        // scrolls nothing, and the cell that starts under the finger is not the one that ends there.
-        let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
-        let to = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
-        from.press(forDuration: 0.3, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.2)
-        hold(until: 3, from: start, beat: "list")
+        // Beat 1 - the list, held just long enough to read. There was a scroll here; it cost 3.5
+        // seconds to move the list by one row, which is the slowest-feeling thing a viewer can be
+        // shown first. openDocuments has already put the list on screen, so a beat of stillness
+        // establishes it and the filter sheet arrives while the viewer is still interested.
+        hold(until: 1, from: start, beat: "list")
 
         // Beat 2 - the filter sheet.
         XCTAssertTrue(openFilter(in: app), "Could not open the filter sheet")
-        hold(until: 7, from: start, beat: "filter")
+        hold(until: 6, from: start, beat: "filter")
 
         // Beat 3 - a search typed into the field the sheet is already built around. openFilter(in:)
         // only returns once this field exists, so it is present here without a further wait.
@@ -45,13 +41,13 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         let searchField = app.textFields[labels.titleAndContent].firstMatch
         searchField.tap()
         searchField.typeText("Sonos")
-        hold(until: 11, from: start, beat: "search")
+        hold(until: 8, from: start, beat: "search")
 
         // Beat 4 - back to the narrowed list. There is no Apply button: the filter applies live, so
         // closing the sheet is what reveals the result.
         closeSheet(in: app)
         XCTAssertTrue(app.cells.firstMatch.waitForExistence(timeout: timeout), "The filtered list came back empty")
-        hold(until: 15, from: start, beat: "filtered")
+        hold(until: 12, from: start, beat: "filtered")
 
         // Beat 5 - a document, open.
         let row = app.cells.firstMatch
@@ -61,7 +57,7 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
             app.otherElements["PDF"].waitForExistence(timeout: timeout),
             "The document detail never rendered a PDF"
         )
-        hold(until: 20, from: start, beat: "pdf")
+        hold(until: 17, from: start, beat: "pdf")
 
         // Beat 6 - editing it where it is being read.
         let edit = app.navigationBars.buttons[labels.edit].firstMatch
@@ -71,12 +67,12 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
             app.staticTexts[labels.editDocument].waitForExistence(timeout: timeout),
             "The edit sheet never appeared"
         )
-        hold(until: 24, from: start, beat: "edit")
+        hold(until: 21, from: start, beat: "edit")
 
         // Beat 7 - back to the document, and rest there. The last frame is the one a viewer is left
         // with, so it is the document rather than a form.
         closeSheet(in: app)
-        hold(until: 27, from: start, beat: "rest")
+        hold(until: 24, from: start, beat: "rest")
 
         mark("end", at: Date())
     }

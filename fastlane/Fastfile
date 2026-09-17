@@ -83,9 +83,10 @@ platform :ios do
       # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
       force: true,
       overwrite_preview_videos: true,
-      # 0:18 is the middle of the beat holding the rendered PDF. Apple's 5s default lands
-      # mid-transition, while the filter sheet is still rising.
-      preview_frame_time_code: "00:00:18:00",
+      # 0:14 sits in the middle of the beat holding the rendered PDF, which runs 0:12 to 0:17 -
+      # not on its closing boundary, where the Edit tap lands. Apple's 5s default would fall
+      # mid-transition while the filter sheet is still rising.
+      preview_frame_time_code: "00:00:14:00",
       run_precheck_before_submit: false,
       # As with the screenshot upload: a preview upload must not touch the app version.
       skip_app_version_update: true,

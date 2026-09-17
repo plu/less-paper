@@ -66,6 +66,12 @@ xcodebuild test-without-building \
 status=$?
 set -e
 
+# Keep recording for a moment after the choreography ends. simctl writes a container duration that
+# overstates the frames it actually finalised on interrupt - measured at ~1.8s on a real run - so a
+# window that fits on paper can still run past the last decodable frame and come back short. Two
+# seconds of genuine tail absorbs that; it is recorded after the end marker, so the trim discards it.
+sleep 2
+
 # SIGINT rather than SIGKILL: simctl finalises the container on interrupt, and a killed recorder
 # leaves an unreadable file.
 kill -INT "$recorder" 2>/dev/null || true
