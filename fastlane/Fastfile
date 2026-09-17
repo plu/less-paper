@@ -73,22 +73,25 @@ platform :ios do
   # upload_metadata, so this touches neither - the same separation those two keep from each other.
   desc "Upload the App Store preview video to App Store Connect"
   lane :upload_previews do
+    connect_api_key
+
     deliver(
+      app_identifier: APP_IDENTIFIER,
       # Setting this is what turns on Deliver::SyncAppPreviews; there is no skip_previews to pair
       # with it, so the path's presence is the whole switch.
       app_previews_path: APP_PREVIEWS,
+      # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
+      force: true,
+      overwrite_preview_videos: true,
       # 0:18 is the middle of the beat holding the rendered PDF. Apple's 5s default lands
       # mid-transition, while the filter sheet is still rising.
       preview_frame_time_code: "00:00:18:00",
-      overwrite_preview_videos: true,
-      # Skips the HTML preview, which otherwise waits for a keypress nobody is there to give.
-      force: true,
-      # As with the screenshot upload: a preview upload must not decide how the version rolls out.
-      automatic_release: nil,
+      run_precheck_before_submit: false,
+      # As with the screenshot upload: a preview upload must not touch the app version.
+      skip_app_version_update: true,
       skip_binary_upload: true,
       skip_metadata: true,
-      skip_screenshots: true,
-      run_precheck_before_submit: false
+      skip_screenshots: true
     )
   end
 

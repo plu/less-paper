@@ -104,6 +104,10 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
             // Logged, not failed: one overrun beat still yields a usable video, and the number is
             // what the marks get retuned against. An overrun big enough to matter fails later, when
             // preview_window.py finds the run outside 15-30s.
+            //
+            // An overrun here is a signal to retune the marks, and stdout is the only place it can
+            // be seen from outside the process.
+            // swiftlint:disable:next print
             print("PREVIEW_OVERRUN \(beat) \(-remaining)")
             return
         }
@@ -111,6 +115,8 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
     }
 
     private func mark(_ name: String, at date: Date) {
+        // This line is the recorder's only way to know when the choreography began and ended:
+        // simctl and xcodebuild are stitched together by these markers, not by assumption.
         print("PREVIEW_MARKER \(name) \(date.timeIntervalSince1970)")
     }
 
