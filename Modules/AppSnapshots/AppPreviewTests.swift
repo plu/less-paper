@@ -12,9 +12,26 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
 
     func testRecordPreview() {
         let app = makeApp()
+
+        // The same two arguments fastlane's setupSnapshot passes for a screenshot run, set here
+        // because no fastlane run is driving this one. Without them the app opens in whatever
+        // language the simulator happens to be in, and every label lookup below misses.
+        // -AppleLocale wants de_DE where App Store Connect's directory wants de-DE.
+        let appleLocale = locale.replacingOccurrences(of: "-", with: "_")
+        app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", appleLocale]
         app.launch()
 
         XCTAssertTrue(openDocuments(in: app), "Could not open the Documents tab")
+
+        // Announced so the recorder can check it got what it asked for. PREVIEW_LOCALE arrives
+        // through xcodebuild's environment, and when that plumbing breaks the default silently
+        // takes over: the app launches in English, the English labels all match, the test passes,
+        // and an English video lands in a German directory.
+        // The custom `print` rule's regex is greedy and matches from the first print in the file
+        // onwards, so this one disable covers every deliberate print here; a second would be
+        // flagged superfluous and --strict makes that an error.
+        // swiftlint:disable:next print
+        print("PREVIEW_LOCALE \(locale)")
 
         let start = Date()
         mark("start", at: start)
@@ -81,11 +98,24 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         continueAfterFailure = false
     }
 
-    // One locale, so the label table is asked for it directly rather than through
-    // Snapshot.deviceLanguage, which is empty when no fastlane run is driving. Not private:
-    // UITestNavigation requires it.
+    // Asked for directly rather than through Snapshot.deviceLanguage, which is empty when no
+    // fastlane run is driving. Not private: UITestNavigation requires it.
     var labels: SnapshotLabels {
-        SnapshotLabels.english
+        SnapshotLabels.current(language)
+    }
+
+    // Which language to record. Set by mise/tasks/preview/record through TEST_RUNNER_PREVIEW_LOCALE,
+    // which is how xcodebuild passes an environment variable into the test runner's own process
+    // rather than into the app it launches. Defaults to en-US so running the test from Xcode with
+    // nothing configured still works.
+    var locale: String {
+        ProcessInfo.processInfo.environment["PREVIEW_LOCALE"] ?? "en-US"
+    }
+
+    // "de-DE" -> "de". -AppleLanguages wants the language, SnapshotLabels.current matches on its
+    // prefix, and App Store Connect wants the full locale for the directory name.
+    var language: String {
+        String(locale.prefix(while: { $0 != "-" }))
     }
 
     // MARK: - Private
@@ -103,7 +133,6 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
             //
             // An overrun here is a signal to retune the marks, and stdout is the only place it can
             // be seen from outside the process.
-            // swiftlint:disable:next print
             print("PREVIEW_OVERRUN \(beat) \(-remaining)")
             return
         }

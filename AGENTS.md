@@ -622,7 +622,7 @@ step:
 
 | Stage | Command | Cost | Output |
 |---|---|---|---|
-| Record | `mise run preview:record` | ~1 minute | `fastlane/app_previews/en-US/01_IPHONE_67.mp4` — **committed** |
+| Record | `mise run preview:record [locale]` | ~1 minute | `fastlane/app_previews/<locale>/01_IPHONE_67.mp4` — **committed** |
 | Upload | `mise run preview:upload` | minutes | App Store Connect |
 
 `mise run ci:preview:record` is the CI entry point behind `.github/workflows/preview-record.yml`,
@@ -652,6 +652,15 @@ the same thing for CI. `release.yml` runs it between the screenshot upload and t
 version has to exist first, which the metadata step creates, and everything has to be attached
 before review is asked for. Unlike the screenshots there is nothing to render beforehand, because
 the `.mp4` is committed.
+
+Each listing language is its own recording, taken with the app launched in that language and the
+choreography navigating by that language's labels: `mise run preview:record` for en-US, `mise run
+preview:record de-DE` for German. The locale reaches the test through `TEST_RUNNER_PREVIEW_LOCALE`,
+which xcodebuild forwards into the test runner's process — as an environment variable, not as a
+command-line argument, where it is read as a build setting and silently ignored. That distinction
+cost a full recording: the app launched in English, every English label matched, the test passed,
+and an English video landed in the German directory. The test now reports the locale it resolved and
+the recorder refuses a mismatch.
 
 It was held back from the release flow at first, because whether Apple accepts simulator-captured
 footage at all was an open question. The first upload settled it — App Store Connect created the

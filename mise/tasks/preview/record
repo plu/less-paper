@@ -10,7 +10,11 @@ set -euo pipefail
 
 DEVICE="iPhone 17 Pro Max"
 SCRIPTS="$MISE_PROJECT_ROOT/mise/scripts"
-OUT="$MISE_PROJECT_ROOT/fastlane/app_previews/en-US/01_IPHONE_67.mp4"
+# Which listing language to record. App Store Connect takes up to three previews per localisation
+# and each is a separate recording: the app is launched in that language and the choreography
+# navigates by that language's labels.
+LOCALE="${1:-en-US}"
+OUT="$MISE_PROJECT_ROOT/fastlane/app_previews/$LOCALE/01_IPHONE_67.mp4"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
@@ -58,6 +62,7 @@ recorder=$!
 sleep 2
 
 set +e
+TEST_RUNNER_PREVIEW_LOCALE="$LOCALE" \
 xcodebuild test-without-building \
   -workspace "$MISE_PROJECT_ROOT/LessPaper.xcworkspace" \
   -scheme Snapshots \
@@ -98,6 +103,15 @@ if [ "$status" -ne 0 ]; then
   echo "error: the choreography failed - the last lines of its log:" >&2
   tail -40 "$WORK/xcodebuild.log" >&2
   exit "$status"
+fi
+
+# The test reports the locale it actually resolved. A mismatch means TEST_RUNNER_PREVIEW_LOCALE did
+# not reach it and the default quietly took over, which produces a perfectly valid English video in
+# whatever directory was asked for - the kind of failure that is only ever caught by watching.
+recorded_locale=$(sed -n 's/^PREVIEW_LOCALE //p' "$WORK/xcodebuild.log" | tail -1)
+if [ "$recorded_locale" != "$LOCALE" ]; then
+  echo "error: asked for $LOCALE but the app recorded in '${recorded_locale:-<nothing reported>}'" >&2
+  exit 1
 fi
 
 grep PREVIEW_OVERRUN "$WORK/xcodebuild.log" || true

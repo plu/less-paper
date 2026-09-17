@@ -235,7 +235,7 @@ testable is everything downstream:
 
 ## Out of scope
 
-- The iPad and German previews. Parameterised for, not built.
+- The iPad preview. Parameterised for, not built. ~~The German preview.~~ **Built** — `preview:record de-DE` records it in German.
 - Framing the video in a device bezel. Apple's preview slot expects raw app footage.
 - Any narration, music, or caption overlay.
 - ~~Wiring the upload into `release:submit`. It stays a deliberate, separate act until the first one

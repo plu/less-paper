@@ -7,10 +7,14 @@ set -euo pipefail
 bundle config set --local path vendor/bundle
 bundle check >/dev/null 2>&1 || bundle install
 
-# Checked here as well as at record time: this is the last gate before the file leaves the machine,
-# and the committed file may not be the one this checkout just recorded.
-python3 "$MISE_PROJECT_ROOT/mise/scripts/preview_check.py" \
-  "$MISE_PROJECT_ROOT/fastlane/app_previews/en-US/01_IPHONE_67.mp4"
+# Every locale, not just one: deliver uploads whatever it finds under app_previews_path, so a video
+# this never looked at could still reach Apple. The loop also fails on an empty directory rather
+# than uploading nothing quietly.
+previews=$(find "$MISE_PROJECT_ROOT/fastlane/app_previews" -name '*.mp4' | sort)
+[ -n "$previews" ] || { echo "error: no previews under fastlane/app_previews" >&2; exit 1; }
+while IFS= read -r preview; do
+  python3 "$MISE_PROJECT_ROOT/mise/scripts/preview_check.py" "$preview"
+done <<< "$previews"
 
 ASC_KEY_ID="$ALTOOL_KEY_ID" \
 ASC_ISSUER_ID="$ALTOOL_ISSUER_ID" \
