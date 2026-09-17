@@ -1,0 +1,6 @@
+Kleine Korrekturen an den Dateiaufgaben aus der letzten Version.
+
+• Die Zeile eines fertigen Imports lässt sich jetzt auf ganzer Breite antippen – das angelegte Dokument öffnet sich also beim ersten Versuch und nicht nur, wenn du den Text triffst.
+• Ein aus den Dateiaufgaben geöffnetes Dokument behält seinen Titel jetzt in der schmalen Leiste, so wie überall sonst in der App.
+
+Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.
