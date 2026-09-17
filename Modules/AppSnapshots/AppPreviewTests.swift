@@ -27,37 +27,30 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
         let to = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
         from.press(forDuration: 0.3, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.2)
-        hold(until: 4, from: start, beat: "list")
+        hold(until: 3, from: start, beat: "list")
 
         // Beat 2 - the filter sheet.
         XCTAssertTrue(openFilter(in: app), "Could not open the filter sheet")
-        hold(until: 8, from: start, beat: "filter")
+        hold(until: 7, from: start, beat: "filter")
 
-        // Beat 3 - the tag picker, with one tag chosen. The tag field is a tap gesture rather than a
-        // button, so it is matched as a label.
-        let tagField = app.staticTexts[labels.tag].firstMatch
-        XCTAssertTrue(tagField.waitForExistence(timeout: timeout), "The filter sheet showed no tag field")
-        tagField.tap()
-
-        XCTAssertTrue(
-            app.buttons[labels.notAssigned].firstMatch.waitForExistence(timeout: timeout),
-            "The tag sheet never appeared"
-        )
-
-        // Not localised: tags are server data, and Screenshots/Fixtures/tags.json carries the same
-        // eleven names in every language. "Important" is four documents, which narrows the list
-        // visibly without emptying it.
-        let tag = app.buttons[Self.featuredTag].firstMatch
-        XCTAssertTrue(tag.waitUntilHittable(timeout: timeout), "The tag sheet did not list \(Self.featuredTag)")
-        tag.tap()
-        hold(until: 12, from: start, beat: "tags")
+        // Beat 3 - a search typed into the field the sheet is already built around. openFilter(in:)
+        // only returns once this field exists, so it is present here without a further wait.
+        //
+        // Not localised: like the tag it replaced, "Telekom" is server data from
+        // Screenshots/Fixtures/documents.json, which carries the same content in every language.
+        // It matches 4 of the 25 fixture documents, which narrows the list visibly without emptying
+        // it - and it removes a whole sheet round trip that the tag picker cost, which is what made
+        // the original beat sheet unbuildable inside Apple's 30s ceiling.
+        let searchField = app.textFields[labels.titleAndContent].firstMatch
+        searchField.tap()
+        searchField.typeText("Telekom")
+        hold(until: 11, from: start, beat: "search")
 
         // Beat 4 - back to the narrowed list. There is no Apply button: the filter applies live, so
-        // closing the two sheets is what reveals the result.
-        closeSheet(in: app)
+        // closing the sheet is what reveals the result.
         closeSheet(in: app)
         XCTAssertTrue(app.cells.firstMatch.waitForExistence(timeout: timeout), "The filtered list came back empty")
-        hold(until: 16, from: start, beat: "filtered")
+        hold(until: 15, from: start, beat: "filtered")
 
         // Beat 5 - a document, open.
         let row = app.cells.firstMatch
@@ -82,7 +75,7 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         // Beat 7 - back to the document, and rest there. The last frame is the one a viewer is left
         // with, so it is the document rather than a form.
         closeSheet(in: app)
-        hold(until: 26, from: start, beat: "rest")
+        hold(until: 27, from: start, beat: "rest")
 
         mark("end", at: Date())
     }
@@ -100,12 +93,10 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
 
     // MARK: - Private
 
-    private static let featuredTag = "Important"
-
     // Beats are scheduled against the start, never chained. Chaining would make the total duration
     // the sum of the dwells *plus* however long six screens took to settle, which on a loaded runner
     // is a coin flip against the 30s ceiling. Scheduling puts the cost of a slow settle inside that
-    // beat's own slot: the video still ends at 0:26, that beat is just held for less.
+    // beat's own slot: the video still ends at 0:27, that beat is just held for less.
     private func hold(until elapsed: TimeInterval, from start: Date, beat: String) {
         let remaining = elapsed - Date().timeIntervalSince(start)
         guard remaining > 0 else {
