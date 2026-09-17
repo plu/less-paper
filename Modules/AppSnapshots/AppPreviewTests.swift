@@ -36,14 +36,15 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         // Beat 3 - a search typed into the field the sheet is already built around. openFilter(in:)
         // only returns once this field exists, so it is present here without a further wait.
         //
-        // Not localised: like the tag it replaced, "Telekom" is server data from
-        // Screenshots/Fixtures/documents.json, which carries the same content in every language.
-        // It matches 4 of the 25 fixture documents, which narrows the list visibly without emptying
-        // it - and it removes a whole sheet round trip that the tag picker cost, which is what made
-        // the original beat sheet unbuildable inside Apple's 30s ceiling.
+        // Not localised: like the tag it replaced, "Sonos" is server data, from
+        // SnapshotCorpus.documentIds rather than Screenshots/Fixtures/documents.json - the snapshot
+        // stub serves that fixed eight-document corpus regardless of locale. It matches 2 of the 8
+        // (Sonos Era 300, Sonos Sub), which narrows the list visibly without emptying it - and it
+        // removes a whole sheet round trip that the tag picker cost, which is what made the original
+        // beat sheet unbuildable inside Apple's 30s ceiling.
         let searchField = app.textFields[labels.titleAndContent].firstMatch
         searchField.tap()
-        searchField.typeText("Telekom")
+        searchField.typeText("Sonos")
         hold(until: 11, from: start, beat: "search")
 
         // Beat 4 - back to the narrowed list. There is no Apply button: the filter applies live, so
