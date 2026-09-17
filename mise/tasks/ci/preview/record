@@ -1,11 +1,26 @@
 #!/usr/bin/env bash
-#MISE description="Record the App Store preview for CI"
+#MISE description="Record the App Store preview for CI, in every listing language"
 set -euo pipefail
 
-# Same work as preview:record. It exists under ci: so a workflow has one obvious entry point, and so
-# the two can diverge later without the local task growing CI-only concerns.
+# Same work as preview:record, once per listing language. It exists under ci: so a workflow has one
+# obvious entry point, and so the two can diverge later without the local task growing CI-only
+# concerns.
 #
 # No bundler here: unlike screenshots, which drives fastlane, this path is xcodebuild, simctl,
 # ffmpeg and python throughout, so there are no gems to install.
 
-mise run preview:record
+# Derived from the listing rather than listed here, for the same reason verify_captures.py reads the
+# Snapfile instead of holding its own copy of the matrix: a language added to the store listing and
+# forgotten here would leave that locale showing a preview of whatever the app looked like when it
+# was last thought about. Matches metadata_lint.py's rule for what counts as a locale directory.
+locales=$(find "$MISE_PROJECT_ROOT/fastlane/metadata" -mindepth 1 -maxdepth 1 -type d -name '*-*' \
+  -exec basename {} \; | sort)
+
+[ -n "$locales" ] || { echo "error: no locale directories under fastlane/metadata" >&2; exit 1; }
+
+echo "Recording: $(echo "$locales" | tr '\n' ' ')"
+while IFS= read -r locale; do
+  echo "::group::preview:record $locale"
+  mise run preview:record "$locale"
+  echo "::endgroup::"
+done <<< "$locales"

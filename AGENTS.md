@@ -625,7 +625,10 @@ step:
 | Record | `mise run preview:record [locale]` | ~1 minute | `fastlane/app_previews/<locale>/01_IPHONE_67.mp4` — **committed** |
 | Upload | `mise run preview:upload` | minutes | App Store Connect |
 
-`mise run ci:preview:record` is the CI entry point behind `.github/workflows/preview-record.yml`,
+`mise run ci:preview:record` records every language the listing has, deriving them from the locale
+directories under `fastlane/metadata` rather than holding its own list — the same reason
+`verify_captures.py` reads the Snapfile instead of copying the matrix. It is the CI entry point
+behind `.github/workflows/preview-record.yml`,
 manual-only and shaped like `screenshots-record.yml`: it opens a pull request with the new `.mp4`
 rather than pushing to `main`, because a re-record changes what the store shows and deserves the same
 look a code change gets. The `.mp4` is LFS (`.gitattributes`), same as the PNGs it sits beside.

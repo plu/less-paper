@@ -54,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: preview-${{ github.run_id }}-${{ github.run_attempt }}
-          path: fastlane/app_previews/en-US/*.mp4
+          path: fastlane/app_previews/*/*.mp4
           retention-days: 14
           if-no-files-found: warn
 
