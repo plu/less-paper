@@ -78,6 +78,13 @@ jobs:
       - name: Upload the screenshots
         run: fnox exec -P ci -- mise run ci:screenshots:upload
 
+      # After the screenshots and before the submission, for the same reason they are: the version
+      # has to exist, which the metadata step above creates, and everything has to be attached
+      # before review is asked for. The preview is committed, so unlike the screenshots there is
+      # nothing to render first.
+      - name: Upload the preview video
+        run: fnox exec -P ci -- mise run ci:preview:upload
+
       - name: Submit for review
         run: fnox exec -P ci -- mise run release:submit ${{ inputs.build }}
 

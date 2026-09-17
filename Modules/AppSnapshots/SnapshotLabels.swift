@@ -17,6 +17,7 @@ struct SnapshotLabels {
     }
 
     static let english = Self(
+        close: "Close",
         documents: "Documents",
         edit: "Edit",
         editDocument: "Edit document",
@@ -31,6 +32,7 @@ struct SnapshotLabels {
     )
 
     static let german = Self(
+        close: "Schließen",
         documents: "Dokumente",
         edit: "Bearbeiten",
         editDocument: "Dokument bearbeiten",
@@ -44,6 +46,7 @@ struct SnapshotLabels {
         titleAndContent: "Titel & Inhalt"
     )
 
+    let close: String
     let documents: String
     let edit: String
     let editDocument: String

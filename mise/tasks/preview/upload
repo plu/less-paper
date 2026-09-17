@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#MISE description="Upload the App Store preview video to App Store Connect"
+set -euo pipefail
+
+# The same App Store Connect key mise/tasks/ci/upload uses for altool. deliver is told to skip the
+# binary, the metadata and the screenshots, so this touches nothing but the preview.
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
+# Every locale, not just one: deliver uploads whatever it finds under app_previews_path, so a video
+# this never looked at could still reach Apple. The loop also fails on an empty directory rather
+# than uploading nothing quietly.
+previews=$(find "$MISE_PROJECT_ROOT/fastlane/app_previews" -name '*.mp4' | sort)
+[ -n "$previews" ] || { echo "error: no previews under fastlane/app_previews" >&2; exit 1; }
+while IFS= read -r preview; do
+  python3 "$MISE_PROJECT_ROOT/mise/scripts/preview_check.py" "$preview"
+done <<< "$previews"
+
+ASC_KEY_ID="$ALTOOL_KEY_ID" \
+ASC_ISSUER_ID="$ALTOOL_ISSUER_ID" \
+ASC_AUTH_KEY="$ALTOOL_AUTH_KEY" \
+  bundle exec fastlane upload_previews

@@ -564,6 +564,12 @@ requires. It needs no paperless instance: the app is launched with `SNAPSHOT_MOD
 the API use cases for the payloads in `Screenshots/Fixtures` and the thumbnails in
 `Screenshots/Thumbnails`.
 
+`SnapshotBootstrap.swift`'s `getDocuments` stub also honours a `.titleContent` filter rule now,
+narrowing the corpus by a case-insensitive substring match on the title. Every other filter rule
+still falls through unhandled — this one exists because the preview pipeline below drives a typed
+search, and a stub that ignored the query would type it and then show the same list, recording a
+filter that visibly does nothing.
+
 Those fixtures are the raw API responses, downloaded once from a seeded instance by
 `mise run screenshots:fixtures -- --url <instance>`. **Re-fetch them rather than editing them** —
 they are the seed's output, and hand-edits are lost on the next fetch. Something the fixtures should
@@ -608,6 +614,63 @@ that it renders wherever the README is read.
 `Screenshots/contact_sheet.py` tiles a directory of screenshots into one image for a workflow's step
 summary. It needs Homebrew's ImageMagick (`brew install imagemagick`), which is not a mise tool
 because the only backends for it build from source.
+
+## The App Store preview video is recorded, never assembled
+
+Structurally the same pipeline as screenshots, one stage shorter because there is no separate framing
+step:
+
+| Stage | Command | Cost | Output |
+|---|---|---|---|
+| Record | `mise run preview:record [locale]` | ~1 minute | `fastlane/app_previews/<locale>/01_IPHONE_67.mp4` — **committed** |
+| Upload | `mise run preview:upload` | minutes | App Store Connect |
+
+`mise run ci:preview:record` records every language the listing has, deriving them from the locale
+directories under `fastlane/metadata` rather than holding its own list — the same reason
+`verify_captures.py` reads the Snapfile instead of copying the matrix. It is the CI entry point
+behind `.github/workflows/preview-record.yml`,
+manual-only and shaped like `screenshots-record.yml`: it opens a pull request with the new `.mp4`
+rather than pushing to `main`, because a re-record changes what the store shows and deserves the same
+look a code change gets. The `.mp4` is LFS (`.gitattributes`), same as the PNGs it sits beside.
+
+Record drives one choreographed journey — `AppPreviewTests` — through the app under the same
+`SNAPSHOT_MODE` fixtures the screenshots use, while `simctl io recordVideo` captures the simulator
+from outside. The two sides are stitched by markers the test prints to the `xcodebuild` log rather
+than by a guessed lead-in, and `mise/scripts/preview_window.py` turns those markers into the offset
+and duration ffmpeg trims to.
+
+Two Python validators guard the result, each catching a different class of rejection before it
+reaches Apple:
+
+- `mise/scripts/preview_window.py` refuses a choreography that measured outside 15–30 seconds,
+  *before* anything is trimmed. **A run outside that band fails the task; it is never truncated to
+  fit.** Shipping a shortened story that stops before its own ending would be worse than failing loud.
+- `mise/scripts/preview_check.py` refuses the finished file unless the resolution, duration, frame
+  rate, H.264 profile and level, and audio track match what App Store Connect's specification
+  requires, and the filename carries `IPHONE_67` — the same instinct as `verify_captures.py`: every
+  limit here is published and stable, so the rejection belongs on a laptop, not a week into review.
+
+Uploading is `mise run preview:upload` → `upload_previews` → `deliver`, and `ci:preview:upload` is
+the same thing for CI. `release.yml` runs it between the screenshot upload and the submission: the
+version has to exist first, which the metadata step creates, and everything has to be attached
+before review is asked for. Unlike the screenshots there is nothing to render beforehand, because
+the `.mp4` is committed.
+
+Each listing language is its own recording, taken with the app launched in that language and the
+choreography navigating by that language's labels: `mise run preview:record` for en-US, `mise run
+preview:record de-DE` for German. The locale reaches the test through `TEST_RUNNER_PREVIEW_LOCALE`,
+which xcodebuild forwards into the test runner's process — as an environment variable, not as a
+command-line argument, where it is read as a build setting and silently ignored. That distinction
+cost a full recording: the app launched in English, every English label matched, the test passed,
+and an English video landed in the German directory. The test now reports the locale it resolved and
+the recorder refuses a mismatch.
+
+It was held back from the release flow at first, because whether Apple accepts simulator-captured
+footage at all was an open question. The first upload settled it — App Store Connect created the
+`IPHONE_67` preview set from the filename and took the video — so it ships with every release now.
+Accepted at upload is not the same as accepted at review, so a rejection that names the preview is
+the thing to watch for; if one ever comes, the recording stage is the only part that would need
+replacing, since conform, validate and upload work the same for footage from a real device.
 
 ## `docker:seed` also seeds the permission scenario users
 

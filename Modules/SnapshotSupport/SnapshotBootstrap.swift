@@ -49,9 +49,17 @@ public extension DependencyValues {
                 }
                 return rule.value?.split(separator: ",").contains("\(inboxTag.rawValue)") == true
             }
-            let results = isInbox
+            var results = isInbox
                 ? corpus.inboxDocumentIds.compactMap { id in documents.first { $0.id == id } }
                 : featured
+
+            // Honoured because the preview walks a search: a fixture that ignored it would type a
+            // query and then show the same list, recording a filter that visibly does nothing.
+            // Every other rule stays unhandled - nothing else drives a screenshot through a typed
+            // filter rather than a fixed corpus subset.
+            if let titleQuery = input.filterRules.first(where: { $0.ruleType == .titleContent })?.value {
+                results = results.filter { $0.title.localizedCaseInsensitiveContains(titleQuery) }
+            }
             return GetDocumentsOutput(count: results.count, next: nil, results: results)
         }
 

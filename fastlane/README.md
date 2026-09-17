@@ -39,6 +39,14 @@ Upload the App Store listing text from fastlane/metadata
 
 Upload the framed screenshots to App Store Connect
 
+### ios upload_previews
+
+```sh
+[bundle exec] fastlane ios upload_previews
+```
+
+Upload the App Store preview video to App Store Connect
+
 ### ios verify_testflight_build
 
 ```sh
