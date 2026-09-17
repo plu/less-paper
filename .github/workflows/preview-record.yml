@@ -1,0 +1,105 @@
+name: Preview - Record
+
+# Manual only. It never pushes to main - a re-record changes what the store will show, so it arrives
+# as a pull request and gets looked at like one. Unlike the screenshots, the artifact cannot be shown
+# in the job summary: GitHub renders images there, not video, so the run artifact is how it gets
+# watched before merging.
+on:
+  workflow_dispatch:
+
+# Queued rather than cancelled, so a run already underway keeps its simulator time.
+concurrency:
+  group: preview-record
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: /bin/bash --noprofile --norc -euo pipefail {0}
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  record:
+    name: Record
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          clean: false
+          lfs: true
+
+      - name: mise
+        uses: jdx/mise-action@v4
+        with:
+          cache: false
+          cache_save: false
+
+      - run: mise ci:clean
+
+      - run: mise simulators:prepare
+
+      - run: mise run ci:preview:record
+
+      - name: Upload the preview artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: preview-${{ github.run_id }}-${{ github.run_attempt }}
+          path: fastlane/app_previews/en-US/*.mp4
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Open a pull request with the new preview
+        run: |
+          branch="preview/record-${{ github.run_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add fastlane/app_previews
+
+          if git diff --cached --quiet; then
+            echo "The preview is unchanged; nothing to open a pull request for." \
+              >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git commit -m "chore: re-record the App Store preview"
+          git push origin "$branch"
+
+          # The branch is the valuable part - it holds the simulator time. Opening the pull request
+          # is a convenience, and GitHub blocks it unless "Allow GitHub Actions to create and approve
+          # pull requests" is enabled, which no amount of `permissions:` overrides. A blocked
+          # convenience must not discard the work, so this reports and carries on.
+          if gh pr create --title "chore: re-record the App Store preview" \
+            --body "Recorded by [run ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). Download the run artifact, watch it, then merge." \
+            --head "$branch"
+          then
+            echo "Pull request opened." >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### The preview is on \`$branch\`"
+              echo
+              echo "Opening the pull request was refused. Enable **Settings → Actions → General →"
+              echo "Allow GitHub Actions to create and approve pull requests**, or open it here:"
+              echo
+              echo "${{ github.server_url }}/${{ github.repository }}/compare/$branch?expand=1"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Preview"
+            echo
+            echo "Video cannot be embedded in a job summary. Download the run artifact to watch it."
+          } >> "$GITHUB_STEP_SUMMARY"

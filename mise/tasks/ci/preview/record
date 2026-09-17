@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#MISE description="Record the App Store preview for CI"
+set -euo pipefail
+
+# Same work as preview:record. It exists under ci: so a workflow has one obvious entry point, and so
+# the two can diverge later without the local task growing CI-only concerns.
+
+# ci:clean wipes untracked files, vendor/bundle included, so the gems are installed per run rather
+# than assumed. bundle check keeps that to a no-op when they are already there.
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
+mise run preview:record
