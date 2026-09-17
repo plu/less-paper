@@ -56,6 +56,30 @@ class WindowTests(unittest.TestCase):
             (2.5, 26.0),
         )
 
+    def test_when_a_test_retries_the_final_attempt_is_used(self):
+        test_log = (
+            "Test Suite 'AppPreviewTests' started\n"
+            "PREVIEW_MARKER start 1000000.0\n"
+            "    t =     1.20s Tap \"Filter\"\n"
+            "PREVIEW_MARKER start 1000002.5\n"
+            "    t =     1.20s Tap \"Filter\"\n"
+            "PREVIEW_MARKER end 1000028.5\n"
+            "Test Suite 'AppPreviewTests' passed\n"
+        )
+        self.assertEqual(window(test_log, STARTED), (2.5, 26.0))
+
+    def test_out_of_order_markers_are_an_error(self):
+        test_log = (
+            "Test Suite 'AppPreviewTests' started\n"
+            "PREVIEW_MARKER start 1000002.5\n"
+            "    t =     1.20s Tap \"Filter\"\n"
+            "PREVIEW_MARKER end 1000001.0\n"
+            "PREVIEW_MARKER start 1000003.0\n"
+            "Test Suite 'AppPreviewTests' passed\n"
+        )
+        with self.assertRaisesRegex(ValueError, "15s to 30s"):
+            window(test_log, STARTED)
+
 
 if __name__ == "__main__":
     unittest.main()

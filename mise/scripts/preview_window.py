@@ -24,12 +24,9 @@ DURATION = (15.0, 30.0)
 def window(log, recorder_started):
     marks = {}
     for name, value in MARKER.findall(log):
-        # First start, last end: a retried test would print more than one pair, and the outermost
-        # bracket is the one that contains the whole journey.
-        if name == "start":
-            marks.setdefault(name, float(value))
-        else:
-            marks[name] = float(value)
+        # Last start, last end: a retried test would print more than one pair, and the final
+        # attempt is the one we want.
+        marks[name] = float(value)
 
     for name in ("start", "end"):
         if name not in marks:
