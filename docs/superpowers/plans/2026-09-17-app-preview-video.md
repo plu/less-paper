@@ -736,15 +736,16 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         continueAfterFailure = false
     }
 
-    // MARK: - Private
-
-    private static let featuredTag = "Important"
-
     // One locale, so the label table is asked for it directly rather than through
-    // Snapshot.deviceLanguage, which is empty when no fastlane run is driving.
+    // Snapshot.deviceLanguage, which is empty when no fastlane run is driving. Not private:
+    // UITestNavigation requires it.
     var labels: SnapshotLabels {
         SnapshotLabels.english
     }
+
+    // MARK: - Private
+
+    private static let featuredTag = "Important"
 
     // Beats are scheduled against the start, never chained. Chaining would make the total duration
     // the sum of the dwells *plus* however long six screens took to settle, which on a loaded runner
@@ -828,7 +829,7 @@ git commit -m "feat: choreograph the App Store preview"
 
 - [ ] **Step 1: Add the tooling**
 
-Append `brew "ffmpeg"` to `Brewfile`, beside the imagemagick that already serves `screenshots:frame`. Append to `.gitattributes`:
+Append `brew "ffmpeg"` and `brew "xcbeautify"` to `Brewfile`, beside the imagemagick that already serves `screenshots:frame`. xcbeautify is already a de-facto dependency — the screenshot lane passes `xcodebuild_formatter: "xcbeautify"` — that nothing pins, and this task pipes through it twice under `set -o pipefail`, where its absence is fatal. Append to `.gitattributes`:
 
 ```
 *.mp4 filter=lfs diff=lfs merge=lfs -text
@@ -915,7 +916,10 @@ fi
 
 grep PREVIEW_OVERRUN "$WORK/xcodebuild.log" || true
 
-read -r offset duration < <(python3 "$SCRIPTS/preview_window.py" "$WORK/xcodebuild.log" "$started")
+# Assigned first, then split: a bare assignment propagates the child's exit status under set -e,
+# where `read < <(...)` does not - and a swallowed failure here hands ffmpeg an empty -ss.
+window=$(python3 "$SCRIPTS/preview_window.py" "$WORK/xcodebuild.log" "$started")
+read -r offset duration <<< "$window"
 echo "Trimming from ${offset}s for ${duration}s."
 
 mkdir -p "$(dirname "$OUT")"
@@ -1211,10 +1215,13 @@ git add .github/workflows/preview-record.yml mise/tasks/ci/preview/record
 git commit -m "ci: record the App Store preview on demand"
 ```
 
-- [ ] **Step 6: Dispatch it once**
+- [ ] **Step 6: Push, and note what cannot be proven yet**
 
-Run: `gh workflow run "Preview - Record" --ref feat/app-preview-video`
-Expected: the run completes, the artifact is attached, and either a pull request opens or the summary explains why it could not. This is the only step that proves the self-hosted runner has ffmpeg — everything before it proved it on a laptop.
+Run: `git push -u origin feat/app-preview-video`
+
+`workflow_dispatch` only lists workflows that exist on the **default branch**, so this workflow cannot be dispatched from the feature branch — `gh workflow run` will answer "could not find any workflows named Preview - Record" until it merges. Do not treat that as a defect in the workflow file.
+
+This leaves one thing unproven until after merge: whether the self-hosted runner has ffmpeg. Everything before this step proved it on a laptop, and `Brewfile` declares it, but the runner installs via `mise` + `brew bundle` and nobody has watched it do so for this dependency. **First action after merging: dispatch the workflow once and confirm it produces an artifact.**
 
 ---
 
