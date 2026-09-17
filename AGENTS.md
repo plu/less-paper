@@ -647,11 +647,18 @@ reaches Apple:
   requires, and the filename carries `IPHONE_67` — the same instinct as `verify_captures.py`: every
   limit here is published and stable, so the rejection belongs on a laptop, not a week into review.
 
-Uploading is `mise run preview:upload` → `upload_previews` → `deliver`, and it is **not** wired into
-`release:submit` or any other release flow. It is a deliberate, separate act, taken once someone has
-watched the recording — the same reasoning that keeps the screenshots upload off the binary upload
-lane, sharpened by the fact that whether Apple accepts simulator-captured footage at all is still an
-open question the first upload settles.
+Uploading is `mise run preview:upload` → `upload_previews` → `deliver`, and `ci:preview:upload` is
+the same thing for CI. `release.yml` runs it between the screenshot upload and the submission: the
+version has to exist first, which the metadata step creates, and everything has to be attached
+before review is asked for. Unlike the screenshots there is nothing to render beforehand, because
+the `.mp4` is committed.
+
+It was held back from the release flow at first, because whether Apple accepts simulator-captured
+footage at all was an open question. The first upload settled it — App Store Connect created the
+`IPHONE_67` preview set from the filename and took the video — so it ships with every release now.
+Accepted at upload is not the same as accepted at review, so a rejection that names the preview is
+the thing to watch for; if one ever comes, the recording stage is the only part that would need
+replacing, since conform, validate and upload work the same for footage from a real device.
 
 ## `docker:seed` also seeds the permission scenario users
 

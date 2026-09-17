@@ -238,8 +238,10 @@ testable is everything downstream:
 - The iPad and German previews. Parameterised for, not built.
 - Framing the video in a device bezel. Apple's preview slot expects raw app footage.
 - Any narration, music, or caption overlay.
-- Wiring the upload into `release:submit`. It stays a deliberate, separate act until the first one has
-  been accepted.
+- ~~Wiring the upload into `release:submit`. It stays a deliberate, separate act until the first one
+  has been accepted.~~ **Done.** The first upload was accepted — App Store Connect created the
+  `IPHONE_67` set from the filename — so `release.yml` now runs `ci:preview:upload` between the
+  screenshot upload and the submission.
 
 ## Risks
 
