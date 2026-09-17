@@ -18,9 +18,10 @@ A native iOS client for [paperless-ngx](https://github.com/paperless-ngx/paperle
 ## Status
 
 This is a complete rewrite of Less Paper, and it is the app on the App Store today:
-<https://apps.apple.com/en/app/less-paper/id6464425056>. It needs paperless-ngx 2.15.3 or newer —
-that is the release whose REST API first reached version 8, which is the oldest the app negotiates
-down to, and an older server is turned away with a message saying so.
+<https://apps.apple.com/en/app/less-paper/id6464425056>. It works with every paperless-ngx from
+2.15.3 up to and including 3.x. 2.15.3 is the release whose REST API first reached version 8, which
+is the oldest the app negotiates down to, and an older server is turned away with a message saying
+so; at the other end the app speaks API 10, which is what 3.x advertises.
 
 Every push to `main` also ships a TestFlight build, and the beta is open to anyone who wants the
 next release early: <https://testflight.apple.com/join/3CM21m1n>
@@ -47,7 +48,7 @@ next release early: <https://testflight.apple.com/join/3CM21m1n>
 ## Requirements
 
 - iOS 18.0 or newer
-- A running [paperless-ngx](https://docs.paperless-ngx.com) instance to talk to
+- A running [paperless-ngx](https://docs.paperless-ngx.com) instance to talk to, 2.15.3 through 3.x
 
 ## Single sign-on (OIDC)
 
