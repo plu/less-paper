@@ -7,6 +7,21 @@ version = "3.2.1"
 backend = "aqua:cpisciotta/xcbeautify"
 specifiers = ["3.2.1"]
 
+[tools."aqua:cpisciotta/xcbeautify"."platforms.linux-x64"]
+checksum = "sha256:5302e480b01910fcda9071fcc5a64f0a7fce904965834a1e9ed065bc9638bfe9"
+url = "https://github.com/cpisciotta/xcbeautify/releases/download/3.2.1/xcbeautify-3.2.1-x86_64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/cpisciotta/xcbeautify/releases/assets/388373840"
+
+[tools."aqua:cpisciotta/xcbeautify"."platforms.macos-arm64"]
+checksum = "sha256:ed32972e41bc3aa19588f8b0f4a0209ef70c663ad60bbf4ad84a2de73355d637"
+url = "https://github.com/cpisciotta/xcbeautify/releases/download/3.2.1/xcbeautify-3.2.1-arm64-apple-macosx.zip"
+url_api = "https://api.github.com/repos/cpisciotta/xcbeautify/releases/assets/388376615"
+
+[tools."aqua:cpisciotta/xcbeautify"."platforms.macos-x64"]
+checksum = "sha256:ba65e8efc2ebe8c6f13393aaeb88a0ff849278d9480ee1496affaa3db781ac6e"
+url = "https://github.com/cpisciotta/xcbeautify/releases/download/3.2.1/xcbeautify-3.2.1-x86_64-apple-macosx.zip"
+url_api = "https://api.github.com/repos/cpisciotta/xcbeautify/releases/assets/388376611"
+
 [[tools."aqua:tuist"]]
 version = "4.208.0"
 backend = "aqua:tuist"
