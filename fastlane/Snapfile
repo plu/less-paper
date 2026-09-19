@@ -5,6 +5,12 @@ devices([
   "iPad Pro 13-inch (M5)"
 ])
 
+# Pinned for the same reason mise/scripts/run_tests.sh passes `-o`: a machine carrying two iOS
+# runtimes has both of these device names twice, and an unpinned run lets fastlane pick. It would
+# capture at the wrong system-UI vintage and go green doing it. Read from mise.toml rather than
+# written out, so it cannot drift from the runtime the snapshot tests record on.
+ios_version(ENV.fetch("TEST_SIMULATOR_OS"))
+
 languages([
   "en-US",
   "de-DE"
