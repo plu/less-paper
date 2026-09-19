@@ -9,7 +9,7 @@ import Testing
 import TestSupport
 
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct DocumentsRepositoryTests {
 
@@ -241,7 +241,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -272,7 +272,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -287,7 +287,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -309,7 +309,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -327,7 +327,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -358,7 +358,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -421,7 +421,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -445,7 +445,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -478,7 +478,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -499,7 +499,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -522,7 +522,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -550,7 +550,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -611,7 +611,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -661,7 +661,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -711,7 +711,7 @@ struct DocumentsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },

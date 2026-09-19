@@ -9,7 +9,7 @@ import Testing
 import TestSupport
 
 @MainActor
-@Suite(.dependencies())
+@Suite(.testDependencies())
 struct FileTaskListReducerTests {
 
     @Test

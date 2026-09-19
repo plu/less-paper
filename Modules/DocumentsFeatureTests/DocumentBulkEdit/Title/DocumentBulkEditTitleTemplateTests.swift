@@ -7,7 +7,7 @@ import Testing
 import TestSupport
 
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.apiCache.correspondent = { id, _ in id == 1 ? .testValue(id: 1, name: "Stadtwerke") : nil }
         $0.apiCache.documentType = { id, _ in id == 1 ? .testValue(id: 1, name: "Invoice") : nil }
         $0.apiCache.tag = { id, _ in

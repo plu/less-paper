@@ -8,7 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies(),
+    .testDependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
@@ -64,7 +64,7 @@ struct DocumentBulkEditMergeViewTests {
         )
     }
 
-    private var documents: [Document] {
+    private var documents: [ApiInterface.Document] {
         [
             .testValue(id: 1, title: "Invoice January"),
             .testValue(id: 2, title: "Invoice February"),

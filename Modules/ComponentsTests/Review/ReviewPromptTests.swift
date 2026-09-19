@@ -7,7 +7,7 @@ import Testing
 import TestSupport
 
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct ReviewPromptTests {
 

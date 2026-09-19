@@ -7,7 +7,7 @@ import SwiftUI
 extension View {
 
     func documentSelectionOverlay(
-        document: Document.Id,
+        document: ApiInterface.Document.Id,
         store: StoreOf<DocumentSelectionReducer>
     ) -> some View {
         modifier(
@@ -46,14 +46,14 @@ private struct DocumentSelectionOverlay: ViewModifier {
     }
 
     init(
-        document: Document.Id,
+        document: ApiInterface.Document.Id,
         store: StoreOf<DocumentSelectionReducer>
     ) {
         self.document = document
         self.store = store
     }
 
-    private let document: Document.Id
+    private let document: ApiInterface.Document.Id
 
     @Bindable
     private var store: StoreOf<DocumentSelectionReducer>

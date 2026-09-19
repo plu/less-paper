@@ -8,7 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct CustomFieldQueryAtomEditorReducerTests {
 
@@ -121,7 +121,7 @@ struct CustomFieldQueryAtomEditorReducerTests {
 
 @MainActor
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct CustomFieldQueryAtomEditorDocumentLinkTests {
 

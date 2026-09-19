@@ -8,7 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies(),
+    .testDependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
@@ -58,7 +58,7 @@ struct DocumentBulkEditTitleViewTests {
         )
     }
 
-    private var documents: IdentifiedArrayOf<Document> {
+    private var documents: IdentifiedArrayOf<ApiInterface.Document> {
         [
             .testValue(id: 10, title: "Invoice 42"),
             .testValue(id: 11, title: "Scan 2026-03-11")

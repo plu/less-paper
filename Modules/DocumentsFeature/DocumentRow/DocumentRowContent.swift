@@ -61,13 +61,13 @@ public struct DocumentRowContent: View {
         .padding(sizeCategory >= breakpoint ? .x4 : .x3)
     }
 
-    public init(document: Document, server: Server, titleLineLimit: Int) {
+    public init(document: ApiInterface.Document, server: Server, titleLineLimit: Int) {
         self.document = document
         self.server = server
         self.titleLineLimit = titleLineLimit
     }
 
-    private let document: Document
+    private let document: ApiInterface.Document
     private let server: Server
     private let titleLineLimit: Int
 

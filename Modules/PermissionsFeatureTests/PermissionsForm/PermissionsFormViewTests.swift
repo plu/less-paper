@@ -8,7 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.getPermissions.execute = { _, _ in .testValue() }
     },
     .snapshots(record: .environment),

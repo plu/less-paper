@@ -7,7 +7,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.getCorrespondents.execute = { _ in [] }
     },
     .snapshots(record: .environment),

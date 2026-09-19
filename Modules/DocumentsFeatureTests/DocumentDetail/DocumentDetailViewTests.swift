@@ -8,7 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies(),
+    .testDependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
@@ -87,7 +87,7 @@ struct DocumentDetailViewTests {
         let data = try Data.testValue()
         let url = URL.testValue()
         let server = Server.testValue()
-        let document = Document.testValue()
+        let document = ApiInterface.Document.testValue()
 
         @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
             .testValue(document: document)

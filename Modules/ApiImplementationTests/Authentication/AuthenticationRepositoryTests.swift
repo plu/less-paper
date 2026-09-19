@@ -21,7 +21,7 @@ struct AuthenticationRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.context = .live
         },
         .tags(.integrationTests)
@@ -36,7 +36,7 @@ struct AuthenticationRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.context = .live
         },
         .tags(.integrationTests)

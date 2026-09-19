@@ -8,7 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct ServerListReducerTests {
 

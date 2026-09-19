@@ -8,7 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies(),
+    .testDependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
@@ -16,7 +16,7 @@ struct DocumentPickerViewTests {
 
     @Test(
         arguments: [
-            ("empty", [Document](), [Document](), ""),
+            ("empty", [ApiInterface.Document](), [ApiInterface.Document](), ""),
             ("results", [puky, invoice], [], ""),
             // The behaviour this picker turns on: a selected document stays listed and removable
             // even once the query stops matching it.
@@ -27,8 +27,8 @@ struct DocumentPickerViewTests {
     )
     func snapshot(
         name: String,
-        documents: [Document],
-        selection: [Document],
+        documents: [ApiInterface.Document],
+        selection: [ApiInterface.Document],
         searchText: String
     ) async throws {
         let state = DocumentPickerReducer.State.testValue(
@@ -53,6 +53,6 @@ struct DocumentPickerViewTests {
 
 // File scope rather than statics on the suite: the suite is `@MainActor`, and a `@Test`
 // `arguments:` expression is evaluated outside that isolation.
-private let invoice = Document.testValue(id: 11, title: "Invoice 2026-08")
+private let invoice = ApiInterface.Document.testValue(id: 11, title: "Invoice 2026-08")
 
-private let puky = Document.testValue(id: 10, title: "Puky-Locked")
+private let puky = ApiInterface.Document.testValue(id: 10, title: "Puky-Locked")

@@ -40,10 +40,15 @@ public struct URLField<Focus: Hashable>: View {
         self._url = url
         self.focus = focus
         self.equals = equals
-        address = url.wrappedValue.absoluteString
-            .replacingOccurrences(of: "\(url.wrappedValue.scheme ?? "")://", with: "")
-            .replacingOccurrences(of: "about:blank", with: "")
-        scheme = .init(rawValue: url.wrappedValue.scheme)
+        // Through the storage rather than the wrapped value: assigning `address` calls a setter on
+        // a half-initialised `self`, which Swift 6.3 rejects because `_scheme` has no default and
+        // is still uninitialised on that line.
+        _address = State(
+            initialValue: url.wrappedValue.absoluteString
+                .replacingOccurrences(of: "\(url.wrappedValue.scheme ?? "")://", with: "")
+                .replacingOccurrences(of: "about:blank", with: "")
+        )
+        _scheme = State(initialValue: .init(rawValue: url.wrappedValue.scheme))
     }
 
     private func updateUrl() {

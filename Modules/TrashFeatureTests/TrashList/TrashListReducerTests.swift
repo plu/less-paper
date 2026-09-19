@@ -8,7 +8,7 @@ import Testing
 import TestSupport
 
 @MainActor
-@Suite(.dependencies())
+@Suite(.testDependencies())
 struct TrashListReducerTests {
 
     @Test

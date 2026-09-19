@@ -12,7 +12,7 @@ import UIKit
 @Suite(
     // The image is handed to the row directly, so this path only keys the `.task` that a synchronous
     // snapshot never runs. It has to resolve, not to point at anything.
-    .dependencies { $0.favoritesStore.pdfURL = { id, _ in URL(filePath: "/favorites/\(id).pdf") } },
+    .testDependencies { $0.favoritesStore.pdfURL = { id, _ in URL(filePath: "/favorites/\(id).pdf") } },
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )

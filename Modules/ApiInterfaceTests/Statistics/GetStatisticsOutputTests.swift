@@ -5,7 +5,7 @@ import Foundation
 import Testing
 
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct GetStatisticsOutputTests {
 

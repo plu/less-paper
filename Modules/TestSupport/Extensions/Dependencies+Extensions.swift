@@ -6,8 +6,12 @@ import Dependencies
 import Foundation
 import Testing
 
+// Named `testDependencies` rather than `dependencies` because `DependenciesTestSupport` declares
+// its own `.dependencies` trait on the same constrained extension. Both are visible wherever this
+// module is imported, and from Swift 6.3 the pair is ambiguous at every call site rather than
+// resolving to this one.
 public extension Trait where Self == _DependenciesTrait {
-    static func dependencies(
+    static func testDependencies(
         _ updateValues: @escaping @Sendable (inout DependencyValues) async throws -> Void = { _ in }
     ) -> Self {
         Self {

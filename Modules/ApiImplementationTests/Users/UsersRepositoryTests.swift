@@ -51,7 +51,7 @@ struct UsersRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },

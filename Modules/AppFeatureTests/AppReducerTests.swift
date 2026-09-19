@@ -16,7 +16,7 @@ import UIKit
 
 @MainActor
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct AppReducerTests {
 

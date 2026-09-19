@@ -15,7 +15,7 @@ import Testing
 import TestSupport
 
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct DocumentFilterInputTests {
     @Test
@@ -1124,7 +1124,7 @@ struct DocumentFilterInputTests {
 }
 
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct DocumentFilterInputCustomFieldQueryTests {
 
