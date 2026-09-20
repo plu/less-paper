@@ -95,7 +95,7 @@ struct DocumentCustomFieldsView: View {
     // every other field in the card renders its value as plain text. Tinting is what says the line
     // leads somewhere.
     @ViewBuilder
-    private func linkLine(id: Document.Id) -> some View {
+    private func linkLine(id: ApiInterface.Document.Id) -> some View {
         if let document = store.linkedDocuments[id: id] {
             Button {
                 send(.documentLinkTapped(id))

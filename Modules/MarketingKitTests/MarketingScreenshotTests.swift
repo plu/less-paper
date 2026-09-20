@@ -7,7 +7,7 @@ import UIKit
 
 @MainActor
 @Suite(
-    .dependencies(),
+    .testDependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )

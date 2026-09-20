@@ -7,7 +7,7 @@ import Testing
 
 @MainActor
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct DocumentSelectionReducerTests {
 

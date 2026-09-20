@@ -5,7 +5,7 @@ import Foundation
 import Testing
 import TestSupport
 
-@Suite(.dependencies())
+@Suite(.testDependencies())
 struct TrashPayloadTests {
 
     /// A real response from `GET /api/trash/`, recorded from a paperless 3.0.5 instance.

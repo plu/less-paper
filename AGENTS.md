@@ -475,16 +475,24 @@ Three things about where it is applied, each deliberate:
 
 `TEST_SIMULATOR` and `TEST_SIMULATOR_OS` in `mise.toml` are the only place the device is named.
 `mise/scripts/run_tests.sh` and `mise/tasks/screenshots/frame` pass both to `tuist test` as `-d`
-and `-o`; `mise/tasks/simulators/prepare` creates that exact pairing when it is missing, along with
-the two App Store sizes from `fastlane/Snapfile`. Adding a device the repository drives by name
-means adding it to `required_devices` there too — Tuist and fastlane both resolve by exact name and
+and `-o`; `fastlane/Snapfile` reads `TEST_SIMULATOR_OS` for its `ios_version`;
+`mise/tasks/simulators/prepare` creates that exact pairing when it is missing, along with the two
+App Store sizes from `fastlane/Snapfile`. Adding a device the repository drives by name means
+adding it to `required_devices` there too — Tuist and fastlane both resolve by exact name and
 neither creates anything.
 
-**The iOS version is pinned, and it tracks `Tuist.swift`'s `compatibleXcodeVersions`.** Xcode 26.5
-ships iOS 26.5, so an Xcode bump is two edits, not one. The pin is not tidiness: the snapshot
-references were recorded on this runtime, and a machine carrying a second iOS would otherwise let
-xcodebuild choose — turning every view test red for a reason nobody would look for in a device
-list.
+**The Snapfile's `ios_version` matters for the same reason `tuist test` gets `-o`.** Without it
+fastlane resolves `iPhone 17 Pro Max` by name alone, and a machine holding two runtimes has that
+name twice — so a capture runs at whichever system-UI vintage it happened to pick and goes green
+doing it. It is `ENV.fetch`, not a literal, so a run outside mise fails loudly rather than
+guessing.
+
+**The iOS version is pinned, and it tracks `Tuist.swift`'s `compatibleXcodeVersions`.** Xcode 27.0
+ships iOS 27.0, so an Xcode bump is three edits, not one: `compatibleXcodeVersions`,
+`TEST_SIMULATOR_OS` here, and `lastXcodeUpgradeCheck` in `Workspace.swift`. The pin is not
+tidiness: the snapshot references were recorded on this runtime, and a machine carrying a second
+iOS would otherwise let xcodebuild choose — turning every view test red for a reason nobody would
+look for in a device list.
 
 Two failures are deliberate rather than papered over. A missing **runtime** and a missing **device
 type** both stop the run and print what is available, because the alternative is rendering

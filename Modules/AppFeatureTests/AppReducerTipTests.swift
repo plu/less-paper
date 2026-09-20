@@ -8,7 +8,7 @@ import TipsFeature
 
 @MainActor
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct AppReducerTipTests {
 

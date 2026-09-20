@@ -9,7 +9,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.apiCache.correspondent = { id, _ in id == 1 ? .testValue(id: 1, name: "Stadtwerke") : nil }
     }
 )

@@ -7,7 +7,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.getStoragePaths.execute = { _ in [] }
     },
     .snapshots(record: .environment),

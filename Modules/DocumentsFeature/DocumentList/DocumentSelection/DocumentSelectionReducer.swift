@@ -8,7 +8,7 @@ public struct DocumentSelectionReducer: Sendable {
 
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
-        case documentTapped(Document.Id)
+        case documentTapped(ApiInterface.Document.Id)
         case error(Error)
         case selectAllLoadedButtonTapped
         case selectAllMatchingButtonTapped
@@ -19,17 +19,17 @@ public struct DocumentSelectionReducer: Sendable {
     @ObservableState
     public struct State: Equatable {
 
-        var allMatchingDocuments = Set<Document.Id>()
+        var allMatchingDocuments = Set<ApiInterface.Document.Id>()
 
         var filter = DocumentFilter()
 
-        var allLoadedDocuments = Set<Document.Id>()
+        var allLoadedDocuments = Set<ApiInterface.Document.Id>()
 
         var isActive = false
 
         var isLoading = false
 
-        var selectedDocuments = Set<Document.Id>()
+        var selectedDocuments = Set<ApiInterface.Document.Id>()
 
         let server: Server
 
@@ -48,10 +48,10 @@ public struct DocumentSelectionReducer: Sendable {
         var canMerge: Bool { permissions.can(.addDocument) }
 
         init(
-            allLoadedDocuments: Set<Document.Id> = .init(),
-            allMatchingDocuments: Set<Document.Id> = .init(),
+            allLoadedDocuments: Set<ApiInterface.Document.Id> = .init(),
+            allMatchingDocuments: Set<ApiInterface.Document.Id> = .init(),
             isActive: Bool = false,
-            selectedDocuments: Set<Document.Id> = .init(),
+            selectedDocuments: Set<ApiInterface.Document.Id> = .init(),
             server: Server
         ) {
             self.allLoadedDocuments = allLoadedDocuments

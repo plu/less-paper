@@ -7,7 +7,7 @@ import Testing
 import TestSupport
 
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.apiCache.customField = { id, _ in
             [CustomField].previewValue.first { $0.id == id }
         }

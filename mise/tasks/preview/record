@@ -10,6 +10,9 @@ set -euo pipefail
 
 DEVICE="iPhone 17 Pro Max"
 SCRIPTS="$MISE_PROJECT_ROOT/mise/scripts"
+
+: "${TEST_SIMULATOR_OS:?not set - it comes from mise.toml, so run this through mise}"
+
 # Which listing language to record. App Store Connect takes up to three previews per localisation
 # and each is a separate recording: the app is launched in that language and the choreography
 # navigates by that language's labels.
@@ -23,17 +26,31 @@ tuist generate --no-open
 
 # Resolved to a UDID once, up front, and used everywhere below - never by "-destination
 # platform=iOS Simulator,name=$DEVICE" again. Two xcodebuild invocations each resolving the name
-# independently is how AGENTS.md:483-487's two-runtimes-after-an-Xcode-upgrade hazard turns silent
-# here: with two iOS runtimes each carrying an "iPhone 17 Pro Max", build-for-testing could pick one
-# and test-without-building the other, so simctl records an idle simulator while the choreography
-# runs, unseen, on a device nothing is watching. The markers still print and preview_check.py still
-# passes - it validates the container, not the content - so this is the one failure in the pipeline
-# that would ship silently. A single UDID looked up once cannot diverge from itself.
-udid=$(xcrun simctl list devices -j | jq -r --arg name "$DEVICE" '
-  [.devices[][] | select(.name == $name and .isAvailable)] | first.udid // ""
+# independently is how the two-runtimes-after-an-Xcode-upgrade hazard in AGENTS.md's "The simulator
+# is declared once" turns silent here: with two iOS runtimes each carrying an "iPhone 17 Pro Max",
+# build-for-testing could pick one and test-without-building the other, so simctl records an idle
+# simulator while the choreography runs, unseen, on a device nothing is watching. The markers still
+# print and preview_check.py still passes - it validates the container, not the content - so this
+# is the one failure in the pipeline that would ship silently. A single UDID looked up once cannot
+# diverge from itself.
+#
+# The runtime is pinned before the name is looked up, because a single UDID is only safe if it is
+# the right one. `.devices[][]` flattens every runtime together and takes whichever the JSON
+# happens to list first, so with 26.5 and 27.0 both installed the choice was ordering, not intent -
+# and a preview recorded a whole OS out of date looks plausible enough to ship.
+runtime=$(xcrun simctl list runtimes -j | jq -r --arg version "$TEST_SIMULATOR_OS" '
+  [.runtimes[] | select(.isAvailable and .platform == "iOS" and .version == $version) | .identifier] | first // ""
+')
+[ -n "$runtime" ] || {
+  echo "error: iOS $TEST_SIMULATOR_OS is not installed - run 'mise run simulators:prepare'" >&2
+  exit 1
+}
+
+udid=$(xcrun simctl list devices -j | jq -r --arg runtime "$runtime" --arg name "$DEVICE" '
+  [(.devices[$runtime] // [])[] | select(.name == $name and .isAvailable)] | first.udid // ""
 ')
 [ -n "$udid" ] && [ "$udid" != "null" ] || {
-  echo "error: no available simulator named $DEVICE - run 'mise run simulators:prepare'" >&2
+  echo "error: no $DEVICE on iOS $TEST_SIMULATOR_OS - run 'mise run simulators:prepare'" >&2
   exit 1
 }
 
@@ -127,6 +144,14 @@ mkdir -p "$(dirname "$OUT")"
 # scale then crop, never pad: 1320x2868 scaled to width 886 is 1926, six pixels too tall, and three
 # rows off each end is invisible where black bars down a store listing would not be.
 #
+# `fps=30` in the chain, not just `-r 30` on the encoder. simctl records variable-rate and emits no
+# frame at all while the screen is still, so a beat that ends on a static view leaves a gap -
+# measured at 2.4s here, from 45.1s to 47.5s, with the window ending inside it. `-r 30` sets the
+# encoder's rate but leaves the last decoded frame where it is, so the mux ended 1.1s early on a
+# window that was comfortably inside the recording. The fps *filter* resamples to constant rate and
+# holds that frame across the gap, which is what the screen actually showed - no frame was emitted
+# because nothing changed. `-shortest` truncated to 23.4s before this and is harmless after it.
+#
 # anullsrc supplies the silent stereo track. Apple requires an enabled audio track and a simulator
 # recording has none, which is the single most common reason a preview is refused.
 #
@@ -139,7 +164,7 @@ ffmpeg -y -loglevel error \
   -ss "$offset" -i "$WORK/raw.mov" \
   -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
   -t "$duration" \
-  -vf "scale=886:-2,crop=886:1920" \
+  -vf "scale=886:-2,crop=886:1920,fps=30" \
   -c:v libx264 -profile:v high -level 4.0 -pix_fmt yuv420p \
   -r 30 -b:v 11M -maxrate 12M -bufsize 24M \
   -c:a aac -b:a 256k -ar 44100 -ac 2 \

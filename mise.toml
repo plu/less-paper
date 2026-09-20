@@ -15,11 +15,11 @@ LANG = "en_US.UTF-8"
 # `simulators:prepare` that creates it cannot drift apart.
 #
 # The iOS version is pinned rather than "whatever is newest", and it tracks Tuist.swift's
-# compatibleXcodeVersions - Xcode 26.5 ships iOS 26.5, so the two move together. The snapshot tests
+# compatibleXcodeVersions - Xcode 27.0 ships iOS 27.0, so the two move together. The snapshot tests
 # compare against images recorded on this runtime: a machine carrying a newer one must not quietly
 # render on it, because every view test would go red for a reason nobody would look for here.
 TEST_SIMULATOR = "iPhone 17 Pro"
-TEST_SIMULATOR_OS = "26.5"
+TEST_SIMULATOR_OS = "27.0"
 
 [hooks]
 postinstall = "brew bundle"

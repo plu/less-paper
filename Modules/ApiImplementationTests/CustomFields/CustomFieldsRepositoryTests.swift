@@ -51,7 +51,7 @@ struct CustomFieldsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -88,7 +88,7 @@ struct CustomFieldsRepositoryTests {
     // The server assigns each select option an opaque string id on create. Nothing else in the app
     // generates those, so this pins the behaviour the form depends on.
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },
@@ -112,7 +112,7 @@ struct CustomFieldsRepositoryTests {
     }
 
     @Test(
-        .dependencies {
+        .testDependencies {
             $0.authenticationProvider = .integrationTest
             $0.context = .live
         },

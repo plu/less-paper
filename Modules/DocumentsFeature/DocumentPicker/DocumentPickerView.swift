@@ -44,7 +44,7 @@ struct DocumentPickerView: View {
     }
 
     @ViewBuilder
-    private func row(_ document: Document) -> some View {
+    private func row(_ document: ApiInterface.Document) -> some View {
         Button {
             // Animated because selecting a row moves it: selected documents pin above the
             // results, so a tap reorders the list as well as ticking the row.

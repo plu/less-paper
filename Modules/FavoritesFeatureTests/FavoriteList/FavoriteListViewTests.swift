@@ -12,7 +12,7 @@ import TestSupport
 @Suite(
     // No PDF behind the thumbnails: the references are about the list, and a real file would make
     // them depend on PDFKit's rendering rather than on this view.
-    .dependencies { $0.favoritesStore.pdfURL = { id, _ in URL(filePath: "/favorites/\(id).pdf") } },
+    .testDependencies { $0.favoritesStore.pdfURL = { id, _ in URL(filePath: "/favorites/\(id).pdf") } },
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )

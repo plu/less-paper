@@ -39,7 +39,7 @@ public struct DocumentImage: View {
     }
 
     public init(
-        document: Document.Id,
+        document: ApiInterface.Document.Id,
         server: Server,
         size: CGSize
     ) {
@@ -52,7 +52,7 @@ public struct DocumentImage: View {
         server.url.appendingPathComponent("/api/documents/\(document)/thumb/")
     }
 
-    private let document: Document.Id
+    private let document: ApiInterface.Document.Id
     private let server: Server
     private let size: CGSize
 

@@ -7,7 +7,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.getCustomFields.execute = { _ in [] }
     },
     .snapshots(record: .environment),

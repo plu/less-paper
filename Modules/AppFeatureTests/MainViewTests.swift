@@ -8,7 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.updateCache.execute = { _ in }
     },
     .snapshots(record: .environment),

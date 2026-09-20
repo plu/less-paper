@@ -9,7 +9,7 @@ import SwiftSharing
 import Testing
 
 @MainActor
-@Suite(.dependencies())
+@Suite(.testDependencies())
 struct FavoriteListReducerTests {
 
     @Test

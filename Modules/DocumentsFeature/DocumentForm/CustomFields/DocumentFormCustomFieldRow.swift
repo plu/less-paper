@@ -24,7 +24,7 @@ struct DocumentFormCustomFieldRow: View {
 
     let field: CustomField
 
-    let linkedDocuments: IdentifiedArrayOf<Document>
+    let linkedDocuments: IdentifiedArrayOf<ApiInterface.Document>
 
     let onDocumentLinkTapped: () -> Void
 
@@ -228,7 +228,7 @@ struct DocumentFormCustomFieldRow: View {
         value.validationError.map { String(localized: $0) }
     }
 
-    private var linkedIds: [Document.Id] {
+    private var linkedIds: [ApiInterface.Document.Id] {
         guard case let .documentLink(ids) = value else {
             return []
         }

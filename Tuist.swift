@@ -7,7 +7,7 @@ let tuist = Tuist(
     fullHandle: "plu/less-paper",
     project: .tuist(
         compatibleXcodeVersions: [
-            .exact(Version(26, 5, 0)),
+            .exact(Version(27, 0, 0)),
         ],
         // Without this a handle makes every command require authentication, `tuist generate`
         // included, and it fails outright rather than degrading. This is a public repository whose

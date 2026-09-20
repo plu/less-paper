@@ -9,7 +9,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.copyFiles.execute = { $0 }
     }
 )

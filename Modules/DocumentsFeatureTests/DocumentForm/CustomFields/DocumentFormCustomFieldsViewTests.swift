@@ -10,7 +10,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies {
+    .testDependencies {
         $0.apiCache.customField = { id, _ in
             guard let id else {
                 return nil

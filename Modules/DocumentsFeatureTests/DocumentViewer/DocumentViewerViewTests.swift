@@ -9,7 +9,7 @@ import TestSupport
 
 @MainActor
 @Suite(
-    .dependencies(),
+    .testDependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
@@ -143,7 +143,7 @@ struct DocumentViewerViewTests {
     // render them rather than an empty sheet.
     @Test
     func testSnapshot_customFields() async throws {
-        let document = Document.testValue(
+        let document = ApiInterface.Document.testValue(
             customFields: [
                 .init(field: 3, value: .bool(true)),
                 .init(field: 6, value: .array([.number(2)])),

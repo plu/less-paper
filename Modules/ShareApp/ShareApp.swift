@@ -75,10 +75,18 @@ struct ShareApp: App {
         }
 
         Task {
-            // Negotiate first, as adding a server does in the real app. Without it every request
-            // carries the un-probed default, which a server outside that version answers 406 to.
-            _ = try await negotiateApiVersion(.testValue())
-            try await updateCache(.testValue())
+            do {
+                // Negotiate first, as adding a server does in the real app. Without it every
+                // request carries the un-probed default, which a server outside that version
+                // answers 406 to.
+                _ = try await negotiateApiVersion(.testValue())
+                try await updateCache(.testValue())
+            } catch {
+                // Swift 6.3 rejects a throwing Task whose handle is discarded. Reported rather
+                // than swallowed: a failure here reaches the journey as an unrelated-looking 406
+                // several steps later.
+                reportIssue(error)
+            }
         }
 
         Self.store = StoreOf<ShareExtensionReducer>.testValue(

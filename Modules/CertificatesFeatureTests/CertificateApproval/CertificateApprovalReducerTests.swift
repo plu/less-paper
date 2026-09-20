@@ -12,7 +12,7 @@ import X509
 
 @MainActor
 @Suite(
-    .dependencies()
+    .testDependencies()
 )
 struct CertificateApprovalReducerTests {
     @Test

@@ -5,7 +5,7 @@ import SwiftUI
 
 struct TrashRowView: View {
 
-    let document: Document
+    let document: ApiInterface.Document
     let isWorking: Bool
     let canModify: Bool
     let deleteForever: () -> Void

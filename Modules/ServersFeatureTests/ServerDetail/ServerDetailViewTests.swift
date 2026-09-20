@@ -15,7 +15,7 @@ import UIKit
     // result never lands before a synchronous snapshot capture - TagListViewTests relies on the
     // same thing - but the call still has to go somewhere, or the unimplemented default records a
     // failure regardless of timing.
-    .dependencies {
+    .testDependencies {
         $0.updateCache.execute = { _ in }
     },
     .snapshots(record: .environment),
