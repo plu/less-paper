@@ -20,6 +20,7 @@ extension DocumentListReducer.State {
         isLoadingMore: Bool = false,
         nextPage: URL? = nil,
         path: StackState<DocumentListReducer.Path.State> = .init(),
+        search: DocumentSearchReducer.State? = nil,
         server: Server = .testValue(),
         totalNumberOfDocuments: Int = 42
     ) -> Self {
@@ -33,6 +34,7 @@ extension DocumentListReducer.State {
             isLoadingMore: isLoadingMore,
             nextPage: nextPage,
             path: path,
+            search: search,
             server: server,
             totalNumberOfDocuments: totalNumberOfDocuments
         )

@@ -13,6 +13,20 @@ import TestSupport
 )
 struct DocumentListViewTests {
 
+    // Read this before "fixing" the search field in these references.
+    //
+    // Every reference here renders `DocumentListView` on its own. The running app never does: it is
+    // embedded in `MainView`'s `TabView`, and on iOS 27 that is what makes the search field appear
+    // at the top, in the navigation bar's search drawer — observed live, and what
+    // `DocumentListScreen.search(for:)` drives. Rendered without that container the field falls to
+    // the bottom of the screen, so the status pill can land next to or over it.
+    //
+    // That proximity is an artefact of the harness and not a bug. It was once "fixed" by widening
+    // the pill's overlay into a full-width opaque band, which cost every user ~38pt of the last row
+    // permanently and unscrollably to hide a collision none of them could ever see. The band was
+    // removed; do not re-add it, and do not add padding, an inset or a background here to make
+    // these references look tidier. If the pill ever needs changing, the case has to come from the
+    // app, not from a PNG of a view rendered outside its container.
     @Test
     func testSnapshot() async throws {
         assertSnapshot(

@@ -66,6 +66,15 @@ public struct DocumentListView: View {
             .overlay(DocumentListEmptyView(store: store))
             .refreshable { await send(.onRefresh).finish() }
             .scrollContentBackground(.hidden)
+            .searchable(text: searchTextBinding, prompt: Text(.search))
+            .searchSuggestions {
+                DocumentSearchResultsView(store: searchStore)
+            }
+            // Breaks this view's alphabetical modifier order deliberately. `onSubmit` writes the
+            // action into the environment of the subtree below it, and the search field is created
+            // by `.searchable` above — placed any earlier, the field never sees it and return does
+            // nothing.
+            .onSubmit(of: .search) { searchStore.send(.view(.submitted)) }
             .task { await send(.onAppear).finish() }
         } destination: { store in
             switch store.case {
@@ -118,6 +127,33 @@ public struct DocumentListView: View {
         store.scope(
             state: \.documentSelection,
             action: \.documentSelection
+        )
+    }
+
+    // Sent through the scoped store rather than as `store.send(.search(…))`: this view is
+    // `@ViewAction`, whose `send` would wrap the action in `.view(…)`, and the macro rejects
+    // `store.send` outright — warnings are errors in every configuration here.
+    private var searchStore: StoreOf<DocumentSearchReducer> {
+        store.scope(
+            state: \.search,
+            action: \.search
+        )
+    }
+
+    // An explicit binding rather than `$store.search.searchText`: that is a chained lookup, so the
+    // store would only ever see `.binding(.set(\.search, …))` on the parent, writing straight into
+    // child state and never running the debounce. Redundant writes are dropped for the reason
+    // DocumentFilterView gives — SwiftUI makes one on appear and one on teardown, and each would
+    // cost a 400ms debounce and a request for a search that had not changed.
+    var searchTextBinding: Binding<String> {
+        Binding(
+            get: { store.search.searchText },
+            set: {
+                guard $0 != store.search.searchText else {
+                    return
+                }
+                searchStore.send(.view(.searchTextChanged($0)))
+            }
         )
     }
 }

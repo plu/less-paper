@@ -22,9 +22,17 @@ struct LogRedactionTests {
         #expect(LogRedaction.isSensitive(name))
     }
 
-    @Test(arguments: ["page", "ordering", "query", "tags__id__all", "document_type__id"])
+    @Test(arguments: ["page", "ordering", "custom_field_query", "tags__id__all", "document_type__id"])
     func test_isSensitive_keepsDiagnosticNames(name: String) {
         #expect(!LogRedaction.isSensitive(name))
+    }
+
+    // `query` is the search term on /api/search/ and the advanced-search filter on
+    // /api/documents/ (FilterRuleType.fulltextQuery), so it is user content on both — as often a
+    // person's name as a word.
+    @Test(arguments: ["query", "term"])
+    func test_isSensitive_catchesSearchTerms(name: String) {
+        #expect(LogRedaction.isSensitive(name))
     }
 
     @Test
@@ -88,5 +96,33 @@ struct LogRedactionTests {
     ])
     func test_redactMessage_leavesMessagesWithoutAURLAlone(message: String) {
         #expect(LogRedaction.redact(message: message) == message)
+    }
+
+    // A failed /api/search/ would otherwise write the user's search term into the file they share
+    // with support, and a term is as often a person's name as it is a word.
+    @Test
+    func redactUrl_redactsSearchTerms() throws {
+        let url = try #require(URL(string: "https://example.com/api/search/?query=Mustermann"))
+
+        #expect(LogRedaction.redact(url) == "/api/search/?query=<redacted>")
+    }
+
+    @Test
+    func redactUrl_redactsAutocompleteTerms() throws {
+        let url = try #require(URL(string: "https://example.com/api/search/autocomplete/?term=Muster"))
+
+        #expect(LogRedaction.redact(url) == "/api/search/autocomplete/?term=<redacted>")
+    }
+
+    // The containment list would have taken `custom_field_query` with it, and which filter was
+    // applied when a request failed is the whole point of that log line.
+    @Test
+    func redactUrl_keepsCustomFieldQuery() throws {
+        let url = try #require(
+            URL(string: "https://example.com/api/documents/?custom_field_query=exists")
+        )
+
+        #expect(LogRedaction.redact(url).contains("custom_field_query=exists"))
+        #expect(LogRedaction.redact(url).contains(LogRedaction.placeholder) == false)
     }
 }
