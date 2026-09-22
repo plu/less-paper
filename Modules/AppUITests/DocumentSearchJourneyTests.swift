@@ -1,41 +1,68 @@
+import ApiInterface
 import UITestSupport
 import XCTest
 
 @MainActor
 final class DocumentSearchJourneyTests: UITestCase {
 
-    // Reads the seeded corpus and modifies nothing. The seed's entities are unowned, so the Manual
-    // tag is visible to the user this journey runs as — which is what makes the result assertable
-    // without creating anything.
+    // The corpus is shared and unowned, so a journey that asserts on search results has to bring
+    // its own tag and document rather than lean on whatever an instance happens to seed. Searching
+    // for the tag's own (unique) name and narrowing to the one document that carries it proves both
+    // that the tag surfaces as a search result and that tapping it actually filters.
     func testSearchingRevealsATagAndFiltersByIt() async throws {
+        let name = "\(user.namespace)-tag"
+        let tagId = try await Fixtures.createTag(named: name, token: user.token)
+        self.tagId = tagId
+
+        let title = "\(user.namespace)-doc"
+        documentId = try await Fixtures.uploadDocument(titled: title, tags: [tagId], token: user.token)
+
         launch()
 
         let documents = DocumentListScreen(app: app, timeout: timeout)
         XCTAssertTrue(documents.open(), "Could not open the Documents tab")
 
-        XCTAssertTrue(documents.search(for: "man"), "Could not reach the search field")
+        XCTAssertTrue(documents.search(for: name), "Could not reach the search field")
 
         XCTAssertTrue(
             app.staticTexts["Tags"].waitForExistence(timeout: timeout),
-            "Searching for man did not show a Tags section"
+            "Searching for \(name) did not show a Tags section"
         )
         XCTAssertTrue(
-            app.staticTexts["Manual"].waitForExistence(timeout: timeout),
-            "Searching for man did not offer the Manual tag"
+            app.staticTexts[name].waitForExistence(timeout: timeout),
+            "Searching for \(name) did not offer the \(name) tag"
         )
 
-        XCTAssertTrue(documents.tapSearchResult("Manual"), "Could not tap the Manual tag result")
+        XCTAssertTrue(documents.tapSearchResult(name), "Could not tap the \(name) tag result")
 
-        // The count is what proves the list actually narrowed — Puky alone is also a member of the
-        // full 25-document corpus, so its presence survives even a tap that applied no filter at
-        // all.
+        // The count is what proves the list actually narrowed, not merely that the document still
+        // exists: the tag and document are both unique to this run, so exactly one document can
+        // carry it, which makes "1 of 1" the deterministic result regardless of corpus size.
         XCTAssertTrue(
-            app.staticTexts["6 of 6 loaded"].waitForExistence(timeout: timeout),
-            "Filtering by the Manual tag did not narrow the list to its six documents"
+            app.staticTexts["1 of 1 loaded"].waitForExistence(timeout: timeout),
+            "Filtering by \(name) did not narrow the list to its one document"
         )
         XCTAssertTrue(
-            app.staticTexts["Puky"].exists,
-            "Filtering by the Manual tag did not leave Puky in the list"
+            app.staticTexts[title].exists,
+            "Filtering by \(name) did not leave \(title) in the list"
         )
     }
+
+    override func tearDown() async throws {
+        if let documentId {
+            try? await Fixtures.deleteDocument(id: documentId, token: user.token)
+        }
+        documentId = nil
+
+        if let tagId {
+            try? await Fixtures.deleteTag(id: tagId, token: user.token)
+        }
+        tagId = nil
+
+        try await super.tearDown()
+    }
+
+    private var documentId: Document.Id?
+
+    private var tagId: Tag.Id?
 }
