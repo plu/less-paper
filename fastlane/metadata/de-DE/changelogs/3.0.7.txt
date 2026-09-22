@@ -1,0 +1,7 @@
+Die Suche findet jetzt mehr als nur Dokumente.
+
+• Tippe etwas in das Suchfeld der Dokumentliste, und die Treffer erscheinen gruppiert – Dokumente, gespeicherte Ansichten, Tags, Korrespondenten, Dokumenttypen, Speicherpfade und benutzerdefinierte Felder. Tippe auf ein Dokument, um es zu öffnen, oder auf etwas anderes, um die Liste danach zu filtern.
+• Wenn du einen Treffer auswählst, verschwindet die Tastatur, dein Suchtext bleibt aber stehen – tippst du das Feld erneut an, sind die Ergebnisse wieder da.
+• Suchbegriffe landen nicht mehr im Diagnoseprotokoll. Das gilt auch für die erweiterte Suche, die sie schon lange vor dieser Version dort abgelegt hat.
+
+Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.
