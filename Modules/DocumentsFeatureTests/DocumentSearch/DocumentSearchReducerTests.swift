@@ -272,6 +272,36 @@ struct DocumentSearchReducerTests {
     }
 
     @Test
+    func view_closeButtonTapped_delegatesClose() async throws {
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            searchText: "manual"
+        )) {
+            DocumentSearchReducer()
+        }
+
+        await store.send(.view(.closeButtonTapped))
+        await store.receive(\.delegate.closeRequested)
+    }
+
+    // Closing is not a reset: the sheet is expected to come back holding what it was closed on.
+    @Test
+    func view_closeButtonTapped_keepsTheQueryAndResults() async throws {
+        let results = GlobalSearchOutput.testValue(tags: [.testValue(id: 7, name: "Manual")])
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            results: results,
+            searchText: "manual"
+        )) {
+            DocumentSearchReducer()
+        }
+
+        await store.send(.view(.closeButtonTapped))
+        await store.receive(\.delegate.closeRequested)
+
+        #expect(store.state.searchText == "manual")
+        #expect(store.state.results == results)
+    }
+
+    @Test
     func view_submitted_delegatesTheQuery() async throws {
         let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
             searchText: "manual"

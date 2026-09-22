@@ -8,6 +8,10 @@ import SwiftUI
 struct DocumentSearchResultsView: View {
 
     var body: some View {
+        // The three status branches below take `listRowBackground(.clear)` while the result rows
+        // take `m3SurfaceContainer`: a spinner or a one-line message is not a row anyone can tap,
+        // and a card behind it would read as an empty result.
+        //
         // Only a first search spins. A re-search keeps the previous results on screen rather than
         // emptying the list under the user while the next response is in flight.
         if store.isLoading, store.results == nil {
@@ -16,6 +20,7 @@ struct DocumentSearchResultsView: View {
                 ProgressView()
                 Spacer()
             }
+            .listRowBackground(Color.clear)
         } else if let error = store.error, store.results == nil {
             // Guarded on `results == nil` for the same reason the spinner is: the reducer leaves
             // `results` standing when a request fails, so an unguarded branch would replace
@@ -26,10 +31,12 @@ struct DocumentSearchResultsView: View {
             // looks exactly like not having searched.
             Text(error)
                 .foregroundStyle(Color.m3Outline)
+                .listRowBackground(Color.clear)
         } else if let results = store.results {
             if results.isEmpty, store.hasQuery, !store.isLoading {
                 Text(.searchNoResults)
                     .foregroundStyle(Color.m3Outline)
+                    .listRowBackground(Color.clear)
             } else {
                 // Each section is guarded rather than left to empty out on its own. An empty
                 // `ForEach` drops the rows but the `Section` still draws its header, and a typical
@@ -51,6 +58,7 @@ struct DocumentSearchResultsView: View {
                                     title: document.title
                                 )
                             }
+                            .listRowBackground(Color.m3SurfaceContainer)
                         }
                     }
                 }
@@ -65,6 +73,7 @@ struct DocumentSearchResultsView: View {
                                     title: savedView.name
                                 )
                             }
+                            .listRowBackground(Color.m3SurfaceContainer)
                         }
                     }
                 }
@@ -76,6 +85,7 @@ struct DocumentSearchResultsView: View {
                             } label: {
                                 DocumentSearchRowView(systemImage: "tag", tag: tag)
                             }
+                            .listRowBackground(Color.m3SurfaceContainer)
                         }
                     }
                 }
@@ -87,6 +97,7 @@ struct DocumentSearchResultsView: View {
                             } label: {
                                 DocumentSearchRowView(systemImage: "person", title: correspondent.name)
                             }
+                            .listRowBackground(Color.m3SurfaceContainer)
                         }
                     }
                 }
@@ -101,6 +112,7 @@ struct DocumentSearchResultsView: View {
                                     title: documentType.name
                                 )
                             }
+                            .listRowBackground(Color.m3SurfaceContainer)
                         }
                     }
                 }
@@ -112,6 +124,7 @@ struct DocumentSearchResultsView: View {
                             } label: {
                                 DocumentSearchRowView(systemImage: "folder", title: storagePath.name)
                             }
+                            .listRowBackground(Color.m3SurfaceContainer)
                         }
                     }
                 }
@@ -126,6 +139,7 @@ struct DocumentSearchResultsView: View {
                                     title: customField.name
                                 )
                             }
+                            .listRowBackground(Color.m3SurfaceContainer)
                         }
                     }
                 }

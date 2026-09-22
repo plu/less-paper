@@ -23,6 +23,7 @@ public struct DocumentSearchReducer: Sendable {
 
         @CasePathable
         public enum Delegate {
+            case closeRequested
             case documentTapped(Document.Id)
             case filterRequested(DocumentFilterInput)
             case queryCommitted(String)
@@ -30,6 +31,7 @@ public struct DocumentSearchReducer: Sendable {
         }
 
         public enum View {
+            case closeButtonTapped
             case correspondentTapped(Correspondent)
             case customFieldTapped(CustomField)
             case documentTapped(Document)
@@ -96,6 +98,11 @@ public struct DocumentSearchReducer: Sendable {
             // window would otherwise search for text the user has already moved on from.
             case .searchDebounced:
                 return .runGlobalSearch(query: state.trimmedQuery, server: state.server)
+            // Delegated rather than resolved here, and it leaves state alone: the parent owns
+            // the presentation flag, and a close is not a reset — the sheet comes back holding
+            // what it was closed on.
+            case .view(.closeButtonTapped):
+                return .send(.delegate(.closeRequested))
             case let .view(.correspondentTapped(correspondent)):
                 return .send(.delegate(.filterRequested(.searchResult(correspondent: correspondent))))
             case let .view(.customFieldTapped(customField)):

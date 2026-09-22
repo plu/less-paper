@@ -7,35 +7,32 @@ import SwiftUI
 struct DocumentSearchSheetView: View {
 
     var body: some View {
-        VStack(spacing: .x0) {
-            Field(padding: .x0) {
-                HStack(spacing: .x0) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(Color.m3Primary)
-                        .padding(.leading, .x2 + .x3)
-                    // A search field, not prose: the observed default capitalised the first
-                    // letter of the query, which is not what anyone means when they type a tag's
-                    // name.
-                    TextField(String(localized: .search), text: searchTextBinding)
-                        .autocorrectionDisabled()
-                        .focused($isSearchFocused)
-                        .padding(.leading, .x2)
-                        .submitLabel(.search)
-                        .textFieldStyle(.plain)
-                        .textInputAutocapitalization(.never)
-                        .onSubmit { send(.submitted) }
-                }
-            }
-            .padding(.horizontal, .x4)
-            .padding(.top, .x4)
+        // `isScrollingEnabled: false` because the content carries its own `List`: wrapped in
+        // `Sheet`'s ScrollView instead, the results would scroll inside a scroll view that has no
+        // height of its own.
+        Sheet(isScrollingEnabled: false, padding: .x0) {
+            SheetHeader(title: .search, left: leftHeader)
+        } content: {
+            VStack(spacing: .x0) {
+                DocumentSearchField(
+                    isFocused: $isSearchFocused,
+                    submitted: { send(.submitted) },
+                    text: searchTextBinding
+                )
+                .padding(.horizontal, .x4)
+                .padding(.top, .x4)
 
-            List {
-                DocumentSearchResultsView(store: store)
+                // Styled as the settings lists are — default list style, surface background,
+                // `m3SurfaceContainer` rows — so a result reads like a row on the Tags or
+                // Correspondents screen rather than like a third kind of list.
+                List {
+                    DocumentSearchResultsView(store: store)
+                }
+                .background(Color.m3SurfaceContainerLowest)
+                .scrollContentBackground(.hidden)
+                .scrollDismissesKeyboard(.immediately)
             }
-            .listStyle(.plain)
-            .scrollDismissesKeyboard(.immediately)
         }
-        .background(Color.m3Surface)
         // The keyboard has to be up before the sheet settles, otherwise the first thing the user
         // does after tapping Search is tap again.
         .task { isSearchFocused = true }
@@ -66,6 +63,12 @@ struct DocumentSearchSheetView: View {
 
     @FocusState
     private var isSearchFocused: Bool
+
+    private func leftHeader() -> some View {
+        SheetCloseButton {
+            send(.closeButtonTapped)
+        }
+    }
 }
 
 #Preview {

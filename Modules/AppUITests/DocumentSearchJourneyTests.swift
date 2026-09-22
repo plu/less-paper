@@ -63,12 +63,31 @@ final class DocumentSearchJourneyTests: UITestCase {
         )
 
         // The query outlives the sheet: `search` is a permanent child of the list's state rather
-        // than presentation state, so reopening resumes the same search.
+        // than presentation state. The list's own copy of the field shows it without the sheet
+        // being open at all, and reopening resumes the same search.
+        XCTAssertEqual(
+            documents.searchRowQuery(),
+            name,
+            "The list's search row did not show the query the sheet was closed on"
+        )
+
         XCTAssertTrue(documents.openSearchSheet(), "Could not reopen the search sheet")
         XCTAssertEqual(
             documents.searchFieldText(),
             name,
             "Reopening the sheet did not restore the typed text in the search field"
+        )
+
+        // The sheet's own way out, which is neither a result tap nor the return key.
+        XCTAssertTrue(documents.closeSearchSheet(), "Could not close the search sheet")
+        XCTAssertTrue(
+            app.buttons["Filter"].waitForExistence(timeout: timeout),
+            "Closing the search sheet did not return to the document list"
+        )
+        XCTAssertEqual(
+            documents.searchRowQuery(),
+            name,
+            "Closing the sheet discarded the query instead of keeping it"
         )
     }
 

@@ -430,6 +430,9 @@ public struct DocumentListReducer: Sendable {
                     $0.isRecalculating = false
                 }
                 return .none
+            case .search(.delegate(.closeRequested)):
+                state.isSearchPresented = false
+                return .none
             case let .search(.delegate(.documentTapped(id))):
                 state.isSearchPresented = false
                 return .send(.openDocument(id))

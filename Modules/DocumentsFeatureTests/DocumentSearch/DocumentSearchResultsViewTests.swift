@@ -2,6 +2,7 @@
 
 import ApiInterface
 import ComposableArchitecture
+import DesignTokens
 import SwiftUI
 import Testing
 import TestSupport
@@ -16,12 +17,12 @@ struct DocumentSearchResultsViewTests {
 
     // Wrapped in a `List` because the view's body is a set of `Section`s, which only render as rows
     // inside a list container — a bare render would record a reference that looks nothing like the
-    // screen. A bare `List` is inset-grouped, not the plain one the search sheet wraps it in, so
-    // these references pin content and section order rather than production chrome.
+    // screen. The wrapper below is the same container the sheet uses, default list style and all,
+    // so these references do show production chrome as well as content and section order.
     @Test
     func testSnapshot_populated() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
@@ -55,7 +56,7 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_partiallyPopulated() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
@@ -78,7 +79,7 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_noResults() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
@@ -100,7 +101,7 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_error() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
@@ -123,7 +124,7 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_errorKeepsPreviousResults() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
@@ -147,7 +148,7 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_loading() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
@@ -162,5 +163,15 @@ struct DocumentSearchResultsViewTests {
             },
             as: .image(layout: .device(config: .iPhone12))
         )
+    }
+
+    // Matches DocumentSearchSheetView's container exactly; a reference recorded against a
+    // differently styled list would say nothing about what the sheet shows.
+    private func searchResultsList(@ViewBuilder content: () -> some View) -> some View {
+        List {
+            content()
+        }
+        .background(Color.m3SurfaceContainerLowest)
+        .scrollContentBackground(.hidden)
     }
 }

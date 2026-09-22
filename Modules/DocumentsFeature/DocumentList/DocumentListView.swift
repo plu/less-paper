@@ -9,17 +9,28 @@ public struct DocumentListView: View {
     public var body: some View {
         AdaptiveNavigationView(path: $store.scope(state: \.path, action: \.path)) {
             List {
+                // The same `DocumentSearchField` the sheet shows, read-only, carrying whatever
+                // the sheet was last closed on — so the list says what is currently searched and
+                // tapping it goes back in to refine. Collapsed into one element for VoiceOver:
+                // it is a button that opens a sheet, not a field anyone can type into here.
                 Button {
                     send(.searchButtonTapped)
                 } label: {
-                    Label(.search, systemImage: "magnifyingglass")
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    DocumentSearchField(query: store.search.searchText)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityLabel(.search)
+                        .accessibilityValue(store.search.searchText)
                 }
-                .buttonStyle(.ghost())
+                .buttonStyle(.plain)
+                // The whole control, not just the glyphs: a Button's label only takes taps where
+                // it draws, and the field is mostly empty space.
+                .contentShape(.rect)
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
                 .listRowSeparator(.hidden)
-                .padding(.x3)
+                .padding(.horizontal, .x3)
+                .padding(.top, .x3)
                 if store.isTipInvitationVisible {
                     // Animated on both paths: the row is answered at most once in a user's
                     // lifetime, and having it vanish between two frames reads as a glitch rather

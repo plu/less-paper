@@ -62,8 +62,9 @@ public struct DocumentListScreen {
         return true
     }
 
-    // The Search button is the first row of the list, and it opens a sheet holding the field. The
-    // field inside it is an ordinary textField, not a searchField: nothing here is `.searchable`.
+    // The list's first row is a read-only copy of the search field, collapsed to a single button
+    // so it never announces as editable. It opens a sheet holding the real field, which is an
+    // ordinary textField, not a searchField: nothing here is `.searchable`.
     @discardableResult
     public func search(for text: String) -> Bool {
         guard openSearchSheet() else {
@@ -107,6 +108,26 @@ public struct DocumentListScreen {
             return nil
         }
         return field.value as? String
+    }
+
+    @discardableResult
+    public func closeSearchSheet() -> Bool {
+        let close = app.buttons["Close"].firstMatch
+        guard close.waitUntilHittable(timeout: timeout) else {
+            return false
+        }
+        close.tap()
+        return true
+    }
+
+    // The list's copy carries the current query as its accessibility value, so this reads what
+    // the list is showing without opening the sheet.
+    public func searchRowQuery() -> String? {
+        let button = app.buttons["Search"].firstMatch
+        guard button.waitForExistence(timeout: timeout) else {
+            return nil
+        }
+        return button.value as? String
     }
 
     private var searchField: XCUIElement {

@@ -24,6 +24,19 @@ struct DocumentListSearchSheetTests {
     }
 
     @Test
+    func search_delegate_closeRequested_dismissesTheSheet() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            isSearchPresented: true
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.search(.delegate(.closeRequested))) {
+            $0.isSearchPresented = false
+        }
+    }
+
+    @Test
     func search_delegate_documentTapped_dismissesTheSheet() async throws {
         let store = TestStore(initialState: DocumentListReducer.State.testValue(
             isSearchPresented: true
