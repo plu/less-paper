@@ -23,7 +23,10 @@ public struct DocumentListScreen {
             return false
         }
         tab.tap()
-        return app.cells.firstMatch.waitForExistence(timeout: timeout)
+
+        // A document row rather than any cell: the search field is a row of this list and exists
+        // before a single document has arrived.
+        return app.documentRows.firstMatch.waitForExistence(timeout: timeout)
     }
 
     @discardableResult

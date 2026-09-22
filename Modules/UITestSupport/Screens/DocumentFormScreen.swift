@@ -29,12 +29,9 @@ public struct DocumentFormScreen {
         tab.tap()
 
         // Not `cells.firstMatch`: the list's first row is the search field now, and tapping it
-        // raises the keyboard instead of opening anything. Waiting on the second cell is what
-        // waits for the documents themselves — the search row exists before any of them arrive.
-        guard app.cells.element(boundBy: 1).waitForExistence(timeout: timeout),
-              let cell = app.cells.allElementsBoundByIndex.first(where: { !$0.textFields.firstMatch.exists }),
-              cell.waitUntilHittable(timeout: timeout)
-        else {
+        // raises the keyboard instead of opening anything.
+        let cell = app.documentRows.firstMatch
+        guard cell.waitUntilHittable(timeout: timeout) else {
             return false
         }
         cell.tap()

@@ -63,11 +63,11 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         // Beat 4 - back to the narrowed list. There is no Apply button: the filter applies live, so
         // closing the sheet is what reveals the result.
         closeSheet(in: app)
-        XCTAssertTrue(app.cells.firstMatch.waitForExistence(timeout: timeout), "The filtered list came back empty")
+        XCTAssertTrue(app.documentRows.firstMatch.waitForExistence(timeout: timeout), "The filtered list came back empty")
         hold(until: 12, from: start, beat: "filtered")
 
         // Beat 5 - a document, open.
-        let row = app.cells.firstMatch
+        let row = app.documentRows.firstMatch
         XCTAssertTrue(row.waitUntilHittable(timeout: timeout), "The filtered list had no tappable row")
         row.tap()
         XCTAssertTrue(
