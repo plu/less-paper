@@ -22,23 +22,30 @@ struct DocumentSearchBarView: View {
             // An icon rather than the word, with the tap target spelled out: the glyph is about
             // 15pt on its own, and this one sits a thumb's width from a field people are typing
             // into. The label is what VoiceOver announces and what the journey looks for.
-            if isCancelVisible {
-                Button {
-                    isSearchFocused = false
-                    send(.cancelButtonTapped)
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.body.weight(.medium))
-                        .foregroundStyle(Color.m3Primary)
-                        .frame(width: .x5 + .x3, height: .x5 + .x3)
-                        .contentShape(.rect)
-                }
-                .accessibilityLabel(.cancel)
-                .buttonStyle(.plain)
-                // Without a transition the button is inserted at full opacity on the frame the
-                // field starts narrowing, so it lands before the space it is landing in exists.
-                .transition(.opacity.combined(with: .scale(scale: 0.8)))
+            //
+            // Always in the hierarchy, collapsed and faded out when there is nothing to cancel,
+            // rather than inside an `if`. A list row does not run a transition on a structural
+            // change: with the `if`, the button was inserted at full opacity on the same frame the
+            // field started narrowing — it arrived before the space it arrives in existed, which
+            // was measured frame by frame, not assumed. Width and opacity are ordinary animatable
+            // values, so the two now move together.
+            Button {
+                isSearchFocused = false
+                send(.cancelButtonTapped)
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Color.m3Primary)
+                    .frame(width: .x5 + .x3, height: .x5 + .x3)
+                    .contentShape(.rect)
             }
+            .accessibilityHidden(!isCancelVisible)
+            .accessibilityLabel(.cancel)
+            .buttonStyle(.plain)
+            .disabled(!isCancelVisible)
+            .frame(width: isCancelVisible ? .x5 + .x3 : .x0)
+            .opacity(isCancelVisible ? 1 : 0)
+            .clipped()
         }
         // Keyed on the button rather than on focus: it is the button's presence that changes the
         // field's width, and text arriving without a focus change — a query that survived a push —
