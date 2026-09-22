@@ -66,6 +66,32 @@ public struct DocumentListView: View {
             .overlay(DocumentListEmptyView(store: store))
             .refreshable { await send(.onRefresh).finish() }
             .scrollContentBackground(.hidden)
+            .searchable(text: searchTextBinding, prompt: Text(.search))
+            .searchSuggestions {
+                DocumentSearchResultsView(
+                    resignSearchFocus: { isSearchFocused = false },
+                    store: searchStore
+                )
+            }
+            // Same placement rule as `onSubmit` below: the search field is created by `.searchable`
+            // above, so this has to sit after it to bind to anything.
+            .searchFocused($isSearchFocused)
+            // Breaks this view's alphabetical modifier order deliberately. `onSubmit` writes the
+            // action into the environment of the subtree below it, and the search field is created
+            // by `.searchable` above — placed any earlier, the field never sees it and return does
+            // nothing.
+            .onSubmit(of: .search) { searchStore.send(.view(.submitted)) }
+            // Only the false → true edge, which is what keeps resigning focus on a row tap from
+            // turning round and re-running the search it just dismissed. `onChange` rather than a
+            // read of `isSearching`: it fires on a real transition instead of on every body
+            // evaluation, and one focus signal cannot disagree with itself the way a second one
+            // would — `isSearching` flips during dismissal too.
+            .onChange(of: isSearchFocused) { _, isFocused in
+                guard isFocused else {
+                    return
+                }
+                searchStore.send(.view(.refocused))
+            }
             .task { await send(.onAppear).finish() }
         } destination: { store in
             switch store.case {
@@ -103,6 +129,9 @@ public struct DocumentListView: View {
     @Environment(\.horizontalSizeClass)
     private var horizontalSizeClass
 
+    @FocusState
+    private var isSearchFocused: Bool
+
     @ViewBuilder
     private func documentSelectionLoadingView() -> some View {
         if store.documentSelection.isLoading {
@@ -118,6 +147,33 @@ public struct DocumentListView: View {
         store.scope(
             state: \.documentSelection,
             action: \.documentSelection
+        )
+    }
+
+    // Sent through the scoped store rather than as `store.send(.search(…))`: this view is
+    // `@ViewAction`, whose `send` would wrap the action in `.view(…)`, and the macro rejects
+    // `store.send` outright — warnings are errors in every configuration here.
+    private var searchStore: StoreOf<DocumentSearchReducer> {
+        store.scope(
+            state: \.search,
+            action: \.search
+        )
+    }
+
+    // An explicit binding rather than `$store.search.searchText`: that is a chained lookup, so the
+    // store would only ever see `.binding(.set(\.search, …))` on the parent, writing straight into
+    // child state and never running the debounce. Redundant writes are dropped for the reason
+    // DocumentFilterView gives — SwiftUI makes one on appear and one on teardown, and each would
+    // cost a 400ms debounce and a request for a search that had not changed.
+    var searchTextBinding: Binding<String> {
+        Binding(
+            get: { store.search.searchText },
+            set: {
+                guard $0 != store.search.searchText else {
+                    return
+                }
+                searchStore.send(.view(.searchTextChanged($0)))
+            }
         )
     }
 }

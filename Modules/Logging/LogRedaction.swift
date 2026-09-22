@@ -69,8 +69,20 @@ public enum LogRedaction {
         headers.keys.sorted()
     }
 
+    /// Query items whose value is never written, matched by exact name rather than by containment.
+    /// `query` cannot join `sensitiveKeys`: that list matches by containment, so it would take
+    /// `custom_field_query` with it — and which filter was applied is exactly what a failed
+    /// request needs to say.
+    static let exactSensitiveKeys = [
+        "query",
+        "term",
+    ]
+
     static func isSensitive(_ name: String) -> Bool {
         let lowercased = name.lowercased()
+        if exactSensitiveKeys.contains(lowercased) {
+            return true
+        }
         return sensitiveKeys.contains { lowercased.contains($0) }
     }
 }

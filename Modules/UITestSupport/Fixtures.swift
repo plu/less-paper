@@ -40,6 +40,43 @@ public enum Fixtures {
         }
     }
 
+    // Created as the test user, not as admin: paperless owns a tag to whoever created it, and an
+    // admin-owned one would be invisible to the user the journey runs as, the same reasoning
+    // uploadDocument gives above.
+    public static func createTag(
+        named name: String,
+        token: String
+    ) async throws -> Tag.Id {
+        try await withUserDependencies(token: token) {
+            @Dependency(\.tagsRepository)
+            var tagsRepository
+
+            return try await tagsRepository.createTag(
+                input: SaveTagInput(
+                    color: "#F7CE46",
+                    isInboxTag: false,
+                    name: name
+                ),
+                server: .testValue()
+            ).id
+        }
+    }
+
+    public static func deleteTag(
+        id: Tag.Id,
+        token: String
+    ) async throws {
+        try await withUserDependencies(token: token) {
+            @Dependency(\.tagsRepository)
+            var tagsRepository
+
+            _ = try await tagsRepository.deleteTag(
+                id: id,
+                server: .testValue()
+            )
+        }
+    }
+
     // Uploaded as the test user, not as admin: paperless owns a document to whoever created it, and
     // an admin-owned one would be invisible to the user the journey runs as.
     //
@@ -53,6 +90,7 @@ public enum Fixtures {
     public static func uploadDocument(
         titled title: String,
         fileNamed fileName: String? = nil,
+        tags: [Tag.Id] = [],
         token: String
     ) async throws -> Document.Id {
         let fixture = URL.projectRoot.appending(path: "docker/data/Sonos One.pdf")
@@ -80,7 +118,7 @@ public enum Fixtures {
                     createdDate: Date(),
                     documentType: nil,
                     storagePath: nil,
-                    tags: [],
+                    tags: tags,
                     title: title,
                     url: copy ?? fixture
                 ),

@@ -141,7 +141,8 @@ struct DocumentListReducerTests {
             filter: .testValue(
                 input: .testValue(searchValue: "Lego"),
                 savedView: .testValue()
-            )
+            ),
+            search: .testValue(searchText: "Lego")
         )) {
             DocumentListReducer()
         } withDependencies: {
@@ -153,8 +154,11 @@ struct DocumentListReducerTests {
             }
         }
 
+        // The search state goes with the filter: the field would otherwise keep showing the query
+        // over a list that is no longer narrowed by it.
         await store.send(.view(.allDocumentsButtonTapped)) {
             $0.filter = .init()
+            $0.search = .testValue()
         }
         await store.receive(\.replaceDocuments, .testValue(
             count: 77,
@@ -217,13 +221,14 @@ struct DocumentListReducerTests {
                 toasts.withValue { $0.append(value) }
             }
         }
-        // Off because the tip-invitation check races with this effect - see
-        // DocumentListTipInvitationTests for the check itself. Skipped assertions still print,
-        // so a real ordering regression shows up in the log instead of passing silently.
-        store.exhaustivity = .off(showSkippedAssertions: true)
+        // `onAppear` merges the fetch with the tip-invitation check, and merged effects have no
+        // order between them, so `.tipInvitationEligible` is left unreceived: receiving it pins an
+        // order the reducer never promised, and whichever lands first swallows the other. Skipped
+        // assertions are off for the same reason - with no order there is always one to report.
+        // DocumentListTipInvitationTests covers the check itself.
+        store.exhaustivity = .off
 
         await store.send(.view(.onAppear))
-        await store.receive(\.tipInvitationEligible)
         await store.receive(\.error) {
             $0.error = "Something went wrong"
         }
@@ -260,13 +265,14 @@ struct DocumentListReducerTests {
                 )
             }
         }
-        // Off because the tip-invitation check races with this effect - see
-        // DocumentListTipInvitationTests for the check itself. Skipped assertions still print,
-        // so a real ordering regression shows up in the log instead of passing silently.
-        store.exhaustivity = .off(showSkippedAssertions: true)
+        // `onAppear` merges the fetch with the tip-invitation check, and merged effects have no
+        // order between them, so `.tipInvitationEligible` is left unreceived: receiving it pins an
+        // order the reducer never promised, and whichever lands first swallows the other. Skipped
+        // assertions are off for the same reason - with no order there is always one to report.
+        // DocumentListTipInvitationTests covers the check itself.
+        store.exhaustivity = .off
 
         await store.send(.view(.onAppear))
-        await store.receive(\.tipInvitationEligible)
         await store.receive(\.replaceDocuments, .testValue(
             count: 77,
             results: [.testValue()]
@@ -311,15 +317,16 @@ struct DocumentListReducerTests {
                 return .testValue(count: 1, results: [.testValue()])
             }
         }
-        // Off because the tip-invitation check races with this effect - see
-        // DocumentListTipInvitationTests for the check itself. Skipped assertions still print,
-        // so a real ordering regression shows up in the log instead of passing silently.
-        store.exhaustivity = .off(showSkippedAssertions: true)
+        // `onAppear` merges the fetch with the tip-invitation check, and merged effects have no
+        // order between them, so `.tipInvitationEligible` is left unreceived: receiving it pins an
+        // order the reducer never promised, and whichever lands first swallows the other. Skipped
+        // assertions are off for the same reason - with no order there is always one to report.
+        // DocumentListTipInvitationTests covers the check itself.
+        store.exhaustivity = .off
 
         await store.send(.view(.onAppear)) {
             $0.filter = .inbox(server: server)
         }
-        await store.receive(\.tipInvitationEligible)
         await store.receive(\.replaceDocuments) {
             $0.documents = [.testValue()]
             $0.documentSelection.allLoadedDocuments = [1]
@@ -1349,5 +1356,57 @@ struct DocumentListReducerTests {
         $permissions.withLock { $0 = [.viewDocument, .deleteDocument] }
 
         #expect(DocumentListReducer.State(server: server).canSelect)
+    }
+
+    @Test
+    func search_delegate_filterRequested_replacesTheFilter() async throws {
+        let tag = Tag.testValue(id: 7, name: "Manual")
+        // Seeded with an error so that clearing it is asserted rather than trivially true: a stale
+        // one survives into `DocumentListEmptyView`, which shows it with a Reload button in place
+        // of "No matching documents".
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            error: "Previous failure",
+            filter: .testValue(savedView: .testValue())
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.getDocuments.execute = { _, _ in .testValue() }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.search(.delegate(.filterRequested(.searchResult(tag: tag))))) {
+            $0.error = nil
+            $0.filter.input = .searchResult(tag: tag)
+            $0.filter.savedView = nil
+        }
+    }
+
+    @Test
+    func search_delegate_queryCommitted_runsATitleAndContentSearch() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            error: "Previous failure"
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.getDocuments.execute = { _, _ in .testValue() }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.search(.delegate(.queryCommitted("manual")))) {
+            $0.error = nil
+            $0.filter.input.searchType = .titleContent
+            $0.filter.input.searchValue = "manual"
+        }
+    }
+
+    @Test
+    func search_delegate_documentTapped_opensTheDocument() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue()) {
+            DocumentListReducer()
+        }
+        store.exhaustivity = .off
+
+        await store.send(.search(.delegate(.documentTapped(Document.Id(rawValue: 1)))))
+        await store.receive(\.openDocument)
     }
 }

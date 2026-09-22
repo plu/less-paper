@@ -1,6 +1,7 @@
 import ApiInterface
 import Components
 import Foundation
+import Tagged
 
 public struct TagFormInput: Equatable, Sendable {
 

@@ -26,6 +26,7 @@ public struct DocumentListReducer: Sendable {
         case openDocument(Document.Id)
         case path(StackActionOf<Path>)
         case replaceDocuments(GetDocumentsOutput)
+        case search(DocumentSearchReducer.Action)
         case tipInvitationEligible(Bool)
         case view(View)
 
@@ -123,6 +124,8 @@ public struct DocumentListReducer: Sendable {
 
         var permissions: ServerPermissions
 
+        var search: DocumentSearchReducer.State
+
         var canImport: Bool { permissions.can(.addDocument) }
 
         var canScan: Bool { permissions.can(.addDocument) }
@@ -173,6 +176,7 @@ public struct DocumentListReducer: Sendable {
             isLoadingMore: Bool = false,
             nextPage: URL? = nil,
             path: StackState<Path.State> = .init(),
+            search: DocumentSearchReducer.State? = nil,
             server: Server,
             totalNumberOfDocuments: Int = 0
         ) {
@@ -185,6 +189,7 @@ public struct DocumentListReducer: Sendable {
             self.isLoadingMore = isLoadingMore
             self.nextPage = nextPage
             self.path = path
+            self.search = search ?? DocumentSearchReducer.State(server: server)
             self.server = server
             self.totalNumberOfDocuments = totalNumberOfDocuments
             permissions = ServerPermissions(server: server)
@@ -204,6 +209,17 @@ public struct DocumentListReducer: Sendable {
             documents = []
             documentSelection.allLoadedDocuments = []
             isLoaded = true
+            nextPage = nil
+            totalNumberOfDocuments = 0
+        }
+
+        // Same shape as clearForEmptyInbox above except isLoaded stays false: an empty list with
+        // isLoaded false is what DocumentListEmptyView renders as a spinner rather than "no
+        // documents", so this is what keeps a stale list off screen while a filter refetches.
+        mutating func clearForPendingFetch() {
+            documents = []
+            documentSelection.allLoadedDocuments = []
+            isLoaded = false
             nextPage = nil
             totalNumberOfDocuments = 0
         }
@@ -251,6 +267,9 @@ public struct DocumentListReducer: Sendable {
         }
         Scope(state: \.documentSelection, action: \.documentSelection) {
             DocumentSelectionReducer()
+        }
+        Scope(state: \.search, action: \.search) {
+            DocumentSearchReducer()
         }
         Reduce { state, action in
             switch action {
@@ -403,6 +422,37 @@ public struct DocumentListReducer: Sendable {
                     $0.isRecalculating = false
                 }
                 return .none
+            case let .search(.delegate(.documentTapped(id))):
+                return .send(.openDocument(id))
+            // The saved view goes with it: leaving it set would keep the navigation title naming a
+            // view whose rules are no longer the ones being applied.
+            case let .search(.delegate(.filterRequested(input))):
+                state.error = nil
+                state.filter.input = input
+                state.filter.savedView = nil
+                state.clearForPendingFetch()
+                return .runGetDocuments(
+                    filterRules: state.filter.input.filterRules,
+                    server: state.server,
+                    sortDirection: state.filter.input.sort.direction,
+                    sortField: state.filter.input.sort.field
+                )
+            case let .search(.delegate(.queryCommitted(query))):
+                state.error = nil
+                state.filter.input.searchType = .titleContent
+                state.filter.input.searchValue = query
+                state.clearForPendingFetch()
+                return .runGetDocuments(
+                    filterRules: state.filter.input.filterRules,
+                    server: state.server,
+                    sortDirection: state.filter.input.sort.direction,
+                    sortField: state.filter.input.sort.field
+                )
+            case let .search(.delegate(.savedViewTapped(savedView))):
+                state.clearForPendingFetch()
+                return .send(.view(.savedViewButtonTapped(savedView)))
+            case .search:
+                return .none
             case let .tipInvitationEligible(isEligible):
                 state.isTipInvitationVisible = isEligible
                 return .none
@@ -411,6 +461,7 @@ public struct DocumentListReducer: Sendable {
                 case .allDocumentsButtonTapped:
                     state.error = nil
                     state.filter = .init()
+                    state.search = DocumentSearchReducer.State(server: state.server)
                     return .runGetDocuments(
                         filterRules: state.filter.input.filterRules,
                         server: state.server,
