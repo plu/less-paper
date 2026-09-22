@@ -417,6 +417,12 @@ in Settings that reads, shares and clears it. Nothing leaves the device unless s
 `xcodebuild test` checks none of what `mise run ci:lint` checks, and CI runs both. **Run
 `mise run ci:lint` before pushing**, not just the schemes you touched.
 
+A hand-typed run carries none of the flags `mise/scripts/run_tests.sh` does, and
+`-collect-test-diagnostics never` is the one that costs ten minutes per failing run to leave out —
+so type the whole thing: `export TUIST_PAPERLESS_TEST_URL=http://192.168.64.1:8000 && mise exec --
+sh -c 'tuist test DocumentsFeature -d "$TEST_SIMULATOR" -o "$TEST_SIMULATOR_OS"
+--no-selective-testing -- -testLanguage en -testRegion DE -collect-test-diagnostics never'`.
+
 It is five steps under `set -eou pipefail`, so **the first failure hides every one after it**:
 
 | Step | Fixed by |

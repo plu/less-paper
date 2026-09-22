@@ -28,8 +28,13 @@ public struct DocumentFormScreen {
         }
         tab.tap()
 
-        let cell = app.cells.firstMatch
-        guard cell.waitUntilHittable(timeout: timeout) else {
+        // Not `cells.firstMatch`: the list's first row is the search field now, and tapping it
+        // raises the keyboard instead of opening anything. Waiting on the second cell is what
+        // waits for the documents themselves — the search row exists before any of them arrive.
+        guard app.cells.element(boundBy: 1).waitForExistence(timeout: timeout),
+              let cell = app.cells.allElementsBoundByIndex.first(where: { $0.textFields.isEmpty }),
+              cell.waitUntilHittable(timeout: timeout)
+        else {
             return false
         }
         cell.tap()
