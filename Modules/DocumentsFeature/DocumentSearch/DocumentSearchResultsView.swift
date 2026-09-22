@@ -146,13 +146,15 @@ struct DocumentSearchResultsView: View {
     // `dismissSearch` is deliberately not used here, though it is the obvious tool and this view is
     // inside the searchable scope that it requires. It clears the field's text on the way out, and
     // that empty string arrives through DocumentListView's binding as a `searchTextChanged("")` —
-    // below the minimum query length, so the reducer drops the results the user is about to come
-    // back to. The owning view resigns a `@FocusState` instead, which leaves the text alone.
+    // below the minimum query length, so the reducer drops both the results and the query the user
+    // is about to come back to. The owning view resigns a `@FocusState` instead, leaving the
+    // reducer to empty the field itself and keep the query stashed for the next focus.
     private let resignSearchFocus: () -> Void
 
-    // The action is sent before focus is resigned, and the order is load-bearing. Resigning focus
-    // makes SwiftUI fire `onSubmit(of: .search)`, and the reducer suppresses that phantom submit
-    // only once the tap's own action has already armed the latch.
+    // The action is sent before focus is resigned, and the order is load-bearing. The action is
+    // what empties the search field, and resigning focus makes SwiftUI fire `onSubmit(of: .search)`
+    // — a submit the user never made, which would overwrite the filter this tap just applied with a
+    // plain text search unless the field is already empty by the time it arrives.
     private func select(_ action: DocumentSearchReducer.Action.View) {
         send(action)
         resignSearchFocus()

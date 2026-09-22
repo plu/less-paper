@@ -50,23 +50,19 @@ public struct DocumentSearchReducer: Sendable {
 
         var isLoading = false
 
+        // Stashed by every row tap and put back by `refocused`. A tap empties the field rather
+        // than only resigning its focus: `.searchable` keeps its expanded presentation over the
+        // navigation bar for as long as it holds text, so a query left standing hides the
+        // navigation bar until the user clears the field by hand. Holding the text here is what
+        // still lets them come back and refine it — do not "restore" it by leaving `searchText`
+        // in place. Not part of `init`: the reducer owns it, it is never initial configuration.
+        var restorableQuery: String?
+
         var results: GlobalSearchOutput?
 
         var searchText = ""
 
         let server: Server
-
-        // Set by every row tap and consumed by the next `submitted`. Resigning the field's focus
-        // programmatically makes SwiftUI fire `onSubmit(of: .search)`, so a tap arrives here as its
-        // own action immediately followed by a submit the user never made — which would apply the
-        // tapped filter and then overwrite it with a plain text search. Not part of `init`: it is a
-        // latch the reducer owns, never initial configuration.
-        //
-        // Cleared by `refocused` and by `searchTextChanged` as well as by the submit it absorbs.
-        // The phantom submit fires during resignation, so focus returning or a fresh keystroke both
-        // mean that window has shut — and a latch left armed by a tap that somehow produced no
-        // submit would otherwise wait indefinitely and swallow a real return press.
-        var suppressesNextSubmit = false
 
         var trimmedQuery: String {
             searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -74,6 +70,14 @@ public struct DocumentSearchReducer: Sendable {
 
         var hasQuery: Bool {
             trimmedQuery.count >= DocumentSearchReducer.minimumQueryLength
+        }
+
+        mutating func stashQuery() {
+            guard !searchText.isEmpty else {
+                return
+            }
+            restorableQuery = searchText
+            searchText = ""
         }
 
         public init(
@@ -110,25 +114,28 @@ public struct DocumentSearchReducer: Sendable {
             case .searchDebounced:
                 return .runGlobalSearch(query: state.trimmedQuery, server: state.server)
             case let .view(.correspondentTapped(correspondent)):
-                state.suppressesNextSubmit = true
+                state.stashQuery()
                 return .send(.delegate(.filterRequested(.searchResult(correspondent: correspondent))))
             case let .view(.customFieldTapped(customField)):
-                state.suppressesNextSubmit = true
+                state.stashQuery()
                 return .send(.delegate(.filterRequested(.searchResult(customField: customField))))
             case let .view(.documentTapped(document)):
-                state.suppressesNextSubmit = true
+                state.stashQuery()
                 return .send(.delegate(.documentTapped(document.id)))
             case let .view(.documentTypeTapped(documentType)):
-                state.suppressesNextSubmit = true
+                state.stashQuery()
                 return .send(.delegate(.filterRequested(.searchResult(documentType: documentType))))
             case let .view(.savedViewTapped(savedView)):
-                state.suppressesNextSubmit = true
+                state.stashQuery()
                 return .send(.delegate(.savedViewTapped(savedView)))
             // No debounce: a deliberate tap on the field is not a keystroke, so there is nothing
             // to coalesce. Shares CancelID.search with the debounce, so a sleep or request left
             // pending by earlier typing cannot land on top of this one.
             case .view(.refocused):
-                state.suppressesNextSubmit = false
+                if let restorableQuery = state.restorableQuery {
+                    state.searchText = restorableQuery
+                    state.restorableQuery = nil
+                }
                 guard state.hasQuery else {
                     return .none
                 }
@@ -137,7 +144,7 @@ public struct DocumentSearchReducer: Sendable {
                 return .runGlobalSearch(query: state.trimmedQuery, server: state.server)
             case let .view(.searchTextChanged(searchText)):
                 state.searchText = searchText
-                state.suppressesNextSubmit = false
+                state.restorableQuery = nil
                 guard state.hasQuery else {
                     state.error = nil
                     state.isLoading = false
@@ -148,19 +155,19 @@ public struct DocumentSearchReducer: Sendable {
                 state.isLoading = true
                 return .runSearchDebounce()
             case let .view(.storagePathTapped(storagePath)):
-                state.suppressesNextSubmit = true
+                state.stashQuery()
                 return .send(.delegate(.filterRequested(.searchResult(storagePath: storagePath))))
+            // Resigning the field's focus programmatically makes SwiftUI fire `onSubmit(of:
+            // .search)`, so a row tap is followed by a submit the user never made. Nothing latches
+            // it away: the tap empties the field first, so the guard below already answers false
+            // by the time that phantom submit arrives.
             case .view(.submitted):
-                guard !state.suppressesNextSubmit else {
-                    state.suppressesNextSubmit = false
-                    return .none
-                }
                 guard state.hasQuery else {
                     return .none
                 }
                 return .send(.delegate(.queryCommitted(state.trimmedQuery)))
             case let .view(.tagTapped(tag)):
-                state.suppressesNextSubmit = true
+                state.stashQuery()
                 return .send(.delegate(.filterRequested(.searchResult(tag: tag))))
             }
         }
