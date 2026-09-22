@@ -32,8 +32,15 @@ set +e
 # -o pins the runtime as well as the device. A machine can carry more than one iOS, and the name
 # alone would let xcodebuild pick whichever it liked - which the snapshot tests would notice and
 # nobody would think to check. `simulators:prepare` creates this exact pairing.
+#
+# -collect-test-diagnostics never stops xcodebuild collecting a simulator sysdiagnose after a
+# failing run. It shells out to `simctl diagnose --timeout=600`, which on this toolchain does not
+# return: every red run pays ten minutes and then reports "Failure collecting diagnostics from
+# simulator: Timed out after 600.0 seconds" having produced nothing. The flag costs only
+# sysdiagnoses and log archives - the failures, their messages and the XCUITest screenshots are
+# governed by separate options and still reach the result bundle.
 tuist test -d "$TEST_SIMULATOR" -o "$TEST_SIMULATOR_OS" --clean "$@" -T "$bundle" \
-  -- -testLanguage en -testRegion DE
+  -- -testLanguage en -testRegion DE -collect-test-diagnostics never
 test_exit_code=$?
 set -e
 

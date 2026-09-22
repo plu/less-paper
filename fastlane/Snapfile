@@ -34,6 +34,11 @@ override_status_bar(true)
 
 concurrent_simulators(false)
 
+# -collect-test-diagnostics never for the reason spelled out in mise/scripts/run_tests.sh. The
+# capture runs the matrix four times over, so a single failing device-language pair would otherwise
+# add ten minutes to a lane that already takes the longest of any here.
+xcargs("-collect-test-diagnostics never")
+
 # The preview choreography lives in the same target because it needs the same fixtures and the same
 # navigation. It captures nothing, so a screenshot run would spend two minutes on it four times over
 # - twice per device, twice per language - for no image.

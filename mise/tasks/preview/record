@@ -78,13 +78,17 @@ recorder=$!
 # The recorder needs a moment to attach before the first frame is real.
 sleep 2
 
+# -collect-test-diagnostics never for the reason spelled out in mise/scripts/run_tests.sh. It
+# matters more here than anywhere else: the screen recorder above is still running, so a failed
+# choreography would spend the diagnostics timeout writing ten minutes of video before exiting.
 set +e
 TEST_RUNNER_PREVIEW_LOCALE="$LOCALE" \
 xcodebuild test-without-building \
   -workspace "$MISE_PROJECT_ROOT/LessPaper.xcworkspace" \
   -scheme Snapshots \
   -destination "platform=iOS Simulator,id=$udid" \
-  -only-testing:AppSnapshots/AppPreviewTests > "$WORK/xcodebuild.log" 2>&1
+  -only-testing:AppSnapshots/AppPreviewTests \
+  -collect-test-diagnostics never > "$WORK/xcodebuild.log" 2>&1
 status=$?
 set -e
 
