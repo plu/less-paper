@@ -16,6 +16,7 @@ public struct DocumentListView: View {
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
+                    .padding(.bottom, .x3)
                     .padding(.horizontal, .x3)
                     .padding(.top, .x3)
                 if store.isSearching {

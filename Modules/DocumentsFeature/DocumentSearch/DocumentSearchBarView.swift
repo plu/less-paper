@@ -9,7 +9,7 @@ import SwiftUI
 struct DocumentSearchBarView: View {
 
     var body: some View {
-        HStack(spacing: .x3) {
+        HStack(spacing: .x0) {
             DocumentSearchField(
                 isFocused: $isSearchFocused,
                 submitted: { send(.submitted) },
@@ -18,14 +18,23 @@ struct DocumentSearchBarView: View {
             // The field's own `X` wipes the text and leaves the user in the field with the keyboard
             // up, which is not a way out. Shown on content as well as on focus because a query that
             // survived a push still needs one.
+            //
+            // An icon rather than the word, with the tap target spelled out: the glyph is about
+            // 15pt on its own, and this one sits a thumb's width from a field people are typing
+            // into. The label is what VoiceOver announces and what the journey looks for.
             if isSearchFocused || !store.searchText.isEmpty {
-                Button(String(localized: .cancel)) {
+                Button {
                     isSearchFocused = false
                     send(.cancelButtonTapped)
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(Color.m3Primary)
+                        .frame(width: .x5 + .x3, height: .x5 + .x3)
+                        .contentShape(.rect)
                 }
+                .accessibilityLabel(.cancel)
                 .buttonStyle(.plain)
-                .foregroundStyle(Color.m3Primary)
-                .lineLimit(1)
             }
         }
         .animation(.default, value: isSearchFocused)

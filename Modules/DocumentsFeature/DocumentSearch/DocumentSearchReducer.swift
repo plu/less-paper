@@ -46,6 +46,15 @@ public struct DocumentSearchReducer: Sendable {
     @ObservableState
     public struct State: Equatable {
 
+        // The one write the field is not allowed to make. Committing a search empties
+        // `searchText` while the UIKit text field still holds the query, and resigning focus
+        // pushes that stale value back through the binding — which puts the results back over the
+        // documents the commit just fetched, and, when the commit's own cancellation lands on the
+        // debounce that write started, leaves `isLoading` true with nothing in flight and a
+        // spinner that never resolves. Swallowed exactly once: typing the same query again is a
+        // different keystroke and clears the latch on its first character.
+        var clearedQuery: String?
+
         var error: String?
 
         var isLoading = false
@@ -88,6 +97,7 @@ public struct DocumentSearchReducer: Sendable {
         // leaves the results behind when the field is empty, so a filter that has been applied and
         // is visible in the list is not also still being searched for.
         mutating func clearQuery() {
+            clearedQuery = trimmedQuery.isEmpty ? nil : searchText
             dismissalCount += 1
             error = nil
             isLoading = false
@@ -142,6 +152,7 @@ public struct DocumentSearchReducer: Sendable {
             case let .view(.savedViewTapped(savedView)):
                 return clearThenDelegate(&state, .savedViewTapped(savedView))
             case let .view(.searchTextChanged(searchText)):
+                state.clearedQuery = nil
                 state.searchText = searchText
                 guard state.hasQuery else {
                     state.error = nil

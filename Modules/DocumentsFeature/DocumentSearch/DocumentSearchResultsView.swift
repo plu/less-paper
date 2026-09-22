@@ -8,140 +8,84 @@ import SwiftUI
 struct DocumentSearchResultsView: View {
 
     var body: some View {
-        // The three status branches below take `listRowBackground(.clear)` while the result rows
-        // take `m3SurfaceContainer`: a spinner or a one-line message is not a row anyone can tap,
-        // and a card behind it would read as an empty result.
+        // The three status branches take a clear row background and no separator: a spinner or a
+        // one-line message is not a row anyone can tap, and a card behind it would read as an
+        // empty result.
         //
         // Only a first search spins. A re-search keeps the previous results on screen rather than
         // emptying the list under the user while the next response is in flight.
         if store.isLoading, store.results == nil {
-            HStack {
-                Spacer()
+            statusRow {
                 ProgressView()
-                Spacer()
             }
-            .listRowBackground(Color.clear)
         } else if let error = store.error, store.results == nil {
             // Guarded on `results == nil` for the same reason the spinner is: the reducer leaves
             // `results` standing when a request fails, so an unguarded branch would replace
             // results the user is reading with an error line the moment a re-search failed.
             //
-            // Inline rather than as a toast. The sheet covers the list while it is up, and a
-            // first search has nothing to fall back on — so a failure that says nothing here
-            // looks exactly like not having searched.
-            Text(error)
-                .foregroundStyle(Color.m3Outline)
-                .listRowBackground(Color.clear)
+            // Inline rather than as a toast. A first search has nothing to fall back on, so a
+            // failure that says nothing here looks exactly like not having searched.
+            statusRow {
+                Text(error)
+                    .foregroundStyle(Color.m3Outline)
+            }
         } else if let results = store.results {
             if results.isEmpty, store.hasQuery, !store.isLoading {
-                Text(.searchNoResults)
-                    .foregroundStyle(Color.m3Outline)
-                    .listRowBackground(Color.clear)
+                statusRow {
+                    Text(.searchNoResults)
+                        .foregroundStyle(Color.m3Outline)
+                }
             } else {
-                // Each section is guarded rather than left to empty out on its own. An empty
-                // `ForEach` drops the rows but the `Section` still draws its header, and a typical
-                // query matches one or two types — which left five captions standing over blank
-                // background. `testSnapshot_partiallyPopulated` is the regression test.
-                //
-                // No client-side truncation, though: the server already caps each list through
+                // No client-side truncation: the server already caps each list through
                 // PAPERLESS_GLOBAL_SEARCH_MAX_RESULTS, and a second cap here would hide results
                 // the server chose to send.
-                if !results.documents.isEmpty {
-                    Section(String(localized: .searchSectionDocuments)) {
-                        ForEach(results.documents) { document in
-                            Button {
-                                send(.documentTapped(document))
-                            } label: {
-                                DocumentSearchRowView(
-                                    caption: document.created.formatted(date: .numeric, time: .omitted),
-                                    systemImage: "document",
-                                    title: document.title
-                                )
-                            }
-                            .listRowBackground(Color.m3SurfaceContainer)
-                        }
-                    }
+                resultCard(.searchSectionDocuments, results.documents) {
+                    send(.documentTapped($0))
+                } row: { document in
+                    DocumentSearchRowView(
+                        caption: document.created.formatted(date: .numeric, time: .omitted),
+                        systemImage: "document",
+                        title: document.title
+                    )
                 }
-                if !results.savedViews.isEmpty {
-                    Section(String(localized: .searchSectionSavedViews)) {
-                        ForEach(results.savedViews) { savedView in
-                            Button {
-                                send(.savedViewTapped(savedView))
-                            } label: {
-                                DocumentSearchRowView(
-                                    systemImage: "line.3.horizontal.decrease",
-                                    title: savedView.name
-                                )
-                            }
-                            .listRowBackground(Color.m3SurfaceContainer)
-                        }
-                    }
+                resultCard(.searchSectionSavedViews, results.savedViews) {
+                    send(.savedViewTapped($0))
+                } row: { savedView in
+                    DocumentSearchRowView(
+                        systemImage: "line.3.horizontal.decrease",
+                        title: savedView.name
+                    )
                 }
-                if !results.tags.isEmpty {
-                    Section(String(localized: .searchSectionTags)) {
-                        ForEach(results.tags) { tag in
-                            Button {
-                                send(.tagTapped(tag))
-                            } label: {
-                                DocumentSearchRowView(systemImage: "tag", tag: tag)
-                            }
-                            .listRowBackground(Color.m3SurfaceContainer)
-                        }
-                    }
+                resultCard(.searchSectionTags, results.tags) {
+                    send(.tagTapped($0))
+                } row: { tag in
+                    DocumentSearchRowView(systemImage: "tag", tag: tag)
                 }
-                if !results.correspondents.isEmpty {
-                    Section(String(localized: .searchSectionCorrespondents)) {
-                        ForEach(results.correspondents) { correspondent in
-                            Button {
-                                send(.correspondentTapped(correspondent))
-                            } label: {
-                                DocumentSearchRowView(systemImage: "person", title: correspondent.name)
-                            }
-                            .listRowBackground(Color.m3SurfaceContainer)
-                        }
-                    }
+                resultCard(.searchSectionCorrespondents, results.correspondents) {
+                    send(.correspondentTapped($0))
+                } row: { correspondent in
+                    DocumentSearchRowView(systemImage: "person", title: correspondent.name)
                 }
-                if !results.documentTypes.isEmpty {
-                    Section(String(localized: .searchSectionDocumentTypes)) {
-                        ForEach(results.documentTypes) { documentType in
-                            Button {
-                                send(.documentTypeTapped(documentType))
-                            } label: {
-                                DocumentSearchRowView(
-                                    systemImage: "document.badge.gearshape",
-                                    title: documentType.name
-                                )
-                            }
-                            .listRowBackground(Color.m3SurfaceContainer)
-                        }
-                    }
+                resultCard(.searchSectionDocumentTypes, results.documentTypes) {
+                    send(.documentTypeTapped($0))
+                } row: { documentType in
+                    DocumentSearchRowView(
+                        systemImage: "document.badge.gearshape",
+                        title: documentType.name
+                    )
                 }
-                if !results.storagePaths.isEmpty {
-                    Section(String(localized: .searchSectionStoragePaths)) {
-                        ForEach(results.storagePaths) { storagePath in
-                            Button {
-                                send(.storagePathTapped(storagePath))
-                            } label: {
-                                DocumentSearchRowView(systemImage: "folder", title: storagePath.name)
-                            }
-                            .listRowBackground(Color.m3SurfaceContainer)
-                        }
-                    }
+                resultCard(.searchSectionStoragePaths, results.storagePaths) {
+                    send(.storagePathTapped($0))
+                } row: { storagePath in
+                    DocumentSearchRowView(systemImage: "folder", title: storagePath.name)
                 }
-                if !results.customFields.isEmpty {
-                    Section(String(localized: .searchSectionCustomFields)) {
-                        ForEach(results.customFields) { customField in
-                            Button {
-                                send(.customFieldTapped(customField))
-                            } label: {
-                                DocumentSearchRowView(
-                                    systemImage: "list.bullet.rectangle",
-                                    title: customField.name
-                                )
-                            }
-                            .listRowBackground(Color.m3SurfaceContainer)
-                        }
-                    }
+                resultCard(.searchSectionCustomFields, results.customFields) {
+                    send(.customFieldTapped($0))
+                } row: { customField in
+                    DocumentSearchRowView(
+                        systemImage: "list.bullet.rectangle",
+                        title: customField.name
+                    )
                 }
             }
         }
@@ -152,4 +96,72 @@ struct DocumentSearchResultsView: View {
     }
 
     let store: StoreOf<DocumentSearchReducer>
+
+    // The inset-grouped chrome the settings lists get from the platform, drawn by hand.
+    //
+    // It cannot be had the usual way. The documents list is `.listStyle(.plain)` because its rows
+    // are full-bleed cards, and `listStyle` takes a concrete type — so switching it for search
+    // mode means branching into two `List`s, which changes the view's identity and tears the
+    // search field down mid-keystroke. That was measured, not assumed: with the branch in place,
+    // clearing the field with its own `X` dropped the keyboard, which is exactly what the `X` is
+    // supposed not to do. So the card is built inside the plain list instead: one list row per
+    // group, its separators and background suppressed, holding a header and a rounded container
+    // of rows with its own dividers.
+    //
+    // Empty groups draw nothing at all. A typical query matches one or two types, and a `Section`
+    // renders its header even when the `ForEach` inside it produces no rows —
+    // `testSnapshot_partiallyPopulated` is the regression test for the five captions that left
+    // standing over blank background.
+    @ViewBuilder
+    private func resultCard<Item: Identifiable, Row: View>(
+        _ title: LocalizedStringResource,
+        _ items: [Item],
+        tapped: @escaping (Item) -> Void,
+        @ViewBuilder row: @escaping (Item) -> Row
+    ) -> some View {
+        if !items.isEmpty {
+            VStack(alignment: .leading, spacing: .x3) {
+                Text(title)
+                    .font(.footnote)
+                    .foregroundStyle(Color.m3Outline)
+                    .padding(.leading, .x3 + .x2)
+                VStack(spacing: .x0) {
+                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                        Button {
+                            tapped(item)
+                        } label: {
+                            row(item)
+                                .padding(.horizontal, .x3 + .x2)
+                                .padding(.vertical, .x3 + .x1)
+                        }
+                        .buttonStyle(.plain)
+                        if index < items.count - 1 {
+                            Divider()
+                                .padding(.leading, .x5 + .x2)
+                                .padding(.trailing, .x3)
+                        }
+                    }
+                }
+                .background(Color.m3SurfaceContainer)
+                .clipShape(RoundedRectangle(cornerRadius: .x3 + .x1, style: .continuous))
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
+            .padding(.bottom, .x4)
+            .padding(.horizontal, .x4 + .x2)
+        }
+    }
+
+    @ViewBuilder
+    private func statusRow(@ViewBuilder content: () -> some View) -> some View {
+        HStack {
+            Spacer()
+            content()
+            Spacer()
+        }
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .padding(.top, .x4)
+    }
 }

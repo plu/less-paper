@@ -223,6 +223,7 @@ struct DocumentSearchReducerTests {
         let store = searchingStore()
 
         await store.send(.view(.tagTapped(tag))) {
+            $0.clearedQuery = "man"
             $0.dismissalCount = 1
             $0.results = nil
             $0.searchText = ""
@@ -238,6 +239,7 @@ struct DocumentSearchReducerTests {
         let store = searchingStore()
 
         await store.send(.view(.correspondentTapped(correspondent))) {
+            $0.clearedQuery = "man"
             $0.dismissalCount = 1
             $0.results = nil
             $0.searchText = ""
@@ -251,6 +253,7 @@ struct DocumentSearchReducerTests {
         let store = searchingStore()
 
         await store.send(.view(.customFieldTapped(customField))) {
+            $0.clearedQuery = "man"
             $0.dismissalCount = 1
             $0.results = nil
             $0.searchText = ""
@@ -264,6 +267,7 @@ struct DocumentSearchReducerTests {
         let store = searchingStore()
 
         await store.send(.view(.documentTypeTapped(documentType))) {
+            $0.clearedQuery = "man"
             $0.dismissalCount = 1
             $0.results = nil
             $0.searchText = ""
@@ -277,6 +281,7 @@ struct DocumentSearchReducerTests {
         let store = searchingStore()
 
         await store.send(.view(.storagePathTapped(storagePath))) {
+            $0.clearedQuery = "man"
             $0.dismissalCount = 1
             $0.results = nil
             $0.searchText = ""
@@ -290,6 +295,7 @@ struct DocumentSearchReducerTests {
         let store = searchingStore()
 
         await store.send(.view(.savedViewTapped(savedView))) {
+            $0.clearedQuery = "man"
             $0.dismissalCount = 1
             $0.results = nil
             $0.searchText = ""
@@ -321,6 +327,7 @@ struct DocumentSearchReducerTests {
         await store.receive(\.searchDebounced)
 
         await store.send(.view(.tagTapped(tag))) {
+            $0.clearedQuery = "man"
             $0.dismissalCount = 1
             $0.isLoading = false
             $0.searchText = ""
@@ -345,6 +352,7 @@ struct DocumentSearchReducerTests {
         }
 
         await store.send(.view(.cancelButtonTapped)) {
+            $0.clearedQuery = "manual"
             $0.dismissalCount = 1
             $0.error = nil
             $0.isLoading = false
@@ -376,6 +384,7 @@ struct DocumentSearchReducerTests {
         await store.receive(\.searchDebounced)
 
         await store.send(.view(.cancelButtonTapped)) {
+            $0.clearedQuery = "man"
             $0.dismissalCount = 1
             $0.isLoading = false
             $0.searchText = ""
@@ -397,6 +406,7 @@ struct DocumentSearchReducerTests {
         }
 
         await store.send(.view(.submitted)) {
+            $0.clearedQuery = "manual"
             $0.dismissalCount = 1
             $0.results = nil
             $0.searchText = ""
@@ -434,6 +444,91 @@ struct DocumentSearchReducerTests {
         }
 
         await store.send(.view(.submitted))
+    }
+
+    // The write nobody makes on purpose. SwiftUI pushes the field's old text back through the
+    // binding as the commit empties it and focus is resigned, and accepting it puts the results
+    // back over the documents the commit just fetched. Worse, the commit's own
+    // `runCancelSearch` shares `CancelID.search` with the debounce that write starts — so when
+    // the cancel lands second, `isLoading` is left true with nothing in flight, which is a
+    // spinner that never resolves.
+    @Test
+    func view_submitted_ignoresTheFieldWritingItsOldQueryBack() async throws {
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            results: .testValue(tags: [.testValue(id: 7, name: "Manual")]),
+            searchText: "Sonos"
+        )) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.continuousClock = TestClock()
+            $0.globalSearch.execute = { _, _ in
+                Issue.record("a write-back of the committed query must not start a new search")
+                return .testValue()
+            }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.submitted))
+        await store.receive(\.delegate.queryCommitted)
+
+        await store.send(.view(.searchTextChanged("Sonos"))) {
+            $0.clearedQuery = nil
+        }
+
+        #expect(store.state.searchText == "")
+        #expect(!store.state.isLoading)
+        #expect(!store.state.hasQuery)
+    }
+
+    @Test
+    func view_cancelButtonTapped_ignoresTheFieldWritingItsOldQueryBack() async throws {
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            searchText: "Sonos"
+        )) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.continuousClock = TestClock()
+            $0.globalSearch.execute = { _, _ in
+                Issue.record("a write-back of the cancelled query must not start a new search")
+                return .testValue()
+            }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.cancelButtonTapped))
+        await store.send(.view(.searchTextChanged("Sonos")))
+
+        #expect(store.state.searchText == "")
+        #expect(!store.state.isLoading)
+    }
+
+    // Swallowed exactly once, and only as a whole: retyping the committed query has to work, and
+    // its first character is what says this is a person rather than a stale binding.
+    @Test
+    func view_searchTextChanged_acceptsTheSameQueryTypedAgain() async throws {
+        let clock = TestClock()
+        let output = GlobalSearchOutput.testValue(tags: [.testValue(id: 7, name: "Manual")])
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            searchText: "Sonos"
+        )) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.globalSearch.execute = { _, _ in output }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.cancelButtonTapped))
+
+        await store.send(.view(.searchTextChanged("S")))
+        await store.send(.view(.searchTextChanged("So")))
+        await store.send(.view(.searchTextChanged("Sonos")))
+
+        await clock.advance(by: .milliseconds(400))
+        await store.receive(\.searchDebounced)
+        await store.receive(\.results)
+
+        #expect(store.state.results == output)
     }
 
     private func searchingStore() -> TestStoreOf<DocumentSearchReducer> {
