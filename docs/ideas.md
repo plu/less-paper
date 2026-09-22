@@ -327,44 +327,30 @@ Surfaced during: Task 9 of `docs/superpowers/specs/2026-09-12-file-tasks-inbox-d
 
 ---
 
-## Move the full-text search off the deprecated `title_content` filter
+## Move the custom field text search off `custom_fields__icontains`
 
-The app sends `title_content=` for its title-and-content search (`FilterRuleType.titleContent`).
-paperless-ngx deprecated that parameter and its implementation explains the cost — `filters.py`,
-`TitleContentFilter`:
+`FilterRuleType.customFieldsText` (rule 36) is deprecated the same way `title_content` was, and
+`filters.py` says so in the same shape:
 
 ```python
-# Deprecated but retained for existing saved views. UI uses Tantivy-backed `text` / `title_search` params.
-logger.warning("Deprecated document filter parameter 'title_content' used; use `text` instead.")
-return annotate_effective_content(qs).filter(
-    Q(title__icontains=value) | Q(effective_content__icontains=value),
+logger.warning(
+    "Deprecated document filter parameter 'custom_fields__icontains' used; use `custom_field_query` or advanced Tantivy field syntax instead.",
 )
 ```
 
-So every search runs `icontains` over every document's full OCR text — an unindexed scan of the
-largest column in the database — and writes a deprecation warning into the server log while it does
-it. `text=` is served by the Tantivy full-text index instead, which is why the web client feels
-instant where the app crawls. The web client sends:
+It was scoped into the Tantivy search change and taken back out, because **upstream has not moved
+off it either**: the 3.0.0 web client's `filter-editor.component.ts` still pushes
+`FILTER_CUSTOM_FIELDS_TEXT` for its custom-fields text target and trips its own warning. Neither
+suggested replacement is a substitute for what the sheet's custom-fields search type means, which
+is *substring across every custom field value*:
 
-```
-/api/documents/?ordering=-added&page=2&page_size=100&text=Rechnung&truncate_content=true&include_selection_data=true
-```
+- `custom_field_query` (rule 42, which the app already supports through the cards UI) needs a named
+  field per clause, so covering "any field" means an OR over the whole field list, growing with it.
+- The Tantivy form is `custom_fields.<name>:value` against a JSON field
+  (`search/_schema.py`: `sb.add_json_field("custom_fields", …)`), which also needs a field name.
 
-Not a one-line swap. `FilterRuleType.simpleText` already maps to `text`, so the plumbing exists, but
-`.titleContent` is what the filter sheet offers as a search type, what `queryCommitted` sets from the
-search field, and what saved views may already contain — including views written by the web client,
-which could carry either. Changing it touches the rule-type mapping, the filter sheet and the
-saved-view round trip, and wants a decision about what to do with existing saved views rather than a
-silent rewrite.
+So this one needs a UI decision before it needs an API decision, and it is not urgent: unlike
+`text=`, nothing here returns wrong results.
 
-Two smaller things in that same URL, independent of the search engine and worth taking on their own:
-
-- **`truncate_content=true`** — the document list currently fetches every row's full OCR text and
-  displays none of it. (Note `/api/search/` ignores this parameter; `/api/documents/` honours it.)
-- **`page_size`** — worth comparing against what the list requests today.
-
-A 25-document dev instance cannot reproduce any of this: at that size the full scan is free, and
-`truncate_content` changes the payload not at all. Measure against a real corpus.
-
-Surfaced during: the inline search work on `feat/search-sheet`, from a URL the user pulled out of
-the web client while wondering why the app's search was slow.
+Surfaced during: `docs/superpowers/specs/2026-09-22-fulltext-search-design.md`, while scoping the
+`title_content` swap.

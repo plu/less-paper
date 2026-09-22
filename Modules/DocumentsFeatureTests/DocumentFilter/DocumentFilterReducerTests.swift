@@ -202,6 +202,33 @@ struct DocumentFilterReducerTests {
         #expect(store.state.isModified == false)
     }
 
+    // Both spellings of the text search have to survive the round trip untouched. Normalising
+    // either one here - or letting the API layer's `text` rewrite leak this far - would open every
+    // view of the other spelling with a live Save button nobody pressed.
+    @Test(arguments: [FilterRuleType.titleContent, .simpleText])
+    func test_isModified_savedViewWithEitherTextSearchRule(ruleType: FilterRuleType) async throws {
+        let savedView = SavedView.testValue(
+            filterRules: [.init(ruleType: ruleType, value: "Rechnung")],
+            sortDirection: .ascending,
+            sortField: .created
+        )
+        let store = TestStore(initialState: DocumentFilterReducer.State.testValue(
+            input: DocumentFilterInput(
+                filterRules: savedView.filterRules,
+                server: .testValue(),
+                sortDirection: savedView.sortDirection,
+                sortField: savedView.sortField
+            ),
+            savedView: savedView
+        )) {
+            DocumentFilterReducer()
+        }
+
+        #expect(store.state.input.searchType == .titleContent)
+        #expect(store.state.input.searchValue == "Rechnung")
+        #expect(store.state.isModified == false)
+    }
+
     @Test
     func test_view_searchValueChanged_debounces() async throws {
         let clock = TestClock()
@@ -419,10 +446,13 @@ struct DocumentFilterReducerTests {
 
         await store.send(.view(.saveButtonTapped))
         await store.receive(\.savedViewSaved, updatedSavedView) {
+            // Re-seeded from the response, so the input now remembers the rule type the server
+            // stored - which is what keeps `isModified` false straight after a save.
+            $0.input = .testValue(searchRuleType: .titleContent, searchValue: "Lego")
             $0.savedView = updatedSavedView
         }
         await store.receive(\.delegate.filterUpdated, .testValue(
-            input: .testValue(searchValue: "Lego"),
+            input: .testValue(searchRuleType: .titleContent, searchValue: "Lego"),
             savedView: updatedSavedView
         ))
     }
@@ -455,11 +485,11 @@ struct DocumentFilterReducerTests {
         }
 
         await store.send(.view(.savedViewButtonTapped(savedView))) {
-            $0.input = .testValue(searchValue: "Invoice")
+            $0.input = .testValue(searchRuleType: .titleContent, searchValue: "Invoice")
             $0.savedView = savedView
         }
         await store.receive(\.delegate.filterUpdated, .testValue(
-            input: .testValue(searchValue: "Invoice"),
+            input: .testValue(searchRuleType: .titleContent, searchValue: "Invoice"),
             savedView: savedView
         ))
     }

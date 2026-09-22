@@ -35,6 +35,7 @@ private extension SaveSavedViewUseCase {
         // UISettings. Older versions require both on create, so there they have to ride along in
         // the body — a POST without them is rejected before anything else can set them.
         var body = input
+        body.filterRules = input.filterRules.upgraded(forApiVersion: version)
         if version >= 10 {
             body.showInSidebar = nil
             body.showOnDashboard = nil

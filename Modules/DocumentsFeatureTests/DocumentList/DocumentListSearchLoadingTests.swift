@@ -92,7 +92,7 @@ struct DocumentListSearchLoadingTests {
         }
         await store.receive(\.view) {
             $0.error = nil
-            $0.filter.input = .testValue(searchValue: "Lego")
+            $0.filter.input = .testValue(searchRuleType: .titleContent, searchValue: "Lego")
             $0.filter.savedView = savedView
         }
     }

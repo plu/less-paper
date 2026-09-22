@@ -284,18 +284,25 @@ No new user-facing strings, so no `Localizable.xcstrings` change in any module.
 
 - `FilterRuleTests`: `upgraded(forApiVersion:)` at 8, 9 and 10 — 19 becomes 49 only at 10; 0, 20,
   36 and 42 are never rewritten at any version; an empty array round-trips.
-- `DocumentFilterInputTests`: a saved view carrying rule 49 produces `searchType == .titleContent`
-  with the term in `searchValue` and **not** in `unsupportedFilterRules` — this is the regression
-  test for the invisible-filter bug, and it fails on `main` today. The same for rule 48 and
-  `.title`. Round-trip tests that 19 in produces 19 out and 49 in produces 49 out.
-- `DocumentFilterReducerTests`: a saved view stored with rule 19, loaded on a server negotiated at
-  10, reports `isModified == false`. The same view after `saveButtonTapped` and a response carrying
-  49 also reports `isModified == false`. These two are the load-bearing tests for the boundary
-  decision — put the translation in the feature layer and the first one fails.
-- `DocumentsRepositoryTests`: the request built for a negotiated 9 carries `title_content=`, and for
-  a negotiated 10 carries `text=`; with no negotiated version stored it carries `title_content=`.
-- `SaveSavedViewUseCaseTests`: extend the existing version-branch tests so the 10 case also asserts
-  `filter_rules` went out with `rule_type: 49` and the 9 case with `rule_type: 19`.
+- `FilterRuleTests`: `upgraded(forApiVersion:)` at 8, 9 and 10 — 19 becomes 49 only at 10; 0, 20,
+  36, 42 and an already-upgraded 49 are never rewritten; an empty array round-trips. One test goes
+  the whole way to `queryDictionary`, so the thing actually asserted is `title_content` at 9 and
+  `text` at 10 rather than a rule number.
+- `DocumentFilterInputTests`: `initWithSearchTypeFilterRule` gains rows for 48 and 49 and now
+  asserts the remembered `searchRuleType` — the regression test for the invisible-filter bug, and
+  it fails on `main` today. Plus round-trips for all four rule types, a test that switching the
+  search type drops the remembered rule, and one that a filter built from scratch uses 19.
+- `DocumentFilterReducerTests`: a saved view stored with either 19 or 49 reports
+  `isModified == false` with the term visible in the sheet. This is the load-bearing test for the
+  boundary decision — put the translation in the feature layer and the 19 case fails.
+- `SaveSavedViewUseCaseTests`: two tests around the existing version branch, asserting the saved
+  view goes out with `rule_type: 19` at version 9 and `rule_type: 49` at 10.
+
+The wire behaviour is covered at the `[FilterRule]` altitude rather than at the request, because
+that is where this repository already tests `queryDictionary`, and because
+`DocumentsRepositoryTests` is an integration suite against a live seeded instance rather than a
+unit test of the URL. The repository change itself is the four-line `@Shared` read that four other
+use cases already carry verbatim.
 - No snapshot changes. Nothing on screen moves — the picker still reads *Title & content*.
 
 **Acceptance, measured on a production-sized corpus.** The dev instance cannot show any of this:
