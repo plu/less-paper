@@ -606,7 +606,7 @@ struct DocumentListReducerTests {
         }
 
         await store.send(.view(.savedViewButtonTapped(savedView))) {
-            $0.filter.input = .testValue(searchValue: "Lego")
+            $0.filter.input = .testValue(searchRuleType: .titleContent, searchValue: "Lego")
             $0.filter.savedView = savedView
         }
         await store.receive(\.replaceDocuments, .testValue(

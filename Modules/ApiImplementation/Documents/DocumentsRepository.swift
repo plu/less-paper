@@ -4,6 +4,7 @@ import DependenciesMacros
 import Foundation
 import Get
 import MultipartFormDataKit
+import SwiftSharing
 
 @DependencyClient
 struct DocumentsRepository: Sendable {
@@ -169,9 +170,18 @@ private extension DocumentsRepository {
         input: GetAllDocumentIdsInput,
         server: Server
     ) async throws -> GetAllDocumentIdsOutput {
-        try await APIClient
+        @Shared(.apiVersion(server))
+        var apiVersion: Int?
+
+        // Not yet negotiated reads as the oldest server this app supports: the newer shape is the
+        // one that has to be earned by a version we have actually seen.
+        let version = apiVersion ?? ApiVersion.minimumSupported
+
+        return try await APIClient
             .client(server: server)
-            .send(.init(input: input))
+            .send(.init(input: GetAllDocumentIdsInput(
+                filterRules: input.filterRules.upgraded(forApiVersion: version)
+            )))
             .value
     }
 
@@ -205,9 +215,23 @@ private extension DocumentsRepository {
         input: GetDocumentsInput,
         server: Server
     ) async throws -> GetDocumentsOutput {
-        try await APIClient
+        @Shared(.apiVersion(server))
+        var apiVersion: Int?
+
+        // Not yet negotiated reads as the oldest server this app supports: the newer shape is the
+        // one that has to be earned by a version we have actually seen.
+        let version = apiVersion ?? ApiVersion.minimumSupported
+
+        // A paginated request carries the server's own `next` link, which already spells the
+        // parameter the first request sent, so only the rules are rewritten here.
+        return try await APIClient
             .client(server: server)
-            .send(.init(input: input))
+            .send(.init(input: GetDocumentsInput(
+                filterRules: input.filterRules.upgraded(forApiVersion: version),
+                sortDirection: input.sortDirection,
+                sortField: input.sortField,
+                url: input.url
+            )))
             .value
     }
 

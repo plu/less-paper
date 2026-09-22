@@ -11,6 +11,23 @@ public struct FilterRule: Comparable, Codable, Equatable, Hashable, Sendable {
 }
 
 public extension [FilterRule] {
+
+    // Applied at the API boundary and nowhere else. A pre-3.0 server does not reject `text=`, it
+    // drops it, so sending the new parameter to one answers a search with the whole archive.
+    // Keeping the rewrite out of the feature layer also keeps `isModified` honest: a saved view
+    // still stored with rule 19 would otherwise open already marked as modified.
+    func upgraded(forApiVersion version: Int) -> [FilterRule] {
+        guard version >= ApiVersion.tantivyTextSearch else {
+            return self
+        }
+        return map { filterRule in
+            guard filterRule.ruleType == .titleContent else {
+                return filterRule
+            }
+            return FilterRule(ruleType: .simpleText, value: filterRule.value)
+        }
+    }
+
     var merged: [FilterRule] {
         var merged = [FilterRule]()
         var previousRule: FilterRule?

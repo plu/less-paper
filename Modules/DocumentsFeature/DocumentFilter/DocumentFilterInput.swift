@@ -47,6 +47,10 @@ public struct DocumentFilterInput: Equatable {
     var customFieldQuery: CustomFieldQuery?
     var date = DateFilter()
     var documentType = ListFilter<DocumentType>()
+    // Remembered from the saved view rather than normalised. paperless-ngx 3.0 writes rule 49 where
+    // older servers wrote 19, and `isModified` compares the stored rules against these - emit the
+    // other one and a view the web client wrote opens with a live Save button nobody pressed.
+    var searchRuleType: FilterRuleType?
     var searchType = DocumentFilterSearchType.titleContent
     var searchValue = ""
     var sort = SortFilter()
@@ -99,6 +103,7 @@ extension DocumentFilterInput {
         sort.field = sortField ?? .added
         storagePath.selection = []
         tag.selection = .init()
+        searchRuleType = nil
         unsupportedFilterRules = []
 
         var dateRules = [FilterRule]()
@@ -197,11 +202,13 @@ extension DocumentFilterInput {
                 )
             case .storagePath:
                 storagePath.rule = .notAssigned
-            case .title:
+            case .title, .simpleTitle:
                 searchType = .title
+                searchRuleType = filterRule.ruleType
                 setSearchValue(filterRule)
-            case .titleContent:
+            case .titleContent, .simpleText:
                 searchType = .titleContent
+                searchRuleType = filterRule.ruleType
                 setSearchValue(filterRule)
             default:
                 unsupportedFilterRules.append(filterRule)
@@ -282,9 +289,9 @@ extension DocumentFilterInput {
         case .customFields:
             append(&filterRules, ruleType: .customFieldsText)
         case .title:
-            append(&filterRules, ruleType: .title)
+            append(&filterRules, ruleType: remembered(.simpleTitle, otherwise: .title))
         case .titleContent:
-            append(&filterRules, ruleType: .titleContent)
+            append(&filterRules, ruleType: remembered(.simpleText, otherwise: .titleContent))
         }
 
         switch correspondent.rule {
@@ -405,6 +412,13 @@ extension DocumentFilterInput {
         return filterRules
     }
 
+    // Matching on the alternative rather than reading `searchRuleType` directly is what keeps a
+    // remembered rule from surviving a change of search type: switch the picker from title and
+    // content to title and the 49 in hand is not `.simpleTitle`, so the default wins.
+    private func remembered(_ alternative: FilterRuleType, otherwise ruleType: FilterRuleType) -> FilterRuleType {
+        searchRuleType == alternative ? alternative : ruleType
+    }
+
     private func append(_ filterRules: inout [FilterRule], ruleType: FilterRuleType) {
         if !searchValue.isEmpty {
             filterRules.append(.init(ruleType: ruleType, value: searchValue))
@@ -444,6 +458,7 @@ extension DocumentFilterInput {
         correspondent: ListFilter<Correspondent> = .init(),
         customFieldQuery: CustomFieldQuery? = nil,
         documentType: ListFilter<DocumentType> = .init(),
+        searchRuleType: FilterRuleType? = nil,
         searchType: DocumentFilterSearchType = .titleContent,
         searchValue: String = "",
         sort: SortFilter = .init(),
@@ -456,6 +471,7 @@ extension DocumentFilterInput {
             correspondent: correspondent,
             customFieldQuery: customFieldQuery,
             documentType: documentType,
+            searchRuleType: searchRuleType,
             searchType: searchType,
             searchValue: searchValue,
             sort: sort,

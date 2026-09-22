@@ -437,14 +437,21 @@ struct DocumentFilterInputTests {
         #expect(input.searchValue == "123")
     }
 
+    // paperless-ngx 3.0 writes rules 48 and 49 where older servers wrote 0 and 19. Both spellings
+    // have to read back into the same search type: until they did, a saved view the web client
+    // wrote landed in `unsupportedFilterRules`, so the filter narrowed the list while the search
+    // field in the sheet sat empty and could not clear it.
     @Test(arguments: [
-        (FilterRuleType.titleContent, DocumentFilterSearchType.titleContent),
-        (FilterRuleType.title, DocumentFilterSearchType.title),
-        (FilterRuleType.customFieldsText, DocumentFilterSearchType.customFields),
+        (FilterRuleType.titleContent, DocumentFilterSearchType.titleContent, FilterRuleType?.some(.titleContent)),
+        (FilterRuleType.simpleText, DocumentFilterSearchType.titleContent, FilterRuleType?.some(.simpleText)),
+        (FilterRuleType.title, DocumentFilterSearchType.title, FilterRuleType?.some(.title)),
+        (FilterRuleType.simpleTitle, DocumentFilterSearchType.title, FilterRuleType?.some(.simpleTitle)),
+        (FilterRuleType.customFieldsText, DocumentFilterSearchType.customFields, FilterRuleType?.none),
     ])
     func initWithSearchTypeFilterRule(
         ruleType: FilterRuleType,
-        expectedSearchType: DocumentFilterSearchType
+        expectedSearchType: DocumentFilterSearchType,
+        expectedSearchRuleType: FilterRuleType?
     ) async throws {
         let filterRules = [FilterRule(ruleType: ruleType, value: "test")]
         let input = DocumentFilterInput(
@@ -455,6 +462,7 @@ struct DocumentFilterInputTests {
         )
 
         expectNoDifference(input, DocumentFilterInput(
+            searchRuleType: expectedSearchRuleType,
             searchType: expectedSearchType,
             searchValue: "test"
         ))
@@ -884,6 +892,7 @@ struct DocumentFilterInputTests {
         expectNoDifference(input, DocumentFilterInput(
             correspondent: .init(rule: .include, selection: [correspondent]),
             documentType: .init(rule: .exclude, selection: [documentType]),
+            searchRuleType: .titleContent,
             searchType: .titleContent,
             searchValue: "invoice",
             storagePath: .init(rule: .include, selection: [storagePath])
@@ -1279,5 +1288,50 @@ struct DocumentFilterInputCustomFieldQueryTests {
         #expect(input.customFieldQuery == nil)
         #expect(input.searchType == .customFields)
         #expect(input.searchValue == "invoice")
+    }
+
+    // Re-emitting what was read is what keeps `isModified` false on a view nobody has touched.
+    @Test(arguments: [
+        FilterRuleType.simpleText,
+        .titleContent,
+        .simpleTitle,
+        .title,
+    ])
+    func roundTripsTheRuleTypeItWasGiven(ruleType: FilterRuleType) {
+        let input = DocumentFilterInput(
+            filterRules: [.init(ruleType: ruleType, value: "Rechnung")],
+            server: .testValue(),
+            sortDirection: nil,
+            sortField: nil
+        )
+
+        expectNoDifference(input.filterRules, [.init(ruleType: ruleType, value: "Rechnung")])
+    }
+
+    @Test
+    func forgetsTheRememberedRuleTypeWhenTheSearchTypeChanges() {
+        var input = DocumentFilterInput(
+            filterRules: [.init(ruleType: .simpleText, value: "Rechnung")],
+            server: .testValue(),
+            sortDirection: nil,
+            sortField: nil
+        )
+
+        input.searchType = .title
+
+        expectNoDifference(input.filterRules, [.init(ruleType: .title, value: "Rechnung")])
+
+        input.searchType = .titleContent
+
+        expectNoDifference(input.filterRules, [.init(ruleType: .simpleText, value: "Rechnung")])
+    }
+
+    @Test
+    func aFilterBuiltFromScratchUsesTheOlderRuleType() {
+        var input = DocumentFilterInput()
+        input.searchType = .titleContent
+        input.searchValue = "Rechnung"
+
+        expectNoDifference(input.filterRules, [.init(ruleType: .titleContent, value: "Rechnung")])
     }
 }
