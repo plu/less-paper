@@ -1,6 +1,7 @@
 import ApiInterface
 import ComposableArchitecture
 import Foundation
+import Tagged
 
 @Reducer
 public struct DocumentCustomFieldsReducer: Sendable {

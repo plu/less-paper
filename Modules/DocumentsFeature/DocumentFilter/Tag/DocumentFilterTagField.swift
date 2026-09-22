@@ -3,6 +3,7 @@ import Components
 import ComposableArchitecture
 import DesignTokens
 import SwiftUI
+import Tagged
 import TagsFeature
 
 struct DocumentFilterTagField: View {

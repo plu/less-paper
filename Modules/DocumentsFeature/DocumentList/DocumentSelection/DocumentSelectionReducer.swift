@@ -2,6 +2,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import SwiftUI
+import Tagged
 
 @Reducer
 public struct DocumentSelectionReducer: Sendable {

@@ -1,6 +1,7 @@
 import ApiInterface
 import Components
 import Foundation
+import Tagged
 
 public struct DocumentTypeFormInput: Equatable, Sendable {
 

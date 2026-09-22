@@ -2,6 +2,7 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+import Tagged
 
 @Reducer
 public struct DocumentBulkEditMergeReducer: Sendable {
