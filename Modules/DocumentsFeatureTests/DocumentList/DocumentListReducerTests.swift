@@ -221,13 +221,14 @@ struct DocumentListReducerTests {
                 toasts.withValue { $0.append(value) }
             }
         }
-        // Off because the tip-invitation check races with this effect - see
-        // DocumentListTipInvitationTests for the check itself. Skipped assertions still print,
-        // so a real ordering regression shows up in the log instead of passing silently.
-        store.exhaustivity = .off(showSkippedAssertions: true)
+        // `onAppear` merges the fetch with the tip-invitation check, and merged effects have no
+        // order between them, so `.tipInvitationEligible` is left unreceived: receiving it pins an
+        // order the reducer never promised, and whichever lands first swallows the other. Skipped
+        // assertions are off for the same reason - with no order there is always one to report.
+        // DocumentListTipInvitationTests covers the check itself.
+        store.exhaustivity = .off
 
         await store.send(.view(.onAppear))
-        await store.receive(\.tipInvitationEligible)
         await store.receive(\.error) {
             $0.error = "Something went wrong"
         }
@@ -264,13 +265,14 @@ struct DocumentListReducerTests {
                 )
             }
         }
-        // Off because the tip-invitation check races with this effect - see
-        // DocumentListTipInvitationTests for the check itself. Skipped assertions still print,
-        // so a real ordering regression shows up in the log instead of passing silently.
-        store.exhaustivity = .off(showSkippedAssertions: true)
+        // `onAppear` merges the fetch with the tip-invitation check, and merged effects have no
+        // order between them, so `.tipInvitationEligible` is left unreceived: receiving it pins an
+        // order the reducer never promised, and whichever lands first swallows the other. Skipped
+        // assertions are off for the same reason - with no order there is always one to report.
+        // DocumentListTipInvitationTests covers the check itself.
+        store.exhaustivity = .off
 
         await store.send(.view(.onAppear))
-        await store.receive(\.tipInvitationEligible)
         await store.receive(\.replaceDocuments, .testValue(
             count: 77,
             results: [.testValue()]
@@ -315,15 +317,16 @@ struct DocumentListReducerTests {
                 return .testValue(count: 1, results: [.testValue()])
             }
         }
-        // Off because the tip-invitation check races with this effect - see
-        // DocumentListTipInvitationTests for the check itself. Skipped assertions still print,
-        // so a real ordering regression shows up in the log instead of passing silently.
-        store.exhaustivity = .off(showSkippedAssertions: true)
+        // `onAppear` merges the fetch with the tip-invitation check, and merged effects have no
+        // order between them, so `.tipInvitationEligible` is left unreceived: receiving it pins an
+        // order the reducer never promised, and whichever lands first swallows the other. Skipped
+        // assertions are off for the same reason - with no order there is always one to report.
+        // DocumentListTipInvitationTests covers the check itself.
+        store.exhaustivity = .off
 
         await store.send(.view(.onAppear)) {
             $0.filter = .inbox(server: server)
         }
-        await store.receive(\.tipInvitationEligible)
         await store.receive(\.replaceDocuments) {
             $0.documents = [.testValue()]
             $0.documentSelection.allLoadedDocuments = [1]
