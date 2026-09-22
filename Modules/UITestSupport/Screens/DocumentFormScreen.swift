@@ -32,7 +32,7 @@ public struct DocumentFormScreen {
         // raises the keyboard instead of opening anything. Waiting on the second cell is what
         // waits for the documents themselves — the search row exists before any of them arrive.
         guard app.cells.element(boundBy: 1).waitForExistence(timeout: timeout),
-              let cell = app.cells.allElementsBoundByIndex.first(where: { $0.textFields.isEmpty }),
+              let cell = app.cells.allElementsBoundByIndex.first(where: { !$0.textFields.firstMatch.exists }),
               cell.waitUntilHittable(timeout: timeout)
         else {
             return false
