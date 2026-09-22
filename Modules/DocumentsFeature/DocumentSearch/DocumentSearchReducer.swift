@@ -152,6 +152,13 @@ public struct DocumentSearchReducer: Sendable {
             case let .view(.savedViewTapped(savedView)):
                 return clearThenDelegate(&state, .savedViewTapped(savedView))
             case let .view(.searchTextChanged(searchText)):
+                // The write-back `clearedQuery` exists for: the text field handing back the query
+                // the commit has just emptied. Taking it would restart the search that was
+                // finished, over the documents it fetched.
+                guard state.clearedQuery != searchText else {
+                    state.clearedQuery = nil
+                    return .none
+                }
                 state.clearedQuery = nil
                 state.searchText = searchText
                 guard state.hasQuery else {

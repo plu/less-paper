@@ -22,7 +22,7 @@ struct DocumentSearchBarView: View {
             // An icon rather than the word, with the tap target spelled out: the glyph is about
             // 15pt on its own, and this one sits a thumb's width from a field people are typing
             // into. The label is what VoiceOver announces and what the journey looks for.
-            if isSearchFocused || !store.searchText.isEmpty {
+            if isCancelVisible {
                 Button {
                     isSearchFocused = false
                     send(.cancelButtonTapped)
@@ -35,9 +35,15 @@ struct DocumentSearchBarView: View {
                 }
                 .accessibilityLabel(.cancel)
                 .buttonStyle(.plain)
+                // Without a transition the button is inserted at full opacity on the frame the
+                // field starts narrowing, so it lands before the space it is landing in exists.
+                .transition(.opacity.combined(with: .scale(scale: 0.8)))
             }
         }
-        .animation(.default, value: isSearchFocused)
+        // Keyed on the button rather than on focus: it is the button's presence that changes the
+        // field's width, and text arriving without a focus change — a query that survived a push —
+        // moves the same layout.
+        .animation(.default, value: isCancelVisible)
         .onChange(of: store.dismissalCount) { isSearchFocused = false }
     }
 
@@ -62,6 +68,10 @@ struct DocumentSearchBarView: View {
                 send(.searchTextChanged($0))
             }
         )
+    }
+
+    private var isCancelVisible: Bool {
+        isSearchFocused || !store.searchText.isEmpty
     }
 
     // Deliberately not raised on appear: the field is a row of the documents list now rather than
