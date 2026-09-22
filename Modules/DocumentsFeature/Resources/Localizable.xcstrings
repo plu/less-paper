@@ -828,6 +828,23 @@
         }
       }
     },
+    "cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abbrechen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
     "checksum": {
       "extractionState": "manual",
       "localizations": {
@@ -841,6 +858,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Checksum"
+          }
+        }
+      }
+    },
+    "clearSearch": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suche löschen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear search"
           }
         }
       }

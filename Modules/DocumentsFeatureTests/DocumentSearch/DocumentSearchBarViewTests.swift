@@ -9,7 +9,7 @@ import TestSupport
 @Suite(
     .testDependencies()
 )
-struct DocumentSearchSheetViewTests {
+struct DocumentSearchBarViewTests {
 
     @Test
     func searchTextBinding_sendsWhenTheValueChanges() async throws {
@@ -41,8 +41,8 @@ struct DocumentSearchSheetViewTests {
         #expect(sent.value.isEmpty)
     }
 
-    // Reopening the sheet hands the same child store back, so the field comes up holding the query
-    // it was closed on rather than an empty string.
+    // The field reads the query straight out of state, so a query that outlived a push to a
+    // document detail is what the field shows on the way back.
     @Test
     func searchTextBinding_readsTheStoredQuery() async throws {
         let (view, _) = view(searchText: "manual")
@@ -50,7 +50,7 @@ struct DocumentSearchSheetViewTests {
         #expect(view.searchTextBinding.wrappedValue == "manual")
     }
 
-    private func view(searchText: String) -> (DocumentSearchSheetView, LockIsolated<[String]>) {
+    private func view(searchText: String) -> (DocumentSearchBarView, LockIsolated<[String]>) {
         let sent = LockIsolated<[String]>([])
         let store = Store(
             initialState: DocumentSearchReducer.State.testValue(searchText: searchText)
@@ -62,6 +62,6 @@ struct DocumentSearchSheetViewTests {
                 return .none
             }
         }
-        return (DocumentSearchSheetView(store: store), sent)
+        return (DocumentSearchBarView(store: store), sent)
     }
 }

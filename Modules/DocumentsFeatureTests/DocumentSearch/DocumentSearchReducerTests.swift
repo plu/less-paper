@@ -194,123 +194,234 @@ struct DocumentSearchReducerTests {
         #expect(store.state.results == previous)
     }
 
+    // The one tap that leaves the query standing: the detail is pushed over the results and
+    // coming back has to return the user to them.
     @Test
-    func view_documentTapped_delegates() async throws {
+    func view_documentTapped_delegatesAndKeepsTheQuery() async throws {
         let document = Document.testValue(id: 8)
-        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
+        let results = GlobalSearchOutput.testValue(documents: [document])
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            results: results,
+            searchText: "man"
+        )) {
             DocumentSearchReducer()
         }
 
         await store.send(.view(.documentTapped(document)))
         await store.receive(\.delegate.documentTapped, document.id)
+
+        #expect(store.state.searchText == "man")
+        #expect(store.state.results == results)
     }
 
+    // Each of the six below is the same shape: the filter the tap composes, and the clear that
+    // ends the search. They start from a query because that is the only way a result can be on
+    // screen to tap.
     @Test
-    func view_tagTapped_delegatesAFilter() async throws {
+    func view_tagTapped_delegatesAFilterAndClears() async throws {
         let tag = Tag.testValue(id: 7, name: "Manual")
-        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
-            DocumentSearchReducer()
-        }
+        let store = searchingStore()
 
-        await store.send(.view(.tagTapped(tag)))
+        await store.send(.view(.tagTapped(tag))) {
+            $0.dismissalCount = 1
+            $0.results = nil
+            $0.searchText = ""
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(tag: tag))
+
+        #expect(!store.state.hasQuery)
     }
 
     @Test
-    func view_correspondentTapped_delegatesAFilter() async throws {
+    func view_correspondentTapped_delegatesAFilterAndClears() async throws {
         let correspondent = Correspondent.testValue(id: 4)
-        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
-            DocumentSearchReducer()
-        }
+        let store = searchingStore()
 
-        await store.send(.view(.correspondentTapped(correspondent)))
+        await store.send(.view(.correspondentTapped(correspondent))) {
+            $0.dismissalCount = 1
+            $0.results = nil
+            $0.searchText = ""
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(correspondent: correspondent))
     }
 
     @Test
-    func view_customFieldTapped_delegatesAFilter() async throws {
+    func view_customFieldTapped_delegatesAFilterAndClears() async throws {
         let customField = CustomField.testValue(id: 2)
-        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
-            DocumentSearchReducer()
-        }
+        let store = searchingStore()
 
-        await store.send(.view(.customFieldTapped(customField)))
+        await store.send(.view(.customFieldTapped(customField))) {
+            $0.dismissalCount = 1
+            $0.results = nil
+            $0.searchText = ""
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(customField: customField))
     }
 
     @Test
-    func view_documentTypeTapped_delegatesAFilter() async throws {
+    func view_documentTypeTapped_delegatesAFilterAndClears() async throws {
         let documentType = DocumentType.testValue(id: 5)
-        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
-            DocumentSearchReducer()
-        }
+        let store = searchingStore()
 
-        await store.send(.view(.documentTypeTapped(documentType)))
+        await store.send(.view(.documentTypeTapped(documentType))) {
+            $0.dismissalCount = 1
+            $0.results = nil
+            $0.searchText = ""
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(documentType: documentType))
     }
 
     @Test
-    func view_storagePathTapped_delegatesAFilter() async throws {
+    func view_storagePathTapped_delegatesAFilterAndClears() async throws {
         let storagePath = StoragePath.testValue(id: 6)
-        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
-            DocumentSearchReducer()
-        }
+        let store = searchingStore()
 
-        await store.send(.view(.storagePathTapped(storagePath)))
+        await store.send(.view(.storagePathTapped(storagePath))) {
+            $0.dismissalCount = 1
+            $0.results = nil
+            $0.searchText = ""
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(storagePath: storagePath))
     }
 
     @Test
-    func view_savedViewTapped_delegates() async throws {
+    func view_savedViewTapped_delegatesAndClears() async throws {
         let savedView = SavedView.testValue()
-        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
-            DocumentSearchReducer()
-        }
+        let store = searchingStore()
 
-        await store.send(.view(.savedViewTapped(savedView)))
+        await store.send(.view(.savedViewTapped(savedView))) {
+            $0.dismissalCount = 1
+            $0.results = nil
+            $0.searchText = ""
+        }
         await store.receive(\.delegate.savedViewTapped, savedView)
     }
 
+    // The debounce and the request share `CancelID.search`, so clearing has to cancel as well as
+    // wipe: a response for the query just thrown away would otherwise land and repopulate it.
     @Test
-    func view_closeButtonTapped_delegatesClose() async throws {
-        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
-            searchText: "manual"
-        )) {
+    func view_tagTapped_cancelsAnInFlightSearch() async throws {
+        let clock = TestClock()
+        let tag = Tag.testValue(id: 7, name: "Manual")
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
             DocumentSearchReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.globalSearch.execute = { _, _ in
+                try await clock.sleep(for: .seconds(60))
+                return .testValue(tags: [tag])
+            }
         }
 
-        await store.send(.view(.closeButtonTapped))
-        await store.receive(\.delegate.closeRequested)
+        await store.send(.view(.searchTextChanged("man"))) {
+            $0.searchText = "man"
+            $0.isLoading = true
+        }
+        await clock.advance(by: .milliseconds(400))
+        await store.receive(\.searchDebounced)
+
+        await store.send(.view(.tagTapped(tag))) {
+            $0.dismissalCount = 1
+            $0.isLoading = false
+            $0.searchText = ""
+        }
+        await store.receive(\.delegate.filterRequested)
+
+        await clock.advance(by: .seconds(60))
+        await store.finish()
     }
 
-    // Closing is not a reset: the sheet is expected to come back holding what it was closed on.
+    // Cancel is the whole way out — one tap back to the document list — rather than the field's
+    // `X`, which only wipes the text and leaves the user in the field with the keyboard up.
     @Test
-    func view_closeButtonTapped_keepsTheQueryAndResults() async throws {
-        let results = GlobalSearchOutput.testValue(tags: [.testValue(id: 7, name: "Manual")])
+    func view_cancelButtonTapped_clearsTheQueryAndResults() async throws {
         let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
-            results: results,
+            error: "offline",
+            isLoading: true,
+            results: .testValue(tags: [.testValue(id: 7, name: "Manual")]),
             searchText: "manual"
         )) {
             DocumentSearchReducer()
         }
 
-        await store.send(.view(.closeButtonTapped))
-        await store.receive(\.delegate.closeRequested)
+        await store.send(.view(.cancelButtonTapped)) {
+            $0.dismissalCount = 1
+            $0.error = nil
+            $0.isLoading = false
+            $0.results = nil
+            $0.searchText = ""
+        }
 
-        #expect(store.state.searchText == "manual")
-        #expect(store.state.results == results)
+        #expect(!store.state.hasQuery)
     }
 
     @Test
-    func view_submitted_delegatesTheQuery() async throws {
+    func view_cancelButtonTapped_cancelsAnInFlightSearch() async throws {
+        let clock = TestClock()
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.globalSearch.execute = { _, _ in
+                try await clock.sleep(for: .seconds(60))
+                return .testValue(tags: [.testValue(id: 7, name: "Manual")])
+            }
+        }
+
+        await store.send(.view(.searchTextChanged("man"))) {
+            $0.searchText = "man"
+            $0.isLoading = true
+        }
+        await clock.advance(by: .milliseconds(400))
+        await store.receive(\.searchDebounced)
+
+        await store.send(.view(.cancelButtonTapped)) {
+            $0.dismissalCount = 1
+            $0.isLoading = false
+            $0.searchText = ""
+        }
+
+        await clock.advance(by: .seconds(60))
+        await store.finish()
+    }
+
+    // The delegate still carries the query the user typed, even though state no longer holds it:
+    // the filter is composed from what is committed, not from what the field is left showing.
+    @Test
+    func view_submitted_delegatesTheQueryAndClearsTheField() async throws {
         let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            results: .testValue(tags: [.testValue(id: 7, name: "Manual")]),
             searchText: "manual"
         )) {
             DocumentSearchReducer()
         }
 
-        await store.send(.view(.submitted))
+        await store.send(.view(.submitted)) {
+            $0.dismissalCount = 1
+            $0.results = nil
+            $0.searchText = ""
+        }
         await store.receive(\.delegate.queryCommitted, "manual")
+    }
+
+    // The field's own `X` empties the text and nothing more: the user is still in the field, so
+    // the keyboard stays up. `dismissalCount` is what the view watches to know the difference, and
+    // an `X` that bumped it would resign focus after every deletion.
+    @Test
+    func view_searchTextChanged_doesNotCountAsADismissal() async throws {
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            results: .testValue(tags: [.testValue(id: 7, name: "Manual")]),
+            searchText: "manual"
+        )) {
+            DocumentSearchReducer()
+        }
+
+        await store.send(.view(.searchTextChanged(""))) {
+            $0.results = nil
+            $0.searchText = ""
+        }
+
+        #expect(store.state.dismissalCount == 0)
     }
 
     // Submitting two characters would put a filter on screen the results list never showed.
@@ -323,6 +434,15 @@ struct DocumentSearchReducerTests {
         }
 
         await store.send(.view(.submitted))
+    }
+
+    private func searchingStore() -> TestStoreOf<DocumentSearchReducer> {
+        TestStore(initialState: DocumentSearchReducer.State.testValue(
+            results: .testValue(tags: [.testValue(id: 7, name: "Manual")]),
+            searchText: "man"
+        )) {
+            DocumentSearchReducer()
+        }
     }
 }
 

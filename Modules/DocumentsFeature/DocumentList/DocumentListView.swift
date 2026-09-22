@@ -9,70 +9,20 @@ public struct DocumentListView: View {
     public var body: some View {
         AdaptiveNavigationView(path: $store.scope(state: \.path, action: \.path)) {
             List {
-                // The same `DocumentSearchField` the sheet shows, read-only, carrying whatever
-                // the sheet was last closed on — so the list says what is currently searched and
-                // tapping it goes back in to refine. Collapsed into one element for VoiceOver:
-                // it is a button that opens a sheet, not a field anyone can type into here.
-                Button {
-                    send(.searchButtonTapped)
-                } label: {
-                    DocumentSearchField(query: store.search.searchText)
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityAddTraits(.isButton)
-                        .accessibilityLabel(.search)
-                        .accessibilityValue(store.search.searchText)
-                }
-                .buttonStyle(.plain)
-                // The whole control, not just the glyphs: a Button's label only takes taps where
-                // it draws, and the field is mostly empty space.
-                .contentShape(.rect)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
-                .listRowSeparator(.hidden)
-                .padding(.horizontal, .x3)
-                .padding(.top, .x3)
-                if store.isTipInvitationVisible {
-                    // Animated on both paths: the row is answered at most once in a user's
-                    // lifetime, and having it vanish between two frames reads as a glitch rather
-                    // than as the app acknowledging what they just did.
-                    TipInvitationBanner(
-                        tapped: { send(.tipInvitationTapped, animation: .default) },
-                        dismissed: { send(.tipInvitationDismissed, animation: .default) }
-                    )
+                // Outside the branch below rather than inside either half of it, which is both
+                // what keeps it reachable in each mode and what keeps its identity — and so the
+                // keyboard — stable as the rows underneath it are swapped.
+                DocumentSearchBarView(store: searchStore)
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)
-                    .padding(.x3)
+                    .padding(.horizontal, .x3)
+                    .padding(.top, .x3)
+                if store.isSearching {
+                    DocumentSearchResultsView(store: searchStore)
+                } else {
+                    documentRows()
                 }
-                // Rows default to `systemBackground`, which is black in dark mode and so paints over
-                // the list's `m3SurfaceContainerLowest`. Invisible in light mode, where both are white.
-                ForEach(Array(store.scope(state: \.documents, action: \.documents))) { store in
-                    DocumentRowView(store: store)
-                        .documentSelectionOverlay(
-                            document: store.document.id,
-                            store: documentSelectionStore
-                        )
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                        .onAppear { send(.onRowAppear(store.document)) }
-                        .padding(.x3)
-                }
-                if store.isLoadingMore {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                            .controlSize(.large)
-                            .id(UUID())
-                        Spacer()
-                    }
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .padding(.x3)
-                }
-                Spacer()
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
             }
             .background(Color.m3SurfaceContainerLowest)
             .documentListBottomToolbar(store: store, viewAction: send)
@@ -88,6 +38,9 @@ public struct DocumentListView: View {
             .overlay(DocumentListEmptyView(store: store))
             .refreshable { await send(.onRefresh).finish() }
             .scrollContentBackground(.hidden)
+            // Dragging the results is as much a way of saying "let me see them" as scrolling a
+            // sheet was.
+            .scrollDismissesKeyboard(.immediately)
             .task { await send(.onAppear).finish() }
         } destination: { store in
             switch store.case {
@@ -113,15 +66,6 @@ public struct DocumentListView: View {
             DocumentFilterView(store: store)
                 .presentationDetents([.sheet])
         }
-        // Presented against a plain flag with the child store scoped in, rather than through
-        // `destination`: the search is a permanent child of this state, so closing the sheet has
-        // to leave the query and its results intact for the next time it opens.
-        // Full height rather than the filter sheet's `.sheet` detent: the results run to seven
-        // sections, and a 600pt sheet with the keyboard up leaves almost none of them visible.
-        .sheet(isPresented: $store.isSearchPresented) {
-            DocumentSearchSheetView(store: searchStore)
-                .presentationDetents([.large])
-        }
     }
 
     public init(store: StoreOf<DocumentListReducer>) {
@@ -133,6 +77,52 @@ public struct DocumentListView: View {
 
     @Environment(\.horizontalSizeClass)
     private var horizontalSizeClass
+
+    @ViewBuilder
+    private func documentRows() -> some View {
+        if store.isTipInvitationVisible {
+            // Animated on both paths: the row is answered at most once in a user's lifetime, and
+            // having it vanish between two frames reads as a glitch rather than as the app
+            // acknowledging what they just did.
+            TipInvitationBanner(
+                tapped: { send(.tipInvitationTapped, animation: .default) },
+                dismissed: { send(.tipInvitationDismissed, animation: .default) }
+            )
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
+            .padding(.x3)
+        }
+        // Rows default to `systemBackground`, which is black in dark mode and so paints over
+        // the list's `m3SurfaceContainerLowest`. Invisible in light mode, where both are white.
+        ForEach(Array(store.scope(state: \.documents, action: \.documents))) { store in
+            DocumentRowView(store: store)
+                .documentSelectionOverlay(
+                    document: store.document.id,
+                    store: documentSelectionStore
+                )
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .onAppear { send(.onRowAppear(store.document)) }
+                .padding(.x3)
+        }
+        if store.isLoadingMore {
+            HStack {
+                Spacer()
+                ProgressView()
+                    .controlSize(.large)
+                    .id(UUID())
+                Spacer()
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .padding(.x3)
+        }
+        Spacer()
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+    }
 
     @ViewBuilder
     private func documentSelectionLoadingView() -> some View {

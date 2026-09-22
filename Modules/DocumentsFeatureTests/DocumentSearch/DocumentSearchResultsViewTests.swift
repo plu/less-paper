@@ -17,8 +17,8 @@ struct DocumentSearchResultsViewTests {
 
     // Wrapped in a `List` because the view's body is a set of `Section`s, which only render as rows
     // inside a list container — a bare render would record a reference that looks nothing like the
-    // screen. The wrapper below is the same container the sheet uses, default list style and all,
-    // so these references do show production chrome as well as content and section order.
+    // screen. The wrapper below is the documents list's own container, so these references show
+    // production chrome as well as content and section order.
     @Test
     func testSnapshot_populated() async throws {
         assertSnapshot(
@@ -165,13 +165,14 @@ struct DocumentSearchResultsViewTests {
         )
     }
 
-    // Matches DocumentSearchSheetView's container exactly; a reference recorded against a
-    // differently styled list would say nothing about what the sheet shows.
+    // Matches DocumentListView's container exactly, `listStyle(.plain)` included; a reference
+    // recorded against a differently styled list would say nothing about what the list shows.
     private func searchResultsList(@ViewBuilder content: () -> some View) -> some View {
         List {
             content()
         }
         .background(Color.m3SurfaceContainerLowest)
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
     }
 }

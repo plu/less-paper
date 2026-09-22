@@ -62,46 +62,25 @@ public struct DocumentListScreen {
         return true
     }
 
-    // The list's first row is a read-only copy of the search field, collapsed to a single button
-    // so it never announces as editable. It opens a sheet holding the real field, which is an
-    // ordinary textField, not a searchField: nothing here is `.searchable`.
+    // The list's first row is the search field itself — an ordinary textField, not a searchField:
+    // nothing here is `.searchable`. Typing three characters is what swaps the document rows for
+    // the result sections, so the caller waits on those rather than on this returning.
     @discardableResult
     public func search(for text: String) -> Bool {
-        guard openSearchSheet() else {
-            return false
-        }
         let field = searchField
-        guard field.waitForExistence(timeout: timeout) else {
+        guard field.waitUntilHittable(timeout: timeout) else {
             return false
         }
-        // The sheet focuses the field itself, but the keyboard is what `typeText` needs and it
-        // arrives a frame or two later. Tapping is the fallback, not the happy path: a tap landing
-        // mid-presentation can miss the field entirely.
-        if !app.keyboards.element.waitForExistence(timeout: timeout) {
-            guard field.waitUntilHittable(timeout: timeout) else {
-                return false
-            }
-            field.tap()
-            guard app.keyboards.element.waitForExistence(timeout: timeout) else {
-                return false
-            }
+        field.tap()
+        guard app.keyboards.element.waitForExistence(timeout: timeout) else {
+            return false
         }
         app.typeText(text)
         return true
     }
 
-    @discardableResult
-    public func openSearchSheet() -> Bool {
-        let button = app.buttons["Search"].firstMatch
-        guard button.waitUntilHittable(timeout: timeout) else {
-            return false
-        }
-        button.tap()
-        return true
-    }
-
-    // Read rather than tapped, so it deliberately does not wait on hittability: the assertion is
-    // about what the field still holds when the sheet is reopened.
+    // Read rather than tapped, so it deliberately does not wait on hittability: every assertion
+    // using this is about what the field is left holding.
     public func searchFieldText() -> String? {
         let field = searchField
         guard field.waitForExistence(timeout: timeout) else {
@@ -110,24 +89,20 @@ public struct DocumentListScreen {
         return field.value as? String
     }
 
-    @discardableResult
-    public func closeSearchSheet() -> Bool {
-        let close = app.buttons["Close"].firstMatch
-        guard close.waitUntilHittable(timeout: timeout) else {
-            return false
-        }
-        close.tap()
-        return true
+    // The field's placeholder renders as its value when it is empty, which is what an emptied
+    // field reports rather than "".
+    public func isSearchFieldEmpty() -> Bool {
+        searchFieldText().map { $0.isEmpty || $0 == "Search" } ?? false
     }
 
-    // The list's copy carries the current query as its accessibility value, so this reads what
-    // the list is showing without opening the sheet.
-    public func searchRowQuery() -> String? {
-        let button = app.buttons["Search"].firstMatch
-        guard button.waitForExistence(timeout: timeout) else {
-            return nil
+    @discardableResult
+    public func cancelSearch() -> Bool {
+        let cancel = app.buttons["Cancel"].firstMatch
+        guard cancel.waitUntilHittable(timeout: timeout) else {
+            return false
         }
-        return button.value as? String
+        cancel.tap()
+        return true
     }
 
     private var searchField: XCUIElement {
