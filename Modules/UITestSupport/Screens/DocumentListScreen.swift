@@ -75,6 +75,16 @@ public struct DocumentListScreen {
         return true
     }
 
+    // Read rather than tapped, so it deliberately does not wait on hittability: after a result tap
+    // the field is no longer focused and the assertion is about what it still holds.
+    public func searchFieldText() -> String? {
+        let field = app.searchFields.firstMatch
+        guard field.waitForExistence(timeout: timeout) else {
+            return nil
+        }
+        return field.value as? String
+    }
+
     // The Tags and Document types sections can both offer a result with the same label (seed data
     // has "Manual" as both a tag and a document type), and section order in the results list puts
     // Tags first, so firstMatch resolves to the tag when both are present.

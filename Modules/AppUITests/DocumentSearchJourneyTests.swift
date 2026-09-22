@@ -38,6 +38,12 @@ final class DocumentSearchJourneyTests: UITestCase {
         // The count is what proves the list actually narrowed, not merely that the document still
         // exists: the tag and document are both unique to this run, so exactly one document can
         // carry it, which makes "1 of 1" the deterministic result regardless of corpus size.
+        //
+        // It also proves the tag filter survived the tap. Resigning the search field's focus makes
+        // SwiftUI fire `onSubmit(of: .search)`, and an unsuppressed phantom submit would commit a
+        // full text search for the tag's name over the top of the filter just applied. That search
+        // matches nothing — the name is not in the document's content — so the collision shows up
+        // here as an empty list rather than as "1 of 1".
         XCTAssertTrue(
             app.staticTexts["1 of 1 loaded"].waitForExistence(timeout: timeout),
             "Filtering by \(name) did not narrow the list to its one document"
@@ -45,6 +51,15 @@ final class DocumentSearchJourneyTests: UITestCase {
         XCTAssertTrue(
             app.staticTexts[title].exists,
             "Filtering by \(name) did not leave \(title) in the list"
+        )
+
+        // The whole point of resigning focus rather than calling `dismissSearch`: the overlay goes
+        // away but the query stays, so tapping the field again resumes the same search. This is
+        // asserted here because it is SwiftUI focus behaviour that no TestStore or snapshot reaches.
+        XCTAssertEqual(
+            documents.searchFieldText(),
+            name,
+            "Tapping the \(name) result did not leave the typed text in the search field"
         )
     }
 

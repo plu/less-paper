@@ -61,6 +61,11 @@ public struct DocumentSearchReducer: Sendable {
         // own action immediately followed by a submit the user never made — which would apply the
         // tapped filter and then overwrite it with a plain text search. Not part of `init`: it is a
         // latch the reducer owns, never initial configuration.
+        //
+        // Cleared by `refocused` and by `searchTextChanged` as well as by the submit it absorbs.
+        // The phantom submit fires during resignation, so focus returning or a fresh keystroke both
+        // mean that window has shut — and a latch left armed by a tap that somehow produced no
+        // submit would otherwise wait indefinitely and swallow a real return press.
         var suppressesNextSubmit = false
 
         var trimmedQuery: String {
@@ -123,6 +128,7 @@ public struct DocumentSearchReducer: Sendable {
             // to coalesce. Shares CancelID.search with the debounce, so a sleep or request left
             // pending by earlier typing cannot land on top of this one.
             case .view(.refocused):
+                state.suppressesNextSubmit = false
                 guard state.hasQuery else {
                     return .none
                 }
@@ -131,6 +137,7 @@ public struct DocumentSearchReducer: Sendable {
                 return .runGlobalSearch(query: state.trimmedQuery, server: state.server)
             case let .view(.searchTextChanged(searchText)):
                 state.searchText = searchText
+                state.suppressesNextSubmit = false
                 guard state.hasQuery else {
                     state.error = nil
                     state.isLoading = false

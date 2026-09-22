@@ -434,6 +434,71 @@ struct DocumentSearchReducerTests {
 
         #expect(queries.value == ["manual"])
     }
+
+    // The latch exists only for the submit that resignation fires, and by the time focus is back
+    // that window has shut. Clearing it here is what stops a tap that somehow produced no submit
+    // from lying in wait and swallowing a genuine return press much later.
+    @Test
+    func view_refocused_clearsAStaleSubmitSuppression() async throws {
+        let tag = Tag.testValue(id: 7, name: "Manual")
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            searchText: "manual"
+        )) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.globalSearch.execute = { _, _ in .testValue() }
+        }
+
+        await store.send(.view(.tagTapped(tag))) {
+            $0.suppressesNextSubmit = true
+        }
+        await store.receive(\.delegate.filterRequested, .searchResult(tag: tag))
+
+        await store.send(.view(.refocused)) {
+            $0.isLoading = true
+            $0.suppressesNextSubmit = false
+        }
+        await store.receive(\.results) {
+            $0.isLoading = false
+            $0.results = .testValue()
+        }
+
+        await store.send(.view(.submitted))
+        await store.receive(\.delegate.queryCommitted, "manual")
+    }
+
+    // Typing is a fresh intent and must not inherit a latch armed by an earlier tap.
+    @Test
+    func view_searchTextChanged_clearsAStaleSubmitSuppression() async throws {
+        let clock = TestClock()
+        let tag = Tag.testValue(id: 7, name: "Manual")
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.globalSearch.execute = { _, _ in .testValue() }
+        }
+
+        await store.send(.view(.tagTapped(tag))) {
+            $0.suppressesNextSubmit = true
+        }
+        await store.receive(\.delegate.filterRequested, .searchResult(tag: tag))
+
+        await store.send(.view(.searchTextChanged("manual"))) {
+            $0.searchText = "manual"
+            $0.isLoading = true
+            $0.suppressesNextSubmit = false
+        }
+        await clock.advance(by: .milliseconds(400))
+        await store.receive(\.searchDebounced)
+        await store.receive(\.results) {
+            $0.isLoading = false
+            $0.results = .testValue()
+        }
+
+        await store.send(.view(.submitted))
+        await store.receive(\.delegate.queryCommitted, "manual")
+    }
 }
 
 private enum SearchTestError: Error {
