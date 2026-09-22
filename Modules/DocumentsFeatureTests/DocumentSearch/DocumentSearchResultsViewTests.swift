@@ -16,14 +16,13 @@ struct DocumentSearchResultsViewTests {
 
     // Wrapped in a `List` because the view's body is a set of `Section`s, which only render as rows
     // inside a list container — a bare render would record a reference that looks nothing like the
-    // screen. A bare `List` is inset-grouped, not the system-styled container `.searchSuggestions`
-    // supplies, so these references pin content and section order rather than production chrome.
+    // screen. A bare `List` is inset-grouped, not the plain one the search sheet wraps it in, so
+    // these references pin content and section order rather than production chrome.
     @Test
     func testSnapshot_populated() async throws {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             results: .testValue(
@@ -58,7 +57,6 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             results: .testValue(
@@ -82,7 +80,6 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             results: .testValue(),
@@ -105,7 +102,6 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             error: "The Internet connection appears to be offline.",
@@ -129,7 +125,6 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             error: "The Internet connection appears to be offline.",
@@ -154,7 +149,6 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             isLoading: true,

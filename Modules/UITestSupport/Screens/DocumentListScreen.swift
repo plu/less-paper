@@ -62,27 +62,55 @@ public struct DocumentListScreen {
         return true
     }
 
-    // The field is visible at rest, in the navigation bar's search drawer — no swipe needed. It is
-    // a searchField, not a textField, so the accessor reaches it through app.searchFields.
+    // The Search button is the first row of the list, and it opens a sheet holding the field. The
+    // field inside it is an ordinary textField, not a searchField: nothing here is `.searchable`.
     @discardableResult
     public func search(for text: String) -> Bool {
-        let field = app.searchFields.firstMatch
-        guard field.waitUntilHittable(timeout: timeout) else {
+        guard openSearchSheet() else {
             return false
         }
-        field.tap()
+        let field = searchField
+        guard field.waitForExistence(timeout: timeout) else {
+            return false
+        }
+        // The sheet focuses the field itself, but the keyboard is what `typeText` needs and it
+        // arrives a frame or two later. Tapping is the fallback, not the happy path: a tap landing
+        // mid-presentation can miss the field entirely.
+        if !app.keyboards.element.waitForExistence(timeout: timeout) {
+            guard field.waitUntilHittable(timeout: timeout) else {
+                return false
+            }
+            field.tap()
+            guard app.keyboards.element.waitForExistence(timeout: timeout) else {
+                return false
+            }
+        }
         app.typeText(text)
         return true
     }
 
-    // Read rather than tapped, so it deliberately does not wait on hittability: after a result tap
-    // the field is no longer focused and the assertion is about what it still holds.
+    @discardableResult
+    public func openSearchSheet() -> Bool {
+        let button = app.buttons["Search"].firstMatch
+        guard button.waitUntilHittable(timeout: timeout) else {
+            return false
+        }
+        button.tap()
+        return true
+    }
+
+    // Read rather than tapped, so it deliberately does not wait on hittability: the assertion is
+    // about what the field still holds when the sheet is reopened.
     public func searchFieldText() -> String? {
-        let field = app.searchFields.firstMatch
+        let field = searchField
         guard field.waitForExistence(timeout: timeout) else {
             return nil
         }
         return field.value as? String
+    }
+
+    private var searchField: XCUIElement {
+        app.textFields["Search"].firstMatch
     }
 
     // The Tags and Document types sections can both offer a result with the same label (seed data

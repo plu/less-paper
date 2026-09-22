@@ -9,7 +9,7 @@ import TestSupport
 @Suite(
     .testDependencies()
 )
-struct DocumentSearchTextBindingTests {
+struct DocumentSearchSheetViewTests {
 
     @Test
     func searchTextBinding_sendsWhenTheValueChanges() async throws {
@@ -41,20 +41,27 @@ struct DocumentSearchTextBindingTests {
         #expect(sent.value.isEmpty)
     }
 
-    private func view(searchText: String) -> (DocumentListView, LockIsolated<[String]>) {
+    // Reopening the sheet hands the same child store back, so the field comes up holding the query
+    // it was closed on rather than an empty string.
+    @Test
+    func searchTextBinding_readsTheStoredQuery() async throws {
+        let (view, _) = view(searchText: "manual")
+
+        #expect(view.searchTextBinding.wrappedValue == "manual")
+    }
+
+    private func view(searchText: String) -> (DocumentSearchSheetView, LockIsolated<[String]>) {
         let sent = LockIsolated<[String]>([])
         let store = Store(
-            initialState: DocumentListReducer.State.testValue(
-                search: .testValue(searchText: searchText)
-            )
+            initialState: DocumentSearchReducer.State.testValue(searchText: searchText)
         ) {
-            Reduce<DocumentListReducer.State, DocumentListReducer.Action> { _, action in
-                if case let .search(.view(.searchTextChanged(value))) = action {
+            Reduce<DocumentSearchReducer.State, DocumentSearchReducer.Action> { _, action in
+                if case let .view(.searchTextChanged(value)) = action {
                     sent.withValue { $0.append(value) }
                 }
                 return .none
             }
         }
-        return (DocumentListView(store: store), sent)
+        return (DocumentSearchSheetView(store: store), sent)
     }
 }

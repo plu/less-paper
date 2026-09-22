@@ -38,12 +38,6 @@ final class DocumentSearchJourneyTests: UITestCase {
         // The count is what proves the list actually narrowed, not merely that the document still
         // exists: the tag and document are both unique to this run, so exactly one document can
         // carry it, which makes "1 of 1" the deterministic result regardless of corpus size.
-        //
-        // It also proves the tag filter survived the tap. Resigning the search field's focus makes
-        // SwiftUI fire `onSubmit(of: .search)`, and an unsuppressed phantom submit would commit a
-        // full text search for the tag's name over the top of the filter just applied. That search
-        // matches nothing — the name is not in the document's content — so the collision shows up
-        // here as an empty list rather than as "1 of 1".
         XCTAssertTrue(
             app.staticTexts["1 of 1 loaded"].waitForExistence(timeout: timeout),
             "Filtering by \(name) did not narrow the list to its one document"
@@ -53,13 +47,28 @@ final class DocumentSearchJourneyTests: UITestCase {
             "Filtering by \(name) did not leave \(title) in the list"
         )
 
-        // The whole point of resigning focus rather than calling `dismissSearch`: the overlay goes
-        // away but the query stays, so tapping the field again resumes the same search. This is
-        // asserted here because it is SwiftUI focus behaviour that no TestStore or snapshot reaches.
+        // The whole point of the rebuild: the sheet goes away on a result tap and hands the
+        // navigation bar back, rather than holding it hostage behind a Close button.
+        XCTAssertTrue(
+            app.buttons["Filter"].waitForExistence(timeout: timeout),
+            "Tapping the \(name) result did not leave the Filter button reachable"
+        )
+        XCTAssertTrue(
+            app.buttons["More actions"].exists,
+            "Tapping the \(name) result did not leave the More actions button reachable"
+        )
+        XCTAssertFalse(
+            app.navigationBars.buttons["Close"].exists,
+            "Tapping the \(name) result left a Close button in the navigation bar"
+        )
+
+        // The query outlives the sheet: `search` is a permanent child of the list's state rather
+        // than presentation state, so reopening resumes the same search.
+        XCTAssertTrue(documents.openSearchSheet(), "Could not reopen the search sheet")
         XCTAssertEqual(
             documents.searchFieldText(),
             name,
-            "Tapping the \(name) result did not leave the typed text in the search field"
+            "Reopening the sheet did not restore the typed text in the search field"
         )
     }
 

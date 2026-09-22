@@ -55,6 +55,7 @@ public struct DocumentListReducer: Sendable {
             case reloadButtonTapped
             case savedViewButtonTapped(SavedView)
             case scanButtonTapped
+            case searchButtonTapped
             case serverButtonTapped(Server)
             case tipInvitationDismissed
             case tipInvitationTapped
@@ -87,6 +88,11 @@ public struct DocumentListReducer: Sendable {
         /// True while a detail column is on screen, which is what decides whether opening a
         /// document pushes over the list or replaces whatever the column is showing.
         var isSplitLayout = false
+
+        // Presentation state for the search sheet only. The search itself lives in `search`
+        // below, outside this flag, so closing the sheet leaves the query and its results standing
+        // for the next time it opens.
+        var isSearchPresented = false
 
         var isTipInvitationVisible = false
 
@@ -174,6 +180,7 @@ public struct DocumentListReducer: Sendable {
             filter: DocumentFilter? = nil,
             isLoaded: Bool = false,
             isLoadingMore: Bool = false,
+            isSearchPresented: Bool = false,
             nextPage: URL? = nil,
             path: StackState<Path.State> = .init(),
             search: DocumentSearchReducer.State? = nil,
@@ -187,6 +194,7 @@ public struct DocumentListReducer: Sendable {
             self.filter = filter ?? .init()
             self.isLoaded = isLoaded
             self.isLoadingMore = isLoadingMore
+            self.isSearchPresented = isSearchPresented
             self.nextPage = nextPage
             self.path = path
             self.search = search ?? DocumentSearchReducer.State(server: server)
@@ -423,11 +431,13 @@ public struct DocumentListReducer: Sendable {
                 }
                 return .none
             case let .search(.delegate(.documentTapped(id))):
+                state.isSearchPresented = false
                 return .send(.openDocument(id))
             // The saved view goes with it: leaving it set would keep the navigation title naming a
             // view whose rules are no longer the ones being applied.
             case let .search(.delegate(.filterRequested(input))):
                 state.error = nil
+                state.isSearchPresented = false
                 state.filter.input = input
                 state.filter.savedView = nil
                 state.clearForPendingFetch()
@@ -439,6 +449,7 @@ public struct DocumentListReducer: Sendable {
                 )
             case let .search(.delegate(.queryCommitted(query))):
                 state.error = nil
+                state.isSearchPresented = false
                 state.filter.input.searchType = .titleContent
                 state.filter.input.searchValue = query
                 state.clearForPendingFetch()
@@ -449,6 +460,7 @@ public struct DocumentListReducer: Sendable {
                     sortField: state.filter.input.sort.field
                 )
             case let .search(.delegate(.savedViewTapped(savedView))):
+                state.isSearchPresented = false
                 state.clearForPendingFetch()
                 return .send(.view(.savedViewButtonTapped(savedView)))
             case .search:
@@ -625,6 +637,9 @@ public struct DocumentListReducer: Sendable {
                     )
                 case .scanButtonTapped:
                     return .send(.documentImport(.view(.scanButtonTapped)))
+                case .searchButtonTapped:
+                    state.isSearchPresented = true
+                    return .none
                 case let .serverButtonTapped(server):
                     guard server != state.server else {
                         return .none
