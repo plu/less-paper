@@ -324,3 +324,47 @@ It was invisible until now; the file task list is the first screen to display th
 sees `invoice%20march.pdf` for any file with a space in its name.
 
 Surfaced during: Task 9 of `docs/superpowers/specs/2026-09-12-file-tasks-inbox-design.md`.
+
+---
+
+## Move the full-text search off the deprecated `title_content` filter
+
+The app sends `title_content=` for its title-and-content search (`FilterRuleType.titleContent`).
+paperless-ngx deprecated that parameter and its implementation explains the cost — `filters.py`,
+`TitleContentFilter`:
+
+```python
+# Deprecated but retained for existing saved views. UI uses Tantivy-backed `text` / `title_search` params.
+logger.warning("Deprecated document filter parameter 'title_content' used; use `text` instead.")
+return annotate_effective_content(qs).filter(
+    Q(title__icontains=value) | Q(effective_content__icontains=value),
+)
+```
+
+So every search runs `icontains` over every document's full OCR text — an unindexed scan of the
+largest column in the database — and writes a deprecation warning into the server log while it does
+it. `text=` is served by the Tantivy full-text index instead, which is why the web client feels
+instant where the app crawls. The web client sends:
+
+```
+/api/documents/?ordering=-added&page=2&page_size=100&text=Rechnung&truncate_content=true&include_selection_data=true
+```
+
+Not a one-line swap. `FilterRuleType.simpleText` already maps to `text`, so the plumbing exists, but
+`.titleContent` is what the filter sheet offers as a search type, what `queryCommitted` sets from the
+search field, and what saved views may already contain — including views written by the web client,
+which could carry either. Changing it touches the rule-type mapping, the filter sheet and the
+saved-view round trip, and wants a decision about what to do with existing saved views rather than a
+silent rewrite.
+
+Two smaller things in that same URL, independent of the search engine and worth taking on their own:
+
+- **`truncate_content=true`** — the document list currently fetches every row's full OCR text and
+  displays none of it. (Note `/api/search/` ignores this parameter; `/api/documents/` honours it.)
+- **`page_size`** — worth comparing against what the list requests today.
+
+A 25-document dev instance cannot reproduce any of this: at that size the full scan is free, and
+`truncate_content` changes the payload not at all. Measure against a real corpus.
+
+Surfaced during: the inline search work on `feat/search-sheet`, from a URL the user pulled out of
+the web client while wondering why the app's search was slow.
