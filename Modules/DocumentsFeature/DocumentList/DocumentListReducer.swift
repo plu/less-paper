@@ -213,6 +213,17 @@ public struct DocumentListReducer: Sendable {
             totalNumberOfDocuments = 0
         }
 
+        // Same shape as clearForEmptyInbox above except isLoaded stays false: an empty list with
+        // isLoaded false is what DocumentListEmptyView renders as a spinner rather than "no
+        // documents", so this is what keeps a stale list off screen while a filter refetches.
+        mutating func clearForPendingFetch() {
+            documents = []
+            documentSelection.allLoadedDocuments = []
+            isLoaded = false
+            nextPage = nil
+            totalNumberOfDocuments = 0
+        }
+
         // Scoped to the filter flow being on screen: the count is presentation state for that sheet
         // and its pickers, so writing it from every list fetch would leave a value nothing reads
         // and make every unrelated list test assert it.
@@ -419,6 +430,7 @@ public struct DocumentListReducer: Sendable {
                 state.error = nil
                 state.filter.input = input
                 state.filter.savedView = nil
+                state.clearForPendingFetch()
                 return .runGetDocuments(
                     filterRules: state.filter.input.filterRules,
                     server: state.server,
@@ -429,6 +441,7 @@ public struct DocumentListReducer: Sendable {
                 state.error = nil
                 state.filter.input.searchType = .titleContent
                 state.filter.input.searchValue = query
+                state.clearForPendingFetch()
                 return .runGetDocuments(
                     filterRules: state.filter.input.filterRules,
                     server: state.server,
@@ -436,6 +449,7 @@ public struct DocumentListReducer: Sendable {
                     sortField: state.filter.input.sort.field
                 )
             case let .search(.delegate(.savedViewTapped(savedView))):
+                state.clearForPendingFetch()
                 return .send(.view(.savedViewButtonTapped(savedView)))
             case .search:
                 return .none
