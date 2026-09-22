@@ -23,6 +23,7 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
+                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             results: .testValue(
@@ -57,6 +58,7 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
+                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             results: .testValue(
@@ -80,6 +82,7 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
+                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             results: .testValue(),
@@ -102,6 +105,7 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
+                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             error: "The Internet connection appears to be offline.",
@@ -125,6 +129,7 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
+                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             error: "The Internet connection appears to be offline.",
@@ -149,6 +154,7 @@ struct DocumentSearchResultsViewTests {
         assertSnapshot(
             of: List {
                 DocumentSearchResultsView(
+                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             isLoading: true,

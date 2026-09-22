@@ -68,13 +68,30 @@ public struct DocumentListView: View {
             .scrollContentBackground(.hidden)
             .searchable(text: searchTextBinding, prompt: Text(.search))
             .searchSuggestions {
-                DocumentSearchResultsView(store: searchStore)
+                DocumentSearchResultsView(
+                    resignSearchFocus: { isSearchFocused = false },
+                    store: searchStore
+                )
             }
+            // Same placement rule as `onSubmit` below: the search field is created by `.searchable`
+            // above, so this has to sit after it to bind to anything.
+            .searchFocused($isSearchFocused)
             // Breaks this view's alphabetical modifier order deliberately. `onSubmit` writes the
             // action into the environment of the subtree below it, and the search field is created
             // by `.searchable` above — placed any earlier, the field never sees it and return does
             // nothing.
             .onSubmit(of: .search) { searchStore.send(.view(.submitted)) }
+            // Only the false → true edge, which is what keeps resigning focus on a row tap from
+            // turning round and re-running the search it just dismissed. `onChange` rather than a
+            // read of `isSearching`: it fires on a real transition instead of on every body
+            // evaluation, and one focus signal cannot disagree with itself the way a second one
+            // would — `isSearching` flips during dismissal too.
+            .onChange(of: isSearchFocused) { _, isFocused in
+                guard isFocused else {
+                    return
+                }
+                searchStore.send(.view(.refocused))
+            }
             .task { await send(.onAppear).finish() }
         } destination: { store in
             switch store.case {
@@ -111,6 +128,9 @@ public struct DocumentListView: View {
 
     @Environment(\.horizontalSizeClass)
     private var horizontalSizeClass
+
+    @FocusState
+    private var isSearchFocused: Bool
 
     @ViewBuilder
     private func documentSelectionLoadingView() -> some View {

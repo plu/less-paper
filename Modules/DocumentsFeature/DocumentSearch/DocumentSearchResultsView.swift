@@ -43,7 +43,7 @@ struct DocumentSearchResultsView: View {
                     Section(String(localized: .searchSectionDocuments)) {
                         ForEach(results.documents) { document in
                             Button {
-                                send(.documentTapped(document))
+                                select(.documentTapped(document))
                             } label: {
                                 DocumentSearchRowView(
                                     caption: document.created.formatted(date: .numeric, time: .omitted),
@@ -58,7 +58,7 @@ struct DocumentSearchResultsView: View {
                     Section(String(localized: .searchSectionSavedViews)) {
                         ForEach(results.savedViews) { savedView in
                             Button {
-                                send(.savedViewTapped(savedView))
+                                select(.savedViewTapped(savedView))
                             } label: {
                                 DocumentSearchRowView(
                                     systemImage: "line.3.horizontal.decrease",
@@ -72,7 +72,7 @@ struct DocumentSearchResultsView: View {
                     Section(String(localized: .searchSectionTags)) {
                         ForEach(results.tags) { tag in
                             Button {
-                                send(.tagTapped(tag))
+                                select(.tagTapped(tag))
                             } label: {
                                 DocumentSearchRowView(systemImage: "tag", tag: tag)
                             }
@@ -83,7 +83,7 @@ struct DocumentSearchResultsView: View {
                     Section(String(localized: .searchSectionCorrespondents)) {
                         ForEach(results.correspondents) { correspondent in
                             Button {
-                                send(.correspondentTapped(correspondent))
+                                select(.correspondentTapped(correspondent))
                             } label: {
                                 DocumentSearchRowView(systemImage: "person", title: correspondent.name)
                             }
@@ -94,7 +94,7 @@ struct DocumentSearchResultsView: View {
                     Section(String(localized: .searchSectionDocumentTypes)) {
                         ForEach(results.documentTypes) { documentType in
                             Button {
-                                send(.documentTypeTapped(documentType))
+                                select(.documentTypeTapped(documentType))
                             } label: {
                                 DocumentSearchRowView(
                                     systemImage: "document.badge.gearshape",
@@ -108,7 +108,7 @@ struct DocumentSearchResultsView: View {
                     Section(String(localized: .searchSectionStoragePaths)) {
                         ForEach(results.storagePaths) { storagePath in
                             Button {
-                                send(.storagePathTapped(storagePath))
+                                select(.storagePathTapped(storagePath))
                             } label: {
                                 DocumentSearchRowView(systemImage: "folder", title: storagePath.name)
                             }
@@ -119,7 +119,7 @@ struct DocumentSearchResultsView: View {
                     Section(String(localized: .searchSectionCustomFields)) {
                         ForEach(results.customFields) { customField in
                             Button {
-                                send(.customFieldTapped(customField))
+                                select(.customFieldTapped(customField))
                             } label: {
                                 DocumentSearchRowView(
                                     systemImage: "list.bullet.rectangle",
@@ -133,9 +133,28 @@ struct DocumentSearchResultsView: View {
         }
     }
 
-    init(store: StoreOf<DocumentSearchReducer>) {
+    init(
+        resignSearchFocus: @escaping () -> Void,
+        store: StoreOf<DocumentSearchReducer>
+    ) {
+        self.resignSearchFocus = resignSearchFocus
         self.store = store
     }
 
     let store: StoreOf<DocumentSearchReducer>
+
+    // `dismissSearch` is deliberately not used here, though it is the obvious tool and this view is
+    // inside the searchable scope that it requires. It clears the field's text on the way out, and
+    // that empty string arrives through DocumentListView's binding as a `searchTextChanged("")` —
+    // below the minimum query length, so the reducer drops the results the user is about to come
+    // back to. The owning view resigns a `@FocusState` instead, which leaves the text alone.
+    private let resignSearchFocus: () -> Void
+
+    // The action is sent before focus is resigned, and the order is load-bearing. Resigning focus
+    // makes SwiftUI fire `onSubmit(of: .search)`, and the reducer suppresses that phantom submit
+    // only once the tap's own action has already armed the latch.
+    private func select(_ action: DocumentSearchReducer.Action.View) {
+        send(action)
+        resignSearchFocus()
+    }
 }

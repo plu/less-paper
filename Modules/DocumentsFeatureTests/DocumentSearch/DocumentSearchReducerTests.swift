@@ -201,7 +201,9 @@ struct DocumentSearchReducerTests {
             DocumentSearchReducer()
         }
 
-        await store.send(.view(.documentTapped(document)))
+        await store.send(.view(.documentTapped(document))) {
+            $0.suppressesNextSubmit = true
+        }
         await store.receive(\.delegate.documentTapped, document.id)
     }
 
@@ -212,7 +214,9 @@ struct DocumentSearchReducerTests {
             DocumentSearchReducer()
         }
 
-        await store.send(.view(.tagTapped(tag)))
+        await store.send(.view(.tagTapped(tag))) {
+            $0.suppressesNextSubmit = true
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(tag: tag))
     }
 
@@ -223,7 +227,9 @@ struct DocumentSearchReducerTests {
             DocumentSearchReducer()
         }
 
-        await store.send(.view(.correspondentTapped(correspondent)))
+        await store.send(.view(.correspondentTapped(correspondent))) {
+            $0.suppressesNextSubmit = true
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(correspondent: correspondent))
     }
 
@@ -234,7 +240,9 @@ struct DocumentSearchReducerTests {
             DocumentSearchReducer()
         }
 
-        await store.send(.view(.customFieldTapped(customField)))
+        await store.send(.view(.customFieldTapped(customField))) {
+            $0.suppressesNextSubmit = true
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(customField: customField))
     }
 
@@ -245,7 +253,9 @@ struct DocumentSearchReducerTests {
             DocumentSearchReducer()
         }
 
-        await store.send(.view(.documentTypeTapped(documentType)))
+        await store.send(.view(.documentTypeTapped(documentType))) {
+            $0.suppressesNextSubmit = true
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(documentType: documentType))
     }
 
@@ -256,7 +266,9 @@ struct DocumentSearchReducerTests {
             DocumentSearchReducer()
         }
 
-        await store.send(.view(.storagePathTapped(storagePath)))
+        await store.send(.view(.storagePathTapped(storagePath))) {
+            $0.suppressesNextSubmit = true
+        }
         await store.receive(\.delegate.filterRequested, .searchResult(storagePath: storagePath))
     }
 
@@ -267,10 +279,13 @@ struct DocumentSearchReducerTests {
             DocumentSearchReducer()
         }
 
-        await store.send(.view(.savedViewTapped(savedView)))
+        await store.send(.view(.savedViewTapped(savedView))) {
+            $0.suppressesNextSubmit = true
+        }
         await store.receive(\.delegate.savedViewTapped, savedView)
     }
 
+    // The return key with no preceding row tap: the latch must leave this path alone.
     @Test
     func view_submitted_delegatesTheQuery() async throws {
         let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
@@ -293,6 +308,131 @@ struct DocumentSearchReducerTests {
         }
 
         await store.send(.view(.submitted))
+    }
+
+    // Resigning focus programmatically makes SwiftUI fire `onSubmit(of: .search)`, so a row tap is
+    // followed by a submit the user never made. Suppressed exactly once: a second submit is a real
+    // return key press and must still commit.
+    @Test
+    func view_submitted_isSuppressedOnceAfterARowTap() async throws {
+        let tag = Tag.testValue(id: 7, name: "Manual")
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            searchText: "manual"
+        )) {
+            DocumentSearchReducer()
+        }
+
+        await store.send(.view(.tagTapped(tag))) {
+            $0.suppressesNextSubmit = true
+        }
+        await store.receive(\.delegate.filterRequested, .searchResult(tag: tag))
+
+        await store.send(.view(.submitted)) {
+            $0.suppressesNextSubmit = false
+        }
+
+        await store.send(.view(.submitted))
+        await store.receive(\.delegate.queryCommitted, "manual")
+    }
+
+    // A deliberate tap on the field is not a keystroke, so the query runs without the debounce.
+    @Test
+    func view_refocused_searchesImmediately() async throws {
+        let clock = TestClock()
+        let output = GlobalSearchOutput.testValue(tags: [.testValue(id: 7, name: "Manual")])
+
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            searchText: "manual"
+        )) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.globalSearch.execute = { _, _ in output }
+        }
+
+        await store.send(.view(.refocused)) {
+            $0.isLoading = true
+        }
+        await store.receive(\.results) {
+            $0.isLoading = false
+            $0.results = output
+        }
+    }
+
+    @Test
+    func view_refocused_usesTheTrimmedQuery() async throws {
+        let queries = LockIsolated([String]())
+
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            searchText: "  manual  "
+        )) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.globalSearch.execute = { query, _ in
+                queries.withValue { $0.append(query) }
+                return .testValue()
+            }
+        }
+
+        await store.send(.view(.refocused)) {
+            $0.isLoading = true
+        }
+        await store.receive(\.results) {
+            $0.isLoading = false
+            $0.results = .testValue()
+        }
+
+        #expect(queries.value == ["manual"])
+    }
+
+    // Focusing an empty field is the ordinary way a search begins, and it must not fire a request.
+    @Test
+    func view_refocused_ignoresAShortQuery() async throws {
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
+            searchText: "ma"
+        )) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.globalSearch.execute = { _, _ in
+                Issue.record("no request may be made below the minimum query length")
+                return .testValue()
+            }
+        }
+
+        await store.send(.view(.refocused))
+    }
+
+    // Proves the refocus search shares the cancel id with the debounce: a sleep left pending when
+    // the field is tapped must not wake up afterwards and search a second time.
+    @Test
+    func view_refocused_cancelsAPendingDebounce() async throws {
+        let clock = TestClock()
+        let queries = LockIsolated([String]())
+
+        let store = TestStore(initialState: DocumentSearchReducer.State.testValue()) {
+            DocumentSearchReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.globalSearch.execute = { query, _ in
+                queries.withValue { $0.append(query) }
+                return .testValue()
+            }
+        }
+
+        await store.send(.view(.searchTextChanged("manual"))) {
+            $0.searchText = "manual"
+            $0.isLoading = true
+        }
+        await store.send(.view(.refocused))
+        await store.receive(\.results) {
+            $0.isLoading = false
+            $0.results = .testValue()
+        }
+
+        await clock.advance(by: .milliseconds(400))
+        await store.finish()
+
+        #expect(queries.value == ["manual"])
     }
 }
 

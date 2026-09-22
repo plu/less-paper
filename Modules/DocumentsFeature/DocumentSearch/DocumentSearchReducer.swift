@@ -34,6 +34,7 @@ public struct DocumentSearchReducer: Sendable {
             case customFieldTapped(CustomField)
             case documentTapped(Document)
             case documentTypeTapped(DocumentType)
+            case refocused
             case savedViewTapped(SavedView)
             case searchTextChanged(String)
             case storagePathTapped(StoragePath)
@@ -54,6 +55,13 @@ public struct DocumentSearchReducer: Sendable {
         var searchText = ""
 
         let server: Server
+
+        // Set by every row tap and consumed by the next `submitted`. Resigning the field's focus
+        // programmatically makes SwiftUI fire `onSubmit(of: .search)`, so a tap arrives here as its
+        // own action immediately followed by a submit the user never made — which would apply the
+        // tapped filter and then overwrite it with a plain text search. Not part of `init`: it is a
+        // latch the reducer owns, never initial configuration.
+        var suppressesNextSubmit = false
 
         var trimmedQuery: String {
             searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -97,15 +105,30 @@ public struct DocumentSearchReducer: Sendable {
             case .searchDebounced:
                 return .runGlobalSearch(query: state.trimmedQuery, server: state.server)
             case let .view(.correspondentTapped(correspondent)):
+                state.suppressesNextSubmit = true
                 return .send(.delegate(.filterRequested(.searchResult(correspondent: correspondent))))
             case let .view(.customFieldTapped(customField)):
+                state.suppressesNextSubmit = true
                 return .send(.delegate(.filterRequested(.searchResult(customField: customField))))
             case let .view(.documentTapped(document)):
+                state.suppressesNextSubmit = true
                 return .send(.delegate(.documentTapped(document.id)))
             case let .view(.documentTypeTapped(documentType)):
+                state.suppressesNextSubmit = true
                 return .send(.delegate(.filterRequested(.searchResult(documentType: documentType))))
             case let .view(.savedViewTapped(savedView)):
+                state.suppressesNextSubmit = true
                 return .send(.delegate(.savedViewTapped(savedView)))
+            // No debounce: a deliberate tap on the field is not a keystroke, so there is nothing
+            // to coalesce. Shares CancelID.search with the debounce, so a sleep or request left
+            // pending by earlier typing cannot land on top of this one.
+            case .view(.refocused):
+                guard state.hasQuery else {
+                    return .none
+                }
+                state.error = nil
+                state.isLoading = true
+                return .runGlobalSearch(query: state.trimmedQuery, server: state.server)
             case let .view(.searchTextChanged(searchText)):
                 state.searchText = searchText
                 guard state.hasQuery else {
@@ -118,13 +141,19 @@ public struct DocumentSearchReducer: Sendable {
                 state.isLoading = true
                 return .runSearchDebounce()
             case let .view(.storagePathTapped(storagePath)):
+                state.suppressesNextSubmit = true
                 return .send(.delegate(.filterRequested(.searchResult(storagePath: storagePath))))
             case .view(.submitted):
+                guard !state.suppressesNextSubmit else {
+                    state.suppressesNextSubmit = false
+                    return .none
+                }
                 guard state.hasQuery else {
                     return .none
                 }
                 return .send(.delegate(.queryCommitted(state.trimmedQuery)))
             case let .view(.tagTapped(tag)):
+                state.suppressesNextSubmit = true
                 return .send(.delegate(.filterRequested(.searchResult(tag: tag))))
             }
         }
