@@ -573,6 +573,21 @@ Each has a manual GitHub Action of its own, and Frame also runs on any pull requ
 the expensive artefact and everything downstream of them is cheap. The cost of that choice: each
 re-record stores 28 new LFS blobs, so re-record when the app's UI has moved, not out of habit.
 
+Being committed is also why **a failed Record puts them back**. The fastlane lane deletes all 32
+before it builds and restores nothing when the build fails, so a failure with no connection to them
+— a missing scheme, a simulator that would not boot — used to leave the deletions in the working
+tree, staged for whoever ran `git add -A` next. Both capture tasks now hold a copy and restore it
+unless the run gets all the way through `verify_captures.py`. The verifier still guards the other
+direction, a run that reports success having recorded nothing.
+
+**Record needs the generated workspace and the gems, and both tasks now arrange that themselves.**
+`capture_screenshots` drives xcodebuild rather than tuist, so nothing downstream of it creates
+`LessPaper.xcworkspace` — and `tuist test` leaves behind a workspace focused on the scheme it ran,
+which is what `mise run snapshots:record` does and which has no `Snapshots` scheme in it. Running
+Record after a snapshot re-record therefore used to fail with `does not contain a scheme named
+"Snapshots"`. Locally it also assumed `bundle install` had been run, and died in bundler naming
+fastlane itself when it had not.
+
 Record drives the real app through the seven App Store screens on every device and language Apple
 requires. It needs no paperless instance: the app is launched with `SNAPSHOT_MODE=true`, which swaps
 the API use cases for the payloads in `Screenshots/Fixtures` and the thumbnails in
