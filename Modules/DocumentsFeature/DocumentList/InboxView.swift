@@ -25,17 +25,20 @@ public struct InboxView: View {
                 }
                 // Rows default to `systemBackground`, which is black in dark mode and so paints over
                 // the list's `m3SurfaceContainerLowest`. Invisible in light mode, where both are white.
-                ForEach(Array(store.scope(state: \.documents, action: \.documents))) { store in
-                    DocumentRowView(store: store)
+                ForEach(Array(store.scope(state: \.documents, action: \.documents))) { rowStore in
+                    DocumentRowView(store: rowStore)
                         .documentSelectionOverlay(
-                            document: store.document.id,
+                            document: rowStore.document.id,
                             store: documentSelectionStore
                         )
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
-                        .onAppear { send(.onRowAppear(store.document)) }
+                        .onAppear { send(.onRowAppear(rowStore.document)) }
                         .padding(.x3)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            clearInboxTagsButton(for: rowStore)
+                        }
                 }
                 if store.isLoadingMore {
                     HStack {
@@ -108,6 +111,29 @@ public struct InboxView: View {
 
     @Shared
     private var inboxDocumentCount: Int
+
+    // Not `role: .destructive`: that removes the row the moment it is tapped, before the server has
+    // agreed, which is the trap TrashRowView documents.
+    //
+    // Hidden while a selection is running, where the row already carries its own tap gesture and a
+    // checkmark, and hidden for a document none of the filter's inbox tags actually cover - the
+    // swipe would otherwise report having cleared tags it never touched.
+    @ViewBuilder
+    private func clearInboxTagsButton(
+        for rowStore: StoreOf<DocumentRowReducer>
+    ) -> some View {
+        if !store.documentSelection.isActive,
+           rowStore.document.tags.contains(where: store.inboxTagIds.contains) {
+            Button {
+                send(.clearInboxTagsSwiped(rowStore.document))
+            } label: {
+                Image(systemName: "tray.and.arrow.down")
+            }
+            .accessibilityLabel(.clearInboxTags)
+            .disabled(rowStore.isBusy)
+            .tint(.m3Primary)
+        }
+    }
 
     @ViewBuilder
     private func documentSelectionLoadingView() -> some View {
