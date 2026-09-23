@@ -7,10 +7,47 @@ set -euo pipefail
 #
 # Captures only. The captures are committed, so this is the expensive stage that is rarely run;
 # `mise run screenshots:frame` turns them into finished images in seconds.
-bundle exec fastlane screenshots
+
+# ci:screenshots:capture vendors the gems because ci:clean wipes them; here they are wherever
+# bundler already put them. Either way they have to exist before the lane starts, or it dies in
+# bundler with a GemNotFound naming fastlane itself - an hour into the day, and nothing to do with
+# screenshots.
+bundle check >/dev/null 2>&1 || bundle install
+
+# The generated workspace is not committed, and `tuist test` leaves one focused on the scheme it
+# ran - which is what `mise run snapshots:record` does, and that workspace has no `Snapshots`
+# scheme in it. capture_screenshots drives xcodebuild rather than tuist, so nothing downstream
+# recreates it and the lane stops at `does not contain a scheme named "Snapshots"`.
+tuist install
+tuist generate --no-open
+
+# capture_screenshots deletes the committed captures before it builds, and puts nothing back when
+# the build fails. A failure with no connection to them - a missing scheme, a simulator that would
+# not boot - therefore leaves 32 deleted PNGs staged for whoever runs `git add -A` next. Hold a
+# copy until the run has been through the verifier.
+stash=$(mktemp -d)
+trap 'rm -rf "$stash"' EXIT
+cp -R "$MISE_PROJECT_ROOT/Screenshots/Captures/." "$stash/"
+
+restore_captures() {
+    rm -rf "${MISE_PROJECT_ROOT:?}/Screenshots/Captures"
+    mkdir -p "$MISE_PROJECT_ROOT/Screenshots/Captures"
+    cp -R "$stash/." "$MISE_PROJECT_ROOT/Screenshots/Captures/"
+    echo >&2
+    echo "Capture failed. The captures it deleted have been put back, so the working tree is" >&2
+    echo "as it was - nothing to git restore." >&2
+}
+
+if ! bundle exec fastlane screenshots; then
+    restore_captures
+    exit 1
+fi
 
 # capture_screenshots clears the captures before it runs and does not fail the lane when the
 # build beneath it fails, so an empty directory and a successful run look identical. The
 # verifier also drops any device the Snapfile does not ask for, which one run produced and
 # which would otherwise be framed and uploaded as a size nobody asked for.
-python3 "$MISE_PROJECT_ROOT/Screenshots/verify_captures.py"
+if ! python3 "$MISE_PROJECT_ROOT/Screenshots/verify_captures.py"; then
+    restore_captures
+    exit 1
+fi
