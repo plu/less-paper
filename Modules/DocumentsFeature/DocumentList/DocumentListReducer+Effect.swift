@@ -2,6 +2,9 @@ import ApiInterface
 import Components
 import ComposableArchitecture
 import Foundation
+// Only the type, not the module: a plain `import SwiftUI` makes `Document` ambiguous against
+// `ApiInterface.Document` throughout this file.
+import struct SwiftUI.Animation
 
 extension Effect where Action == DocumentListReducer.Action {
 
@@ -81,6 +84,9 @@ extension Effect where Action == DocumentListReducer.Action {
     ) -> Self {
         .merge(
             .runGetDocuments(
+                // One row leaves the filter here, or comes back to it, so it is worth animating -
+                // unlike the refetches this helper's default is tuned for.
+                animation: .default,
                 filterRules: state.filter.input.filterRules,
                 server: state.server,
                 sortDirection: state.filter.input.sort.direction,
@@ -113,7 +119,11 @@ extension Effect where Action == DocumentListReducer.Action {
         }
     }
 
+    // Unanimated by default because most callers are a wholesale replacement - a pull to refresh, a
+    // sort change, another page - where animating every row that moved is noise rather than
+    // feedback. A caller that knows exactly one row is leaving or arriving passes `.default`.
     static func runGetDocuments(
+        animation: Animation? = .none,
         filterRules: [FilterRule] = [],
         server: Server,
         sortDirection: SortDirection,
@@ -129,7 +139,7 @@ extension Effect where Action == DocumentListReducer.Action {
         )
 
         return .run { send in
-            try await send(.replaceDocuments(getDocuments(input, server)), animation: .none)
+            try await send(.replaceDocuments(getDocuments(input, server)), animation: animation)
             await send(.set(\.isLoaded, true))
         } catch: { error, send in
             await send(.error(error))
