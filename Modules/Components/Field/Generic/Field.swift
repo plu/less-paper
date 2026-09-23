@@ -13,8 +13,8 @@ public struct Field<Input: View>: View {
                     .lineLimit(1)
                     .padding(.horizontal, scaledMetric * 4)
                     .padding(.top, scaledMetric)
-                    .foregroundColor(.m3OnSurface)
-                    .background(Capsule().foregroundColor(.m3SurfaceBright))
+                    .foregroundColor(titleColor)
+                    .background(Capsule().foregroundColor(fillColor))
                     .zIndex(1)
                     .offset(x: scaledMetric * 12, y: 0)
                     .padding(.trailing, scaledMetric * 20)
@@ -26,8 +26,9 @@ public struct Field<Input: View>: View {
                 .padding(.horizontal, scaledMetric * padding)
                 .padding(scaledMetric * 2)
                 .background(fillColor)
-                .overlay(Capsule().stroke(borderColor, lineWidth: scaledMetric * 2).padding(scaledMetric * 2))
+                .overlay(Capsule().stroke(borderColor, lineWidth: scaledMetric * borderWidth).padding(scaledMetric * 2))
                 .clipShape(Capsule())
+                .animation(.snappy, value: isFocused)
                 .font(.body)
                 .offset(x: 0, y: -titleSize.height / 1.7)
                 .padding(.bottom, -titleSize.height / 2)
@@ -56,17 +57,43 @@ public struct Field<Input: View>: View {
         self.padding = padding
         self.input = input()
         self._error = .constant(nil)
+        self._isFocused = .constant(false)
     }
 
     private var borderColor: Color {
-        error != nil ? .m3Error : .m3Outline
+        if error != nil {
+            return .m3Error
+        }
+        return isFocused ? .m3Primary : .m3Outline
     }
 
-    // The title capsule deliberately keeps `m3SurfaceBright`: it sits over the sheet, masking the
-    // border line behind the label, so tinting it would draw a grey pill against the background
-    // instead of blending into it.
+    // Hairline at rest, doubled when focused or in error, so the three states differ by weight and
+    // not only by hue — the one distinction a red-green colour-blind user cannot make unaided.
+    private var borderWidth: Double {
+        error != nil || isFocused ? 2 : 1
+    }
+
+    // `m3SurfaceBright` is the *focused* fill rather than the resting one. It is near-white in
+    // light mode and the top of the ladder in dark, which is the same instruction either way —
+    // lift this one — and that only reads as intentional on the field the caret is in. Resting
+    // takes `m3SurfaceContainerHighest`, which is what Material specifies for a filled text field.
+    //
+    // The title capsule shares this colour so the label always sits on the fill it belongs to. It
+    // does not blend into the card *behind* the field: a notch masking a border can match only one
+    // of the two surfaces it straddles, and the field is the one that stays right when the card
+    // underneath changes.
     private var fillColor: Color {
-        isReadOnly ? .m3SurfaceContainerHigh : .m3SurfaceBright
+        if isReadOnly {
+            return .m3SurfaceContainerHigh
+        }
+        return isFocused ? .m3SurfaceBright : .m3SurfaceContainerHighest
+    }
+
+    private var titleColor: Color {
+        if error != nil {
+            return .m3Error
+        }
+        return isFocused ? .m3Primary : .m3OnSurface
     }
 
     private var isReadOnly = false
@@ -76,6 +103,12 @@ public struct Field<Input: View>: View {
 
     @Binding
     private var error: String?
+
+    // Mirrors the `@FocusState` that `FieldStateModifier` owns. The modifier applies it to the
+    // whole field, so this is the only route by which the border can know where the caret is — a
+    // field built without `state(_:)` never lights up.
+    @Binding
+    private var isFocused: Bool
 
     @State
     private var titleSize: CGSize = .zero
@@ -113,6 +146,7 @@ public extension Field {
     ) -> some View {
         var copy = self
         copy._error = state.error
+        copy._isFocused = state.focused
         return copy.modifier(FieldStateModifier(state: state))
     }
 }
