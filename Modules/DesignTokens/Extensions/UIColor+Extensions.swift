@@ -33,3 +33,9 @@ public extension UIColor {
     static let m3Tertiary = UIColor.internalM3Tertiary
     static let m3TertiaryContainer = UIColor.internalM3TertiaryContainer
 }
+
+// See the note on `Color.sheetHeader` for why these two are not `m3`-prefixed.
+public extension UIColor {
+    static let onSheetHeader = UIColor.internalOnSheetHeader
+    static let sheetHeader = UIColor.internalSheetHeader
+}

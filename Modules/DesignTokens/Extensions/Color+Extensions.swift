@@ -34,6 +34,16 @@ public extension Color {
     static let m3TertiaryContainer = Color.internalM3TertiaryContainer
 }
 
+// Not `m3`-prefixed, because these are not Material roles. The sheet header wants one colour that
+// stays a dark brand teal in both themes, and Material has no role that does: `primary` is a deep
+// teal in light and a bright mint in dark, `primaryContainer` the other way round. Aliasing either
+// one would flip the bar's polarity in whichever theme it was not chosen for. The prefix marks the
+// difference — an `m3` symbol is a role from the scheme, these two are an app decision.
+public extension Color {
+    static let onSheetHeader = Color.internalOnSheetHeader
+    static let sheetHeader = Color.internalSheetHeader
+}
+
 public extension Color {
 
     struct ColorPreview: View {
@@ -214,6 +224,13 @@ public extension Color {
                 backgroundName: "m3Shadow",
                 foregroundColor: .clear,
                 foregroundName: ""
+            )
+
+            ColorPreview(
+                backgroundColor: .sheetHeader,
+                backgroundName: "sheetHeader",
+                foregroundColor: .onSheetHeader,
+                foregroundName: "onSheetHeader"
             )
         }
         .frame(minWidth: 300)

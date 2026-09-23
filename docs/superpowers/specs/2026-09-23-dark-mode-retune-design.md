@@ -63,8 +63,11 @@ borders cannot be calmed without dimming half the text in the app at the same ti
 `Sheet` paints its top bar `m3Primary` with `m3OnPrimary` text. Light mode gets a deep teal bar with
 white type. Dark mode gets `#81D5CE` — **83× the luminance of the body behind it**, roughly a fifth
 of the screen at full brightness above a near-black page. `primary` is an accent role for things met
-at small sizes; a filled region this large is what `primaryContainer` is for, and that colorset
-already exists, unused for this.
+at small sizes, not a fill for a fifth of the screen.
+
+`primaryContainer` is the obvious replacement and it is not one: `#9DF2EA` in light, `#00504C` in
+dark, which is the identical inversion pointing the other way. There is no Material role that stays
+dark in both themes, which is what this bar has always been in light mode and needs to be in dark.
 
 ### Two smaller things found while measuring
 
@@ -141,10 +144,25 @@ have covered every field rather than only the ones built with `state(_:)`, but `
 wrapper reporting a descendant's focus is not contractual, and a focus ring that silently never
 appears is worse than one that appears in fewer places.
 
-**The sheet header takes `m3PrimaryContainer` / `m3OnPrimaryContainer` in both themes.** One rule,
-no new tokens. Light mode's bar changes from deep teal with white type to mint with dark teal type
-(13.32:1); dark mode's becomes `#00504C` with `#9DF2EA` (7.25:1). In both themes the Save button is
-now the strongest thing on the screen, which is the correct hierarchy for a form.
+**The sheet header gets a token pair of its own, and it is not `m3`-prefixed.** The bar needs one
+polarity in both themes — a dark brand teal with light type — and no Material role holds that.
+`primary` is `#006A65` in light and `#81D5CE` in dark; `primaryContainer` is the same inversion in
+the other direction. Aliasing either flips the bar in whichever theme it was not chosen for, which
+is the original bug with the sides swapped.
+
+`sheetHeader` is light `#006A65` / dark `#00504C`, `onSheetHeader` light `#FFFFFF` / dark `#9DF2EA`
+— 6.46:1 and 7.25:1. Light mode's bar is byte-identical to what it has always been; only dark
+changes. In both themes the Save button is now the strongest thing on the screen, which is the
+right hierarchy for a form.
+
+The missing prefix is the point rather than an oversight. Every `m3*` symbol in this catalogue is a
+role from the Material scheme and can be regenerated from it; these two cannot, because they exist
+precisely where the scheme has no answer. A reader who sees `Color.sheetHeader` should know without
+checking that no generator will ever produce it.
+
+The first attempt did put the header on `m3PrimaryContainer` in both themes, which fixed dark and
+flipped light to a mint bar with dark teal type. That is defensible and it is not what this app
+looks like.
 
 **The notched label is not fixed here.** Its chip hardcodes `m3SurfaceBright`, and a comment claims
 it blends into the background behind it. That is true in light mode and false in dark, where it
@@ -190,8 +208,13 @@ capsule gets `.animation(.snappy, value: isFocused)` so the border does not snap
 
 ### `Modules/Components/Sheet/Sheet.swift`
 
-Two lines: `m3Primary` → `m3PrimaryContainer`, `m3OnPrimary` → `m3OnPrimaryContainer`, with a
-comment saying why `primary` is wrong for a filled region this size.
+Two lines: `m3Primary` → `sheetHeader`, `m3OnPrimary` → `onSheetHeader`, with a comment saying why
+neither Material role works for a filled region this size.
+
+`internalSheetHeader.colorset` and `internalOnSheetHeader.colorset` are new, and both extensions
+gain a second `public extension` block for them rather than a line in the `m3*` list — the split is
+what marks them as an app decision rather than a scheme role. The `previewValue` gallery gains the
+pair as a background/foreground preview.
 
 ### 36 feature and component files
 
@@ -207,9 +230,11 @@ already set a foreground, so the three genuine uses are untouched:
 Two comments that named `m3Outline` in prose were updated with it, in `TipInvitationBanner.swift`
 and `CustomFieldFormView.swift`, so neither now describes a colour the file no longer uses.
 
-### `Snapshots/` — 240 references
+### `Snapshots/` — 209 references
 
-Re-recorded across 17 schemes with `mise run snapshots:record`.
+Re-recorded with `mise run snapshots:record`: 240 across 17 schemes for the palette, then 122 again
+across 12 when the sheet header moved off `m3PrimaryContainer`. 209 differ from `main` in the end;
+the light-mode sheet headers were recorded twice and landed back where they started.
 
 ## Testing
 
@@ -246,15 +271,22 @@ forms a `FieldState` rather than with a palette change.
 
 ## Risks
 
-**240 references moved in one branch, which is a lot of diff to review by eye.** The mitigation is
-that they moved for two reasons only — a neutral shifted, or a secondary text colour did — and both
-are visible in seconds on any one image. A reference records whatever the code produced, bug
+**209 references moved in one branch, which is a lot of diff to review by eye.** The mitigation is
+that they moved for three reasons only — a neutral shifted, a secondary text colour did, or a sheet
+header did — and all three are visible in seconds on any one image. A reference records whatever the code produced, bug
 included, so the dark-mode ones were opened individually rather than counted.
 
-**Light mode's editable fields and sheet header both change**, and neither was in the original
-complaint. Both are deliberate and argued above, but they are the changes most likely to draw "I
-didn't ask for that" at review, so they are called out in the commits rather than buried in a
-re-record.
+**Light mode's editable fields change**, and that was not in the original complaint. It is
+deliberate and argued above, but it is the change most likely to draw "I didn't ask for that" at
+review, so it is called out in the commits rather than buried in a re-record. The sheet header no
+longer changes in light mode at all.
+
+**`sheetHeader` and `m3PrimaryContainer` hold the same dark value, `#00504C`, and nothing enforces
+it.** They are unrelated by intent — the header wants a dark teal in both themes, the container is a
+Material role that happens to be one in dark — so a future scheme regeneration moving
+`primaryContainer` should leave the header alone. The risk is the opposite reading: someone noticing
+the duplication and "tidying" the header back onto the Material role, which silently reintroduces
+the light-mode flip. The comment in `Sheet.swift` and the extension both say so.
 
 **Secondary text got lighter in light mode too.** `m3OnSurfaceVariant` is `#3F4947` where
 `m3Outline` was `#6F7978` — that is *darker*, not lighter, so light mode's secondary text gains
