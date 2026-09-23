@@ -34,8 +34,11 @@ public extension UIColor {
     static let m3TertiaryContainer = UIColor.internalM3TertiaryContainer
 }
 
-// See the note on `Color.sheetHeader` for why these two are not `m3`-prefixed.
+// See the note on `Color.fieldFill` for why these are not `m3`-prefixed.
 public extension UIColor {
+    static let fieldFill = UIColor.internalFieldFill
+    static let fieldFillFocused = UIColor.internalFieldFillFocused
+    static let fieldFillReadOnly = UIColor.internalFieldFillReadOnly
     static let onSheetHeader = UIColor.internalOnSheetHeader
     static let sheetHeader = UIColor.internalSheetHeader
 }

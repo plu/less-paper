@@ -73,10 +73,10 @@ public struct Field<Input: View>: View {
         error != nil || isFocused ? 2 : 1
     }
 
-    // `m3SurfaceBright` is the *focused* fill rather than the resting one. It is near-white in
-    // light mode and the top of the ladder in dark, which is the same instruction either way —
-    // lift this one — and that only reads as intentional on the field the caret is in. Resting
-    // takes `m3SurfaceContainerHighest`, which is what Material specifies for a filled text field.
+    // Off the Material surface ladder deliberately — see the note on `Color.fieldFill`. The three
+    // states get brighter as the field becomes more usable, in both themes, and no `m3` rung can
+    // say that: light spends the top of its range on the caret while dark spends the bottom of its
+    // range on a locked field, so one token would have to mean two different things.
     //
     // The title capsule shares this colour so the label always sits on the fill it belongs to. It
     // does not blend into the card *behind* the field: a notch masking a border can match only one
@@ -84,9 +84,9 @@ public struct Field<Input: View>: View {
     // underneath changes.
     private var fillColor: Color {
         if isReadOnly {
-            return .m3SurfaceContainerHigh
+            return .fieldFillReadOnly
         }
-        return isFocused ? .m3SurfaceBright : .m3SurfaceContainerHighest
+        return isFocused ? .fieldFillFocused : .fieldFill
     }
 
     private var titleColor: Color {

@@ -110,26 +110,32 @@ The dark value is deliberately a shade under Material's canonical `#BFC9C7`: sec
 at 9.4:1 against `OnSurface`'s 14.8:1 keeps a visible rank between primary and secondary text, which
 is the whole point of having the second token.
 
-**The field's three states take three consecutive rungs, and `m3SurfaceBright` becomes the focused
-fill.** This is the decision that makes the token honest in both themes. `SurfaceBright` means
-"near-white" in light and "brightest grey" in dark, which is the same *instruction* — lift this one
-— and that only reads as intentional on the field the caret is in.
+**The field's fills come off the Material ladder entirely, into three tokens of their own.** This
+is the second place the scheme has no answer, and for the same reason as the sheet header: `m3`
+roles say *how bright* a surface is, and what a field needs to say is *how usable it is*.
 
-| state | fill | border |
-|---|---|---|
-| read-only | `m3SurfaceContainerHigh` (unchanged) | `m3Outline`, 1pt |
-| resting | `m3SurfaceContainerHighest` | `m3Outline`, 1pt |
-| focused | `m3SurfaceBright` | `m3Primary`, 2pt |
-| error | `m3SurfaceContainerHighest` | `m3Error`, 2pt |
+| state | fill | light | dark | border |
+|---|---|---|---|---|
+| read-only | `fieldFillReadOnly` | `#E3E9E8` | `#262D2C` | `m3Outline`, 1pt |
+| resting | `fieldFill` | `#F4FBF9` | `#2D3533` | `m3Outline`, 1pt |
+| focused | `fieldFillFocused` | `#FFFFFF` | `#353C3B` | `m3Primary`, 2pt |
+| error | `fieldFill` | `#F4FBF9` | `#2D3533` | `m3Error`, 2pt |
 
-Read-only stays exactly where it was. `DocumentMetadataGroupView` picked `m3SurfaceContainerLow` for
-its card specifically so that a `High` fill would separate from it in light mode, and moving the
-read-only fill down a rung would undo that.
+Both rows run the same direction — **more light as the field becomes more usable** — but they run it
+through different parts of the range. Light spends the top of its range on the caret: grey when
+locked, near-white at rest, pure white under the cursor. Dark climbs from a floor low enough that
+its brightest rung is still calm. No single `m3` symbol can express that, because `m3SurfaceBright`
+would have to be the *resting* fill in light and the *focused* fill in dark at the same time.
 
-**Light mode's editable fields change, deliberately.** They go from `#F4FBF9` to `#DDE4E2` — from
-near-white-on-white, legible only by their outline, to the grey capsule Material specifies for a
-filled text field. This is the one place light mode is not left alone, and it is an improvement
-rather than a side effect.
+**Light mode keeps the brightness convention it already had.** An earlier version of this change put
+light's resting fill on `m3SurfaceContainerHighest` (`#DDE4E2`), the grey capsule Material specifies
+for a filled text field. That is the correct Material answer and the wrong answer here: in this
+app's light theme, near-white already means *paper, type here*, and grey is what read-only fields
+wear. Greying an editable field borrows the signal for locked. Material's convention loses to the
+app's own on the app's own screen.
+
+The practical result is that light mode's read-only and resting fills are now byte-identical to
+`main`. Only the focused fill is new there.
 
 **The border is a hairline at rest and doubles when focused or in error.** Three states that differ
 by weight as well as hue; hue alone is the one distinction a red-green colour-blind user cannot
@@ -200,8 +206,9 @@ because that is the role it plays.
 
 ### `Modules/Components/Field/Generic/Field.swift`
 
-`fillColor` and `borderColor` gain a focused branch; `borderWidth` and `titleColor` are new. The
-title capsule takes `fillColor` and `titleColor` instead of `m3SurfaceBright` and `m3OnSurface`. A
+`fillColor` returns `fieldFillReadOnly` / `fieldFill` / `fieldFillFocused`; `borderColor` gains a
+focused branch; `borderWidth` and `titleColor` are new. The title capsule takes `fillColor` and
+`titleColor` instead of `m3SurfaceBright` and `m3OnSurface`. A
 `@Binding var isFocused` mirrors `FieldState.focused`, defaulted to `.constant(false)` in `init` so
 a field built without `state(_:)` compiles and simply never lights up. `state(_:)` assigns it. The
 capsule gets `.animation(.snappy, value: isFocused)` so the border does not snap.
@@ -211,10 +218,11 @@ capsule gets `.animation(.snappy, value: isFocused)` so the border does not snap
 Two lines: `m3Primary` → `sheetHeader`, `m3OnPrimary` → `onSheetHeader`, with a comment saying why
 neither Material role works for a filled region this size.
 
-`internalSheetHeader.colorset` and `internalOnSheetHeader.colorset` are new, and both extensions
-gain a second `public extension` block for them rather than a line in the `m3*` list — the split is
-what marks them as an app decision rather than a scheme role. The `previewValue` gallery gains the
-pair as a background/foreground preview.
+`internalSheetHeader.colorset` and `internalOnSheetHeader.colorset` are new, as are
+`internalFieldFill`, `internalFieldFillFocused` and `internalFieldFillReadOnly`. All five live in a
+second `public extension` block in both extension files rather than as lines in the `m3*` list — the
+split is what marks them as app decisions rather than scheme roles. The `previewValue` gallery gains
+the header pair and the three field states.
 
 ### 36 feature and component files
 
@@ -272,14 +280,21 @@ forms a `FieldState` rather than with a palette change.
 ## Risks
 
 **209 references moved in one branch, which is a lot of diff to review by eye.** The mitigation is
-that they moved for three reasons only — a neutral shifted, a secondary text colour did, or a sheet
-header did — and all three are visible in seconds on any one image. A reference records whatever the code produced, bug
+that they moved for four reasons only — a neutral shifted, a secondary text colour did, a sheet
+header did, or a field fill did — and all four are visible in seconds on any one image. A reference records whatever the code produced, bug
 included, so the dark-mode ones were opened individually rather than counted.
 
-**Light mode's editable fields change**, and that was not in the original complaint. It is
-deliberate and argued above, but it is the change most likely to draw "I didn't ask for that" at
-review, so it is called out in the commits rather than buried in a re-record. The sheet header no
-longer changes in light mode at all.
+**Light mode is nearly untouched, but not entirely, and the remainder is easy to miss.** The
+field fills and the sheet header are byte-identical to `main` there. What does change: the resting
+border drops from 2pt to 1pt, focused fields gain `#FFFFFF` and a teal ring, and the
+`m3OnSurfaceVariant` sweep makes secondary text *darker* (`#6F7978` → `#3F4947`). None of those are
+regressions, but a reviewer expecting "dark mode only" will still see light-mode diffs.
+
+**Five colorsets now sit outside the Material scheme, and the scheme cannot regenerate them.** A
+future re-derivation of the `m3*` palette from a new seed colour will leave `sheetHeader`,
+`onSheetHeader` and the three `fieldFill*` tokens untouched, and they will need hand-matching. That
+is the cost of expressing "editable" and "header" at all; the alternative was a `colorScheme`
+conditional in two views, which nothing else in this codebase does.
 
 **`sheetHeader` and `m3PrimaryContainer` hold the same dark value, `#00504C`, and nothing enforces
 it.** They are unrelated by intent — the header wants a dark teal in both themes, the container is a
