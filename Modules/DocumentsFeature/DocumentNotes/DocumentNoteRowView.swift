@@ -14,7 +14,7 @@ struct DocumentNoteRowView: View {
                 DateFormatter.noteCreated.string(from: note.created),
             ].joined(separator: " · "))
                 .font(.caption)
-                .foregroundStyle(Color.m3Outline)
+                .foregroundStyle(Color.m3OnSurfaceVariant)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.x4)

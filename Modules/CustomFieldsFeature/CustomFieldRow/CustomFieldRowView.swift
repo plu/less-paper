@@ -14,7 +14,7 @@ struct CustomFieldRowView: View {
                 .clipShape(Rectangle())
             Text(caption)
                 .font(.caption)
-                .foregroundColor(.m3Outline)
+                .foregroundColor(.m3OnSurfaceVariant)
         }
         .accessibilityElement()
         .accessibilityValue([

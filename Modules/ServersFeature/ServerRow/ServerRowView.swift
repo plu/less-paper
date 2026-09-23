@@ -19,7 +19,7 @@ struct ServerRowView: View {
                         .foregroundColor(Color.m3OnSurface)
                     Text([store.server.username, store.server.url.absoluteString].joined(separator: " @ "))
                         .font(.caption)
-                        .foregroundColor(.m3Outline)
+                        .foregroundColor(.m3OnSurfaceVariant)
                 }
                 if store.isSelecting {
                     Spacer()
@@ -28,7 +28,7 @@ struct ServerRowView: View {
                     Spacer()
                     Image(systemName: "checkmark.circle")
                         .font(.title)
-                        .foregroundStyle(Color.m3Outline)
+                        .foregroundStyle(Color.m3OnSurfaceVariant)
                 }
             }
             .accessibilityElement()

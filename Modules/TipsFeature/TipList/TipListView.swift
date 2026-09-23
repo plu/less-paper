@@ -48,7 +48,7 @@ public struct TipListView: View {
                                         ProgressView()
                                     } else {
                                         Text(product.displayPrice)
-                                            .foregroundStyle(Color.m3Outline)
+                                            .foregroundStyle(Color.m3OnSurfaceVariant)
                                     }
                                 }
                             }

@@ -37,7 +37,7 @@ struct MultiSelectOptions<OptionsItemView: View, Value: Comparable & CustomStrin
                             Image(systemName: systemImage(value))
                                 .font(.title2)
                                 .fontWeight(.medium)
-                                .foregroundStyle(Color.m3Outline)
+                                .foregroundStyle(Color.m3OnSurfaceVariant)
                             optionsItem(value)
                         }
                     }

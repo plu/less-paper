@@ -53,7 +53,7 @@ struct ShareFormView: View {
                 Text(.importNotPermittedInfo(serverAlias: store.server.alias))
                     .font(.footnote)
                     .multilineTextAlignment(.center)
-                    .foregroundStyle(Color.m3Outline)
+                    .foregroundStyle(Color.m3OnSurfaceVariant)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -155,7 +155,7 @@ struct ShareFormView: View {
                     .resizable()
                     .scaledToFill()
                     .frame(width: 114, height: 154)
-                    .foregroundStyle(Color.m3Outline)
+                    .foregroundStyle(Color.m3OnSurfaceVariant)
             }
         }
         .quickLookPreview($store.quickLookPreview)

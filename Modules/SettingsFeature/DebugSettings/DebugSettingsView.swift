@@ -125,7 +125,7 @@ public struct DebugSettingsView: View {
                 .foregroundStyle(Color.m3OnSurface)
             Spacer()
             Text(value)
-                .foregroundStyle(isGood == false ? Color.m3Error : Color.m3Outline)
+                .foregroundStyle(isGood == false ? Color.m3Error : Color.m3OnSurfaceVariant)
             if let isGood {
                 Image(systemName: isGood ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .foregroundStyle(isGood ? Color.m3Primary : Color.m3Error)

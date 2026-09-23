@@ -12,6 +12,7 @@ public extension UIColor {
     static let m3OnSecondary = UIColor.internalM3OnSecondary
     static let m3OnSecondaryContainer = UIColor.internalM3OnSecondaryContainer
     static let m3OnSurface = UIColor.internalM3OnSurface
+    static let m3OnSurfaceVariant = UIColor.internalM3OnSurfaceVariant
     static let m3OnTertiary = UIColor.internalM3OnTertiary
     static let m3OnTertiaryContainer = UIColor.internalM3OnTertiaryContainer
     static let m3Outline = UIColor.internalM3Outline
@@ -31,4 +32,13 @@ public extension UIColor {
     static let m3SurfaceDim = UIColor.internalM3SurfaceDim
     static let m3Tertiary = UIColor.internalM3Tertiary
     static let m3TertiaryContainer = UIColor.internalM3TertiaryContainer
+}
+
+// See the note on `Color.fieldFill` for why these are not `m3`-prefixed.
+public extension UIColor {
+    static let fieldFill = UIColor.internalFieldFill
+    static let fieldFillFocused = UIColor.internalFieldFillFocused
+    static let fieldFillReadOnly = UIColor.internalFieldFillReadOnly
+    static let onSheetHeader = UIColor.internalOnSheetHeader
+    static let sheetHeader = UIColor.internalSheetHeader
 }

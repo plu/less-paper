@@ -49,7 +49,7 @@ public struct ServerDetailView: View {
                     Image(systemName: "exclamationmark.triangle")
                 }
                 .font(.footnote)
-                .foregroundStyle(Color.m3Outline)
+                .foregroundStyle(Color.m3OnSurfaceVariant)
                 .listRowBackground(Color.m3SurfaceContainer)
             }
         }
@@ -167,7 +167,7 @@ public struct ServerDetailView: View {
                                 }
                             }
                         }
-                        .foregroundStyle(Color.m3Outline)
+                        .foregroundStyle(Color.m3OnSurfaceVariant)
                     }
                     // One utterance carrying the words, rather than four icons announced
                     // separately: the glyphs are for the eye, and this row is what VoiceOver reads.

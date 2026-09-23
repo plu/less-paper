@@ -89,7 +89,7 @@ public struct CustomFieldFormView: View {
         if store.isDataTypeLocked {
             Field(.dataType) {
                 HStack {
-                    // Same colour as an editable value, not `m3Outline`: this is the field's real
+                    // Same colour as an editable value, not `m3OnSurfaceVariant`: this is the field's real
                     // type, and grey text in an empty-looking capsule reads as a placeholder
                     // prompting for input. The dimmed fill is what says "not editable".
                     Text(store.input.dataType.description)

@@ -8,7 +8,7 @@ struct DocumentBulkEditTitlePreviewRow: View {
         VStack(alignment: .leading, spacing: .x1) {
             Text(preview.oldTitle)
                 .strikethrough()
-                .foregroundStyle(Color.m3Outline)
+                .foregroundStyle(Color.m3OnSurfaceVariant)
             Text(preview.newTitle)
                 .fontWeight(.medium)
                 .foregroundStyle(Color.m3OnSurface)

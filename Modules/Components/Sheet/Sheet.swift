@@ -11,8 +11,13 @@ public struct Sheet<Top: View, Content: View, ContentOverlay: View, Bottom: View
                     .padding(.x4)
                     .frame(maxWidth: .infinity)
                     .frame(height: 60)
-                    .background(Color.m3Primary)
-                    .foregroundStyle(Color.m3OnPrimary)
+                    // Not `m3Primary`: it is a deep teal in light mode and a bright mint in dark,
+                    // so the same bar flipped from dark-on-light to light-on-dark and became the
+                    // brightest thing on a near-black screen. `m3PrimaryContainer` inverts the same
+                    // way, just in the other theme — a bar this large needs one polarity in both,
+                    // and no Material role holds it, so this pair is the app's own.
+                    .background(Color.sheetHeader)
+                    .foregroundStyle(Color.onSheetHeader)
                     .dynamicTypeSize(.xSmall ... .xxLarge)
             }
 

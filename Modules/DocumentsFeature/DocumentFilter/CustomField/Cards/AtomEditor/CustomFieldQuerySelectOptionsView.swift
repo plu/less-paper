@@ -62,7 +62,7 @@ struct CustomFieldQuerySelectOptionsView: View {
                 Image(systemName: selected.contains(id) ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
                     .fontWeight(.medium)
-                    .foregroundStyle(Color.m3Outline)
+                    .foregroundStyle(Color.m3OnSurfaceVariant)
                 Text(option.label)
                     .font(.body)
                     .foregroundStyle(Color.m3OnSurface)

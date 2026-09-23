@@ -27,13 +27,13 @@ struct DocumentSearchResultsView: View {
             // failure that says nothing here looks exactly like not having searched.
             statusRow {
                 Text(error)
-                    .foregroundStyle(Color.m3Outline)
+                    .foregroundStyle(Color.m3OnSurfaceVariant)
             }
         } else if let results = store.results {
             if results.isEmpty, store.hasQuery, !store.isLoading {
                 statusRow {
                     Text(.searchNoResults)
-                        .foregroundStyle(Color.m3Outline)
+                        .foregroundStyle(Color.m3OnSurfaceVariant)
                 }
             } else {
                 // No client-side truncation: the server already caps each list through
@@ -123,7 +123,7 @@ struct DocumentSearchResultsView: View {
             VStack(alignment: .leading, spacing: .x3) {
                 Text(title)
                     .font(.footnote)
-                    .foregroundStyle(Color.m3Outline)
+                    .foregroundStyle(Color.m3OnSurfaceVariant)
                     .padding(.leading, .x3 + .x2)
                 VStack(spacing: .x0) {
                     ForEach(Array(items.enumerated()), id: \.element.id) { index, item in

@@ -54,14 +54,14 @@ struct DocumentPickerView: View {
                 Image(systemName: store.selection[id: document.id] != nil ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
                     .fontWeight(.medium)
-                    .foregroundStyle(Color.m3Outline)
+                    .foregroundStyle(Color.m3OnSurfaceVariant)
                 VStack(alignment: .leading, spacing: .x1) {
                     Text(document.title)
                         .font(.body)
                         .foregroundStyle(Color.m3OnSurface)
                     Text(document.created, format: .dateTime.year().month().day())
                         .font(.caption)
-                        .foregroundStyle(Color.m3Outline)
+                        .foregroundStyle(Color.m3OnSurfaceVariant)
                 }
             }
         }

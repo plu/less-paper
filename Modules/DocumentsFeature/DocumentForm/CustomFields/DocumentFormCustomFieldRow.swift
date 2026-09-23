@@ -15,7 +15,7 @@ struct DocumentFormCustomFieldRow: View {
                 onRemove()
             } label: {
                 Image(systemName: "xmark")
-                    .foregroundColor(.m3Outline)
+                    .foregroundColor(.m3OnSurfaceVariant)
                     .accessibilityLabel(.removeCustomField)
             }
             .buttonStyle(.borderless)
@@ -111,7 +111,7 @@ struct DocumentFormCustomFieldRow: View {
             HStack(spacing: .x3) {
                 if linkedIds.isEmpty {
                     Text(verbatim: "—")
-                        .foregroundColor(.m3Outline)
+                        .foregroundColor(.m3OnSurfaceVariant)
                     Spacer()
                 } else {
                     ScrollView(.horizontal) {
@@ -170,7 +170,7 @@ struct DocumentFormCustomFieldRow: View {
             Field(title) {
                 HStack {
                     Text(.setDate)
-                        .foregroundColor(.m3Outline)
+                        .foregroundColor(.m3OnSurfaceVariant)
                     Spacer()
                 }
             }
@@ -217,7 +217,7 @@ struct DocumentFormCustomFieldRow: View {
         Field(title) {
             HStack {
                 Text(verbatim: "—")
-                    .foregroundColor(.m3Outline)
+                    .foregroundColor(.m3OnSurfaceVariant)
                 Spacer()
             }
         }

@@ -14,7 +14,7 @@ struct StoragePathRowView: View {
                 .clipShape(Rectangle())
             Text(.numberOfDocuments(store.storagePath.documentCount))
                 .font(.caption)
-                .foregroundColor(.m3Outline)
+                .foregroundColor(.m3OnSurfaceVariant)
         }
         .accessibilityElement()
         .accessibilityValue([

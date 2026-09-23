@@ -64,7 +64,7 @@ struct CertificateApprovalView: View {
         if let value {
             VStack(alignment: .leading, spacing: .x1) {
                 Text(title)
-                    .foregroundStyle(Color.m3Outline)
+                    .foregroundStyle(Color.m3OnSurfaceVariant)
                 Text(value)
             }
             .font(.footnote)

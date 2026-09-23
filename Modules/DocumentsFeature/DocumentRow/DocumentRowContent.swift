@@ -23,7 +23,7 @@ public struct DocumentRowContent: View {
                 Text(DateFormatter.createdDate.string(from: document.created))
                     .font(.footnote)
                     .fontWeight(.medium)
-                    .foregroundColor(.m3Outline)
+                    .foregroundColor(.m3OnSurfaceVariant)
                     .lineLimit(1)
                     .padding(.trailing, .x2)
             }
@@ -55,7 +55,7 @@ public struct DocumentRowContent: View {
                 }
             }
         }
-        .foregroundColor(.m3Outline)
+        .foregroundColor(.m3OnSurfaceVariant)
         .fontWeight(.medium)
         .font(.footnote)
         .padding(sizeCategory >= breakpoint ? .x4 : .x3)

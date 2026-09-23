@@ -12,6 +12,7 @@ public extension Color {
     static let m3OnSecondary = Color.internalM3OnSecondary
     static let m3OnSecondaryContainer = Color.internalM3OnSecondaryContainer
     static let m3OnSurface = Color.internalM3OnSurface
+    static let m3OnSurfaceVariant = Color.internalM3OnSurfaceVariant
     static let m3OnTertiary = Color.internalM3OnTertiary
     static let m3OnTertiaryContainer = Color.internalM3OnTertiaryContainer
     static let m3Outline = Color.internalM3Outline
@@ -31,6 +32,30 @@ public extension Color {
     static let m3SurfaceDim = Color.internalM3SurfaceDim
     static let m3Tertiary = Color.internalM3Tertiary
     static let m3TertiaryContainer = Color.internalM3TertiaryContainer
+}
+
+// Not `m3`-prefixed, because these are not Material roles. The scheme has roles for *how bright* a
+// surface is, and both of the things below need a role for *what it means* — which inverts against
+// brightness between the themes, so no `m3` symbol can carry either one.
+//
+// The field states run grey → near-white → white in light and near-black → calm grey → lighter grey
+// in dark. Both run the same direction, more light as a field becomes more usable, but light spends
+// the top of its range on the caret while dark spends the bottom of its range on a locked field.
+// `m3SurfaceBright` would have to be the resting fill in light and the focused fill in dark at the
+// same time.
+//
+// The sheet header wants one polarity in both themes, a dark brand teal under light type, and
+// `m3Primary` and `m3PrimaryContainer` invert in opposite directions — aliasing either flips the
+// bar in whichever theme it was not chosen for.
+//
+// The missing prefix is the signal: an `m3` symbol is a role the Material scheme could regenerate,
+// these are app decisions that no generator will ever produce.
+public extension Color {
+    static let fieldFill = Color.internalFieldFill
+    static let fieldFillFocused = Color.internalFieldFillFocused
+    static let fieldFillReadOnly = Color.internalFieldFillReadOnly
+    static let onSheetHeader = Color.internalOnSheetHeader
+    static let sheetHeader = Color.internalSheetHeader
 }
 
 public extension Color {
@@ -188,6 +213,13 @@ public extension Color {
             )
 
             ColorPreview(
+                backgroundColor: .m3Surface,
+                backgroundName: "m3Surface",
+                foregroundColor: .m3OnSurfaceVariant,
+                foregroundName: "m3OnSurfaceVariant"
+            )
+
+            ColorPreview(
                 backgroundColor: .m3Outline,
                 backgroundName: "m3Outline",
                 foregroundColor: .clear,
@@ -206,6 +238,34 @@ public extension Color {
                 backgroundName: "m3Shadow",
                 foregroundColor: .clear,
                 foregroundName: ""
+            )
+
+            ColorPreview(
+                backgroundColor: .sheetHeader,
+                backgroundName: "sheetHeader",
+                foregroundColor: .onSheetHeader,
+                foregroundName: "onSheetHeader"
+            )
+
+            ColorPreview(
+                backgroundColor: .fieldFillReadOnly,
+                backgroundName: "fieldFillReadOnly",
+                foregroundColor: .m3OnSurface,
+                foregroundName: "m3OnSurface"
+            )
+
+            ColorPreview(
+                backgroundColor: .fieldFill,
+                backgroundName: "fieldFill",
+                foregroundColor: .m3OnSurface,
+                foregroundName: "m3OnSurface"
+            )
+
+            ColorPreview(
+                backgroundColor: .fieldFillFocused,
+                backgroundName: "fieldFillFocused",
+                foregroundColor: .m3OnSurface,
+                foregroundName: "m3OnSurface"
             )
         }
         .frame(minWidth: 300)

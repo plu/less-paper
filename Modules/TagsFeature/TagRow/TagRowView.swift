@@ -22,7 +22,7 @@ struct TagRowView: View {
                     }
                 }
                 .font(.caption)
-                .foregroundColor(.m3Outline)
+                .foregroundColor(.m3OnSurfaceVariant)
             }
             Spacer()
             Text(store.tag.color).tag(tag: store.tag, font: .footnote)

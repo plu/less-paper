@@ -28,7 +28,7 @@ struct DocumentSearchField: View {
                         text.wrappedValue = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(Color.m3Outline)
+                            .foregroundStyle(Color.m3OnSurfaceVariant)
                     }
                     .accessibilityLabel(.clearSearch)
                     .buttonStyle(.plain)

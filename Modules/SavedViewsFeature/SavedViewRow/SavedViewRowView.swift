@@ -22,7 +22,7 @@ struct SavedViewRowView: View {
                 }
             }
             .font(.caption)
-            .foregroundColor(.m3Outline)
+            .foregroundColor(.m3OnSurfaceVariant)
         }
         .accessibilityElement()
         .accessibilityValue([

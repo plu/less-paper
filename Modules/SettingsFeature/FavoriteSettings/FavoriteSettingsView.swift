@@ -14,7 +14,7 @@ public struct FavoriteSettingsView: View {
                         .foregroundStyle(Color.m3OnSurface)
                     Spacer()
                     Text(formattedByteCount)
-                        .foregroundStyle(Color.m3Outline)
+                        .foregroundStyle(Color.m3OnSurfaceVariant)
                 }
             }
             .listRowBackground(Color.m3SurfaceContainer)
