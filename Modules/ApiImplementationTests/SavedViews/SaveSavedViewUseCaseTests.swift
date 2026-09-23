@@ -187,6 +187,61 @@ struct SaveSavedViewUseCaseTests {
         #expect(uiSettingsRequested.value == false)
     }
 
+    @Test
+    func execute_onVersion9_storesTheSavedViewWithTitleContent() async throws {
+        let server = Server.testValue()
+
+        let inputReceived = LockIsolated<SaveSavedViewInput?>(nil)
+
+        try await withDependencies {
+            $0.savedViewsRepository.updateSavedView = { _, input, _ in
+                inputReceived.setValue(input)
+                return .testValue(name: "Updated")
+            }
+        } operation: {
+            _ = try await SaveSavedViewUseCase.liveValue.execute(
+                id: 1,
+                input: .testValue(filterRules: [.init(ruleType: .titleContent, value: "Rechnung")]),
+                server: server
+            )
+        }
+
+        expectNoDifference(
+            inputReceived.value?.filterRules,
+            [.init(ruleType: .titleContent, value: "Rechnung")]
+        )
+    }
+
+    // The web client writes rule 49 for the same search from 3.0 on, so a view the app saves there
+    // has to look the same as one saved from the browser.
+    @Test
+    func execute_onVersion10_storesTheSavedViewWithSimpleText() async throws {
+        let server = Server.testValue()
+        @Shared(.apiVersion(server))
+        var apiVersion: Int?
+        $apiVersion.withLock { $0 = 10 }
+
+        let inputReceived = LockIsolated<SaveSavedViewInput?>(nil)
+
+        try await withDependencies {
+            $0.savedViewsRepository.updateSavedView = { _, input, _ in
+                inputReceived.setValue(input)
+                return .testValue(name: "Updated")
+            }
+        } operation: {
+            _ = try await SaveSavedViewUseCase.liveValue.execute(
+                id: 1,
+                input: .testValue(filterRules: [.init(ruleType: .titleContent, value: "Rechnung")]),
+                server: server
+            )
+        }
+
+        expectNoDifference(
+            inputReceived.value?.filterRules,
+            [.init(ruleType: .simpleText, value: "Rechnung")]
+        )
+    }
+
     @Shared(.savedViews(.testValue()))
     private var cache: IdentifiedArrayOf<ApiInterface.SavedView> = [.testValue(id: 1)]
 }

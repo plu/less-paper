@@ -42,11 +42,13 @@ extension UITestNavigation {
         return true
     }
 
+    // Waits on a document row rather than on any cell: the search field is a row of this list and
+    // exists before a single document has arrived, so a cell is on screen the moment the tab is.
     func openDocuments(in app: XCUIApplication) -> Bool {
         guard tapTab(labels.documents, in: app) else {
             return false
         }
-        return app.cells.firstMatch.waitForExistence(timeout: timeout)
+        return app.documentRows.firstMatch.waitForExistence(timeout: timeout)
     }
 
     func openFilter(in app: XCUIApplication) -> Bool {
@@ -61,13 +63,14 @@ extension UITestNavigation {
         return app.textFields[labels.titleAndContent].firstMatch.waitForExistence(timeout: timeout)
     }
 
-    // The first row rather than a title: the corpus differs by language, and SnapshotCorpus puts
-    // the document these two screenshots want at the top for exactly this reason.
+    // The first document row rather than a title: the corpus differs by language, and
+    // SnapshotCorpus puts the document these two screenshots want at the top for exactly this
+    // reason. Not the first *cell* — that is the search field.
     func openFeaturedDocument(in app: XCUIApplication) -> Bool {
         guard openDocuments(in: app) else {
             return false
         }
-        let row = app.cells.firstMatch
+        let row = app.documentRows.firstMatch
         guard row.waitUntilHittable(timeout: timeout) else {
             return false
         }

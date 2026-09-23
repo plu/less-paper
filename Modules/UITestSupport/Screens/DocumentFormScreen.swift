@@ -28,7 +28,9 @@ public struct DocumentFormScreen {
         }
         tab.tap()
 
-        let cell = app.cells.firstMatch
+        // Not `cells.firstMatch`: the list's first row is the search field now, and tapping it
+        // raises the keyboard instead of opening anything.
+        let cell = app.documentRows.firstMatch
         guard cell.waitUntilHittable(timeout: timeout) else {
             return false
         }

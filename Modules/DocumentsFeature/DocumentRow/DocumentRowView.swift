@@ -23,6 +23,10 @@ struct DocumentRowView: View {
             ShareSheet(url: item.url)
         }
         .frame(maxWidth: .infinity)
+        // The list's first row is the search field, not a document, so nothing that walks this
+        // list can take the first cell and assume it holds a document. This is what a document row
+        // answers to instead.
+        .accessibilityIdentifier(DocumentRowView.accessibilityIdentifier)
         .background(Color.m3SurfaceContainer)
         .buttonStyle(.borderless)
         .contentShape(Rectangle())
@@ -51,6 +55,8 @@ struct DocumentRowView: View {
 
     @Bindable
     var store: StoreOf<DocumentRowReducer>
+
+    static let accessibilityIdentifier = "DocumentRow"
 
     @ViewBuilder
     private func contextMenu() -> some View {

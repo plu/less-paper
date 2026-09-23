@@ -30,11 +30,11 @@ public struct DocumentSearchReducer: Sendable {
         }
 
         public enum View {
+            case cancelButtonTapped
             case correspondentTapped(Correspondent)
             case customFieldTapped(CustomField)
             case documentTapped(Document)
             case documentTypeTapped(DocumentType)
-            case refocused
             case savedViewTapped(SavedView)
             case searchTextChanged(String)
             case storagePathTapped(StoragePath)
@@ -46,6 +46,15 @@ public struct DocumentSearchReducer: Sendable {
     @ObservableState
     public struct State: Equatable {
 
+        // The one write the field is not allowed to make. Committing a search empties
+        // `searchText` while the UIKit text field still holds the query, and resigning focus
+        // pushes that stale value back through the binding — which puts the results back over the
+        // documents the commit just fetched, and, when the commit's own cancellation lands on the
+        // debounce that write started, leaves `isLoading` true with nothing in flight and a
+        // spinner that never resolves. Swallowed exactly once: typing the same query again is a
+        // different keystroke and clears the latch on its first character.
+        var clearedQuery: String?
+
         var error: String?
 
         var isLoading = false
@@ -56,17 +65,11 @@ public struct DocumentSearchReducer: Sendable {
 
         let server: Server
 
-        // Set by every row tap and consumed by the next `submitted`. Resigning the field's focus
-        // programmatically makes SwiftUI fire `onSubmit(of: .search)`, so a tap arrives here as its
-        // own action immediately followed by a submit the user never made — which would apply the
-        // tapped filter and then overwrite it with a plain text search. Not part of `init`: it is a
-        // latch the reducer owns, never initial configuration.
-        //
-        // Cleared by `refocused` and by `searchTextChanged` as well as by the submit it absorbs.
-        // The phantom submit fires during resignation, so focus returning or a fresh keystroke both
-        // mean that window has shut — and a latch left armed by a tap that somehow produced no
-        // submit would otherwise wait indefinitely and swallow a real return press.
-        var suppressesNextSubmit = false
+        // Bumped by `clearQuery` and by nothing else, which is the field's cue to resign focus.
+        // The `X` inside the field empties the text through `searchTextChanged` and deliberately
+        // leaves the keyboard up; finishing the search — Cancel, submit, or a result that applies
+        // a filter — has to put it away, and none of those are things the field itself can see.
+        var dismissalCount = 0
 
         var trimmedQuery: String {
             searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -89,6 +92,18 @@ public struct DocumentSearchReducer: Sendable {
             self.searchText = searchText
             self.server = server
         }
+
+        // Every way out of search mode other than opening a document ends here: the list only
+        // leaves the results behind when the field is empty, so a filter that has been applied and
+        // is visible in the list is not also still being searched for.
+        mutating func clearQuery() {
+            clearedQuery = trimmedQuery.isEmpty ? nil : searchText
+            dismissalCount += 1
+            error = nil
+            isLoading = false
+            results = nil
+            searchText = ""
+        }
     }
 
     public var body: some ReducerOf<Self> {
@@ -109,35 +124,43 @@ public struct DocumentSearchReducer: Sendable {
             // window would otherwise search for text the user has already moved on from.
             case .searchDebounced:
                 return .runGlobalSearch(query: state.trimmedQuery, server: state.server)
+            // The field's own clear button only wipes the text, which arrives as a
+            // `searchTextChanged("")`. Cancel is the one that also has to drop focus, and that
+            // half belongs to the view: there is no focus in state to reset here.
+            case .view(.cancelButtonTapped):
+                state.clearQuery()
+                return .runCancelSearch()
             case let .view(.correspondentTapped(correspondent)):
-                state.suppressesNextSubmit = true
-                return .send(.delegate(.filterRequested(.searchResult(correspondent: correspondent))))
+                return clearThenDelegate(
+                    &state,
+                    .filterRequested(.searchResult(correspondent: correspondent))
+                )
             case let .view(.customFieldTapped(customField)):
-                state.suppressesNextSubmit = true
-                return .send(.delegate(.filterRequested(.searchResult(customField: customField))))
+                return clearThenDelegate(
+                    &state,
+                    .filterRequested(.searchResult(customField: customField))
+                )
+            // The one tap that leaves the query standing: the detail is pushed over the results,
+            // and coming back has to return the user to the list they picked from.
             case let .view(.documentTapped(document)):
-                state.suppressesNextSubmit = true
                 return .send(.delegate(.documentTapped(document.id)))
             case let .view(.documentTypeTapped(documentType)):
-                state.suppressesNextSubmit = true
-                return .send(.delegate(.filterRequested(.searchResult(documentType: documentType))))
+                return clearThenDelegate(
+                    &state,
+                    .filterRequested(.searchResult(documentType: documentType))
+                )
             case let .view(.savedViewTapped(savedView)):
-                state.suppressesNextSubmit = true
-                return .send(.delegate(.savedViewTapped(savedView)))
-            // No debounce: a deliberate tap on the field is not a keystroke, so there is nothing
-            // to coalesce. Shares CancelID.search with the debounce, so a sleep or request left
-            // pending by earlier typing cannot land on top of this one.
-            case .view(.refocused):
-                state.suppressesNextSubmit = false
-                guard state.hasQuery else {
+                return clearThenDelegate(&state, .savedViewTapped(savedView))
+            case let .view(.searchTextChanged(searchText)):
+                // The write-back `clearedQuery` exists for: the text field handing back the query
+                // the commit has just emptied. Taking it would restart the search that was
+                // finished, over the documents it fetched.
+                guard state.clearedQuery != searchText else {
+                    state.clearedQuery = nil
                     return .none
                 }
-                state.error = nil
-                state.isLoading = true
-                return .runGlobalSearch(query: state.trimmedQuery, server: state.server)
-            case let .view(.searchTextChanged(searchText)):
+                state.clearedQuery = nil
                 state.searchText = searchText
-                state.suppressesNextSubmit = false
                 guard state.hasQuery else {
                     state.error = nil
                     state.isLoading = false
@@ -148,23 +171,32 @@ public struct DocumentSearchReducer: Sendable {
                 state.isLoading = true
                 return .runSearchDebounce()
             case let .view(.storagePathTapped(storagePath)):
-                state.suppressesNextSubmit = true
-                return .send(.delegate(.filterRequested(.searchResult(storagePath: storagePath))))
+                return clearThenDelegate(
+                    &state,
+                    .filterRequested(.searchResult(storagePath: storagePath))
+                )
             case .view(.submitted):
-                guard !state.suppressesNextSubmit else {
-                    state.suppressesNextSubmit = false
-                    return .none
-                }
                 guard state.hasQuery else {
                     return .none
                 }
-                return .send(.delegate(.queryCommitted(state.trimmedQuery)))
+                let query = state.trimmedQuery
+                return clearThenDelegate(&state, .queryCommitted(query))
             case let .view(.tagTapped(tag)):
-                state.suppressesNextSubmit = true
-                return .send(.delegate(.filterRequested(.searchResult(tag: tag))))
+                return clearThenDelegate(&state, .filterRequested(.searchResult(tag: tag)))
             }
         }
     }
 
     public init() {}
+
+    // The delegate is composed before the clear so a case that reads the query — `queryCommitted`
+    // — still sees it. Merged with the cancel so a debounce or request already scheduled for the
+    // query being thrown away cannot land afterwards and repopulate the results.
+    private func clearThenDelegate(
+        _ state: inout State,
+        _ delegate: Action.Delegate
+    ) -> Effect<Action> {
+        state.clearQuery()
+        return .merge(.runCancelSearch(), .send(.delegate(delegate)))
+    }
 }

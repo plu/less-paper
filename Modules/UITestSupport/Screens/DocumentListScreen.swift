@@ -23,7 +23,10 @@ public struct DocumentListScreen {
             return false
         }
         tab.tap()
-        return app.cells.firstMatch.waitForExistence(timeout: timeout)
+
+        // A document row rather than any cell: the search field is a row of this list and exists
+        // before a single document has arrived.
+        return app.documentRows.firstMatch.waitForExistence(timeout: timeout)
     }
 
     @discardableResult
@@ -62,27 +65,51 @@ public struct DocumentListScreen {
         return true
     }
 
-    // The field is visible at rest, in the navigation bar's search drawer — no swipe needed. It is
-    // a searchField, not a textField, so the accessor reaches it through app.searchFields.
+    // The list's first row is the search field itself — an ordinary textField, not a searchField:
+    // nothing here is `.searchable`. Typing three characters is what swaps the document rows for
+    // the result sections, so the caller waits on those rather than on this returning.
     @discardableResult
     public func search(for text: String) -> Bool {
-        let field = app.searchFields.firstMatch
+        let field = searchField
         guard field.waitUntilHittable(timeout: timeout) else {
             return false
         }
         field.tap()
+        guard app.keyboards.element.waitForExistence(timeout: timeout) else {
+            return false
+        }
         app.typeText(text)
         return true
     }
 
-    // Read rather than tapped, so it deliberately does not wait on hittability: after a result tap
-    // the field is no longer focused and the assertion is about what it still holds.
+    // Read rather than tapped, so it deliberately does not wait on hittability: every assertion
+    // using this is about what the field is left holding.
     public func searchFieldText() -> String? {
-        let field = app.searchFields.firstMatch
+        let field = searchField
         guard field.waitForExistence(timeout: timeout) else {
             return nil
         }
         return field.value as? String
+    }
+
+    // The field's placeholder renders as its value when it is empty, which is what an emptied
+    // field reports rather than "".
+    public func isSearchFieldEmpty() -> Bool {
+        searchFieldText().map { $0.isEmpty || $0 == "Search" } ?? false
+    }
+
+    @discardableResult
+    public func cancelSearch() -> Bool {
+        let cancel = app.buttons["Cancel"].firstMatch
+        guard cancel.waitUntilHittable(timeout: timeout) else {
+            return false
+        }
+        cancel.tap()
+        return true
+    }
+
+    private var searchField: XCUIElement {
+        app.textFields["Search"].firstMatch
     }
 
     // The Tags and Document types sections can both offer a result with the same label (seed data

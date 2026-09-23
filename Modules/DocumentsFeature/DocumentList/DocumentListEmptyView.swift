@@ -4,8 +4,14 @@ import SwiftUI
 
 @ViewAction(for: DocumentListReducer.self)
 struct DocumentListEmptyView: View {
+    // Silent while the list is showing search results. Both branches below read `documents`,
+    // which the results have replaced rather than emptied — so an unguarded view would spin over
+    // them mid-fetch, or tell someone whose library is genuinely empty that there is nothing here
+    // while their query is busy finding tags.
     var body: some View {
-        if store.documents.isEmpty && store.isLoaded {
+        if store.isSearching {
+            EmptyView()
+        } else if store.documents.isEmpty && store.isLoaded {
             ContentUnavailableView {
                 emptyListView()
             }

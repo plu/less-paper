@@ -2,6 +2,7 @@
 
 import ApiInterface
 import ComposableArchitecture
+import DesignTokens
 import SwiftUI
 import Testing
 import TestSupport
@@ -16,14 +17,13 @@ struct DocumentSearchResultsViewTests {
 
     // Wrapped in a `List` because the view's body is a set of `Section`s, which only render as rows
     // inside a list container — a bare render would record a reference that looks nothing like the
-    // screen. A bare `List` is inset-grouped, not the system-styled container `.searchSuggestions`
-    // supplies, so these references pin content and section order rather than production chrome.
+    // screen. The wrapper below is the documents list's own container, so these references show
+    // production chrome as well as content and section order.
     @Test
     func testSnapshot_populated() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             results: .testValue(
@@ -56,9 +56,8 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_partiallyPopulated() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             results: .testValue(
@@ -80,9 +79,8 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_noResults() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             results: .testValue(),
@@ -103,9 +101,8 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_error() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             error: "The Internet connection appears to be offline.",
@@ -127,9 +124,8 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_errorKeepsPreviousResults() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             error: "The Internet connection appears to be offline.",
@@ -152,9 +148,8 @@ struct DocumentSearchResultsViewTests {
     @Test
     func testSnapshot_loading() async throws {
         assertSnapshot(
-            of: List {
+            of: searchResultsList {
                 DocumentSearchResultsView(
-                    resignSearchFocus: {},
                     store: Store(
                         initialState: DocumentSearchReducer.State.testValue(
                             isLoading: true,
@@ -168,5 +163,16 @@ struct DocumentSearchResultsViewTests {
             },
             as: .image(layout: .device(config: .iPhone12))
         )
+    }
+
+    // Matches DocumentListView's container exactly, `listStyle(.plain)` included; a reference
+    // recorded against a differently styled list would say nothing about what the list shows.
+    private func searchResultsList(@ViewBuilder content: () -> some View) -> some View {
+        List {
+            content()
+        }
+        .background(Color.m3SurfaceContainerLowest)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
 }

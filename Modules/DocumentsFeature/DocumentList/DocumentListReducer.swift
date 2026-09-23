@@ -131,9 +131,19 @@ public struct DocumentListReducer: Sendable {
         var canScan: Bool { permissions.can(.addDocument) }
 
         // Either permission is enough to make a selection worth having: gating on change alone
-        // would hide bulk delete from someone who may delete but not edit.
+        // would hide bulk delete from someone who may delete but not edit. Off while the list is
+        // showing search results: a tag row is not something anyone can select and act on.
         var canSelect: Bool {
-            permissions.can(.changeDocument) || permissions.can(.deleteDocument)
+            guard !isSearching else {
+                return false
+            }
+            return permissions.can(.changeDocument) || permissions.can(.deleteDocument)
+        }
+
+        // The single switch between the two things the list can be: document rows below the
+        // minimum query length, search results at or above it. The field is a row either way.
+        var isSearching: Bool {
+            search.hasQuery
         }
 
         @Shared
@@ -422,6 +432,8 @@ public struct DocumentListReducer: Sendable {
                     $0.isRecalculating = false
                 }
                 return .none
+            // No clearing here, unlike every other result tap: the detail is pushed over the
+            // results and coming back has to land the user back on them.
             case let .search(.delegate(.documentTapped(id))):
                 return .send(.openDocument(id))
             // The saved view goes with it: leaving it set would keep the navigation title naming a
@@ -451,6 +463,13 @@ public struct DocumentListReducer: Sendable {
             case let .search(.delegate(.savedViewTapped(savedView))):
                 state.clearForPendingFetch()
                 return .send(.view(.savedViewButtonTapped(savedView)))
+            // Selection mode and search results cannot both be on screen, and the user typing is
+            // the later of the two intents.
+            case .search(.view(.searchTextChanged)):
+                if state.isSearching {
+                    state.documentSelection.isActive = false
+                }
+                return .none
             case .search:
                 return .none
             case let .tipInvitationEligible(isEligible):
@@ -567,6 +586,11 @@ public struct DocumentListReducer: Sendable {
                         onEveryAppearance
                     )
                 case .onRefresh, .reloadButtonTapped:
+                    // Pulling on a list of search results would refetch documents that are not the
+                    // rows being pulled, so it does nothing at all while they are showing.
+                    guard !state.isSearching else {
+                        return .none
+                    }
                     // Inbox only, for the reason given under .onAppear above.
                     let refreshFailedFileTaskCount: Effect<Action> = state.filter.isInbox
                         ? .runRefreshFailedFileTaskCount(server: state.server)

@@ -370,4 +370,57 @@ struct FilterRuleCustomFieldQueryEqualityTests {
         #expect(FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exists",true],[8,"exists",true]]]"#)
             != FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[8,"exists",true],[7,"exists",true]]]"#))
     }
+
+    @Test(arguments: [8, 9])
+    func upgradedBelowTen(version: Int) {
+        let rules = [FilterRule(ruleType: .titleContent, value: "Rechnung")]
+
+        expectNoDifference(rules.upgraded(forApiVersion: version), rules)
+    }
+
+    @Test
+    func upgradedAtTenRewritesTitleContent() {
+        let rules = [FilterRule(ruleType: .titleContent, value: "Rechnung")]
+
+        expectNoDifference(
+            rules.upgraded(forApiVersion: 10),
+            [FilterRule(ruleType: .simpleText, value: "Rechnung")]
+        )
+    }
+
+    // The whole point of the version gate: a pre-3.0 server does not reject `text`, it drops it
+    // and answers with every document, so the parameter has to stay `title_content` there.
+    @Test
+    func upgradedDecidesTheQueryParameter() {
+        let rules = [FilterRule(ruleType: .titleContent, value: "Rechnung")]
+
+        expectNoDifference(
+            rules.upgraded(forApiVersion: 9).queryDictionary,
+            ["title_content": "Rechnung"]
+        )
+        expectNoDifference(
+            rules.upgraded(forApiVersion: 10).queryDictionary,
+            ["text": "Rechnung"]
+        )
+    }
+
+    // Title search stays on `title__icontains`, which is neither deprecated nor the slow one, and
+    // the custom field and advanced rules have no Tantivy substitute at all.
+    @Test
+    func upgradedLeavesEveryOtherRuleTypeAlone() {
+        let rules = [
+            FilterRule(ruleType: .title, value: "Rechnung"),
+            FilterRule(ruleType: .simpleText, value: "already upgraded"),
+            FilterRule(ruleType: .fulltextQuery, value: "Rechnung"),
+            FilterRule(ruleType: .customFieldsText, value: "Rechnung"),
+            FilterRule(ruleType: .customFieldsQuery, value: #"["AND",[[7,"exists",true]]]"#)
+        ]
+
+        expectNoDifference(rules.upgraded(forApiVersion: 10), rules)
+    }
+
+    @Test
+    func upgradedEmptyRules() {
+        expectNoDifference([FilterRule]().upgraded(forApiVersion: 10), [])
+    }
 }

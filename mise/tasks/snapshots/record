@@ -40,13 +40,17 @@ bundle="$work_dir/record.xcresult"
 #
 # -o pins the runtime as well as the device, matching mise/scripts/run_tests.sh. References are
 # compared against images recorded on this exact pairing, so they have to be recorded on it too.
+#
+# -collect-test-diagnostics never for the reason spelled out in mise/scripts/run_tests.sh. A
+# re-record run fails by design whenever a reference moves, so this is the run that would pay the
+# ten-minute diagnostics timeout most often.
 set +e
 tuist test "$usage_scheme" \
     -d "$TEST_SIMULATOR" \
     -o "$TEST_SIMULATOR_OS" \
     --no-selective-testing \
     -T "$bundle" \
-    -- -testLanguage en -testRegion DE ${only[@]+"${only[@]}"}
+    -- -testLanguage en -testRegion DE -collect-test-diagnostics never ${only[@]+"${only[@]}"}
 set -e
 
 summary=$(xcrun xcresulttool get test-results summary --path "$bundle" 2>/dev/null || echo '{}')

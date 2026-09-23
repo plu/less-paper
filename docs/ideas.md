@@ -324,3 +324,33 @@ It was invisible until now; the file task list is the first screen to display th
 sees `invoice%20march.pdf` for any file with a space in its name.
 
 Surfaced during: Task 9 of `docs/superpowers/specs/2026-09-12-file-tasks-inbox-design.md`.
+
+---
+
+## Move the custom field text search off `custom_fields__icontains`
+
+`FilterRuleType.customFieldsText` (rule 36) is deprecated the same way `title_content` was, and
+`filters.py` says so in the same shape:
+
+```python
+logger.warning(
+    "Deprecated document filter parameter 'custom_fields__icontains' used; use `custom_field_query` or advanced Tantivy field syntax instead.",
+)
+```
+
+It was scoped into the Tantivy search change and taken back out, because **upstream has not moved
+off it either**: the 3.0.0 web client's `filter-editor.component.ts` still pushes
+`FILTER_CUSTOM_FIELDS_TEXT` for its custom-fields text target and trips its own warning. Neither
+suggested replacement is a substitute for what the sheet's custom-fields search type means, which
+is *substring across every custom field value*:
+
+- `custom_field_query` (rule 42, which the app already supports through the cards UI) needs a named
+  field per clause, so covering "any field" means an OR over the whole field list, growing with it.
+- The Tantivy form is `custom_fields.<name>:value` against a JSON field
+  (`search/_schema.py`: `sb.add_json_field("custom_fields", …)`), which also needs a field name.
+
+So this one needs a UI decision before it needs an API decision, and it is not urgent: unlike
+`text=`, nothing here returns wrong results.
+
+Surfaced during: `docs/superpowers/specs/2026-09-22-fulltext-search-design.md`, while scoping the
+`title_content` swap.
