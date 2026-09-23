@@ -106,7 +106,7 @@ struct DocumentCustomFieldsView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(Color.m3Outline)
+                        .foregroundStyle(Color.m3OnSurfaceVariant)
                         .imageScale(.small)
                 }
                 .contentShape(Rectangle())
@@ -116,7 +116,7 @@ struct DocumentCustomFieldsView: View {
             // An unresolved link has no document to open, so it stays inert — and carries no
             // chevron, which would promise a destination that is not there yet.
             Text(verbatim: "#\(id.rawValue)")
-                .foregroundStyle(Color.m3Outline)
+                .foregroundStyle(Color.m3OnSurfaceVariant)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }

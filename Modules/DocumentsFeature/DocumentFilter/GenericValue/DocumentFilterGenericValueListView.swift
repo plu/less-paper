@@ -51,7 +51,7 @@ struct DocumentFilterGenericValueListView<Value: CustomStringConvertible & Equat
                         Image(systemName: systemImage(value))
                             .font(.title2)
                             .fontWeight(.medium)
-                            .foregroundStyle(Color.m3Outline)
+                            .foregroundStyle(Color.m3OnSurfaceVariant)
                         Text(value.description)
                             .font(.body)
                             .foregroundStyle(Color.m3OnSurface)

@@ -12,6 +12,7 @@ public extension UIColor {
     static let m3OnSecondary = UIColor.internalM3OnSecondary
     static let m3OnSecondaryContainer = UIColor.internalM3OnSecondaryContainer
     static let m3OnSurface = UIColor.internalM3OnSurface
+    static let m3OnSurfaceVariant = UIColor.internalM3OnSurfaceVariant
     static let m3OnTertiary = UIColor.internalM3OnTertiary
     static let m3OnTertiaryContainer = UIColor.internalM3OnTertiaryContainer
     static let m3Outline = UIColor.internalM3Outline

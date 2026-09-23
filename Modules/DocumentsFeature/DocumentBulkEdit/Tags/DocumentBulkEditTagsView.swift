@@ -73,7 +73,7 @@ struct DocumentBulkEditTagsView: View {
                         Image(systemName: store.state.systemImage(for: value))
                             .font(.title2)
                             .fontWeight(.medium)
-                            .foregroundStyle(Color.m3Outline)
+                            .foregroundStyle(Color.m3OnSurfaceVariant)
                         Text(value.description)
                             .capsule(
                                 backgroundColor: Color(hex: value.color),

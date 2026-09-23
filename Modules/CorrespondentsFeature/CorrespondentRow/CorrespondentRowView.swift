@@ -14,7 +14,7 @@ struct CorrespondentRowView: View {
                 .clipShape(Rectangle())
             Text(.numberOfDocuments(store.correspondent.documentCount))
                 .font(.caption)
-                .foregroundColor(.m3Outline)
+                .foregroundColor(.m3OnSurfaceVariant)
         }
         .accessibilityElement()
         .accessibilityValue([

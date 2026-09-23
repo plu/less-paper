@@ -67,7 +67,7 @@ public struct MfaFormView: View {
 
             Text(.mfaCodeRequiredInfo)
                 .font(.footnote)
-                .foregroundStyle(Color.m3Outline)
+                .foregroundStyle(Color.m3OnSurfaceVariant)
         }
     }
 

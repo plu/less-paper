@@ -72,7 +72,7 @@ struct DocumentBulkEditGenericValueView<Value: DocumentBulkEditGenericValue>: Vi
                         Image(systemName: store.state.systemImage(for: value))
                             .font(.title2)
                             .fontWeight(.medium)
-                            .foregroundStyle(Color.m3Outline)
+                            .foregroundStyle(Color.m3OnSurfaceVariant)
                         Text(value.description)
                             .font(.body)
                             .foregroundStyle(Color.m3OnSurface)

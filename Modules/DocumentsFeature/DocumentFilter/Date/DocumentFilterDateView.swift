@@ -101,7 +101,7 @@ struct DocumentFilterDateView: View {
 
                 Button(action: onReset) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color.m3Outline)
+                        .foregroundStyle(Color.m3OnSurfaceVariant)
                 }
                 .accessibilityLabel(.reset)
             } else {

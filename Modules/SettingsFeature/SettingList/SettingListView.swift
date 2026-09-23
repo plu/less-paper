@@ -196,7 +196,7 @@ public struct SettingListView: View {
                         Spacer()
                         Text(store.appVersion)
                             .font(.caption)
-                            .foregroundStyle(Color.m3Outline)
+                            .foregroundStyle(Color.m3OnSurfaceVariant)
                         Spacer()
                     }
                 }

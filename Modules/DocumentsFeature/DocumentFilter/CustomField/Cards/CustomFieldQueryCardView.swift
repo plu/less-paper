@@ -70,7 +70,7 @@ struct CustomFieldQueryCardView: View {
                 onViewAction(.negationToggled(path))
             } label: {
                 Image(systemName: "exclamationmark.circle")
-                    .foregroundStyle(atom == nil ? Color.m3Primary : Color.m3Outline)
+                    .foregroundStyle(atom == nil ? Color.m3Primary : Color.m3OnSurfaceVariant)
             }
             .accessibilityLabel(.customFieldQueryNot)
 
@@ -142,7 +142,7 @@ struct CustomFieldQueryCardView: View {
                 onViewAction(.negationToggled(path))
             } label: {
                 Image(systemName: isNegated ? "exclamationmark.circle.fill" : "exclamationmark.circle")
-                    .foregroundStyle(isNegated ? Color.m3Primary : Color.m3Outline)
+                    .foregroundStyle(isNegated ? Color.m3Primary : Color.m3OnSurfaceVariant)
             }
             .accessibilityLabel(.customFieldQueryNot)
 

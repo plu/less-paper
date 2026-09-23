@@ -18,7 +18,7 @@ struct TrashRowView: View {
             if let deletedAt = document.deletedAt {
                 Text(.trashDeletedAt(deletedAt.formatted(date: .abbreviated, time: .shortened)))
                     .font(.caption)
-                    .foregroundColor(.m3Outline)
+                    .foregroundColor(.m3OnSurfaceVariant)
             }
         }
         .accessibilityElement()

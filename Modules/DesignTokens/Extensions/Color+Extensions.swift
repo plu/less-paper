@@ -12,6 +12,7 @@ public extension Color {
     static let m3OnSecondary = Color.internalM3OnSecondary
     static let m3OnSecondaryContainer = Color.internalM3OnSecondaryContainer
     static let m3OnSurface = Color.internalM3OnSurface
+    static let m3OnSurfaceVariant = Color.internalM3OnSurfaceVariant
     static let m3OnTertiary = Color.internalM3OnTertiary
     static let m3OnTertiaryContainer = Color.internalM3OnTertiaryContainer
     static let m3Outline = Color.internalM3Outline
@@ -185,6 +186,13 @@ public extension Color {
                 backgroundName: "m3TertiaryContainer",
                 foregroundColor: .m3OnTertiaryContainer,
                 foregroundName: "m3OnTertiaryContainer"
+            )
+
+            ColorPreview(
+                backgroundColor: .m3Surface,
+                backgroundName: "m3Surface",
+                foregroundColor: .m3OnSurfaceVariant,
+                foregroundName: "m3OnSurfaceVariant"
             )
 
             ColorPreview(

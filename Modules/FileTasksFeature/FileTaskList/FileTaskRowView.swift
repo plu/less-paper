@@ -18,7 +18,7 @@ struct FileTaskRowView: View {
             Text(verbatim: (task.dateDone ?? task.dateCreated)
                 .formatted(date: .abbreviated, time: .shortened))
                 .font(.caption)
-                .foregroundColor(.m3Outline)
+                .foregroundColor(.m3OnSurfaceVariant)
             if let message = task.message, task.status == .failed {
                 // Selectable and unclipped: a reason the user can neither read in full nor copy into
                 // a bug report is no better than no reason at all.

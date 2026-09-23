@@ -25,7 +25,7 @@ struct DocumentSearchRowView: View {
             if let caption {
                 Text(caption)
                     .font(.caption)
-                    .foregroundStyle(Color.m3Outline)
+                    .foregroundStyle(Color.m3OnSurfaceVariant)
             }
         }
         .contentShape(.rect)
