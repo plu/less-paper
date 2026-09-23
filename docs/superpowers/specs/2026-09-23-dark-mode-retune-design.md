@@ -1,0 +1,267 @@
+# An even dark surface ladder, a filled field, and a token for secondary text
+
+Dark mode reads harsher than light mode because several components pick the wrong role out of the
+Material palette, and because two of those roles **invert** between themes. A field that whispers in
+light mode shouts in dark; a header that is a deep teal bar in light mode is a slab of bright mint
+in dark. The palette itself was never the problem.
+
+## Context
+
+Everything below was measured off the committed references under `Snapshots/` and the colorsets in
+`Modules/DesignTokens/Resources/Colors.xcassets`. Luminance figures are OKLab `L*` (×100); contrast
+figures are WCAG ratios.
+
+### The field spends its two loudest tokens at once
+
+`Field` fills with `m3SurfaceBright` and strokes 2pt of `m3Outline`. In light mode those are the two
+quietest choices in the catalogue — the fill is `#F4FBF9`, within five per channel of the page, and
+the stroke a mid grey. In dark mode they are the two loudest:
+
+| | light | dark |
+|---|---|---|
+| `m3SurfaceBright` (the fill) | `#F4FBF9`, `L*` 95.1 | `#343A3A`, `L*` 34.3 — **the brightest neutral in the system** |
+| `m3Surface` (the page behind it) | `#F9FBF9`, `L*` 95.9 | `#0E1514`, `L*` 18.8 |
+| `m3Outline` (the stroke) | `#6F7978` | `#889391` — **brighter than the fill it encloses, 3.66:1** |
+
+So the same component is 0.8 `L*` above its page in light mode and 15.5 above it in dark, wrapped in
+a hairline that out-shines its own fill. `DocumentMetadataViewTests/testSnapshot_darkMode` is six of
+them stacked, and that is the screen the complaint started from.
+
+### The dark ladder is uneven, and two rungs do one job
+
+Elevation only reads if the steps are even. Measured in OKLab `L*`:
+
+```
+SurfaceContainerLowest  16.20
+Surface                 18.81   +2.61
+SurfaceDim              18.81   +0.00   (equal to Surface, which is correct per M3)
+SurfaceContainerLow     22.33   +3.52
+SurfaceContainer        24.04   +1.71
+SurfaceContainerHigh    28.28   +4.24
+SurfaceContainerHighest 32.59   +4.31
+SurfaceBright           34.28   +1.69
+```
+
+`Surface` and `SurfaceContainer` are 1.7 apart while `High` and `Highest` jump 4.3 — a card barely
+separates from its page, then two rungs near the top separate too much. `SurfaceBright` lands 1.7
+above `Highest`, so the top two rungs are effectively one, which is why choosing a field fill from
+this ladder felt arbitrary. The hue wanders too, between 184.6° and 196.8°, so the neutrals do not
+agree with each other about how teal they are.
+
+### `m3Outline` is doing a job Material has another token for
+
+48 call sites across 36 files set `foregroundStyle(Color.m3Outline)` — correspondent rows, server
+subtitles, filter captions, search results, the tip banner. `outline` is a **border** role; Material
+has `onSurfaceVariant` for secondary text, and this catalogue simply does not have it.
+
+Two consequences. Secondary text lands at **5.17:1** on `m3SurfaceContainer` in dark — legally
+passing, visually murky. And borders and secondary text are pinned to one value, so the field
+borders cannot be calmed without dimming half the text in the app at the same time.
+
+### The sheet header flips polarity
+
+`Sheet` paints its top bar `m3Primary` with `m3OnPrimary` text. Light mode gets a deep teal bar with
+white type. Dark mode gets `#81D5CE` — **83× the luminance of the body behind it**, roughly a fifth
+of the screen at full brightness above a near-black page. `primary` is an accent role for things met
+at small sizes; a filled region this large is what `primaryContainer` is for, and that colorset
+already exists, unused for this.
+
+### Two smaller things found while measuring
+
+`m3Shadow` is `#ECF2F0` in dark — a near-white shadow. Nothing outside the token preview uses it
+today, so it is harmless, and it is a trap waiting for the first `.shadow(color: .m3Shadow)`.
+
+Screens also disagree about the page ground: `Sheet` and `PermissionsFormView` set `m3Surface`,
+while `DocumentMetadataView` sets nothing and falls through to the system's pure `#000000`. In dark
+mode that is a visible seam between a teal-tinted near-black and a true black.
+
+## Decisions
+
+**The dark neutrals are regenerated on a flat OKLab step rather than nudged.** Seven rungs from
+`L*` 17 to 35 at a step of 3.0, constant chroma 0.010, hue 186°. Quantised to 8-bit sRGB the shipped
+steps come out 2.75–3.24 (hue 178.8°–196.5°, which is as close as three bytes get at this
+lightness):
+
+| token | was | becomes | `L*` |
+|---|---|---|---|
+| `SurfaceContainerLowest` | `#090F0F` | `#0B1110` | 17.09 |
+| `Surface`, `SurfaceDim` | `#0E1514` | `#111817` | 20.15 |
+| `SurfaceContainerLow` | `#161D1C` | `#181E1E` | 22.89 |
+| `SurfaceContainer` | `#1A2120` | `#1F2625` | 26.13 |
+| `SurfaceContainerHigh` | `#252B2A` | `#262D2C` | 29.00 |
+| `SurfaceContainerHighest` | `#2F3635` | `#2D3533` | 32.07 |
+| `SurfaceBright` | `#343A3A` | `#353C3B` | 34.93 |
+| `OnSurface` | `#DDE4E2` | `#E0EBE9` | 93 |
+| `Outline` | `#889391` | `#727D7B` | 58 |
+| `OutlineVariant` | `#3F4947` | `#313A39` | 34 |
+| `Shadow` | `#ECF2F0` | `#000000` | 0 |
+
+The base lifts from `L*` 18.8 to 20.2. That is still unmistakably dark, and it is off the floor,
+which is where OLED smearing and the halation around bright type come from.
+
+**`m3OnSurfaceVariant` is a new token, and `m3Outline` goes back to being a border.** Light
+`#3F4947`, dark `#B1BEBC` — the values Material would have given it. Secondary text goes from 5.17:1
+to **8.05:1** on a card, and the two roles can now move independently.
+
+The dark value is deliberately a shade under Material's canonical `#BFC9C7`: secondary text sitting
+at 9.4:1 against `OnSurface`'s 14.8:1 keeps a visible rank between primary and secondary text, which
+is the whole point of having the second token.
+
+**The field's three states take three consecutive rungs, and `m3SurfaceBright` becomes the focused
+fill.** This is the decision that makes the token honest in both themes. `SurfaceBright` means
+"near-white" in light and "brightest grey" in dark, which is the same *instruction* — lift this one
+— and that only reads as intentional on the field the caret is in.
+
+| state | fill | border |
+|---|---|---|
+| read-only | `m3SurfaceContainerHigh` (unchanged) | `m3Outline`, 1pt |
+| resting | `m3SurfaceContainerHighest` | `m3Outline`, 1pt |
+| focused | `m3SurfaceBright` | `m3Primary`, 2pt |
+| error | `m3SurfaceContainerHighest` | `m3Error`, 2pt |
+
+Read-only stays exactly where it was. `DocumentMetadataGroupView` picked `m3SurfaceContainerLow` for
+its card specifically so that a `High` fill would separate from it in light mode, and moving the
+read-only fill down a rung would undo that.
+
+**Light mode's editable fields change, deliberately.** They go from `#F4FBF9` to `#DDE4E2` — from
+near-white-on-white, legible only by their outline, to the grey capsule Material specifies for a
+filled text field. This is the one place light mode is not left alone, and it is an improvement
+rather than a side effect.
+
+**The border is a hairline at rest and doubles when focused or in error.** Three states that differ
+by weight as well as hue; hue alone is the one distinction a red-green colour-blind user cannot
+make unaided. The resting stroke also drops from 2pt to 1pt, which is most of the visual relief on
+the metadata screen — six capsules, half the ink.
+
+**Focus reaches the border through `state.focused`, not a new `@FocusState`.** `FieldStateModifier`
+already owns a `@FocusState` and already mirrors it into `FieldState.focused` on every change — that
+is how it clears errors when a field is focused. `Field` takes a `@Binding` to the same value, and
+`state(_:)` wires it. Adding a second `@FocusState` inside `Field` and applying it to `input` would
+have covered every field rather than only the ones built with `state(_:)`, but `.focused` on a
+wrapper reporting a descendant's focus is not contractual, and a focus ring that silently never
+appears is worse than one that appears in fewer places.
+
+**The sheet header takes `m3PrimaryContainer` / `m3OnPrimaryContainer` in both themes.** One rule,
+no new tokens. Light mode's bar changes from deep teal with white type to mint with dark teal type
+(13.32:1); dark mode's becomes `#00504C` with `#9DF2EA` (7.25:1). In both themes the Save button is
+now the strongest thing on the screen, which is the correct hierarchy for a form.
+
+**The notched label is not fixed here.** Its chip hardcodes `m3SurfaceBright`, and a comment claims
+it blends into the background behind it. That is true in light mode and false in dark, where it
+draws a visibly lighter pill on the card. The real defect is structural: a notch masking a border
+can match only one of the two surfaces it straddles, and the chip is pinned to one of them while the
+card underneath varies by screen. Fixing it properly means either plumbing the host surface through
+the environment or retiring the notch, and both are design changes rather than colour changes.
+
+The interim is that the chip follows `fillColor` instead of a literal, so it always matches the
+field it labels. That is strictly better than today, where a read-only field's chip is `SurfaceBright`
+while its fill is `SurfaceContainerHigh` and the two already disagree.
+
+## Architecture
+
+Nothing moves. `DesignTokens` stays the only place a colour is defined, `Components` stays the only
+place `Field` and `Sheet` are drawn, and feature modules keep reading public `m3*` symbols.
+
+The one shape worth naming: `Field` now has four derived colour properties — `fillColor`,
+`borderColor`, `borderWidth`, `titleColor` — each a single `switch`-like read over `isReadOnly`,
+`error` and `isFocused`. Keeping them separate rather than folding state into one enum is what lets
+the label capsule reuse `fillColor` without knowing why it is that colour.
+
+## Changes
+
+### `Modules/DesignTokens/Resources/Colors.xcassets` (12 colorsets edited, 1 added)
+
+Dark entries only, per the table under Decisions. `internalM3OnSurfaceVariant.colorset` is new, light
+`#3F4947` / dark `#B1BEBC`.
+
+### `Modules/DesignTokens/Extensions/Color+Extensions.swift`, `UIColor+Extensions.swift`
+
+`m3OnSurfaceVariant` added to both, alphabetically between `m3OnSurface` and `m3OnTertiary`. The
+`previewValue` gallery gains one `ColorPreview` for it, rendered as a foreground on `m3Surface`
+because that is the role it plays.
+
+### `Modules/Components/Field/Generic/Field.swift`
+
+`fillColor` and `borderColor` gain a focused branch; `borderWidth` and `titleColor` are new. The
+title capsule takes `fillColor` and `titleColor` instead of `m3SurfaceBright` and `m3OnSurface`. A
+`@Binding var isFocused` mirrors `FieldState.focused`, defaulted to `.constant(false)` in `init` so
+a field built without `state(_:)` compiles and simply never lights up. `state(_:)` assigns it. The
+capsule gets `.animation(.snappy, value: isFocused)` so the border does not snap.
+
+### `Modules/Components/Sheet/Sheet.swift`
+
+Two lines: `m3Primary` → `m3PrimaryContainer`, `m3OnPrimary` → `m3OnPrimaryContainer`, with a
+comment saying why `primary` is wrong for a filled region this size.
+
+### 36 feature and component files
+
+`foregroundStyle(Color.m3Outline)` → `foregroundStyle(Color.m3OnSurfaceVariant)`, and the
+`foregroundColor(.m3Outline)` spelling of the same, across 48 call sites. Applied only to lines that
+already set a foreground, so the three genuine uses are untouched:
+
+- `Field.swift` — the resting border.
+- `DocumentNoteComposerView.swift:24` — a `.stroke`.
+- `CustomFieldQueryCardView.swift:49` — the neutral fourth entry in a rail of accent colours, which
+  is a filled `Rectangle` rather than text.
+
+Two comments that named `m3Outline` in prose were updated with it, in `TipInvitationBanner.swift`
+and `CustomFieldFormView.swift`, so neither now describes a colour the file no longer uses.
+
+### `Snapshots/` — 240 references
+
+Re-recorded across 17 schemes with `mise run snapshots:record`.
+
+## Testing
+
+`mise run ci:lint` passes, including `tuist inspect dependencies --only implicit` — no target gained
+a module, because every file in the sweep already imported `DesignTokens` to reach `m3Outline`.
+
+`FULL_TEST_RUN=true mise run ci:test:unit` after re-recording: **1658 passed, 31 failed, 1 skipped.**
+All 31 are `ApiImplementationTests` failing on `Could not connect to the server` against
+`http://localhost:9000/api/token/`; nothing was listening on that port for this run. They are
+unrelated to this change — no colour reaches a repository test — and they need the reverse tunnel
+described under *Claude uses the dev instance at `192.168.64.1:8000`* in `AGENTS.md`.
+
+Every one of the 240 re-recorded references was recorded, and the dark-mode ones were looked at
+rather than trusted: `DocumentMetadataViewTests`, `DocumentFormViewTests`, `DocumentListViewTests`,
+`ServerFormViewTests` and `ServerListViewTests` in both themes.
+
+There is no new test. The focus state is the one behaviour added, and a snapshot test cannot hold a
+field focused — `assertSnapshot` renders a detached view that never becomes first responder. Covering
+it needs a UI test driving a real keyboard, which belongs with the follow-up that gives the remaining
+forms a `FieldState` rather than with a palette change.
+
+## Out of scope
+
+- **Retiring the notched label**, per the decision above. The chip now tracks the fill; the
+  structural fix is its own change.
+- **Fields built without `state(_:)`** — `ServerFormView`, `ShareFormView` and the filter fields
+  among them — get the new fills and the hairline but no focus ring, because nothing mirrors their
+  focus into a binding. Giving their inputs a `FieldState` is mechanical and independent.
+- **`DocumentMetadataView`'s missing background.** It falls through to pure black instead of
+  `m3Surface`. One modifier, but it changes a screen this spec is not otherwise touching, and the
+  seam is only visible next to a screen that does set it.
+- **The accents.** `Primary`, `Secondary`, `Tertiary`, `Error` and every container are unchanged in
+  both themes. They measure well and they are the brand.
+
+## Risks
+
+**240 references moved in one branch, which is a lot of diff to review by eye.** The mitigation is
+that they moved for two reasons only — a neutral shifted, or a secondary text colour did — and both
+are visible in seconds on any one image. A reference records whatever the code produced, bug
+included, so the dark-mode ones were opened individually rather than counted.
+
+**Light mode's editable fields and sheet header both change**, and neither was in the original
+complaint. Both are deliberate and argued above, but they are the changes most likely to draw "I
+didn't ask for that" at review, so they are called out in the commits rather than buried in a
+re-record.
+
+**Secondary text got lighter in light mode too.** `m3OnSurfaceVariant` is `#3F4947` where
+`m3Outline` was `#6F7978` — that is *darker*, not lighter, so light mode's secondary text gains
+contrast rather than losing it. Worth stating because the sweep is theme-blind and the dark half is
+what the change was aimed at.
+
+**The hue of the dark neutrals still wanders**, 178.8° to 196.5° after quantisation, against a 186°
+target. At `L*` 17–35 the sRGB grid is coarse enough that chroma 0.010 cannot be held exactly. It is
+tighter than the 184.6°–196.8° it replaces and invisible at these chromas, but it is not the clean
+single hue the generator was asked for.
