@@ -22,6 +22,9 @@ public struct DocumentListReducer: Sendable {
         case documentsDeleted(Set<Document.Id>)
         case documentsRefreshed([Document])
         case error(Error)
+        case inboxTagsFailed(document: Document.Id, error: Error)
+        case inboxTagsRestored(document: Document.Id)
+        case inboxTagsUndone(document: Document.Id, tags: [Tag.Id])
         case isUpdating(ids: Set<Document.Id>, isUpdating: Bool)
         case openDocument(Document.Id)
         case path(StackActionOf<Path>)
@@ -371,8 +374,11 @@ public struct DocumentListReducer: Sendable {
                 switch delegateAction {
                 case .deleteDocument:
                     return .runDeleteDocuments(ids: [id], server: state.server)
-                case .inboxTagsChanged:
-                    return .runInboxTagsRefresh(state: state, document: id)
+                case let .inboxTagsCleared(tags: tags):
+                    return .merge(
+                        .runInboxTagsRefresh(state: state, document: id),
+                        .runPresentInboxTagsCleared(document: id, tags: tags)
+                    )
                 case let .presentDocumentDetail(document):
                     state.presentDocumentDetail(document)
                     return .none
@@ -419,6 +425,18 @@ public struct DocumentListReducer: Sendable {
                 // blanking it would tell the user the filter matches nothing.
                 state.updateFilterMatchCount { $0.isRecalculating = false }
                 return .toast(error)
+            case let .inboxTagsFailed(document: document, error: error):
+                state.documents[id: document]?.isUpdating = false
+                return .toast(error)
+            case let .inboxTagsRestored(document: document):
+                state.documents[id: document]?.isUpdating = false
+                return .runInboxTagsRefresh(state: state, document: document)
+            case let .inboxTagsUndone(document: document, tags: tags):
+                return .runRestoreInboxTags(
+                    document: document,
+                    tags: tags,
+                    server: state.server
+                )
             case let .isUpdating(ids: ids, isUpdating: isUpdating):
                 for id in ids {
                     state.documents[id: id]?.isUpdating = isUpdating

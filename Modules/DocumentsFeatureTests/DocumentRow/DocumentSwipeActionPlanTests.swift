@@ -36,6 +36,16 @@ struct DocumentSwipeActionPlanTests {
         #expect(plan.actions == [.share])
     }
 
+    // Clearing inbox tags is a modify_tags bulk edit, which this codebase gates on change_document
+    // everywhere else - DocumentSelectionReducer's canBulkEdit is the same check. Without this a
+    // read-only user is offered the default inbox swipe and gets a 403 for it.
+    @Test
+    func dropsClearInboxTagsWithoutTheEditPermission() async throws {
+        let plan = makePlan(configured: [.clearInboxTags, .preview], canEdit: false)
+
+        #expect(plan.actions == [.preview])
+    }
+
     // An empty tray reads as a bug; a dead edge reads as "nothing here".
     @Test
     func anEdgeWhoseActionsAreAllHiddenIsEmptyAndDoesNotFullSwipe() async throws {

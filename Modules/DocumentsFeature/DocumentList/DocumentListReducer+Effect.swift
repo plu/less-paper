@@ -30,6 +30,53 @@ extension Effect where Action == DocumentListReducer.Action {
     // drops the row out of the inbox filter (or puts it back); the statistics fetch is here because
     // the tab badge reads `inboxDocumentCount`, which nothing else on this path writes, so without
     // it the number sits still while rows leave the list underneath it.
+    static func runRestoreInboxTags(
+        document: Document.Id,
+        tags: [Tag.Id],
+        server: Server
+    ) -> Self {
+        @Dependency(\.bulkEditDocuments.execute)
+        var bulkEditDocuments
+
+        let input = BulkEditDocumentsInput(
+            documents: [document],
+            method: .modifyTags(.init(addTags: tags, removeTags: []))
+        )
+
+        return .run { send in
+            // Dimmed while the restore is in flight, like every other write: without it a second
+            // swipe lands on the same CancelID and cancels this one halfway.
+            await send(.isUpdating(ids: [document], isUpdating: true))
+            try await bulkEditDocuments(input, server)
+            await send(.inboxTagsRestored(document: document))
+        } catch: { error, send in
+            await send(.inboxTagsFailed(document: document, error: error))
+        }
+        .cancellable(id: CancelID.inboxTags(document))
+    }
+
+    // Owned by the list rather than the row that asked for it: the clear is what removes that row
+    // from the inbox, and TCA cancels an element's effects as soon as its id leaves the array. The
+    // toast outlives the row by seconds, so awaiting it there loses the Undo silently.
+    static func runPresentInboxTagsCleared(
+        document: Document.Id,
+        tags: [Tag.Id]
+    ) -> Self {
+        @Dependency(\.toastPresenter.presentAction)
+        var presentAction
+
+        return .run { send in
+            let wasUndone = await presentAction(
+                .success(String(localized: .inboxTagsCleared(tags.count))),
+                String(localized: .undo)
+            )
+            guard wasUndone else {
+                return
+            }
+            await send(.inboxTagsUndone(document: document, tags: tags))
+        }
+    }
+
     static func runInboxTagsRefresh(
         state: DocumentListReducer.State,
         document: Document.Id
@@ -204,6 +251,7 @@ private enum CancelID: Hashable {
     case deleteDocuments
     case getDocuments
     case getMoreDocuments
+    case inboxTags(Document.Id)
     case refreshDocuments
     case refreshFailedFileTaskCount
     case refreshStatistics

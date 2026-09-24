@@ -61,4 +61,22 @@ struct DocumentSwipeActionSettingsTests {
 
         #expect(decoded.documents.leading.isEmpty)
     }
+
+    // The same "a newer build must not brick an older one" rule, one level up: a missing key would
+    // otherwise throw and cost the user the whole preference rather than the part it cannot read.
+    @Test
+    func decodingToleratesMissingKeys() async throws {
+        let json = Data("""
+        {
+          "inbox": { "leading": ["share"] }
+        }
+        """.utf8)
+
+        let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
+
+        #expect(decoded.inbox.leading == [.share])
+        #expect(decoded.inbox.trailing.isEmpty)
+        // A whole missing screen falls back to its default rather than to nothing.
+        #expect(decoded.documents == DocumentSwipeActionSettings().documents)
+    }
 }

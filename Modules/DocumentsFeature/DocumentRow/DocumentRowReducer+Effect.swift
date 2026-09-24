@@ -37,45 +37,9 @@ extension Effect where Action == DocumentRowReducer.Action {
         } catch: { error, send in
             await send(.inboxTagsFailed(error))
         }
+        // Keyed by document, like the two above: clearing an inbox means swiping several rows in a
+        // row, and one shared id would let the second swipe cancel the first document's write.
         .cancellable(id: CancelID.inboxTags(document))
-    }
-
-    static func runRestoreInboxTags(
-        document: Document.Id,
-        tags: [Tag.Id],
-        server: Server
-    ) -> Self {
-        @Dependency(\.bulkEditDocuments.execute)
-        var bulkEditDocuments
-
-        let input = BulkEditDocumentsInput(
-            documents: [document],
-            method: .modifyTags(.init(addTags: tags, removeTags: []))
-        )
-
-        return .run { send in
-            try await bulkEditDocuments(input, server)
-            await send(.inboxTagsRestored)
-        } catch: { error, send in
-            await send(.inboxTagsFailed(error))
-        }
-        .cancellable(id: CancelID.inboxTags(document))
-    }
-
-    static func runPresentInboxTagsCleared(tags: [Tag.Id]) -> Self {
-        @Dependency(\.toastPresenter.presentAction)
-        var presentAction
-
-        return .run { send in
-            let wasUndone = await presentAction(
-                .success(String(localized: .inboxTagsCleared(tags.count))),
-                String(localized: .undo)
-            )
-            guard wasUndone else {
-                return
-            }
-            await send(.inboxTagsUndone(tags: tags))
-        }
     }
 
     static func runDownloadDocument(

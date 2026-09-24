@@ -26,7 +26,9 @@ extension DocumentSwipeActionPlan {
         let actions = configured.filter { action in
             switch action {
             case .clearInboxTags:
-                hasInboxTags
+                // The edit permission as well as the tags: clearing them is a modify_tags bulk
+                // edit, which the server refuses without change_document.
+                canEdit && hasInboxTags
             case .delete:
                 canDelete
             case .edit:

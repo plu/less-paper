@@ -23,12 +23,25 @@ public struct DocumentSwipeActionSettings: Codable, Equatable, Sendable {
     public var documents: Edges
     public var inbox: Edges
 
+    private enum CodingKeys: String, CodingKey {
+        case documents, inbox
+    }
+
     public init(
         documents: Edges = .init(leading: [.edit], trailing: [.clearInboxTags]),
         inbox: Edges = .init(leading: [.edit], trailing: [.clearInboxTags])
     ) {
         self.documents = documents
         self.inbox = inbox
+    }
+
+    // Absent keys fall back to the defaults for the same reason the edges tolerate unknown actions:
+    // a file written by a newer build must cost the user only the part this one cannot read.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self()
+        documents = try container.decodeIfPresent(Edges.self, forKey: .documents) ?? defaults.documents
+        inbox = try container.decodeIfPresent(Edges.self, forKey: .inbox) ?? defaults.inbox
     }
 }
 
@@ -43,10 +56,10 @@ extension DocumentSwipeActionSettings.Edges: Codable {
     // build named.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        leading = try container.decode([String].self, forKey: .leading)
-            .compactMap(DocumentSwipeAction.init(rawValue:))
-        trailing = try container.decode([String].self, forKey: .trailing)
-            .compactMap(DocumentSwipeAction.init(rawValue:))
+        leading = try container.decodeIfPresent([String].self, forKey: .leading)?
+            .compactMap(DocumentSwipeAction.init(rawValue:)) ?? []
+        trailing = try container.decodeIfPresent([String].self, forKey: .trailing)?
+            .compactMap(DocumentSwipeAction.init(rawValue:)) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {

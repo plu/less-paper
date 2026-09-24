@@ -1411,7 +1411,7 @@ struct DocumentListReducerTests {
     }
 
     @Test
-    func documents_delegate_inboxTagsChanged_refreshesTheListAndTheBadge() async throws {
+    func documents_delegate_inboxTagsCleared_refreshesTheListAndTheBadge() async throws {
         let didGetDocuments = LockIsolated(false)
         let didGetStatistics = LockIsolated(false)
         let store = TestStore(initialState: DocumentListReducer.State.testValue()) {
@@ -1425,14 +1425,77 @@ struct DocumentListReducerTests {
                 didGetStatistics.setValue(true)
                 return .testValue()
             }
+            $0.toastPresenter.presentAction = { _, _ in false }
         }
         store.exhaustivity = .off
 
-        await store.send(.documents(.element(id: 3, action: .delegate(.inboxTagsChanged))))
+        await store.send(.documents(.element(id: 3, action: .delegate(.inboxTagsCleared(tags: [5, 7])))))
         await store.finish()
 
         #expect(didGetDocuments.value)
         // The tab badge reads inboxDocumentCount, and only a statistics fetch writes it.
         #expect(didGetStatistics.value)
+    }
+
+    // The row that asks for the toast is the row the clear removes from the inbox, and the toast
+    // outlives it by seconds. An effect scoped to that row is cancelled the moment it leaves the
+    // list, and TCA then drops whatever the Undo button sends - silently, because the toast itself
+    // is still on screen. The gate here is what makes the ordering real: an instantly answered
+    // toast hides the bug entirely.
+    @Test
+    func documents_clearInboxTags_undoSurvivesTheRowLeavingTheList() async throws {
+        let inputs = LockIsolated<[BulkEditDocumentsInput]>([])
+        let (undoStream, undoContinuation) = AsyncStream<Bool>.makeStream()
+        @Shared(.inboxTags(.testValue()))
+        var inboxTags
+        $inboxTags.withLock { $0 = [5, 7] }
+
+        let store = TestStore(initialState: DocumentListReducer.State.testValue()) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.bulkEditDocuments.execute = { input, _ in inputs.withValue { $0.append(input) } }
+            // Document 3 no longer matches the inbox filter, so the refetch drops its row.
+            $0.getDocuments.execute = { _, _ in
+                .testValue(results: [
+                    .testValue(id: 1),
+                    .testValue(id: 2),
+                    .testValue(id: 4)
+                ])
+            }
+            $0.toastPresenter.presentAction = { _, _ in await undoStream.first { _ in true } ?? false }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.documents(.element(id: 3, action: .view(.clearInboxTagsButtonTapped))))
+        await store.receive(\.replaceDocuments)
+        #expect(store.state.documents[id: 3] == nil)
+
+        undoContinuation.yield(true)
+        await store.finish()
+
+        #expect(inputs.value.count == 2)
+        #expect(inputs.value.last?.method == .modifyTags(.init(addTags: [5, 7], removeTags: [])))
+    }
+
+    @Test
+    func documents_clearInboxTags_toastLeftAloneRestoresNothing() async throws {
+        let inputs = LockIsolated<[BulkEditDocumentsInput]>([])
+        @Shared(.inboxTags(.testValue()))
+        var inboxTags
+        $inboxTags.withLock { $0 = [5, 7] }
+
+        let store = TestStore(initialState: DocumentListReducer.State.testValue()) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.bulkEditDocuments.execute = { input, _ in inputs.withValue { $0.append(input) } }
+            $0.getDocuments.execute = { _, _ in .testValue() }
+            $0.toastPresenter.presentAction = { _, _ in false }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.documents(.element(id: 3, action: .view(.clearInboxTagsButtonTapped))))
+        await store.finish()
+
+        #expect(inputs.value.count == 1)
     }
 }

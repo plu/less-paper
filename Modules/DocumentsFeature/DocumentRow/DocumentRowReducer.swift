@@ -17,13 +17,11 @@ public struct DocumentRowReducer: Sendable {
         case favoriteToggleSucceeded
         case inboxTagsCleared(tags: [Tag.Id])
         case inboxTagsFailed(Error)
-        case inboxTagsRestored
-        case inboxTagsUndone(tags: [Tag.Id])
         case view(View)
 
         public enum Delegate {
             case deleteDocument
-            case inboxTagsChanged
+            case inboxTagsCleared(tags: [Tag.Id])
             case presentDocumentDetail(Shared<Document>)
         }
 
@@ -184,22 +182,14 @@ public struct DocumentRowReducer: Sendable {
                 return .none
             case let .inboxTagsCleared(tags: tags):
                 state.isUpdating = false
-                return .merge(
-                    .send(.delegate(.inboxTagsChanged)),
-                    .runPresentInboxTagsCleared(tags: tags)
-                )
+                // The undo toast and the restore belong to the list, not here. Clearing the tags is
+                // what drops this row out of the inbox filter, and TCA cancels an element's effects
+                // the moment its id leaves the array - so a toast awaited here is still on screen
+                // when its Undo stops being connected to anything.
+                return .send(.delegate(.inboxTagsCleared(tags: tags)))
             case let .inboxTagsFailed(error):
                 state.isUpdating = false
                 return .toast(error)
-            case .inboxTagsRestored:
-                state.isUpdating = false
-                return .send(.delegate(.inboxTagsChanged))
-            case let .inboxTagsUndone(tags: tags):
-                return .runRestoreInboxTags(
-                    document: state.document.id,
-                    tags: tags,
-                    server: state.server
-                )
             case let .view(viewAction):
                 switch viewAction {
                 case .clearInboxTagsButtonTapped:

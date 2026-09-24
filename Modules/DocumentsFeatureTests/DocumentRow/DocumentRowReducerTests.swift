@@ -313,7 +313,6 @@ struct DocumentRowReducerTests {
             DocumentRowReducer()
         } withDependencies: {
             $0.bulkEditDocuments.execute = { bulkEditInput, _ in input.setValue(bulkEditInput) }
-            $0.toastPresenter.presentAction = { _, _ in false }
         }
         store.exhaustivity = .off
 
@@ -323,7 +322,7 @@ struct DocumentRowReducerTests {
         await store.receive(\.inboxTagsCleared) {
             $0.isUpdating = false
         }
-        await store.receive(\.delegate, .inboxTagsChanged)
+        await store.receive(\.delegate, .inboxTagsCleared(tags: [5, 7]))
         await store.finish()
 
         let sent = try #require(input.value)
@@ -350,59 +349,6 @@ struct DocumentRowReducerTests {
         }
 
         await store.send(.view(.clearInboxTagsButtonTapped))
-    }
-
-    @Test
-    func clearInboxTags_undoPutsTheSameTagsBack() async throws {
-        let inputs = LockIsolated<[BulkEditDocumentsInput]>([])
-        @Shared(.inboxTags(.testValue()))
-        var inboxTags
-        $inboxTags.withLock { $0 = [5, 7] }
-
-        let store = TestStore(
-            initialState: DocumentRowReducer.State.testValue(
-                document: .testValue(id: 3, tags: [5, 6, 7, 8])
-            )
-        ) {
-            DocumentRowReducer()
-        } withDependencies: {
-            $0.bulkEditDocuments.execute = { input, _ in inputs.withValue { $0.append(input) } }
-            $0.toastPresenter.presentAction = { _, _ in true }
-        }
-        store.exhaustivity = .off
-
-        await store.send(.view(.clearInboxTagsButtonTapped))
-        await store.receive(\.inboxTagsUndone)
-        await store.receive(\.inboxTagsRestored)
-        await store.finish()
-
-        #expect(inputs.value.count == 2)
-        #expect(inputs.value.last?.method == .modifyTags(.init(addTags: [5, 7], removeTags: [])))
-    }
-
-    @Test
-    func clearInboxTags_toastLeftAloneRestoresNothing() async throws {
-        let inputs = LockIsolated<[BulkEditDocumentsInput]>([])
-        @Shared(.inboxTags(.testValue()))
-        var inboxTags
-        $inboxTags.withLock { $0 = [5, 7] }
-
-        let store = TestStore(
-            initialState: DocumentRowReducer.State.testValue(
-                document: .testValue(id: 3, tags: [5, 6, 7, 8])
-            )
-        ) {
-            DocumentRowReducer()
-        } withDependencies: {
-            $0.bulkEditDocuments.execute = { input, _ in inputs.withValue { $0.append(input) } }
-            $0.toastPresenter.presentAction = { _, _ in false }
-        }
-        store.exhaustivity = .off
-
-        await store.send(.view(.clearInboxTagsButtonTapped))
-        await store.finish()
-
-        #expect(inputs.value.count == 1)
     }
 
     @Test

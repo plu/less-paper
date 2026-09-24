@@ -19,7 +19,7 @@ struct SwipeActionSettingsViewTests {
     func testSnapshot_defaults() async throws {
         assertSnapshot(
             of: view(settings: .init()),
-            as: .image(layout: .device(config: .iPhone12)),
+            as: .image(layout: .fixed(width: 390, height: 2400)),
             named: "defaults"
         )
     }
@@ -33,7 +33,7 @@ struct SwipeActionSettingsViewTests {
                 documents: .init(leading: [], trailing: []),
                 inbox: .init(leading: [.edit, .share], trailing: [.delete])
             )),
-            as: .image(layout: .device(config: .iPhone12)),
+            as: .image(layout: .fixed(width: 390, height: 2400)),
             named: "fullAndEmptyEdges"
         )
     }
