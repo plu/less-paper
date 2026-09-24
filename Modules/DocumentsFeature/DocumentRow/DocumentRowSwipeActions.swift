@@ -68,7 +68,7 @@ private extension DocumentSwipeAction {
         case .favorite:
             .favoriteButtonTapped
         case .openNotes:
-            .viewButtonTapped(.notes)
+            .notesButtonTapped
         case .preview:
             .previewButtonTapped
         case .share:

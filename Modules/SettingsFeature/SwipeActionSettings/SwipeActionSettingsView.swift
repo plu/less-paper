@@ -7,7 +7,7 @@ import SwiftUI
 public struct SwipeActionSettingsView: View {
 
     public var body: some View {
-        Form {
+        List {
             section(.swipeActionsInboxLeading, screen: .inbox, edge: .leading)
             section(.swipeActionsInboxTrailing, screen: .inbox, edge: .trailing)
             section(.swipeActionsDocumentsLeading, screen: .documents, edge: .leading)
@@ -18,10 +18,13 @@ public struct SwipeActionSettingsView: View {
                 } label: {
                     Text(.swipeActionsReset)
                 }
+                .listRowBackground(Color.m3SurfaceContainer)
             }
         }
-        .navigationTitle(.swipeActions)
+        .background(Color.m3SurfaceContainerLowest)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(.swipeActions)
+        .scrollContentBackground(.hidden)
     }
 
     public init(store: StoreOf<SwipeActionSettingsReducer>) {
@@ -46,8 +49,13 @@ public struct SwipeActionSettingsView: View {
                     HStack {
                         Label {
                             Text(action.localized)
+                                .foregroundStyle(Color.m3OnSurface)
                         } icon: {
+                            // Tinted per element rather than on the Button: a foregroundStyle on the
+                            // label paints the glyph too, and every other row in Settings keeps its
+                            // icon in the accent with the text in the body colour.
                             Image(systemName: action.systemImage)
+                                .foregroundStyle(Color.m3Primary)
                         }
                         Spacer()
                         // The position rather than a tick: with two slots, which one a full swipe
@@ -59,7 +67,7 @@ public struct SwipeActionSettingsView: View {
                         }
                     }
                 }
-                .foregroundStyle(Color.m3OnSurface)
+                .listRowBackground(Color.m3SurfaceContainer)
             }
         } header: {
             Text(title)

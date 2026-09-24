@@ -149,10 +149,12 @@ public struct DocumentFormReducer: Sendable {
         init(
             destination: DocumentFormReducer.Destination.State? = nil,
             document: Shared<Document>,
+            section: DocumentFormSection = .details,
             server: Server
         ) {
             self.destination = destination
             self._document = document
+            self.section = section
             self.input = DocumentFormInput(
                 document: document.wrappedValue,
                 server: server

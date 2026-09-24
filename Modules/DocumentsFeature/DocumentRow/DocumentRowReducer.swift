@@ -30,6 +30,7 @@ public struct DocumentRowReducer: Sendable {
             case deleteButtonTapped
             case editButtonTapped
             case favoriteButtonTapped
+            case notesButtonTapped
             case previewButtonTapped
             case rowTapped
             case shareButtonTapped
@@ -218,6 +219,15 @@ public struct DocumentRowReducer: Sendable {
                         isFavorited: state.isFavorited,
                         server: state.server
                     )
+                case .notesButtonTapped:
+                    // The form rather than the viewer: reaching for notes is usually reaching to
+                    // add one, and the viewer can only show the ones already there.
+                    state.destination = .documentForm(DocumentFormReducer.State(
+                        document: state.$document,
+                        section: .notes,
+                        server: state.server
+                    ))
+                    return .none
                 case .previewButtonTapped:
                     return state.download(intent: .preview)
                 case .rowTapped:
