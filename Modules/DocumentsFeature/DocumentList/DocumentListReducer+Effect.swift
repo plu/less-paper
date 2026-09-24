@@ -26,8 +26,6 @@ extension Effect where Action == DocumentListReducer.Action {
         .cancellable(id: CancelID.deleteDocuments)
     }
 
-
-
     // The same three-way refresh after either direction of the swipe. `runGetDocuments` is what
     // drops the row out of the inbox filter (or puts it back); the statistics fetch is here because
     // the tab badge reads `inboxDocumentCount`, which nothing else on this path writes, so without
@@ -53,7 +51,6 @@ extension Effect where Action == DocumentListReducer.Action {
             .runRefreshStatistics(server: state.server)
         )
     }
-
 
     // Unanimated by default because most callers are a wholesale replacement - a pull to refresh, a
     // sort change, another page - where animating every row that moved is noise rather than
