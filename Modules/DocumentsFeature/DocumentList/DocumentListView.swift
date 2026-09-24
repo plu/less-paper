@@ -79,6 +79,9 @@ public struct DocumentListView: View {
     @Environment(\.horizontalSizeClass)
     private var horizontalSizeClass
 
+    @SharedReader(.documentSwipeActions)
+    private var swipeActions: DocumentSwipeActionSettings
+
     @ViewBuilder
     private func documentRows() -> some View {
         if store.isTipInvitationVisible {
@@ -96,17 +99,22 @@ public struct DocumentListView: View {
         }
         // Rows default to `systemBackground`, which is black in dark mode and so paints over
         // the list's `m3SurfaceContainerLowest`. Invisible in light mode, where both are white.
-        ForEach(Array(store.scope(state: \.documents, action: \.documents))) { store in
-            DocumentRowView(store: store)
+        ForEach(Array(store.scope(state: \.documents, action: \.documents))) { rowStore in
+            DocumentRowView(store: rowStore)
                 .documentSelectionOverlay(
-                    document: store.document.id,
+                    document: rowStore.document.id,
                     store: documentSelectionStore
                 )
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
                 .listRowSeparator(.hidden)
-                .onAppear { send(.onRowAppear(store.document)) }
+                .onAppear { send(.onRowAppear(rowStore.document)) }
                 .padding(.x3)
+                .documentSwipeActions(
+                    edges: swipeActions.documents,
+                    isSelecting: store.documentSelection.isActive,
+                    store: rowStore
+                )
         }
         if store.isLoadingMore {
             HStack {

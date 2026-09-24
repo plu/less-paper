@@ -36,9 +36,11 @@ public struct InboxView: View {
                         .listRowSeparator(.hidden)
                         .onAppear { send(.onRowAppear(rowStore.document)) }
                         .padding(.x3)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            clearInboxTagsButton(for: rowStore)
-                        }
+                        .documentSwipeActions(
+                            edges: swipeActions.inbox,
+                            isSelecting: store.documentSelection.isActive,
+                            store: rowStore
+                        )
                 }
                 if store.isLoadingMore {
                     HStack {
@@ -112,27 +114,8 @@ public struct InboxView: View {
     @Shared
     private var inboxDocumentCount: Int
 
-    // Not `role: .destructive`: that removes the row the moment it is tapped, before the server has
-    // agreed, which is the trap TrashRowView documents.
-    //
-    // Hidden while a selection is running, where the row already carries its own tap gesture and a
-    // checkmark, and hidden for a document none of the filter's inbox tags actually cover - the
-    // swipe would otherwise report having cleared tags it never touched.
-    @ViewBuilder
-    private func clearInboxTagsButton(
-        for rowStore: StoreOf<DocumentRowReducer>
-    ) -> some View {
-        if !store.documentSelection.isActive, !rowStore.inboxTags.isEmpty {
-            Button {
-                rowStore.send(.view(.clearInboxTagsButtonTapped))
-            } label: {
-                Image(systemName: "tray.and.arrow.down")
-            }
-            .accessibilityLabel(.clearInboxTags)
-            .disabled(rowStore.isBusy)
-            .tint(.m3Primary)
-        }
-    }
+    @SharedReader(.documentSwipeActions)
+    private var swipeActions: DocumentSwipeActionSettings
 
     @ViewBuilder
     private func documentSelectionLoadingView() -> some View {
