@@ -52,6 +52,7 @@ public struct SettingListReducer {
         case savedViewList(SavedViewListReducer)
         case serverList(ServerListReducer)
         case storagePathList(StoragePathListReducer)
+        case swipeActionSettings(SwipeActionSettingsReducer)
         case tagList(TagListReducer)
         case tipList(TipListReducer)
         case trashList(TrashListReducer)

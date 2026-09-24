@@ -165,6 +165,13 @@ public struct SettingListView: View {
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.swipeActionSettings(SwipeActionSettingsReducer.State())
+                    ) {
+                        Label(.swipeActions, systemImage: "hand.draw")
+                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+
                     Link(destination: Self.repositoryUrl) {
                         Label {
                             Text(.github)
@@ -246,6 +253,8 @@ public struct SettingListView: View {
                 ServerListView(store: store)
             case let .storagePathList(store):
                 StoragePathListView(store: store)
+            case let .swipeActionSettings(store):
+                SwipeActionSettingsView(store: store)
             case let .tagList(store):
                 TagListView(store: store)
             case let .tipList(store):
