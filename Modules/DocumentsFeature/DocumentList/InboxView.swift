@@ -122,10 +122,9 @@ public struct InboxView: View {
     private func clearInboxTagsButton(
         for rowStore: StoreOf<DocumentRowReducer>
     ) -> some View {
-        if !store.documentSelection.isActive,
-           rowStore.document.tags.contains(where: store.inboxTagIds.contains) {
+        if !store.documentSelection.isActive, !rowStore.inboxTags.isEmpty {
             Button {
-                send(.clearInboxTagsSwiped(rowStore.document))
+                rowStore.send(.view(.clearInboxTagsButtonTapped))
             } label: {
                 Image(systemName: "tray.and.arrow.down")
             }

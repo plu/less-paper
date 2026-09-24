@@ -1,4 +1,5 @@
 import ApiInterface
+import Components
 import ComposableArchitecture
 import Foundation
 
@@ -15,6 +16,66 @@ extension Effect where Action == DocumentRowReducer.Action {
             await send(.delegate(.deleteDocument))
         }
         .cancellable(id: CancelID.confirmDelete)
+    }
+
+    static func runClearInboxTags(
+        document: Document.Id,
+        tags: [Tag.Id],
+        server: Server
+    ) -> Self {
+        @Dependency(\.bulkEditDocuments.execute)
+        var bulkEditDocuments
+
+        let input = BulkEditDocumentsInput(
+            documents: [document],
+            method: .modifyTags(.init(addTags: [], removeTags: tags))
+        )
+
+        return .run { send in
+            try await bulkEditDocuments(input, server)
+            await send(.inboxTagsCleared(tags: tags))
+        } catch: { error, send in
+            await send(.inboxTagsFailed(error))
+        }
+        .cancellable(id: CancelID.inboxTags(document))
+    }
+
+    static func runRestoreInboxTags(
+        document: Document.Id,
+        tags: [Tag.Id],
+        server: Server
+    ) -> Self {
+        @Dependency(\.bulkEditDocuments.execute)
+        var bulkEditDocuments
+
+        let input = BulkEditDocumentsInput(
+            documents: [document],
+            method: .modifyTags(.init(addTags: tags, removeTags: []))
+        )
+
+        return .run { send in
+            try await bulkEditDocuments(input, server)
+            await send(.inboxTagsRestored)
+        } catch: { error, send in
+            await send(.inboxTagsFailed(error))
+        }
+        .cancellable(id: CancelID.inboxTags(document))
+    }
+
+    static func runPresentInboxTagsCleared(tags: [Tag.Id]) -> Self {
+        @Dependency(\.toastPresenter.presentAction)
+        var presentAction
+
+        return .run { send in
+            let wasUndone = await presentAction(
+                .success(String(localized: .inboxTagsCleared(tags.count))),
+                String(localized: .undo)
+            )
+            guard wasUndone else {
+                return
+            }
+            await send(.inboxTagsUndone(tags: tags))
+        }
     }
 
     static func runDownloadDocument(
@@ -58,5 +119,6 @@ extension Effect where Action == DocumentRowReducer.Action {
 private enum CancelID: Hashable {
     case confirmDelete
     case downloadDocument(Document.Id)
+    case inboxTags(Document.Id)
     case toggleFavorite(Document.Id)
 }

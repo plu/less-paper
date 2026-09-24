@@ -15,14 +15,20 @@ public struct DocumentRowReducer: Sendable {
         case downloadSucceeded(url: URL, intent: DownloadIntent)
         case favoriteToggleFailed(Error)
         case favoriteToggleSucceeded
+        case inboxTagsCleared(tags: [Tag.Id])
+        case inboxTagsFailed(Error)
+        case inboxTagsRestored
+        case inboxTagsUndone(tags: [Tag.Id])
         case view(View)
 
         public enum Delegate {
             case deleteDocument
+            case inboxTagsChanged
             case presentDocumentDetail(Shared<Document>)
         }
 
         public enum View {
+            case clearInboxTagsButtonTapped
             case deleteButtonTapped
             case editButtonTapped
             case favoriteButtonTapped
@@ -70,6 +76,15 @@ public struct DocumentRowReducer: Sendable {
 
         var isBusy: Bool {
             isDownloading || isTogglingFavorite || isUpdating
+        }
+
+        @SharedReader
+        var inboxTagIds: [Tag.Id]
+
+        // The document's own tags that are inbox tags. Empty is what makes the swipe action hide
+        // rather than clear nothing and report otherwise.
+        var inboxTags: [Tag.Id] {
+            document.tags.filter(Set(inboxTagIds).contains)
         }
 
         var isDownloading = false
@@ -135,6 +150,7 @@ public struct DocumentRowReducer: Sendable {
             self._document = document
             self.downloadedURL = downloadedURL
             self._favorites = SharedReader(wrappedValue: [], .favorites(server))
+            self._inboxTagIds = SharedReader(wrappedValue: [], .inboxTags(server))
             self.isDownloading = isDownloading
             self.isTogglingFavorite = isTogglingFavorite
             self.isUpdating = isUpdating
@@ -166,8 +182,37 @@ public struct DocumentRowReducer: Sendable {
             case .favoriteToggleSucceeded:
                 state.isTogglingFavorite = false
                 return .none
+            case let .inboxTagsCleared(tags: tags):
+                state.isUpdating = false
+                return .merge(
+                    .send(.delegate(.inboxTagsChanged)),
+                    .runPresentInboxTagsCleared(tags: tags)
+                )
+            case let .inboxTagsFailed(error):
+                state.isUpdating = false
+                return .toast(error)
+            case .inboxTagsRestored:
+                state.isUpdating = false
+                return .send(.delegate(.inboxTagsChanged))
+            case let .inboxTagsUndone(tags: tags):
+                return .runRestoreInboxTags(
+                    document: state.document.id,
+                    tags: tags,
+                    server: state.server
+                )
             case let .view(viewAction):
                 switch viewAction {
+                case .clearInboxTagsButtonTapped:
+                    let tags = state.inboxTags
+                    guard !tags.isEmpty else {
+                        return .none
+                    }
+                    state.isUpdating = true
+                    return .runClearInboxTags(
+                        document: state.document.id,
+                        tags: tags,
+                        server: state.server
+                    )
                 case .deleteButtonTapped:
                     return .runConfirmDelete(documentTitle: state.document.title)
                 case .editButtonTapped:
