@@ -22,6 +22,10 @@ public struct DocumentListReducer: Sendable {
         case documentsDeleted(Set<Document.Id>)
         case documentsRefreshed([Document])
         case error(Error)
+        case inboxTagsCleared(document: Document.Id, tags: [Tag.Id])
+        case inboxTagsFailed(document: Document.Id, error: Error)
+        case inboxTagsRestored(document: Document.Id)
+        case inboxTagsUndone(document: Document.Id, tags: [Tag.Id])
         case isUpdating(ids: Set<Document.Id>, isUpdating: Bool)
         case openDocument(Document.Id)
         case path(StackActionOf<Path>)
@@ -38,6 +42,7 @@ public struct DocumentListReducer: Sendable {
 
         public enum View {
             case allDocumentsButtonTapped
+            case clearInboxTagsSwiped(Document)
             case deleteSelectedButtonTapped
             case editCorrespondentButtonTapped
             case editDocumentTypeButtonTapped
@@ -213,6 +218,14 @@ public struct DocumentListReducer: Sendable {
 
         var isInboxWithoutInboxTags: Bool {
             filter.isInbox && filter.input.tag.selection.any.isEmpty
+        }
+
+        // Read off the filter rather than `@Shared(.inboxTags(server))`: the filter is already
+        // rebuilt from that storage on every appearance, and going through it keeps this decidable
+        // from state alone. A property rather than a `tags(of:)` method because the view reaches it
+        // through the store, and dynamic member lookup can only see key paths.
+        var inboxTagIds: Set<Tag.Id> {
+            Set(filter.input.tag.selection.any.map(\.id))
         }
 
         mutating func clearForEmptyInbox() {
@@ -417,6 +430,24 @@ public struct DocumentListReducer: Sendable {
                 // blanking it would tell the user the filter matches nothing.
                 state.updateFilterMatchCount { $0.isRecalculating = false }
                 return .toast(error)
+            case let .inboxTagsCleared(document: document, tags: tags):
+                state.documents[id: document]?.isUpdating = false
+                return .merge(
+                    .runInboxTagsRefresh(state: state, document: document),
+                    .runPresentInboxTagsCleared(document: document, tags: tags)
+                )
+            case let .inboxTagsFailed(document: document, error: error):
+                state.documents[id: document]?.isUpdating = false
+                return .toast(error)
+            case let .inboxTagsRestored(document: document):
+                state.documents[id: document]?.isUpdating = false
+                return .runInboxTagsRefresh(state: state, document: document)
+            case let .inboxTagsUndone(document: document, tags: tags):
+                return .runRestoreInboxTags(
+                    document: document,
+                    tags: tags,
+                    server: state.server
+                )
             case let .isUpdating(ids: ids, isUpdating: isUpdating):
                 for id in ids {
                     state.documents[id: id]?.isUpdating = isUpdating
@@ -486,6 +517,16 @@ public struct DocumentListReducer: Sendable {
                         server: state.server,
                         sortDirection: state.filter.input.sort.direction,
                         sortField: state.filter.input.sort.field
+                    )
+                case let .clearInboxTagsSwiped(document):
+                    let tags = document.tags.filter(state.inboxTagIds.contains)
+                    guard !tags.isEmpty else {
+                        return .none
+                    }
+                    return .runClearInboxTags(
+                        document: document.id,
+                        tags: tags,
+                        server: state.server
                     )
                 case .deleteSelectedButtonTapped:
                     guard !state.documentSelection.selectedDocuments.isEmpty else {
