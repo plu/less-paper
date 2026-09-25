@@ -1,1 +1,1 @@
-Die App richtet sich jetzt nach den Berechtigungen deines Kontos – was du nicht darfst, wird nicht angezeigt. Dazu Offline-Favoriten, alle Filter und Single Sign-on.
+Die App richtet sich jetzt nach den Berechtigungen deines Kontos – was du nicht darfst, wird nicht angezeigt. Dazu Offline-Dokumente, alle Filter und Single Sign-on.
