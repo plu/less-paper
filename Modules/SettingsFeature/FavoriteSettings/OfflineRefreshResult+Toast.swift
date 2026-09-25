@@ -2,7 +2,7 @@ import ApiInterface
 import Components
 import Foundation
 
-extension FavoriteRefreshResult {
+extension OfflineRefreshResult {
 
     // What a manual refresh reports. Only the first thing worth saying is said: a failure is what
     // the user can act on, a document the server no longer has is news the row badge only shows

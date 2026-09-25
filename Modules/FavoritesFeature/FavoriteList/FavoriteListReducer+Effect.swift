@@ -34,7 +34,7 @@ extension Effect where Action == FavoriteListReducer.Action {
         // Shared with AppFeature's automatic refresh, which runs over the same records and the same
         // PDF paths: one identity is what keeps the two from downloading everything twice.
         .cancellable(
-            id: RefreshFavoritesCancelID.refresh,
+            id: RefreshOfflineCancelID.refresh,
             cancelInFlight: true
         )
     }

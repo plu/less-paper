@@ -29,7 +29,7 @@ public struct FavoriteSettingsReducer: Sendable {
     }
 
     public enum Action: ViewAction {
-        case refreshResult(Result<FavoriteRefreshResult, Error>)
+        case refreshResult(Result<OfflineRefreshResult, Error>)
         case removeConfirmed
         case removed
         case removeFailed(Error)
@@ -106,7 +106,7 @@ public struct FavoriteSettingsReducer: Sendable {
 
             case .view(.redownloadAllButtonTapped):
                 state.isWorking = true
-                // Deliberately not on `RefreshFavoritesCancelID.refresh`, unlike the tab's
+                // Deliberately not on `RefreshOfflineCancelID.refresh`, unlike the tab's
                 // pull-to-refresh: this is a long user-initiated redownload of everything, and a
                 // foreground refresh arriving mid-run must not be allowed to kill it.
                 return .run { [server = state.server] send in

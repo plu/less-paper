@@ -35,7 +35,7 @@ public struct FavoriteListReducer: Sendable {
         case binding(BindingAction<State>)
         case favoritesChanged(IdentifiedArrayOf<OfflineDocument>)
         case path(StackActionOf<Path>)
-        case refreshResult(Result<FavoriteRefreshResult, Error>)
+        case refreshResult(Result<OfflineRefreshResult, Error>)
         case rows(IdentifiedActionOf<FavoriteRowReducer>)
         case view(View)
 

@@ -49,7 +49,7 @@ struct FavoriteListReducerTests {
         let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
             FavoriteListReducer()
         } withDependencies: {
-            $0.refreshOffline.execute = { _, _ in FavoriteRefreshResult(updated: 1) }
+            $0.refreshOffline.execute = { _, _ in OfflineRefreshResult(updated: 1) }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 
@@ -74,7 +74,7 @@ struct FavoriteListReducerTests {
             FavoriteListReducer()
         } withDependencies: {
             $0.refreshOffline.execute = { _, _ in
-                FavoriteRefreshResult(failed: 2, unavailable: 1, updated: 3)
+                OfflineRefreshResult(failed: 2, unavailable: 1, updated: 3)
             }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
@@ -94,7 +94,7 @@ struct FavoriteListReducerTests {
         let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
             FavoriteListReducer()
         } withDependencies: {
-            $0.refreshOffline.execute = { _, _ in FavoriteRefreshResult() }
+            $0.refreshOffline.execute = { _, _ in OfflineRefreshResult() }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 

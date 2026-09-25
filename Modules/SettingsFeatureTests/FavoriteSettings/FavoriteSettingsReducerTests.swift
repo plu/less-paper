@@ -124,7 +124,7 @@ struct FavoriteSettingsReducerTests {
             $0.offlineStore.totalByteCount = { _ in 8192 }
             $0.refreshOffline.execute = { force, _ in
                 forced.setValue(force)
-                return FavoriteRefreshResult(updated: 2)
+                return OfflineRefreshResult(updated: 2)
             }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }

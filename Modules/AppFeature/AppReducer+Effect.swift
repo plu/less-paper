@@ -48,7 +48,7 @@ extension Effect where Action == AppReducer.Action {
         // trigger is the one with the fresher view of the world. Without this, backgrounding and
         // foregrounding repeatedly stacks refreshes, each holding a whole PDF in memory.
         .cancellable(
-            id: RefreshFavoritesCancelID.refresh,
+            id: RefreshOfflineCancelID.refresh,
             cancelInFlight: true
         )
     }
