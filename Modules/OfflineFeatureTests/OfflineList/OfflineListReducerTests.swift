@@ -198,6 +198,36 @@ struct OfflineListReducerTests {
         #expect(store.state.rows.map(\.id) == [1])
     }
 
+    // The rows are rebuilt on every refresh and on every change to the offline store, and both
+    // run without anyone asking - so a rebuild that dropped what the row was showing would close
+    // a sheet opened from it moments after a swipe opened it. The preview stands in for the edit
+    // form here because it is the one such field this module can set: they travel together.
+    @Test
+    func test_rebuildingTheRowsKeepsWhatARowIsShowing() async throws {
+        let server = Server.testValue(id: "rebuild-keeps-the-sheet")
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(id: 1)),
+            .testValue(document: .testValue(id: 2)),
+        ]
+
+        var state = OfflineListReducer.State(server: server)
+        let document = try #require(state.rows[id: 1]).$document
+        state.rows[id: 1]?.row = DocumentRowReducer.State(
+            document: document,
+            quickLookPreview: URL(string: "file:///offline/1.pdf"),
+            server: server
+        )
+
+        let store = TestStore(initialState: state) {
+            OfflineListReducer()
+        }
+
+        // Nothing to assert: the rebuild has to leave every row exactly as it found it.
+        await store.send(.offlineDocumentsChanged(offlineDocuments))
+    }
+
     // Removing deletes the PDF the detail screen is reading, so the screen it leaves behind can
     // re-fetch nothing and has no button left to undo with. It has to pop.
     @Test

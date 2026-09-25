@@ -917,6 +917,57 @@ struct DocumentListReducerTests {
         }
     }
 
+    // A refresh that lands while a row has the edit form open used to rebuild every row from
+    // scratch, and a rebuilt row carries no `destination` - which is what dismissed the form the
+    // moment it appeared, and left the row's download and share state behind with it.
+    @Test
+    func test_replaceDocuments_keepsWhatTheRowIsShowing() async throws {
+        let document = Document.testValue(id: 7, title: "Invoice")
+        let row = DocumentRowReducer.State.testValue(
+            destination: .documentForm(.testValue(document: document)),
+            document: document,
+            isDownloading: true
+        )
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documents: [row]
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.replaceDocuments(.testValue(
+            count: 1,
+            results: [document]
+        ))) {
+            $0.documentSelection.allLoadedDocuments = [7]
+            $0.totalNumberOfDocuments = 1
+            $0.$documentCache.withLock { $0 = [document] }
+        }
+    }
+
+    // The rows a refresh drops are gone for good, including whatever they were showing: the
+    // document is no longer in the list.
+    @Test
+    func test_replaceDocuments_dropsRowsTheRefreshNoLongerCarries() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            documents: [
+                .testValue(document: .testValue(id: 7)),
+                .testValue(destination: .documentForm(.testValue()), document: .testValue(id: 8)),
+            ]
+        )) {
+            DocumentListReducer()
+        }
+
+        await store.send(.replaceDocuments(.testValue(
+            count: 1,
+            results: [.testValue(id: 7)]
+        ))) {
+            $0.documents = [.testValue(document: .testValue(id: 7))]
+            $0.documentSelection.allLoadedDocuments = [7]
+            $0.totalNumberOfDocuments = 1
+            $0.$documentCache.withLock { $0 = [.testValue(id: 7)] }
+        }
+    }
+
     @Test
     func test_documentDetail_referencesDocumentCache() async throws {
         let state = DocumentListReducer.State.testValue(documents: [])

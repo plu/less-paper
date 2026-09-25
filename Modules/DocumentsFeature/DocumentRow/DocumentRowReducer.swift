@@ -134,6 +134,20 @@ public struct DocumentRowReducer: Sendable {
             return titleLineLimit
         }
 
+        // What the row is doing right now: a sheet or preview it is showing, and the writes it is
+        // waiting on. A list rebuilds its rows on every refresh, and a rebuilt row starts with
+        // none of this - which is what takes the edit form off the screen when a refresh lands
+        // while it is open, and leaves a download in flight with nothing left to report to.
+        public mutating func adoptPresentation(of other: Self) {
+            destination = other.destination
+            downloadedURL = other.downloadedURL
+            isDownloading = other.isDownloading
+            isTogglingOffline = other.isTogglingOffline
+            isUpdating = other.isUpdating
+            quickLookPreview = other.quickLookPreview
+            shareItem = other.shareItem
+        }
+
         public init(
             destination: Destination.State? = nil,
             document: Shared<Document>,

@@ -99,12 +99,21 @@ public struct OfflineListReducer: Sendable {
         }
 
         mutating func rebuildRows() {
+            let existingRows = rows
             rows = IdentifiedArray(uniqueElements: visibleOfflineDocuments.map { offlineDocument in
-                OfflineRowReducer.State(
+                var row = OfflineRowReducer.State(
                     document: reference(to: offlineDocument),
                     offlineDocument: offlineDocument,
                     server: server
                 )
+                // Built fresh, because the cache entry this points at can arrive after the row
+                // did - and then handed back whatever the old row was showing. This runs on every
+                // refresh and on every change to the offline store, so without it a sheet opened
+                // from a row closes itself the moment either happens.
+                if let existing = existingRows[id: offlineDocument.id] {
+                    row.row.adoptPresentation(of: existing.row)
+                }
+                return row
             })
         }
 
