@@ -8,7 +8,7 @@ public enum MarketingScreen: String, CaseIterable, Sendable {
     case view
     case edit
     case settings
-    case favorites
+    case offline
 
     // Matches the names the capture writes, so the numbering that orders them on the store survives
     // the trip through the renderer.
@@ -28,8 +28,8 @@ public enum MarketingScreen: String, CaseIterable, Sendable {
             "06-Edit"
         case .settings:
             "07-Settings"
-        case .favorites:
-            "08-Favorites"
+        case .offline:
+            "08-Offline"
         }
     }
 
@@ -49,8 +49,8 @@ public enum MarketingScreen: String, CaseIterable, Sendable {
             .marketingEdit
         case .settings:
             .marketingSettings
-        case .favorites:
-            .marketingFavorites
+        case .offline:
+            .marketingOffline
         }
     }
 }

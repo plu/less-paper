@@ -1,0 +1,331 @@
+@testable import OfflineFeature
+
+import ApiInterface
+import Components
+import ComposableArchitecture
+import DocumentsFeature
+import Foundation
+import SwiftSharing
+import Testing
+
+@MainActor
+@Suite(.testDependencies())
+struct OfflineListReducerTests {
+
+    @Test
+    func test_searchFiltersOnTitle() async {
+        let server = Server.testValue(id: "search-filters-on-title")
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(content: nil, id: 1, title: "Invoice")),
+            .testValue(document: .testValue(content: nil, id: 2, title: "Warranty")),
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        }
+
+        await store.send(\.binding.searchText, "inv") {
+            $0.searchText = "inv"
+            $0.rows.remove(id: 2)
+        }
+
+        #expect(store.state.rows.map(\.id) == [1])
+    }
+
+    // The counters are the whole point of the use case returning a result: pull-to-refresh is a
+    // manual gesture, so it says what it did. The automatic refresh in AppFeature stays silent.
+    @Test
+    func test_refreshReportsItsResult() async {
+        let server = Server.testValue(id: "refresh-reports-its-result")
+        let toasts = LockIsolated([Toast]())
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(id: 1))
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        } withDependencies: {
+            $0.refreshOffline.execute = { _, _ in OfflineRefreshResult(updated: 1) }
+            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
+        }
+
+        await store.send(.view(.onRefresh))
+        await store.receive(\.refreshResult)
+        await store.finish()
+
+        #expect(toasts.value == [.success("One document updated.")])
+    }
+
+    @Test
+    func test_refreshReportsFailuresAheadOfEverythingElse() async {
+        let server = Server.testValue(id: "refresh-reports-failures")
+        let toasts = LockIsolated([Toast]())
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(id: 1))
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        } withDependencies: {
+            $0.refreshOffline.execute = { _, _ in
+                OfflineRefreshResult(failed: 2, unavailable: 1, updated: 3)
+            }
+            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
+        }
+
+        await store.send(.view(.onRefresh))
+        await store.receive(\.refreshResult)
+        await store.finish()
+
+        #expect(toasts.value == [.error("2 documents could not be refreshed.")])
+    }
+
+    @Test
+    func test_refreshWithNothingToDoSaysSo() async {
+        let server = Server.testValue(id: "refresh-with-nothing-to-do")
+        let toasts = LockIsolated([Toast]())
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        } withDependencies: {
+            $0.refreshOffline.execute = { _, _ in OfflineRefreshResult() }
+            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
+        }
+
+        await store.send(.view(.onRefresh))
+        await store.receive(\.refreshResult)
+        await store.finish()
+
+        #expect(toasts.value == [.success("Offline documents are up to date.")])
+    }
+
+    @Test
+    func test_aRowShowsTheLiveDocumentWhenTheCacheHasOne() async {
+        let server = Server.testValue(id: "row-shows-the-live-document")
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(id: 1, title: "Stored"))
+        ]
+        @Shared(.documents(server))
+        var cache: IdentifiedArrayOf<Document> = [
+            .testValue(id: 1, title: "Edited")
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        }
+
+        #expect(store.state.rows[id: 1]?.document.title == "Edited")
+    }
+
+    @Test
+    func test_aRowFallsBackToTheStoredDocumentWhenTheCacheHasNone() async {
+        let server = Server.testValue(id: "row-falls-back-to-the-stored-document")
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(id: 1, title: "Stored"))
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        }
+
+        #expect(store.state.rows[id: 1]?.document.title == "Stored")
+    }
+
+    // A swipe on a row, or a document saved offline from another tab, writes the shared store
+    // rather than this reducer's state. The observer started by `onAppear` is what carries that
+    // back, so the list does not have to wait for its next appearance to show it.
+    @Test
+    func test_anOfflineDocumentsChangeRebuildsTheRows() async {
+        let server = Server.testValue(id: "offline-documents-change-rebuilds-the-rows")
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(id: 1)),
+            .testValue(document: .testValue(id: 2)),
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        }
+
+        $offlineDocuments.withLock { _ = $0.remove(id: 2) }
+
+        // What the observer delivers once the store has changed.
+        await store.send(.offlineDocumentsChanged(offlineDocuments)) {
+            $0.rows.remove(id: 2)
+        }
+
+        #expect(store.state.rows.map(\.id) == [1])
+    }
+
+    // Removing deletes the PDF the detail screen is reading, so the screen it leaves behind can
+    // re-fetch nothing and has no button left to undo with. It has to pop.
+    @Test
+    func test_removingFromTheDetailPopsBackToTheList() async throws {
+        let server = Server.testValue(id: "remove-from-the-detail")
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(id: 1))
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        } withDependencies: {
+            $0.removeOfflineDocument.execute = { [shared = $offlineDocuments] id, _ in
+                shared.withLock { _ = $0.remove(id: id) }
+            }
+        }
+        store.exhaustivity = .off
+
+        let offlineDocument = try #require(offlineDocuments[id: 1])
+        await store.send(.rows(.element(id: 1, action: .delegate(.open(offlineDocument)))))
+        #expect(store.state.path.count == 1)
+
+        await store.send(.path(.element(
+            id: 0,
+            action: .documentDetail(.view(.saveOfflineButtonTapped))
+        )))
+        await store.receive(\.path[id: 0].documentDetail.offlineToggleSucceeded)
+        await store.finish()
+
+        #expect(store.state.path.isEmpty)
+    }
+
+    // Removal can also arrive from somewhere the detail screen knows nothing about — a swipe on the
+    // row behind it, or "Remove all offline documents" in Settings.
+    @Test
+    func test_anOfflineDocumentRemovedElsewherePopsTheDetail() async throws {
+        let server = Server.testValue(id: "offline-document-removed-elsewhere")
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(id: 1))
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        }
+        store.exhaustivity = .off
+
+        let offlineDocument = try #require(offlineDocuments[id: 1])
+        await store.send(.rows(.element(id: 1, action: .delegate(.open(offlineDocument)))))
+        #expect(store.state.path.count == 1)
+
+        $offlineDocuments.withLock { $0.removeAll() }
+        await store.send(.offlineDocumentsChanged([]))
+
+        #expect(store.state.path.isEmpty)
+    }
+
+    // The detail screen is the network screen, run against the record. It opens the detail and each
+    // of the viewer's four sections, which between them reach the five read dependencies the Path
+    // overrides: downloadDocument, getDocument, getDocumentMetadata, getDocumentsByIds and
+    // getNotes.
+    //
+    // What it catches: a new call site of any of those five, from anywhere the detail screen
+    // reaches, and — if the loop below is extended with it — a new viewer section.
+    //
+    // What it cannot catch, because there is no choke point to assert on: a *newly introduced*
+    // dependency. The count works by stubbing five named use cases, and a sixth would fall through
+    // to its own `testValue` — every use case in this codebase ships a working one rather than an
+    // unimplemented trap (`GetDocumentUseCase.testValue` returns `Document.testValue()`), so the
+    // new call would hand back fixture data, increment nothing, and leave this test green while the
+    // offline screen broke. Adding a dependency to the detail screen means adding it here too.
+    @Test
+    func test_theDetailScreenReadsFromTheStoreRatherThanTheNetwork() async throws {
+        let server = Server.testValue(id: "detail-reads-from-the-store")
+        let note = Note.testValue()
+        let networkCalls = LockIsolated(0)
+
+        let pdfURL = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).pdf")
+        try Data("%PDF-1.4".utf8).write(to: pdfURL)
+        defer { try? FileManager.default.removeItem(at: pdfURL) }
+
+        // A document-link field is what makes the custom fields section resolve anything at all;
+        // with no such field it never asks, and the section would pass by doing nothing.
+        @Shared(.customFields(server))
+        var customFields: IdentifiedArrayOf<CustomField> = [
+            .testValue(dataType: .documentLink, id: 1)
+        ]
+
+        let document = Document.testValue(
+            customFields: [.testValue(field: 1, value: .array([.number(8)]))],
+            id: 7
+        )
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: document, metadata: .testValue(), notes: [note]),
+            .testValue(document: .testValue(id: 8, title: "Linked")),
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        } withDependencies: {
+            $0.downloadDocument.execute = { _, _ in
+                networkCalls.withValue { $0 += 1 }
+                return Data()
+            }
+            $0.offlineStore.pdfURL = { _, _ in pdfURL }
+            $0.getDocument.execute = { _, _ in
+                networkCalls.withValue { $0 += 1 }
+                return .testValue()
+            }
+            $0.getDocumentMetadata.execute = { _, _ in
+                networkCalls.withValue { $0 += 1 }
+                return .testValue()
+            }
+            $0.getDocumentsByIds.execute = { _, _ in
+                networkCalls.withValue { $0 += 1 }
+                return []
+            }
+            $0.getNotes.execute = { _, _ in
+                networkCalls.withValue { $0 += 1 }
+                return []
+            }
+        }
+        store.exhaustivity = .off
+
+        let offlineDocument = try #require(offlineDocuments[id: 7])
+        await store.send(.rows(.element(id: 7, action: .delegate(.open(offlineDocument)))))
+        await store.send(.path(.element(id: 0, action: .documentDetail(.view(.onAppear)))))
+
+        for section in DocumentViewerSection.allCases {
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.view(.viewButtonTapped(section)))
+            )))
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.destination(.presented(.documentViewer(.view(.onAppear)))))
+            )))
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.destination(.presented(.documentViewer(.customFields(.view(.onAppear))))))
+            )))
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.destination(.presented(.documentViewer(.metadata(.view(.onAppear))))))
+            )))
+            await store.send(.path(.element(
+                id: 0,
+                action: .documentDetail(.destination(.presented(.documentViewer(.notes(.view(.onAppear))))))
+            )))
+        }
+
+        await store.finish()
+
+        #expect(networkCalls.value == 0)
+    }
+}

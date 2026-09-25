@@ -60,16 +60,17 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func contextMenu() -> some View {
-        // Favorite cannot sit in the A-Z run below: its label flips between "Favorite" and
-        // "Unfavorite" as the state it reports changes, so an alphabetical position would move it
-        // under the user's thumb between taps. Held first instead. No divider under it — it is one
-        // of the reversible actions, and a divider would imply it is set apart the way Delete is.
+        // Save offline cannot sit in the A-Z run below: its label flips between "Save offline" and
+        // "Remove from Offline" as the state it reports changes, so an alphabetical position would
+        // move it under the user's thumb between taps. Held first instead. No divider under it — it
+        // is one of the reversible actions, and a divider would imply it is set apart the way
+        // Delete is.
         Button {
-            send(.favoriteButtonTapped)
+            send(.saveOfflineButtonTapped)
         } label: {
             Label(
-                store.isFavorited ? .unfavorite : .favorite,
-                systemImage: store.isFavorited ? "heart.fill" : "heart"
+                store.isSavedOffline ? .removeFromOffline : .saveOffline,
+                systemImage: store.isSavedOffline ? "arrow.down.circle.fill" : "arrow.down.circle"
             )
         }
 

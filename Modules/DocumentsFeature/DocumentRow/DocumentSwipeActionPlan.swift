@@ -36,7 +36,7 @@ extension DocumentSwipeActionPlan {
                 canEdit
             case .openNotes:
                 canViewNotes
-            case .favorite, .preview, .share:
+            case .preview, .saveOffline, .share:
                 true
             }
         }

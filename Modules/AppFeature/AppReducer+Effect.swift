@@ -35,20 +35,20 @@ extension Effect where Action == AppReducer.Action {
         }
     }
 
-    static func runRefreshFavorites(server: Server) -> Self {
-        @Dependency(\.refreshFavorites.execute) var refreshFavorites
+    static func runRefreshOffline(server: Server) -> Self {
+        @Dependency(\.refreshOffline.execute) var refreshOffline
 
         // Silent by design: the user did not ask for this one, so neither success nor failure is
         // surfaced. Only pull-to-refresh and "Redownload all" report.
         return .run { _ in
-            _ = try? await refreshFavorites(false, server)
+            _ = try? await refreshOffline(false, server)
         }
         // Newest wins rather than first wins, and deliberately so: a launch, a foreground and a
         // pull-to-refresh all walk the same records and write the same PDF paths, and the later
         // trigger is the one with the fresher view of the world. Without this, backgrounding and
         // foregrounding repeatedly stacks refreshes, each holding a whole PDF in memory.
         .cancellable(
-            id: RefreshFavoritesCancelID.refresh,
+            id: RefreshOfflineCancelID.refresh,
             cancelInFlight: true
         )
     }

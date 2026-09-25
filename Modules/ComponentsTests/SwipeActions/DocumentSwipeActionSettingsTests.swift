@@ -70,8 +70,35 @@ struct DocumentSwipeActionSettingsTests {
 
         let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
 
-        #expect(decoded.leading == [.favorite])
+        #expect(decoded.leading == [.saveOffline])
         // A missing edge falls back to its default rather than to nothing.
         #expect(decoded.trailing == DocumentSwipeActionSettings().trailing)
+    }
+
+    // `favorite` is what this case's raw value was before the feature was renamed to Offline, and
+    // a configuration written by any shipped build still says it. Dropping it would not fail
+    // loudly - the decode compactMaps - so the user's swipe would simply stop existing.
+    @Test
+    func decodingTranslatesTheLegacyFavoriteRawValue() async throws {
+        let json = Data("""
+        { "leading": ["favorite"], "trailing": ["share"] }
+        """.utf8)
+
+        let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
+
+        #expect(decoded.leading == [.saveOffline])
+    }
+
+    // A downgrade and an upgrade can leave both spellings in one edge, and the alias turns them
+    // into the same case - which would draw the same button twice.
+    @Test
+    func decodingCollapsesTheLegacyAndCurrentSpellingsOfOneAction() async throws {
+        let json = Data("""
+        { "leading": ["favorite", "saveOffline"], "trailing": [] }
+        """.utf8)
+
+        let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
+
+        #expect(decoded.leading == [.saveOffline])
     }
 }

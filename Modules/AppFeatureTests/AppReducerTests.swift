@@ -43,16 +43,16 @@ struct AppReducerTests {
     }
 
     @Test
-    func test_didBecomeActive_refreshesFavorites() async {
+    func test_didBecomeActive_refreshesOfflineDocuments() async {
         let refreshed = LockIsolated(false)
 
         let store = TestStore(initialState: AppReducer.State(main: .testValue())) {
             AppReducer()
         } withDependencies: {
-            $0.refreshFavorites.execute = { force, _ in
+            $0.refreshOffline.execute = { force, _ in
                 #expect(force == false)
                 refreshed.setValue(true)
-                return FavoriteRefreshResult()
+                return OfflineRefreshResult()
             }
         }
 
@@ -122,10 +122,10 @@ struct AppReducerTests {
             AppReducer()
         } withDependencies: {
             $0.continuousClock = clock
-            $0.refreshFavorites.execute = { _, _ in
+            $0.refreshOffline.execute = { _, _ in
                 try await clock.sleep(for: .seconds(1))
                 completed.withValue { $0 += 1 }
-                return FavoriteRefreshResult()
+                return OfflineRefreshResult()
             }
         }
 
@@ -143,7 +143,7 @@ struct AppReducerTests {
         let store = TestStore(initialState: AppReducer.State(main: .testValue())) {
             AppReducer()
         } withDependencies: {
-            $0.refreshFavorites.execute = { _, _ in throw ApiError.testValue() }
+            $0.refreshOffline.execute = { _, _ in throw ApiError.testValue() }
         }
 
         await store.send(.didBecomeActive)

@@ -140,7 +140,7 @@ public extension Document {
 
     // Every list endpoint sends `truncate_content=true`, so a document from one carries a preview
     // of its text rather than the text. Anything holding on to the full content — the offline
-    // favorites record is the one that does — has to keep its own copy across such an update.
+    // record is the one that does — has to keep its own copy across such an update.
     func with(content: String?) -> Document {
         Document(
             added: added,

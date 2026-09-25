@@ -1839,23 +1839,6 @@
         }
       }
     },
-    "favorite": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favorisieren"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favorite"
-          }
-        }
-      }
-    },
     "fileTasks": {
       "extractionState": "manual",
       "localizations": {
@@ -2642,6 +2625,23 @@
         }
       }
     },
+    "removeFromOffline": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus Offline entfernen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from Offline"
+          }
+        }
+      }
+    },
     "reset": {
       "extractionState": "manual",
       "localizations": {
@@ -2706,6 +2706,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Save as…"
+          }
+        }
+      }
+    },
+    "saveOffline": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline speichern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save offline"
           }
         }
       }
@@ -3625,23 +3642,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Undo"
-          }
-        }
-      }
-    },
-    "unfavorite": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nicht mehr favorisieren"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unfavorite"
           }
         }
       }

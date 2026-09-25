@@ -13,7 +13,7 @@ A native iOS client for [paperless-ngx](https://github.com/paperless-ngx/paperle
 [![License: MIT](https://img.shields.io/badge/license-MIT-3DA639)](LICENSE)
 [![TestFlight beta](https://img.shields.io/badge/TestFlight-public_beta-0D96F6?logo=apple&logoColor=white)](https://testflight.apple.com/join/3CM21m1n)
 
-![The inbox, the document list, offline favorites, the search filters, and a document open for reading](docs/images/screenshots.png)
+![The inbox, the document list, offline documents, the search filters, and a document open for reading](docs/images/screenshots.png)
 
 ## Status
 
@@ -31,7 +31,7 @@ next release early: <https://testflight.apple.com/join/3CM21m1n>
 - **Multiple servers** — connect to as many paperless-ngx instances as you like and switch between them
 - **Search and filter** — the full filter set from the web UI, including custom-field filters, and a search field on every management list
 - **Saved views** — create, edit and reorder them from the app
-- **Offline favorites** — keep chosen documents on the device, PDF and all, and read them with no server in reach
+- **Offline** — keep chosen documents on the device, PDF and all, and read them with no server in reach
 - **Document editing** — title, correspondent, document type, storage path, tags, notes and custom fields
 - **Bulk edit** — apply changes to a whole selection at once, including bulk delete and merge
 - **Import** — share sheet extension for getting documents in from anywhere on the device

@@ -1,0 +1,162 @@
+import ApiInterface
+import Components
+import ComposableArchitecture
+import Dependencies
+import DesignTokens
+import DocumentsFeature
+import SwiftSharing
+import SwiftUI
+
+@ViewAction(for: OfflineRowReducer.self)
+struct OfflineRowView: View {
+
+    var body: some View {
+        AdaptiveStack(
+            breakpoint: breakpoint,
+            horizontalAlignment: .center,
+            horizontalSpacing: .x0,
+            verticalSpacing: .x0
+        ) {
+            imageView()
+            detailsView()
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color.m3SurfaceContainer)
+        .contentShape(Rectangle())
+        .listRowSeparator(.hidden)
+        .onTapGesture { send(.rowTapped) }
+        .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+        // Removing is prepended rather than configured, so it is always there and always what a
+        // full swipe right reaches - this list is the one place that action is the obvious one.
+        // It rides on the scoped row's offline toggle, which calls the same removeOfflineDocument
+        // as this row's own action and additionally dims the row and reports a failure.
+        .documentSwipeActions(
+            settings: swipeActions,
+            isSelecting: false,
+            leadingPrefix: [.saveOffline],
+            store: store.scope(state: \.row, action: \.row)
+        )
+        .documentRowDestinations(store: store.scope(state: \.row, action: \.row))
+    }
+
+    @Bindable
+    var store: StoreOf<OfflineRowReducer>
+
+    @SharedReader(.documentSwipeActions)
+    private var swipeActions: DocumentSwipeActionSettings
+
+    @ViewBuilder
+    private func detailsView() -> some View {
+        DocumentRowContent(
+            document: store.document,
+            server: store.server,
+            titleLineLimit: titleLineLimit
+        )
+    }
+
+    @ViewBuilder
+    private func imageView() -> some View {
+        OfflineThumbnail(
+            url: pdfURL,
+            size: imageSize,
+            storedAt: store.offlineDocument.storedAt,
+            renderedImage: renderedThumbnail
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+        .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))
+        .overlay(alignment: .topTrailing) {
+            tagsView()
+        }
+        .overlay(alignment: .topLeading) {
+            unavailableBadge()
+        }
+        .padding(.top, sizeCategory >= breakpoint ? .x4 : .x0)
+        .padding(.horizontal, sizeCategory >= breakpoint ? .x4 : .x0)
+    }
+
+    @ViewBuilder
+    private func tagsView() -> some View {
+        DocumentRowTags(tags: tags, height: imageSize.height)
+    }
+
+    @ViewBuilder
+    private func unavailableBadge() -> some View {
+        if store.offlineDocument.isUnavailable {
+            Text(.offlineUnavailable)
+                .capsule(backgroundColor: .m3Error, font: .footnote, foregroundColor: .m3OnError)
+                .padding(.x3)
+        }
+    }
+
+    private let breakpoint = ContentSizeCategory.extraLarge
+
+    private var imageSize: CGSize {
+        CGSize(width: 134 * scaleFactor, height: 190 * scaleFactor)
+    }
+
+    // Nil in the app: the thumbnail renders itself. A snapshot cannot wait for that, so the
+    // reference that proves this row matches a document row hands the image in.
+    var renderedThumbnail: UIImage?
+
+    private var pdfURL: URL {
+        @Dependency(\.offlineStore.pdfURL) var pdfURL
+        return pdfURL(store.offlineDocument.id, store.server)
+    }
+
+    private var tags: [Tag] {
+        store.document.tags.compactMap { $0.get(store.server) }
+    }
+
+    // Mirrors DocumentRowReducer.State.titleLineLimit: one less line per detail row the document
+    // carries, so a busy row still fits inside the same thumbnail height.
+    private var titleLineLimit: Int {
+        let document = store.document
+        var titleLineLimit = 6
+        if document.archiveSerialNumber != nil {
+            titleLineLimit -= 1
+        }
+        if document.documentType != nil {
+            titleLineLimit -= 1
+        }
+        if document.storagePath != nil {
+            titleLineLimit -= 1
+        }
+        return titleLineLimit
+    }
+
+    @ScaledMetric
+    private var scaleFactor = 1.0
+
+    @Environment(\.sizeCategory)
+    private var sizeCategory
+}
+
+#Preview {
+    List {
+        OfflineRowView(
+            store: Store(
+                initialState: OfflineRowReducer.State(offlineDocument: .testValue(), server: .testValue()),
+                reducer: {
+                    OfflineRowReducer()
+                }
+            )
+        )
+
+        OfflineRowView(
+            store: Store(
+                initialState: OfflineRowReducer.State(
+                    offlineDocument: .testValue(isUnavailable: true),
+                    server: .testValue()
+                ),
+                reducer: {
+                    OfflineRowReducer()
+                }
+            )
+        )
+    }
+    .background(Color.m3SurfaceContainerLowest)
+    .listStyle(.plain)
+    .navigationBarTitleDisplayMode(.inline)
+    .scrollContentBackground(.hidden)
+}

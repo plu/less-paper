@@ -89,7 +89,7 @@ struct DocumentDetailViewTests {
         let server = Server.testValue()
         let document = ApiInterface.Document.testValue()
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: document)
         ]
 

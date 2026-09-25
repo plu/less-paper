@@ -182,39 +182,39 @@ struct DocumentRowReducerTests {
     }
 
     @Test
-    func test_favoriteButtonSavesWhenNotYetFavorited() async {
+    func test_saveOfflineButtonSavesWhenNotYetSaved() async {
         let server = Server.testValue()
         let saved = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
 
         let store = TestStore(
             initialState: DocumentRowReducer.State(document: Shared(value: .testValue(id: 7)), server: server)
         ) {
             DocumentRowReducer()
         } withDependencies: {
-            $0.saveFavorite.execute = { document, _, mode in
+            $0.saveOfflineDocument.execute = { document, _, mode in
                 #expect(mode == .add)
                 saved.setValue(document.id)
             }
         }
 
-        await store.send(.view(.favoriteButtonTapped)) {
-            $0.isTogglingFavorite = true
+        await store.send(.view(.saveOfflineButtonTapped)) {
+            $0.isTogglingOffline = true
         }
-        await store.receive(\.favoriteToggleSucceeded) {
-            $0.isTogglingFavorite = false
+        await store.receive(\.offlineToggleSucceeded) {
+            $0.isTogglingOffline = false
         }
 
         #expect(saved.value == 7)
     }
 
     @Test
-    func test_favoriteButtonRemovesWhenAlreadyFavorited() async {
+    func test_saveOfflineButtonRemovesWhenAlreadySaved() async {
         let server = Server.testValue()
         let removed = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
@@ -223,14 +223,14 @@ struct DocumentRowReducerTests {
         ) {
             DocumentRowReducer()
         } withDependencies: {
-            $0.removeFavorite.execute = { id, _ in removed.setValue(id) }
+            $0.removeOfflineDocument.execute = { id, _ in removed.setValue(id) }
         }
 
-        await store.send(.view(.favoriteButtonTapped)) {
-            $0.isTogglingFavorite = true
+        await store.send(.view(.saveOfflineButtonTapped)) {
+            $0.isTogglingOffline = true
         }
-        await store.receive(\.favoriteToggleSucceeded) {
-            $0.isTogglingFavorite = false
+        await store.receive(\.offlineToggleSucceeded) {
+            $0.isTogglingOffline = false
         }
 
         #expect(removed.value == 7)
@@ -273,10 +273,10 @@ struct DocumentRowReducerTests {
     }
 
     @Test
-    func test_favoriteButtonTapped_toastsOnFailure() async {
+    func test_saveOfflineButtonTapped_toastsOnFailure() async {
         let server = Server.testValue()
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
         let toasts = LockIsolated<[Toast]>([])
 
         let store = TestStore(
@@ -284,15 +284,15 @@ struct DocumentRowReducerTests {
         ) {
             DocumentRowReducer()
         } withDependencies: {
-            $0.saveFavorite.execute = { _, _, _ in throw ApiError.testValue() }
+            $0.saveOfflineDocument.execute = { _, _, _ in throw ApiError.testValue() }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 
-        await store.send(.view(.favoriteButtonTapped)) {
-            $0.isTogglingFavorite = true
+        await store.send(.view(.saveOfflineButtonTapped)) {
+            $0.isTogglingOffline = true
         }
-        await store.receive(\.favoriteToggleFailed) {
-            $0.isTogglingFavorite = false
+        await store.receive(\.offlineToggleFailed) {
+            $0.isTogglingOffline = false
         }
 
         #expect(toasts.value == [.error("Something went wrong")])

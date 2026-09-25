@@ -31,10 +31,19 @@ public struct DocumentSwipeActionSettings: Codable, Equatable, Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let defaults = Self()
-        leading = try container.decodeIfPresent([String].self, forKey: .leading)?
-            .compactMap(DocumentSwipeAction.init(rawValue:)) ?? defaults.leading
-        trailing = try container.decodeIfPresent([String].self, forKey: .trailing)?
-            .compactMap(DocumentSwipeAction.init(rawValue:)) ?? defaults.trailing
+        leading = try container.decodeIfPresent([String].self, forKey: .leading)
+            .map(Self.actions(from:)) ?? defaults.leading
+        trailing = try container.decodeIfPresent([String].self, forKey: .trailing)
+            .map(Self.actions(from:)) ?? defaults.trailing
+    }
+
+    // De-duplicated, because `storedRawValue` maps two raw values onto one case: a configuration
+    // carrying both the legacy and the current spelling would otherwise draw the same button twice.
+    private static func actions(from rawValues: [String]) -> [DocumentSwipeAction] {
+        var seen: Set<DocumentSwipeAction> = []
+        return rawValues
+            .compactMap(DocumentSwipeAction.init(storedRawValue:))
+            .filter { seen.insert($0).inserted }
     }
 
     public func encode(to encoder: Encoder) throws {

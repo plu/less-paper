@@ -152,8 +152,8 @@ struct ServerDetailViewTests {
         @Shared(.users(server)) var users: IdentifiedArrayOf<User>
         $users.withLock { $0 = [.testValue()] }
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument>
-        $favorites.withLock { $0 = [.testValue()] }
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
+        $offlineDocuments.withLock { $0 = [.testValue()] }
 
         // hasToken: true renders the auth mode row as "token" rather than the "Unknown" every
         // other fixture shows - a fixture has to seed this or the row's real values never get
@@ -182,7 +182,7 @@ struct ServerDetailViewTests {
 
     // The case that catches a screen printing 0: nothing has ever been cached, so every count that
     // depends on the server must read "Unknown" rather than a number that looks real but isn't.
-    // Favorites is the one row that legitimately reads 0 - nothing was ever asked of the server to
+    // Offline is the one row that legitimately reads 0 - nothing was ever asked of the server to
     // know that this device has none. hasToken stays nil here too, on purpose: this is the fixture
     // for "never resolved anything".
     @Test
@@ -206,10 +206,10 @@ struct ServerDetailViewTests {
     // The exception to the "empty cache reads Unknown" rule, and the fixture that stops it being
     // silently withdrawn. Every cache-derived array is left at its default [] on purpose, after a
     // refresh that completed (statistics is set): the four server-side counts still read Unknown,
-    // because a completed refresh does not prove any individual list was fetched, while Favorites
+    // because a completed refresh does not prove any individual list was fetched, while Offline
     // reads 0 - it is a local store, so its emptiness is knowable without asking anyone.
     @Test
-    func testSnapshot_emptyCachesReadUnknownExceptFavorites() async throws {
+    func testSnapshot_emptyCachesReadUnknownExceptOffline() async throws {
         let server = Server.testValue(url: Self.fixtureURL)
 
         var state = ServerDetailReducer.State.testValue(server: server)
@@ -272,8 +272,8 @@ struct ServerDetailViewTests {
         @Shared(.tags(server)) var tags: IdentifiedArrayOf<ApiInterface.Tag>
         $tags.withLock { $0 = [.testValue()] }
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument>
-        $favorites.withLock { $0 = [.testValue()] }
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
+        $offlineDocuments.withLock { $0 = [.testValue()] }
 
         // Users and groups stay empty on purpose - the restriction under test. updateCache swallows
         // the 403 each of them answers with, so nothing distinguishes a refused fetch from an empty

@@ -24,16 +24,16 @@ public struct ServerDetailView: View {
 
     public init(store: StoreOf<ServerDetailReducer>) {
         self.store = store
-        _favorites = Shared(wrappedValue: [], .favorites(store.server))
+        _offlineDocuments = Shared(wrappedValue: [], .offlineDocuments(store.server))
     }
 
     public var store: StoreOf<ServerDetailReducer>
 
-    // Read directly rather than through State: favorites has nothing to do with the refresh this
-    // screen triggers, and threading it through the reducer would make ServerDetailReducer own a
-    // cache no other part of it touches.
+    // Read directly rather than through State: offline documents has nothing to do with the refresh
+    // this screen triggers, and threading it through the reducer would make ServerDetailReducer own
+    // a cache no other part of it touches.
     @Shared
-    private var favorites: IdentifiedArrayOf<FavoriteDocument>
+    private var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
     // A failed refresh never replaces the screen and never clears a value - the last known numbers
     // are still the best answer available - so it says so quietly and stays out of the way. Only
@@ -253,12 +253,13 @@ public struct ServerDetailView: View {
             }
             .listRowBackground(Color.m3SurfaceContainer)
 
-            // Not labelled "(Cached)" and not gated: favorites is a purely local store - records
-            // are created by user action and refreshed only where they already exist - so an empty
-            // array means the user has no favorites here, a fact that is known without ever asking
-            // the server. It is the one count on this screen that cannot be stale.
-            LabeledContent(String(localized: .favorites)) {
-                Text(verbatim: String(favorites.count))
+            // Not labelled "(Cached)" and not gated: offline documents is a purely local store -
+            // records are created by user action and refreshed only where they already exist - so
+            // an empty array means the user has no offline documents here, a fact that is known
+            // without ever asking the server. It is the one count on this screen that cannot be
+            // stale.
+            LabeledContent(String(localized: .offline)) {
+                Text(verbatim: String(offlineDocuments.count))
             }
             .listRowBackground(Color.m3SurfaceContainer)
         } header: {

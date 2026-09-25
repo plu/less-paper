@@ -1,7 +1,7 @@
 import ApiInterface
 import ComposableArchitecture
 import DocumentsFeature
-import FavoritesFeature
+import OfflineFeature
 import SettingsFeature
 
 @Reducer
@@ -9,7 +9,7 @@ public struct MainReducer {
 
     public enum Action {
         case documentList(DocumentListReducer.Action)
-        case favoriteList(FavoriteListReducer.Action)
+        case offlineList(OfflineListReducer.Action)
         case inbox(DocumentListReducer.Action)
         case selectedTab(AppTab)
         case settingList(SettingListReducer.Action)
@@ -20,7 +20,7 @@ public struct MainReducer {
 
         var documentList: DocumentListReducer.State
 
-        var favoriteList: FavoriteListReducer.State
+        var offlineList: OfflineListReducer.State
 
         var inbox: DocumentListReducer.State
 
@@ -35,7 +35,7 @@ public struct MainReducer {
             server: Server
         ) {
             self.documentList = .init(server: server)
-            self.favoriteList = .init(server: server)
+            self.offlineList = .init(server: server)
             self.inbox = .init(
                 filter: .inbox(server: server),
                 server: server
@@ -50,8 +50,8 @@ public struct MainReducer {
         Scope(state: \.documentList, action: \.documentList) {
             DocumentListReducer()
         }
-        Scope(state: \.favoriteList, action: \.favoriteList) {
-            FavoriteListReducer()
+        Scope(state: \.offlineList, action: \.offlineList) {
+            OfflineListReducer()
         }
         Scope(state: \.inbox, action: \.inbox) {
             DocumentListReducer()
@@ -76,7 +76,7 @@ public struct MainReducer {
             case let .selectedTab(tab):
                 state.selectedTab = tab
                 return .none
-            case .documentList, .favoriteList, .inbox, .settingList:
+            case .documentList, .offlineList, .inbox, .settingList:
                 return .none
             }
         }

@@ -72,14 +72,14 @@ final class SnapshotTests: XCTestCase, UITestNavigation {
 
     // Waits on a row rather than the title: the list is seeded before launch, so the tab arrives
     // populated, and a title would be satisfied by the empty state too.
-    func testFavorites() {
+    func testOffline() {
         let app = launch()
-        XCTAssertTrue(tapTab(labels.favorites, in: app), "Could not open the Favorites tab")
+        XCTAssertTrue(tapTab(labels.offline, in: app), "Could not open the Offline tab")
         XCTAssertTrue(
             app.cells.firstMatch.waitForExistence(timeout: timeout),
-            "The Favorites tab listed nothing"
+            "The Offline tab listed nothing"
         )
-        snapshot("08-Favorites")
+        snapshot("08-Offline")
     }
 
     func testSettings() {

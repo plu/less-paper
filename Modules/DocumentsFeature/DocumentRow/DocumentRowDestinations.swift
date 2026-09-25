@@ -6,7 +6,7 @@ import SwiftUI
 public extension View {
 
     // Everything a row action can open. Extracted so a list that is not the document list - the
-    // Favorites tab composes its own row - can offer the same swipe actions without any of them
+    // Offline tab composes its own row - can offer the same swipe actions without any of them
     // silently doing nothing for want of somewhere to present.
     func documentRowDestinations(store: StoreOf<DocumentRowReducer>) -> some View {
         modifier(DocumentRowDestinations(store: store))

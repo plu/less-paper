@@ -78,14 +78,14 @@ public extension SharedReaderKey where Self == InMemoryKey<IdentifiedArrayOf<Doc
 }
 
 public extension SharedReaderKey
-    where Self == FileStorageKey<IdentifiedArrayOf<FavoriteDocument>>.Default {
+    where Self == FileStorageKey<IdentifiedArrayOf<OfflineDocument>>.Default {
 
-    static func favorites(_ server: Server) -> Self {
+    static func offlineDocuments(_ server: Server) -> Self {
         Self[
             .fileStorage(
-                .applicationGroupDirectory.appending(component: "\(server.id)-favorites.json"),
-                decoder: .favoritesDecoder,
-                encoder: .favoritesEncoder
+                .applicationGroupDirectory.appending(component: "\(server.id)-offline.json"),
+                decoder: .offlineDecoder,
+                encoder: .offlineEncoder
             ),
             default: []
         ]

@@ -2,6 +2,10 @@ excluded:
   - .claude
   - Tuist/.build
   - Derived
+  # xcodebuild's output, including the Swift the string catalogues generate. CI never sees it
+  # because ci:clean runs first, so this only ever bit someone linting after a local build - and
+  # it failed on a file nobody wrote.
+  - build
   # fastlane ships Swift of its own inside the gem, which is neither ours nor lintable.
   - vendor
 disabled_rules:

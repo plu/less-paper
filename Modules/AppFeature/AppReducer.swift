@@ -135,7 +135,7 @@ public struct AppReducer {
                 }
                 return recordActiveDay
                     .merge(with: .runRefreshStatistics(server: server))
-                    .merge(with: .runRefreshFavorites(server: server))
+                    .merge(with: .runRefreshOffline(server: server))
                     .merge(with: .runRefreshPermissions(server: server))
             case .logLaunchContext:
                 return .runLogLaunchContext()
@@ -146,7 +146,7 @@ public struct AppReducer {
                     // didBecomeActive alone would miss that: SwiftUI's onChange(of: scenePhase)
                     // never fires for the phase the app already launched into.
                     let updateCache = Effect<Action>.runUpdateCache(server: server)
-                        .merge(with: .runRefreshFavorites(server: server))
+                        .merge(with: .runRefreshOffline(server: server))
                     guard state.pendingLink != nil else {
                         return updateCache
                     }

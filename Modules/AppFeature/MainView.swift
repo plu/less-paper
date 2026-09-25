@@ -1,7 +1,7 @@
 import ComposableArchitecture
 import Dependencies
 import DocumentsFeature
-import FavoritesFeature
+import OfflineFeature
 import SettingsFeature
 import SwiftUI
 
@@ -27,11 +27,11 @@ struct MainView: View {
             .tabItem { Label(.documents, systemImage: "document.on.document.fill") }
             .tag(AppTab.documents)
 
-            FavoriteListView(
-                store: store.scope(state: \.favoriteList, action: \.favoriteList)
+            OfflineListView(
+                store: store.scope(state: \.offlineList, action: \.offlineList)
             )
-            .tabItem { Label(.favorites, systemImage: "heart.fill") }
-            .tag(AppTab.favorites)
+            .tabItem { Label(.offline, systemImage: "arrow.down.circle.fill") }
+            .tag(AppTab.offline)
 
             SettingListView(
                 store: store.scope(

@@ -35,7 +35,7 @@ extension Module {
                 .target(.certificatesFeature),
                 .target(.components),
                 .target(.documentsFeature),
-                .target(.favoritesFeature),
+                .target(.offlineFeature),
                 .target(.forwardAuthFeature),
                 .target(.imageFeature),
                 .target(.logging),
@@ -52,7 +52,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.appFeature),
                 .target(.components),
-                .target(.favoritesFeature),
+                .target(.offlineFeature),
                 .target(.imageFeature),
                 .target(.logging),
                 .target(.serversFeature),
@@ -274,7 +274,7 @@ extension Module {
                 .target(.tagsFeature),
                 .target(.testSupport),
             ]
-        case .favoritesFeature:
+        case .offlineFeature:
             [
                 .external(.composableArchitecture),
                 .external(.dependencies),
@@ -286,7 +286,7 @@ extension Module {
                 .target(.designTokens),
                 .target(.documentsFeature),
             ]
-        case .favoritesFeatureTests:
+        case .offlineFeatureTests:
             [
                 .external(.composableArchitecture),
                 .external(.dependenciesTestSupport),
@@ -294,7 +294,7 @@ extension Module {
                 .target(.apiInterface),
                 .target(.components),
                 .target(.documentsFeature),
-                .target(.favoritesFeature),
+                .target(.offlineFeature),
                 .target(.testSupport),
             ]
         case .fileTasksFeature:

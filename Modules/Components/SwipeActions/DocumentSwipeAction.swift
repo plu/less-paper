@@ -6,8 +6,8 @@ public enum DocumentSwipeAction: String, CaseIterable, Codable, Equatable, Senda
     case clearInboxTags
     case delete
     case edit
-    case favorite
     case openNotes
+    case saveOffline
     case preview
     case share
 }
@@ -18,6 +18,19 @@ public extension DocumentSwipeAction {
     // that actually has inbox tags, so putting it in Settings would ask the user to choose
     // something that is neither theirs to turn off nor meaningful on most rows.
     static let configurable = allCases.filter { $0 != .clearInboxTags }
+
+    // `favorite` was this case's raw value before the feature was renamed to Offline, and a stored
+    // configuration still carries it. Translated rather than ignored: the settings decode
+    // compactMaps, so an unrecognised value is dropped and the user's swipe stops existing rather
+    // than falling back to anything.
+    init?(storedRawValue: String) {
+        switch storedRawValue {
+        case "favorite":
+            self = .saveOffline
+        default:
+            self.init(rawValue: storedRawValue)
+        }
+    }
 }
 
 extension DocumentSwipeAction: Localizable {
@@ -30,10 +43,10 @@ extension DocumentSwipeAction: Localizable {
             .swipeActionDelete
         case .edit:
             .swipeActionEdit
-        case .favorite:
-            .swipeActionFavorite
         case .openNotes:
             .swipeActionOpenNotes
+        case .saveOffline:
+            .swipeActionOffline
         case .preview:
             .swipeActionPreview
         case .share:
@@ -41,8 +54,8 @@ extension DocumentSwipeAction: Localizable {
         }
     }
 
-    // Favorite's glyph is the unfilled one here because this names the action, not the state of any
-    // one document. The swipe button swaps it for a document already favorited.
+    // Save offline's glyph is the unfilled one here because this names the action, not the state of
+    // any one document. The swipe button swaps it for a document already saved.
     public var systemImage: String {
         switch self {
         case .clearInboxTags:
@@ -51,10 +64,10 @@ extension DocumentSwipeAction: Localizable {
             "trash"
         case .edit:
             "square.and.pencil"
-        case .favorite:
-            "heart"
         case .openNotes:
             "note.text"
+        case .saveOffline:
+            "arrow.down.circle"
         case .preview:
             "eye"
         case .share:

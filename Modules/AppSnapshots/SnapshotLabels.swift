@@ -21,7 +21,7 @@ struct SnapshotLabels {
         documents: "Documents",
         edit: "Edit",
         editDocument: "Edit document",
-        favorites: "Favorites",
+        offline: "Offline",
         filter: "Filter",
         inbox: "Inbox",
         notAssigned: "Not assigned",
@@ -36,7 +36,7 @@ struct SnapshotLabels {
         documents: "Dokumente",
         edit: "Bearbeiten",
         editDocument: "Dokument bearbeiten",
-        favorites: "Favoriten",
+        offline: "Offline",
         filter: "Filter",
         inbox: "Eingang",
         notAssigned: "Nicht zugewiesen",
@@ -50,7 +50,7 @@ struct SnapshotLabels {
     let documents: String
     let edit: String
     let editDocument: String
-    let favorites: String
+    let offline: String
     let filter: String
     let inbox: String
     let notAssigned: String

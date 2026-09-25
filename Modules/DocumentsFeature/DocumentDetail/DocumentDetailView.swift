@@ -52,20 +52,20 @@ public struct DocumentDetailView: View {
                 // the label changes with state, so ordering it by its initial would move it under
                 // the user's thumb as they used it.
                 //
-                // Saving a favorite means SaveFavoriteUseCase's own reads run too, and on a
+                // Saving offline means SaveOfflineDocumentUseCase's own reads run too, and on a
                 // snapshot those are pinned to the record already on disk, not to this document —
-                // adding one from here would only fail. Unfavoriting stays offered: removal
+                // adding one from here would only fail. Removing stays offered: removal
                 // touches none of those reads.
-                if !store.isOfflineSnapshot || store.isFavorited {
+                if !store.isOfflineSnapshot || store.isSavedOffline {
                     Button {
-                        send(.favoriteButtonTapped)
+                        send(.saveOfflineButtonTapped)
                     } label: {
                         Label(
-                            store.isFavorited ? .unfavorite : .favorite,
-                            systemImage: store.isFavorited ? "heart.fill" : "heart"
+                            store.isSavedOffline ? .removeFromOffline : .saveOffline,
+                            systemImage: store.isSavedOffline ? "arrow.down.circle.fill" : "arrow.down.circle"
                         )
                     }
-                    .disabled(store.isTogglingFavorite)
+                    .disabled(store.isTogglingOffline)
                 }
 
                 if store.downloadedURL != nil {
@@ -95,7 +95,7 @@ public struct DocumentDetailView: View {
             } label: {
                 // The menu dismisses on selection, so a spinner inside it would never be seen.
                 // The toolbar item itself carries the wait instead.
-                if store.isTogglingFavorite {
+                if store.isTogglingOffline {
                     ProgressView()
                 } else {
                     Label(.moreActions, systemImage: "ellipsis.circle")

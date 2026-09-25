@@ -35,23 +35,6 @@
         }
       }
     },
-    "favorites": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favoriten"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favorites"
-          }
-        }
-      }
-    },
     "inbox": {
       "extractionState": "manual",
       "localizations": {
@@ -65,6 +48,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Inbox"
+          }
+        }
+      }
+    },
+    "offline": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
           }
         }
       }

@@ -30,27 +30,27 @@ extension Effect where Action == DocumentDetailReducer.Action {
         .cancellable(id: CancelID.downloadDocument)
     }
 
-    static func runToggleFavorite(document: Document, isFavorited: Bool, server: Server) -> Self {
+    static func runToggleOffline(document: Document, isSavedOffline: Bool, server: Server) -> Self {
         .run { send in
-            if isFavorited {
-                @Dependency(\.removeFavorite.execute)
-                var removeFavorite
-                try await removeFavorite(document.id, server)
+            if isSavedOffline {
+                @Dependency(\.removeOfflineDocument.execute)
+                var removeOfflineDocument
+                try await removeOfflineDocument(document.id, server)
             } else {
-                @Dependency(\.saveFavorite.execute)
-                var saveFavorite
-                try await saveFavorite(document, server, .add)
+                @Dependency(\.saveOfflineDocument.execute)
+                var saveOfflineDocument
+                try await saveOfflineDocument(document, server, .add)
             }
-            await send(.favoriteToggleSucceeded)
+            await send(.offlineToggleSucceeded)
         } catch: { error, send in
-            await send(.favoriteToggleFailed(error))
+            await send(.offlineToggleFailed(error))
         }
-        .cancellable(id: CancelID.toggleFavorite)
+        .cancellable(id: CancelID.toggleOffline)
     }
 }
 
 private enum CancelID {
     case confirmDelete
     case downloadDocument
-    case toggleFavorite
+    case toggleOffline
 }
