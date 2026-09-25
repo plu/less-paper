@@ -1,7 +1,10 @@
-Die Suche findet jetzt mehr als nur Dokumente.
+Die Suche findet jetzt mehr als nur Dokumente, und aus Favoriten wird Offline.
 
 • Tippe etwas in das Suchfeld der Dokumentliste, und die Treffer erscheinen gruppiert – Dokumente, gespeicherte Ansichten, Tags, Korrespondenten, Dokumenttypen, Speicherpfade und benutzerdefinierte Felder. Tippe auf ein Dokument, um es zu öffnen, oder auf etwas anderes, um die Liste danach zu filtern.
 • Wenn du einen Treffer auswählst, verschwindet die Tastatur, dein Suchtext bleibt aber stehen – tippst du das Feld erneut an, sind die Ergebnisse wieder da.
 • Suchbegriffe landen nicht mehr im Diagnoseprotokoll. Das gilt auch für die erweiterte Suche, die sie schon lange vor dieser Version dort abgelegt hat.
+
+• Der Tab „Favoriten“ heißt jetzt „Offline“ – und tut, was er immer getan hat: ausgewählte Dokumente bleiben auf diesem Gerät und sind ohne Verbindung lesbar. Aus „Favorisieren“ wird „Offline speichern“, mit einem Download-Pfeil statt eines Herzens. Alles, was du gespeichert hattest, ist weiterhin da, und eine Wischgeste, die du auf „Favorit“ gestellt hattest, funktioniert weiter – sie heißt jetzt „Offline“.
+• Die Offline-Liste hat jetzt dasselbe Suchfeld wie die Dokumentliste, statt des Systemfelds darüber.
 
 Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.
