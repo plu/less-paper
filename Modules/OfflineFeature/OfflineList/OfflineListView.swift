@@ -10,6 +10,20 @@ public struct OfflineListView: View {
 
     private var list: some View {
         List {
+            // Outside any branch on whether there is something to search: the documents list keeps
+            // its bar over an empty list too, and a row that comes and goes takes the query with
+            // it. It scrolls away with the rows rather than hiding above them, which is what
+            // `.searchable` did and what made the two lists look unrelated.
+            SearchBar(
+                text: $store.searchText,
+                cancelled: { send(.searchCancelled) }
+            )
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
+            .padding(.bottom, .x3)
+            .padding(.horizontal, .x3)
+            .padding(.top, .x3)
             ForEach(store.scope(state: \.rows, action: \.rows)) { store in
                 OfflineRowView(store: store)
                     .listRowBackground(Color.clear)
@@ -26,24 +40,14 @@ public struct OfflineListView: View {
         .overlay(emptyListView())
         .refreshable { await send(.onRefresh).finish() }
         .scrollContentBackground(.hidden)
+        // Dragging the rows is as much a way of saying "let me see them" as scrolling a sheet was.
+        .scrollDismissesKeyboard(.immediately)
         .task { await send(.onAppear).finish() }
     }
 
-    // Its own NavigationStack rather than `Searchable`'s: the pushes are driven by the reducer's
-    // StackState, and `Searchable` builds an unbound stack that a path binding cannot reach.
     public var body: some View {
         NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
-            // Attached only when there is something to search. The field sits above the list and
-            // hides by scrolling out of view, so over an empty list it has nowhere to go and simply
-            // stays on screen - and a search field above nothing cannot do anything anyway.
-            //
-            // The searchText half is not belt and braces: a query matching nothing empties the
-            // list, and without it the field would vanish mid-search, taking the query with it.
-            if !store.rows.isEmpty || !store.searchText.isEmpty {
-                list.searchable(text: $store.searchText)
-            } else {
-                list
-            }
+            list
         } destination: { store in
             switch store.case {
             case let .documentDetail(store):

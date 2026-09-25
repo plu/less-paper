@@ -43,6 +43,7 @@ public struct OfflineListReducer: Sendable {
             case onAppear
             case onDisappear
             case onRefresh
+            case searchCancelled
         }
     }
 
@@ -179,6 +180,12 @@ public struct OfflineListReducer: Sendable {
                     // a cancelled effect delivers no result to clear it, and the list would be
                     // locked out of pull-to-refresh for the rest of the session.
                     return .runRefreshOffline(server: state.server)
+                // The search bar drops focus itself before this arrives; the query is the only
+                // half the reducer owns.
+                case .searchCancelled:
+                    state.searchText = ""
+                    state.rebuildRows()
+                    return .none
                 }
             case .binding, .path, .rows:
                 return .none
