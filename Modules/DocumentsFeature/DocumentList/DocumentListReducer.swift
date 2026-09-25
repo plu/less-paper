@@ -265,10 +265,17 @@ public struct DocumentListReducer: Sendable {
         func rows(for documents: [Document]) -> IdentifiedArrayOf<DocumentRowReducer.State> {
             cacheDocuments(documents)
             return IdentifiedArray(uniqueElements: documents.map { document in
-                DocumentRowReducer.State(
+                var row = DocumentRowReducer.State(
                     document: Shared($documentCache[id: document.id])!,
                     server: server
                 )
+                // Built fresh so the row always reads the cache entry, then handed back whatever
+                // the old row was showing: a refresh that lands while the edit form is open must
+                // leave it open, and a row that vanished from the results keeps nothing.
+                if let existing = self.documents[id: document.id] {
+                    row.adoptPresentation(of: existing)
+                }
+                return row
             })
         }
     }
