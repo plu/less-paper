@@ -12,7 +12,7 @@ import TestSupport
 @Suite(
     // No PDF behind the thumbnails: the references are about the list, and a real file would make
     // them depend on PDFKit's rendering rather than on this view.
-    .testDependencies { $0.favoritesStore.pdfURL = { id, _ in URL(filePath: "/favorites/\(id).pdf") } },
+    .testDependencies { $0.offlineStore.pdfURL = { id, _ in URL(filePath: "/favorites/\(id).pdf") } },
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
@@ -22,8 +22,8 @@ struct FavoriteListViewTests {
     func testSnapshot_populated() async throws {
         let server = Server.testValue(id: "snapshot-populated")
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1, title: "Invoice")),
             .testValue(document: .testValue(id: 2, title: "Warranty")),
         ]
@@ -52,8 +52,8 @@ struct FavoriteListViewTests {
     func testSnapshot_noSearchResults() async throws {
         let server = Server.testValue(id: "snapshot-no-search-results")
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(content: nil, id: 1, title: "Invoice"))
         ]
 
@@ -76,8 +76,8 @@ struct FavoriteListViewTests {
     func testSnapshot_unavailable() async throws {
         let server = Server.testValue(id: "snapshot-unavailable")
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1, title: "Invoice"), isUnavailable: true)
         ]
 

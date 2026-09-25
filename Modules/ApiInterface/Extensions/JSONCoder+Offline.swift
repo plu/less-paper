@@ -8,7 +8,7 @@ import Foundation
 // ever been written to disk.
 public extension JSONEncoder {
 
-    static let favoritesEncoder = {
+    static let offlineEncoder = {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .millisecondsSince1970
         return encoder
@@ -17,7 +17,7 @@ public extension JSONEncoder {
 
 public extension JSONDecoder {
 
-    static let favoritesDecoder = {
+    static let offlineDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .millisecondsSince1970
         return decoder

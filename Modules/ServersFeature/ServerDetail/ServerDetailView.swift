@@ -24,7 +24,7 @@ public struct ServerDetailView: View {
 
     public init(store: StoreOf<ServerDetailReducer>) {
         self.store = store
-        _favorites = Shared(wrappedValue: [], .favorites(store.server))
+        _favorites = Shared(wrappedValue: [], .offlineDocuments(store.server))
     }
 
     public var store: StoreOf<ServerDetailReducer>
@@ -33,7 +33,7 @@ public struct ServerDetailView: View {
     // screen triggers, and threading it through the reducer would make ServerDetailReducer own a
     // cache no other part of it touches.
     @Shared
-    private var favorites: IdentifiedArrayOf<FavoriteDocument>
+    private var favorites: IdentifiedArrayOf<OfflineDocument>
 
     // A failed refresh never replaces the screen and never clears a value - the last known numbers
     // are still the best answer available - so it says so quietly and stays out of the way. Only

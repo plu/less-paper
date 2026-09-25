@@ -18,7 +18,7 @@ struct FavoriteSettingsReducerTests {
         let store = TestStore(initialState: FavoriteSettingsReducer.State(server: .testValue())) {
             FavoriteSettingsReducer()
         } withDependencies: {
-            $0.favoritesStore.totalByteCount = { _ in 4096 }
+            $0.offlineStore.totalByteCount = { _ in 4096 }
         }
 
         await store.send(.view(.onAppear))
@@ -30,7 +30,7 @@ struct FavoriteSettingsReducerTests {
         let server = Server.testValue()
         let deleted = LockIsolated(false)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
@@ -41,7 +41,7 @@ struct FavoriteSettingsReducerTests {
             FavoriteSettingsReducer()
         } withDependencies: {
             $0.deleteConfirmation.present = { _, _ in true }
-            $0.favoritesStore.deleteAll = { _ in deleted.setValue(true) }
+            $0.offlineStore.deleteAll = { _ in deleted.setValue(true) }
         }
 
         await store.send(.view(.removeAllButtonTapped))
@@ -62,7 +62,7 @@ struct FavoriteSettingsReducerTests {
         let server = Server.testValue(id: "declining-removes-nothing")
         let deleted = LockIsolated(false)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
@@ -70,7 +70,7 @@ struct FavoriteSettingsReducerTests {
             FavoriteSettingsReducer()
         } withDependencies: {
             $0.deleteConfirmation.present = { _, _ in false }
-            $0.favoritesStore.deleteAll = { _ in deleted.setValue(true) }
+            $0.offlineStore.deleteAll = { _ in deleted.setValue(true) }
         }
 
         await store.send(.view(.removeAllButtonTapped))
@@ -86,7 +86,7 @@ struct FavoriteSettingsReducerTests {
         let server = Server.testValue(id: "failed-remove")
         let toasts = LockIsolated([Toast]())
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
@@ -97,8 +97,8 @@ struct FavoriteSettingsReducerTests {
             FavoriteSettingsReducer()
         } withDependencies: {
             $0.deleteConfirmation.present = { _, _ in true }
-            $0.favoritesStore.deleteAll = { _ in throw TestError.someError }
-            $0.favoritesStore.totalByteCount = { _ in 512 }
+            $0.offlineStore.deleteAll = { _ in throw TestError.someError }
+            $0.offlineStore.totalByteCount = { _ in 512 }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 
@@ -121,8 +121,8 @@ struct FavoriteSettingsReducerTests {
         let store = TestStore(initialState: FavoriteSettingsReducer.State(server: .testValue())) {
             FavoriteSettingsReducer()
         } withDependencies: {
-            $0.favoritesStore.totalByteCount = { _ in 8192 }
-            $0.refreshFavorites.execute = { force, _ in
+            $0.offlineStore.totalByteCount = { _ in 8192 }
+            $0.refreshOffline.execute = { force, _ in
                 forced.setValue(force)
                 return FavoriteRefreshResult(updated: 2)
             }
@@ -146,7 +146,7 @@ struct FavoriteSettingsReducerTests {
         let store = TestStore(initialState: FavoriteSettingsReducer.State(server: .testValue())) {
             FavoriteSettingsReducer()
         } withDependencies: {
-            $0.refreshFavorites.execute = { _, _ in throw TestError.someError }
+            $0.refreshOffline.execute = { _, _ in throw TestError.someError }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 

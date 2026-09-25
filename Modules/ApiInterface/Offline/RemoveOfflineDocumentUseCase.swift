@@ -3,12 +3,12 @@ import DependenciesMacros
 import Foundation
 
 @DependencyClient
-public struct RemoveFavoriteUseCase: Sendable {
+public struct RemoveOfflineDocumentUseCase: Sendable {
 
     public var execute: @Sendable (_ id: Document.Id, _ server: Server) async throws -> Void
 }
 
-extension RemoveFavoriteUseCase: TestDependencyKey {
+extension RemoveOfflineDocumentUseCase: TestDependencyKey {
 
     public static let previewValue = Self(execute: { _, _ in })
 
@@ -17,8 +17,8 @@ extension RemoveFavoriteUseCase: TestDependencyKey {
 
 public extension DependencyValues {
 
-    var removeFavorite: RemoveFavoriteUseCase {
-        get { self[RemoveFavoriteUseCase.self] }
-        set { self[RemoveFavoriteUseCase.self] = newValue }
+    var removeOfflineDocument: RemoveOfflineDocumentUseCase {
+        get { self[RemoveOfflineDocumentUseCase.self] }
+        set { self[RemoveOfflineDocumentUseCase.self] = newValue }
     }
 }

@@ -6,12 +6,12 @@ import SwiftSharing
 import Testing
 
 @Suite
-struct SaveFavoriteUseCaseTests {
+struct SaveOfflineDocumentUseCaseTests {
 
-    // A server per test, so the shared favorites file cannot collide under swift-testing's
+    // A server per test, so the shared offline documents file cannot collide under swift-testing's
     // in-suite parallelism.
     private static func server(_ name: String) -> Server {
-        .testValue(id: "save-favorite-use-case-tests-\(name)")
+        .testValue(id: "save-offline-document-use-case-tests-\(name)")
     }
 
     @Test
@@ -23,24 +23,24 @@ struct SaveFavoriteUseCaseTests {
         let note = Note.testValue()
         let written = LockIsolated<Data?>(nil)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
 
         try await withDependencies {
             $0.getDocument.execute = { _, _ in document }
             $0.getNotes.execute = { _, _ in [note] }
             $0.getDocumentMetadata.execute = { _, _ in .testValue() }
             $0.downloadDocument.execute = { _, _ in Data(repeating: 9, count: 64) }
-            $0.favoritesStore.writePDF = { data, _, _ in written.setValue(data); return data.count }
+            $0.offlineStore.writePDF = { data, _, _ in written.setValue(data); return data.count }
             $0.date.now = Date(timeIntervalSince1970: 100)
         } operation: {
-            try await SaveFavoriteUseCase.liveValue.execute(document, server, .add)
+            try await SaveOfflineDocumentUseCase.liveValue.execute(document, server, .add)
         }
 
         #expect(written.value?.count == 64)
-        #expect($favorites.wrappedValue[id: 7]?.document.title == "Invoice")
-        #expect($favorites.wrappedValue[id: 7]?.notes == [note])
-        #expect($favorites.wrappedValue[id: 7]?.pdfByteCount == 64)
-        #expect($favorites.wrappedValue[id: 7]?.isUnavailable == false)
+        #expect($offlineDocuments.wrappedValue[id: 7]?.document.title == "Invoice")
+        #expect($offlineDocuments.wrappedValue[id: 7]?.notes == [note])
+        #expect($offlineDocuments.wrappedValue[id: 7]?.pdfByteCount == 64)
+        #expect($offlineDocuments.wrappedValue[id: 7]?.isUnavailable == false)
     }
 
     // The document handed to a save came from a list response, and paperless truncates content on
@@ -54,30 +54,30 @@ struct SaveFavoriteUseCaseTests {
         let listCopy = Document.testValue(content: "The quick brown fox jum", id: 7)
         let full = Document.testValue(content: "The quick brown fox jumped over the lazy dog", id: 7)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
 
         try await withDependencies {
             $0.getDocument.execute = { _, _ in full }
             $0.getNotes.execute = { _, _ in [] }
             $0.getDocumentMetadata.execute = { _, _ in .testValue() }
             $0.downloadDocument.execute = { _, _ in Data(repeating: 9, count: 64) }
-            $0.favoritesStore.writePDF = { data, _, _ in data.count }
+            $0.offlineStore.writePDF = { data, _, _ in data.count }
             $0.date.now = Date(timeIntervalSince1970: 100)
         } operation: {
-            try await SaveFavoriteUseCase.liveValue.execute(listCopy, server, .add)
+            try await SaveOfflineDocumentUseCase.liveValue.execute(listCopy, server, .add)
         }
 
-        #expect($favorites.wrappedValue[id: 7]?.document.content == full.content)
+        #expect($offlineDocuments.wrappedValue[id: 7]?.document.content == full.content)
     }
 
-    // A failed download must leave nothing behind: a record without its PDF is a favorite that
+    // A failed download must leave nothing behind: a record without its PDF is an offline document that
     // cannot be read offline, which is the one thing it exists to do.
     @Test
     func test_writesNoRecordWhenTheDownloadFails() async {
         let server = Self.server("download-fails")
         defer { cleanUp(server) }
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
 
         await #expect(throws: (any Error).self) {
             try await withDependencies {
@@ -86,26 +86,26 @@ struct SaveFavoriteUseCaseTests {
                 $0.getDocumentMetadata.execute = { _, _ in .testValue() }
                 $0.downloadDocument.execute = { _, _ in throw ApiError.testValue() }
             } operation: {
-                try await SaveFavoriteUseCase.liveValue.execute(.testValue(id: 7), server, .add)
+                try await SaveOfflineDocumentUseCase.liveValue.execute(.testValue(id: 7), server, .add)
             }
         }
 
-        #expect($favorites.wrappedValue.isEmpty)
+        #expect($offlineDocuments.wrappedValue.isEmpty)
     }
 
-    // A refresh must not put back a favorite the user removed while its fetch was in flight, and
+    // A refresh must not put back an offline document the user removed while its fetch was in flight, and
     // losing that race must not strand the PDF the save had already written.
     @Test
-    func test_aRefreshSaveDoesNotResurrectAFavoriteRemovedMidFlight() async throws {
+    func test_aRefreshSaveDoesNotResurrectAnOfflineDocumentRemovedMidFlight() async throws {
         let server = Self.server("removed-mid-save")
         defer { cleanUp(server) }
 
         let deleted = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
-        let shared = $favorites
+        let shared = $offlineDocuments
 
         try await withDependencies {
             $0.getDocument.execute = { _, _ in .testValue(id: 7) }
@@ -115,24 +115,24 @@ struct SaveFavoriteUseCaseTests {
                 shared.withLock { _ = $0.remove(id: 7) }
                 return Data(repeating: 9, count: 64)
             }
-            $0.favoritesStore.writePDF = { data, _, _ in data.count }
-            $0.favoritesStore.deletePDF = { id, _ in deleted.setValue(id) }
+            $0.offlineStore.writePDF = { data, _, _ in data.count }
+            $0.offlineStore.deletePDF = { id, _ in deleted.setValue(id) }
             $0.date.now = Date(timeIntervalSince1970: 100)
         } operation: {
-            try await SaveFavoriteUseCase.liveValue.execute(
+            try await SaveOfflineDocumentUseCase.liveValue.execute(
                 .testValue(id: 7),
                 server,
                 .refreshExisting
             )
         }
 
-        #expect($favorites.wrappedValue[id: 7] == nil)
+        #expect($offlineDocuments.wrappedValue[id: 7] == nil)
         #expect(deleted.value == 7)
     }
 
     private func cleanUp(_ server: Server) {
         try? FileManager.default.removeItem(
-            at: URL.applicationGroupDirectory.appending(component: "\(server.id)-favorites.json")
+            at: URL.applicationGroupDirectory.appending(component: "\(server.id)-offline.json")
         )
     }
 }

@@ -6,12 +6,12 @@ import SwiftSharing
 import Testing
 
 @Suite
-struct RemoveFavoriteUseCaseTests {
+struct RemoveOfflineDocumentUseCaseTests {
 
-    // A server per test, so the shared favorites file cannot collide under swift-testing's
+    // A server per test, so the shared offline documents file cannot collide under swift-testing's
     // in-suite parallelism.
     private static func server(_ name: String) -> Server {
-        .testValue(id: "remove-favorite-use-case-tests-\(name)")
+        .testValue(id: "remove-offline-document-use-case-tests-\(name)")
     }
 
     @Test
@@ -21,43 +21,43 @@ struct RemoveFavoriteUseCaseTests {
 
         let deletedId = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
         try await withDependencies {
-            $0.favoritesStore.deletePDF = { id, _ in deletedId.setValue(id) }
+            $0.offlineStore.deletePDF = { id, _ in deletedId.setValue(id) }
         } operation: {
-            try await RemoveFavoriteUseCase.liveValue.execute(7, server)
+            try await RemoveOfflineDocumentUseCase.liveValue.execute(7, server)
         }
 
         #expect(deletedId.value == 7)
-        #expect($favorites.wrappedValue.isEmpty)
+        #expect($offlineDocuments.wrappedValue.isEmpty)
     }
 
     // The record goes first so that a `.refreshExisting` save cannot pass its in-lock membership
     // check after the file is already gone and write a record pointing at nothing. That ordering
     // means a failed file delete leaves the bytes behind rather than the record — an untracked
-    // file wastes space, an untracked-PDF record is a favorite that cannot be opened offline. The
+    // file wastes space, an untracked-PDF record is an offline document that cannot be opened offline. The
     // error still propagates, so the caller learns the storage total is now wrong.
     @Test
     func test_removesTheRecordEvenWhenTheDeleteFails() async {
         let server = Self.server("delete-fails")
         defer { cleanUp(server) }
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
         await #expect(throws: (any Error).self) {
             try await withDependencies {
-                $0.favoritesStore.deletePDF = { _, _ in throw ApiError.testValue() }
+                $0.offlineStore.deletePDF = { _, _ in throw ApiError.testValue() }
             } operation: {
-                try await RemoveFavoriteUseCase.liveValue.execute(7, server)
+                try await RemoveOfflineDocumentUseCase.liveValue.execute(7, server)
             }
         }
 
-        #expect($favorites.wrappedValue[id: 7] == nil)
+        #expect($offlineDocuments.wrappedValue[id: 7] == nil)
     }
 
     // The window this ordering closes: with the file deleted first, a save already past its
@@ -68,19 +68,19 @@ struct RemoveFavoriteUseCaseTests {
         let server = Self.server("record-before-file")
         defer { cleanUp(server) }
 
-        let recordAtDeleteTime = LockIsolated<FavoriteDocument?>(nil)
+        let recordAtDeleteTime = LockIsolated<OfflineDocument?>(nil)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
-        let shared = $favorites
+        let shared = $offlineDocuments
 
         try await withDependencies {
-            $0.favoritesStore.deletePDF = { _, _ in
+            $0.offlineStore.deletePDF = { _, _ in
                 recordAtDeleteTime.setValue(shared.wrappedValue[id: 7])
             }
         } operation: {
-            try await RemoveFavoriteUseCase.liveValue.execute(7, server)
+            try await RemoveOfflineDocumentUseCase.liveValue.execute(7, server)
         }
 
         #expect(recordAtDeleteTime.value == nil)
@@ -88,7 +88,7 @@ struct RemoveFavoriteUseCaseTests {
 
     private func cleanUp(_ server: Server) {
         try? FileManager.default.removeItem(
-            at: URL.applicationGroupDirectory.appending(component: "\(server.id)-favorites.json")
+            at: URL.applicationGroupDirectory.appending(component: "\(server.id)-offline.json")
         )
     }
 }

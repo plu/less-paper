@@ -56,7 +56,7 @@ public struct DocumentDetailReducer: Sendable {
         }
 
         @SharedReader
-        var favorites: IdentifiedArrayOf<FavoriteDocument>
+        var favorites: IdentifiedArrayOf<OfflineDocument>
 
         var isFavorited: Bool {
             favorites[id: document.id] != nil
@@ -98,7 +98,7 @@ public struct DocumentDetailReducer: Sendable {
             self.destination = destination
             self._document = document
             self.downloadResult = downloadResult
-            self._favorites = SharedReader(wrappedValue: [], .favorites(server))
+            self._favorites = SharedReader(wrappedValue: [], .offlineDocuments(server))
             self.isOfflineSnapshot = isOfflineSnapshot
             self.isTogglingFavorite = isTogglingFavorite
             self.quickLookPreview = quickLookPreview
@@ -151,9 +151,9 @@ public struct DocumentDetailReducer: Sendable {
                     ))
                     return .none
                 case .favoriteButtonTapped:
-                    // Saving means SaveFavoriteUseCase's own reads run too, and a snapshot has
+                    // Saving means SaveOfflineDocumentUseCase's own reads run too, and a snapshot has
                     // those pinned to the record it already has — not to whatever this document
-                    // turns out to be. Unfavoriting is fine: RemoveFavoriteUseCase touches none of
+                    // turns out to be. Unfavoriting is fine: RemoveOfflineDocumentUseCase touches none of
                     // the overridden dependencies. The view hides the button for the case this
                     // guards, so this is the belt to that braces.
                     guard !state.isOfflineSnapshot || state.isFavorited else {

@@ -27,14 +27,14 @@ struct FavoriteRowView: View {
         .onTapGesture { send(.rowTapped) }
         .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
-        // Unfavoriting is prepended rather than configured, so it is always there and always what
-        // a full swipe right reaches - this list is the one place that action is the obvious one.
-        // It rides on the scoped row's favorite toggle, which calls the same removeFavorite as this
-        // row's own action and additionally dims the row and reports a failure.
+        // Removing is prepended rather than configured, so it is always there and always what a
+        // full swipe right reaches - this list is the one place that action is the obvious one.
+        // It rides on the scoped row's offline toggle, which calls the same removeOfflineDocument
+        // as this row's own action and additionally dims the row and reports a failure.
         .documentSwipeActions(
             settings: swipeActions,
             isSelecting: false,
-            leadingPrefix: [.favorite],
+            leadingPrefix: [.saveOffline],
             store: store.scope(state: \.row, action: \.row)
         )
         .documentRowDestinations(store: store.scope(state: \.row, action: \.row))
@@ -100,7 +100,7 @@ struct FavoriteRowView: View {
     var renderedThumbnail: UIImage?
 
     private var pdfURL: URL {
-        @Dependency(\.favoritesStore.pdfURL) var pdfURL
+        @Dependency(\.offlineStore.pdfURL) var pdfURL
         return pdfURL(store.favorite.id, store.server)
     }
 

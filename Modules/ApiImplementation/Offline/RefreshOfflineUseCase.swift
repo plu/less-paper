@@ -4,11 +4,11 @@ import Foundation
 import IdentifiedCollections
 import SwiftSharing
 
-extension RefreshFavoritesUseCase: @retroactive DependencyKey {
+extension RefreshOfflineUseCase: @retroactive DependencyKey {
     public static let liveValue = Self(execute: execute(force:server:))
 }
 
-private extension RefreshFavoritesUseCase {
+private extension RefreshOfflineUseCase {
 
     // Long enough to be worth one request, short enough that the URL cannot be rejected.
     static let chunkSize = 100
@@ -16,19 +16,19 @@ private extension RefreshFavoritesUseCase {
     // Enough to be quick, not enough to hammer a home server.
     static let concurrency = 3
 
-    static func execute(force: Bool, server: Server) async throws -> FavoriteRefreshResult {
+    static func execute(force: Bool, server: Server) async throws -> OfflineRefreshResult {
         @Dependency(\.getDocumentsByIds.execute) var getDocumentsByIds
-        @Dependency(\.saveFavorite.execute) var saveFavorite
+        @Dependency(\.saveOfflineDocument.execute) var saveOfflineDocument
 
-        @Shared(.favorites(server)) var favorites
+        @Shared(.offlineDocuments(server)) var offlineDocuments
 
-        let stored = $favorites.wrappedValue
+        let stored = $offlineDocuments.wrappedValue
         guard !stored.isEmpty else {
-            return FavoriteRefreshResult()
+            return OfflineRefreshResult()
         }
 
         // Phase one. A throw here propagates before anything is written, which is what keeps a
-        // failed request from marking every favorite unavailable.
+        // failed request from marking every offline document unavailable.
         var fresh: [Document.Id: Document] = [:]
         for chunk in stored.ids.chunked(into: chunkSize) {
             let documents = try await getDocumentsByIds(
@@ -43,24 +43,24 @@ private extension RefreshFavoritesUseCase {
         var changed: [Document] = []
         var unavailable = 0
 
-        $favorites.withLock { favorites in
-            for favorite in stored {
-                // `stored` is a snapshot taken before the request. A favorite removed while it was
+        $offlineDocuments.withLock { offlineDocuments in
+            for offlineDocument in stored {
+                // `stored` is a snapshot taken before the request. An offline document removed while it was
                 // in flight must stay removed: writing it back would leave a record pointing at a
-                // PDF `RemoveFavoriteUseCase` has already deleted.
-                guard favorites[id: favorite.id] != nil else {
+                // PDF `RemoveOfflineDocumentUseCase` has already deleted.
+                guard offlineDocuments[id: offlineDocument.id] != nil else {
                     continue
                 }
 
-                guard let document = fresh[favorite.id] else {
-                    // The flag is set either way; only the transition is counted. A favorite that
+                guard let document = fresh[offlineDocument.id] else {
+                    // The flag is set either way; only the transition is counted. An offline document that
                     // was already missing is not news, and reporting it again would put an error
-                    // toast ahead of "N favorites updated" on every manual refresh from here on —
+                    // toast ahead of "N offline documents updated" on every manual refresh from here on —
                     // the same stale complaint forever, and never a word about the real work.
-                    if !favorite.isUnavailable {
+                    if !offlineDocument.isUnavailable {
                         unavailable += 1
                     }
-                    favorites[id: favorite.id]?.isUnavailable = true
+                    offlineDocuments[id: offlineDocument.id]?.isUnavailable = true
                     continue
                 }
 
@@ -72,17 +72,17 @@ private extension RefreshFavoritesUseCase {
                 // paperless truncates, so copying its `content` over would replace the whole text
                 // with a preview of it. Anything that genuinely changes content moves `modified`,
                 // so phase two is what refreshes it.
-                favorites[id: favorite.id] = FavoriteDocument(
-                    document: document.with(content: favorite.document.content),
-                    metadata: favorite.metadata,
-                    notes: favorite.notes,
-                    pdfByteCount: favorite.pdfByteCount,
-                    storedAt: favorite.storedAt,
-                    syncedModified: favorite.syncedModified,
+                offlineDocuments[id: offlineDocument.id] = OfflineDocument(
+                    document: document.with(content: offlineDocument.document.content),
+                    metadata: offlineDocument.metadata,
+                    notes: offlineDocument.notes,
+                    pdfByteCount: offlineDocument.pdfByteCount,
+                    storedAt: offlineDocument.storedAt,
+                    syncedModified: offlineDocument.syncedModified,
                     isUnavailable: false
                 )
 
-                if force || document.modified != favorite.syncedModified {
+                if force || document.modified != offlineDocument.syncedModified {
                     changed.append(document)
                 }
             }
@@ -90,7 +90,7 @@ private extension RefreshFavoritesUseCase {
 
         // Bound to a `let` first: `@Dependency` declares a mutable backing var, which a task
         // group's sending closure is not allowed to capture.
-        let save = saveFavorite
+        let save = saveOfflineDocument
 
         // Phase two.
         // A sliding window: `concurrency` tasks in flight, and each one that finishes starts the
@@ -125,7 +125,7 @@ private extension RefreshFavoritesUseCase {
             return failures
         }
 
-        return FavoriteRefreshResult(
+        return OfflineRefreshResult(
             failed: failed,
             unavailable: unavailable,
             updated: changed.count - failed

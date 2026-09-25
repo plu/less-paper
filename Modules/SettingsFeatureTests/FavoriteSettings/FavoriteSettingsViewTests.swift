@@ -59,7 +59,7 @@ struct FavoriteSettingsViewTests {
                     ),
                     reducer: { FavoriteSettingsReducer() },
                     withDependencies: {
-                        $0.favoritesStore.totalByteCount = { _ in totalByteCount }
+                        $0.offlineStore.totalByteCount = { _ in totalByteCount }
                     }
                 )
             )

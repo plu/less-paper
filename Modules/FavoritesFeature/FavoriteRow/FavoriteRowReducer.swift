@@ -18,7 +18,7 @@ public struct FavoriteRowReducer: Sendable {
         @Shared
         var document: Document
 
-        var favorite: FavoriteDocument
+        var favorite: OfflineDocument
 
         // The document list's row, scoped in only for what a swipe can do. Its own tap and its
         // delegates are not wired: this list opens rows its own way, and the one delegate that has
@@ -27,14 +27,14 @@ public struct FavoriteRowReducer: Sendable {
 
         let server: Server
 
-        public init(document: Shared<Document>, favorite: FavoriteDocument, server: Server) {
+        public init(document: Shared<Document>, favorite: OfflineDocument, server: Server) {
             self._document = document
             self.favorite = favorite
             self.row = DocumentRowReducer.State(document: document, server: server)
             self.server = server
         }
 
-        public init(favorite: FavoriteDocument, server: Server) {
+        public init(favorite: OfflineDocument, server: Server) {
             self.init(
                 document: Shared(value: favorite.document),
                 favorite: favorite,
@@ -50,7 +50,7 @@ public struct FavoriteRowReducer: Sendable {
 
         @CasePathable
         public enum Delegate {
-            case open(FavoriteDocument)
+            case open(OfflineDocument)
         }
 
         public enum View {
@@ -87,8 +87,8 @@ public struct FavoriteRowReducer: Sendable {
                 let id = state.id
                 let server = state.server
                 return .run { _ in
-                    @Dependency(\.removeFavorite.execute) var removeFavorite
-                    try await removeFavorite(id, server)
+                    @Dependency(\.removeOfflineDocument.execute) var removeOfflineDocument
+                    try await removeOfflineDocument(id, server)
                 }
             }
         }

@@ -152,7 +152,7 @@ struct ServerDetailViewTests {
         @Shared(.users(server)) var users: IdentifiedArrayOf<User>
         $users.withLock { $0 = [.testValue()] }
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument>
+        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument>
         $favorites.withLock { $0 = [.testValue()] }
 
         // hasToken: true renders the auth mode row as "token" rather than the "Unknown" every
@@ -272,7 +272,7 @@ struct ServerDetailViewTests {
         @Shared(.tags(server)) var tags: IdentifiedArrayOf<ApiInterface.Tag>
         $tags.withLock { $0 = [.testValue()] }
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument>
+        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument>
         $favorites.withLock { $0 = [.testValue()] }
 
         // Users and groups stay empty on purpose - the restriction under test. updateCache swallows

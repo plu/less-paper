@@ -71,7 +71,7 @@ public struct DocumentRowReducer: Sendable {
         var downloadedURL: URL?
 
         @SharedReader
-        var favorites: IdentifiedArrayOf<FavoriteDocument>
+        var favorites: IdentifiedArrayOf<OfflineDocument>
 
         var isBusy: Bool {
             isDownloading || isTogglingFavorite || isUpdating
@@ -148,7 +148,7 @@ public struct DocumentRowReducer: Sendable {
             self.destination = destination
             self._document = document
             self.downloadedURL = downloadedURL
-            self._favorites = SharedReader(wrappedValue: [], .favorites(server))
+            self._favorites = SharedReader(wrappedValue: [], .offlineDocuments(server))
             self._inboxTagIds = SharedReader(wrappedValue: [], .inboxTags(server))
             self.isDownloading = isDownloading
             self.isTogglingFavorite = isTogglingFavorite

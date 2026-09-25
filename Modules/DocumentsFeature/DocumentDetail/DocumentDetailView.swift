@@ -52,7 +52,7 @@ public struct DocumentDetailView: View {
                 // the label changes with state, so ordering it by its initial would move it under
                 // the user's thumb as they used it.
                 //
-                // Saving a favorite means SaveFavoriteUseCase's own reads run too, and on a
+                // Saving a favorite means SaveOfflineDocumentUseCase's own reads run too, and on a
                 // snapshot those are pinned to the record already on disk, not to this document —
                 // adding one from here would only fail. Unfavoriting stays offered: removal
                 // touches none of those reads.

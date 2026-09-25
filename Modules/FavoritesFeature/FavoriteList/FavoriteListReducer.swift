@@ -22,18 +22,18 @@ public struct FavoriteListReducer: Sendable {
             EmptyReducer()
                 .ifCaseLet(\.documentDetail, action: \.documentDetail) {
                     DocumentDetailReducer()
-                        .dependency(\.downloadDocument, .favoritesStore)
-                        .dependency(\.getDocument, .favoritesStore)
-                        .dependency(\.getDocumentMetadata, .favoritesStore)
-                        .dependency(\.getDocumentsByIds, .favoritesStore)
-                        .dependency(\.getNotes, .favoritesStore)
+                        .dependency(\.downloadDocument, .offlineStore)
+                        .dependency(\.getDocument, .offlineStore)
+                        .dependency(\.getDocumentMetadata, .offlineStore)
+                        .dependency(\.getDocumentsByIds, .offlineStore)
+                        .dependency(\.getNotes, .offlineStore)
                 }
         }
     }
 
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
-        case favoritesChanged(IdentifiedArrayOf<FavoriteDocument>)
+        case favoritesChanged(IdentifiedArrayOf<OfflineDocument>)
         case path(StackActionOf<Path>)
         case refreshResult(Result<FavoriteRefreshResult, Error>)
         case rows(IdentifiedActionOf<FavoriteRowReducer>)
@@ -61,7 +61,7 @@ public struct FavoriteListReducer: Sendable {
         let server: Server
 
         @Shared
-        var favorites: IdentifiedArrayOf<FavoriteDocument>
+        var favorites: IdentifiedArrayOf<OfflineDocument>
 
         // The `.inMemory` cache the documents and inbox lists project their rows out of. Read-side
         // only here: a favorite carries its own copy of the document, so without this the list
@@ -72,12 +72,12 @@ public struct FavoriteListReducer: Sendable {
 
         public init(server: Server) {
             self.server = server
-            self._favorites = Shared(wrappedValue: [], .favorites(server))
+            self._favorites = Shared(wrappedValue: [], .offlineDocuments(server))
             self._documentCache = Shared(wrappedValue: [], .documents(server))
             rebuildRows()
         }
 
-        var visibleFavorites: IdentifiedArrayOf<FavoriteDocument> {
+        var visibleFavorites: IdentifiedArrayOf<OfflineDocument> {
             guard !searchText.isEmpty else {
                 return favorites
             }
@@ -124,13 +124,13 @@ public struct FavoriteListReducer: Sendable {
             }
         }
 
-        private func displayed(_ favorite: FavoriteDocument) -> Document {
+        private func displayed(_ favorite: OfflineDocument) -> Document {
             documentCache[id: favorite.id] ?? favorite.document
         }
 
         // The live copy when the cache has one, the stored snapshot otherwise. A cold launch and an
         // offline session get the snapshot, which is exactly when it is the only truth available.
-        private func reference(to favorite: FavoriteDocument) -> Shared<Document> {
+        private func reference(to favorite: OfflineDocument) -> Shared<Document> {
             Shared($documentCache[id: favorite.id]) ?? Shared(value: favorite.document)
         }
     }

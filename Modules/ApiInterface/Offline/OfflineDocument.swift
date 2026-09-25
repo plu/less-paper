@@ -1,7 +1,7 @@
 import Foundation
 import Tagged
 
-public struct FavoriteDocument: Codable, Equatable, Hashable, Identifiable, Sendable {
+public struct OfflineDocument: Codable, Equatable, Hashable, Identifiable, Sendable {
 
     public var id: Document.Id { document.id }
 
@@ -18,7 +18,7 @@ public struct FavoriteDocument: Codable, Equatable, Hashable, Identifiable, Send
     // The `document.modified` the notes, metadata and PDF were last successfully fetched at, which
     // is not the same as `document.modified`: a refresh stores the server's document even when the
     // download that follows fails. Gating the next refresh on the document's own `modified` would
-    // then find them equal and never retry, leaving the favorite stale for good.
+    // then find them equal and never retry, leaving the offline document stale for good.
     public let syncedModified: Date
 
     // Set by a refresh whose id__in response did not include this document. Mutable because it is
@@ -44,7 +44,7 @@ public struct FavoriteDocument: Codable, Equatable, Hashable, Identifiable, Send
     }
 }
 
-public extension FavoriteDocument {
+public extension OfflineDocument {
 
     static func testValue(
         document: Document = .testValue(),

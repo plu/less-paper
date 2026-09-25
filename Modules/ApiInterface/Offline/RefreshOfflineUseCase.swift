@@ -2,7 +2,7 @@ import Dependencies
 import DependenciesMacros
 import Foundation
 
-public struct FavoriteRefreshResult: Equatable, Sendable {
+public struct OfflineRefreshResult: Equatable, Sendable {
 
     public let failed: Int
 
@@ -18,17 +18,17 @@ public struct FavoriteRefreshResult: Equatable, Sendable {
 }
 
 @DependencyClient
-public struct RefreshFavoritesUseCase: Sendable {
+public struct RefreshOfflineUseCase: Sendable {
 
     // `force` is what separates pull-to-refresh from Settings' "Redownload all": the same walk,
-    // with phase two run for every favorite instead of only the changed ones.
+    // with phase two run for every offline document instead of only the changed ones.
     public var execute: @Sendable (
         _ force: Bool,
         _ server: Server
-    ) async throws -> FavoriteRefreshResult
+    ) async throws -> OfflineRefreshResult
 }
 
-extension RefreshFavoritesUseCase: TestDependencyKey {
+extension RefreshOfflineUseCase: TestDependencyKey {
 
     public static let previewValue = Self(execute: { _, _ in .init() })
 
@@ -37,9 +37,9 @@ extension RefreshFavoritesUseCase: TestDependencyKey {
 
 public extension DependencyValues {
 
-    var refreshFavorites: RefreshFavoritesUseCase {
-        get { self[RefreshFavoritesUseCase.self] }
-        set { self[RefreshFavoritesUseCase.self] = newValue }
+    var refreshOffline: RefreshOfflineUseCase {
+        get { self[RefreshOfflineUseCase.self] }
+        set { self[RefreshOfflineUseCase.self] = newValue }
     }
 }
 
@@ -47,6 +47,6 @@ public extension DependencyValues {
 // launch and foreground refreshes in AppFeature walk the same records and write the same PDF paths,
 // so two of them at once means downloading everything twice. It lives beside the use case because
 // both modules already depend on it and neither can see the other's cancel ids.
-public enum RefreshFavoritesCancelID: Sendable {
+public enum RefreshOfflineCancelID: Sendable {
     case refresh
 }

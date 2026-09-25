@@ -63,16 +63,16 @@ public struct FavoriteSettingsReducer: Sendable {
             case .removeConfirmed:
                 state.isWorking = true
                 return .run { [server = state.server] send in
-                    // The records go first, as in RemoveFavoriteUseCase. Deleting the files first
+                    // The records go first, as in RemoveOfflineDocumentUseCase. Deleting the files first
                     // leaves a window in which a refresh's save, already past its download, still
                     // sees its record, writes its PDF and recreates the directory being cleared.
                     // Dropping the records first means that save fails its own membership check and
                     // cleans up after itself instead.
-                    @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+                    @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
                     $favorites.withLock { $0.removeAll() }
 
                     do {
-                        try await favoritesStore.deleteAll(server)
+                        try await offlineStore.deleteAll(server)
                     } catch {
                         await send(.removeFailed(error))
                         return
@@ -110,7 +110,7 @@ public struct FavoriteSettingsReducer: Sendable {
                 // pull-to-refresh: this is a long user-initiated redownload of everything, and a
                 // foreground refresh arriving mid-run must not be allowed to kill it.
                 return .run { [server = state.server] send in
-                    await send(.refreshResult(.success(try await refreshFavorites(true, server))))
+                    await send(.refreshResult(.success(try await refreshOffline(true, server))))
                 } catch: { error, send in
                     await send(.refreshResult(.failure(error)))
                 }
@@ -133,15 +133,15 @@ public struct FavoriteSettingsReducer: Sendable {
     @Dependency(\.deleteConfirmation.present)
     private var presentConfirmation
 
-    @Dependency(\.favoritesStore)
-    private var favoritesStore
+    @Dependency(\.offlineStore)
+    private var offlineStore
 
-    @Dependency(\.refreshFavorites.execute)
-    private var refreshFavorites
+    @Dependency(\.refreshOffline.execute)
+    private var refreshOffline
 
     private func loadTotalByteCount(server: Server) -> Effect<Action> {
         .run { send in
-            await send(.totalByteCountLoaded(favoritesStore.totalByteCount(server)))
+            await send(.totalByteCountLoaded(offlineStore.totalByteCount(server)))
         }
     }
 }

@@ -63,13 +63,13 @@ extension Effect where Action == DocumentRowReducer.Action {
     ) -> Self {
         .run { send in
             if isFavorited {
-                @Dependency(\.removeFavorite.execute)
-                var removeFavorite
-                try await removeFavorite(document.id, server)
+                @Dependency(\.removeOfflineDocument.execute)
+                var removeOfflineDocument
+                try await removeOfflineDocument(document.id, server)
             } else {
-                @Dependency(\.saveFavorite.execute)
-                var saveFavorite
-                try await saveFavorite(document, server, .add)
+                @Dependency(\.saveOfflineDocument.execute)
+                var saveOfflineDocument
+                try await saveOfflineDocument(document, server, .add)
             }
             await send(.favoriteToggleSucceeded)
         } catch: { error, send in

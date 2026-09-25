@@ -6,8 +6,8 @@ import SwiftSharing
 extension Effect where Action == FavoriteListReducer.Action {
 
     static func runFavoritesObserver(server: Server) -> Self {
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument>
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument>
 
         return .publisher {
             $favorites
@@ -23,11 +23,11 @@ extension Effect where Action == FavoriteListReducer.Action {
     }
 
     static func runRefreshFavorites(server: Server) -> Self {
-        @Dependency(\.refreshFavorites.execute)
-        var refreshFavorites
+        @Dependency(\.refreshOffline.execute)
+        var refreshOffline
 
         return .run { send in
-            await send(.refreshResult(.success(try await refreshFavorites(false, server))))
+            await send(.refreshResult(.success(try await refreshOffline(false, server))))
         } catch: { error, send in
             await send(.refreshResult(.failure(error)))
         }

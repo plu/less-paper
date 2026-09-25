@@ -4,18 +4,18 @@ import Foundation
 import Testing
 
 @Suite
-struct FavoritesStoreTests {
+struct OfflineStoreTests {
 
     // A server per test, so the directories cannot collide. swift-testing runs a suite's tests in
     // parallel, and the byte-count test asserts an exact total over its whole directory — sharing
     // one server would make it flake whenever a sibling's file happened to exist.
     private static func server(_ name: String) -> Server {
-        .testValue(id: "favorites-store-tests-\(name)")
+        .testValue(id: "offline-store-tests-\(name)")
     }
 
     @Test
     func test_writeThenReadThenDelete() async throws {
-        let store = FavoritesStore.liveValue
+        let store = OfflineStore.liveValue
         let server = Self.server("write-read-delete")
         let data = Data("%PDF-1.4 hello".utf8)
 
@@ -33,7 +33,7 @@ struct FavoritesStoreTests {
     // re-downloads into the same path.
     @Test
     func test_writeReplacesAnExistingFile() async throws {
-        let store = FavoritesStore.liveValue
+        let store = OfflineStore.liveValue
         let server = Self.server("write-replaces")
 
         _ = try await store.writePDF(Data(repeating: 0, count: 100), 43, server)
@@ -47,7 +47,7 @@ struct FavoritesStoreTests {
 
     @Test
     func test_totalByteCountSumsTheFilesAndDeleteAllClearsThem() async throws {
-        let store = FavoritesStore.liveValue
+        let store = OfflineStore.liveValue
         let server = Self.server("total-bytes")
 
         _ = try await store.writePDF(Data(repeating: 0, count: 300), 44, server)

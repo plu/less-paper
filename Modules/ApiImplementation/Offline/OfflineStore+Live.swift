@@ -2,7 +2,7 @@ import ApiInterface
 import Dependencies
 import Foundation
 
-extension FavoritesStore: @retroactive DependencyKey {
+extension OfflineStore: @retroactive DependencyKey {
 
     public static let liveValue = Self(
         deleteAll: { server in
@@ -42,13 +42,13 @@ extension FavoritesStore: @retroactive DependencyKey {
 
     private static func directory(_ server: Server) -> URL {
         URL.applicationGroupDirectory
-            .appending(component: "Favorites")
+            .appending(component: "Offline")
             .appending(component: "\(server.id)")
     }
 
     // Already gone is the outcome the caller wanted, so it is not an error. Anything else —
     // permissions, a busy volume — is, and must not be swallowed: a `try?` here would report a
-    // favorite as removed while its bytes stayed on disk.
+    // offline document as removed while its bytes stayed on disk.
     private static func removeIfPresent(_ url: URL) throws {
         do {
             try FileManager.default.removeItem(at: url)

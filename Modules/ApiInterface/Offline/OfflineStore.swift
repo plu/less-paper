@@ -3,7 +3,7 @@ import DependenciesMacros
 import Foundation
 
 @DependencyClient
-public struct FavoritesStore: Sendable {
+public struct OfflineStore: Sendable {
 
     public var deleteAll: @Sendable (_ server: Server) async throws -> Void
 
@@ -18,7 +18,7 @@ public struct FavoritesStore: Sendable {
     public var writePDF: @Sendable (_ data: Data, _ id: Document.Id, _ server: Server) async throws -> Int
 }
 
-extension FavoritesStore: TestDependencyKey {
+extension OfflineStore: TestDependencyKey {
 
     public static let previewValue = Self()
 
@@ -27,8 +27,8 @@ extension FavoritesStore: TestDependencyKey {
 
 public extension DependencyValues {
 
-    var favoritesStore: FavoritesStore {
-        get { self[FavoritesStore.self] }
-        set { self[FavoritesStore.self] = newValue }
+    var offlineStore: OfflineStore {
+        get { self[OfflineStore.self] }
+        set { self[OfflineStore.self] = newValue }
     }
 }

@@ -65,7 +65,7 @@ struct ServerListReducerTests {
         let store = TestStore(initialState: ServerListReducer.State()) {
             ServerListReducer()
         } withDependencies: {
-            $0.favoritesStore.deleteAll = { _ in }
+            $0.offlineStore.deleteAll = { _ in }
         }
 
         #expect(store.state.servers == [.testValue(server: server)])
@@ -87,15 +87,15 @@ struct ServerListReducerTests {
         @Shared(.servers)
         var servers: IdentifiedArrayOf<Server> = [server]
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1))
         ]
 
         let store = TestStore(initialState: ServerListReducer.State()) {
             ServerListReducer()
         } withDependencies: {
-            $0.favoritesStore.deleteAll = { deleted.setValue($0) }
+            $0.offlineStore.deleteAll = { deleted.setValue($0) }
         }
 
         await store.send(.servers(.element(id: server.id, action: .delegate(.deleteServer)))) {

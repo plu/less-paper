@@ -16,8 +16,8 @@ struct FavoriteListReducerTests {
     func test_searchFiltersOnTitle() async {
         let server = Server.testValue(id: "search-filters-on-title")
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(content: nil, id: 1, title: "Invoice")),
             .testValue(document: .testValue(content: nil, id: 2, title: "Warranty")),
         ]
@@ -41,15 +41,15 @@ struct FavoriteListReducerTests {
         let server = Server.testValue(id: "refresh-reports-its-result")
         let toasts = LockIsolated([Toast]())
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1))
         ]
 
         let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
             FavoriteListReducer()
         } withDependencies: {
-            $0.refreshFavorites.execute = { _, _ in FavoriteRefreshResult(updated: 1) }
+            $0.refreshOffline.execute = { _, _ in FavoriteRefreshResult(updated: 1) }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 
@@ -65,15 +65,15 @@ struct FavoriteListReducerTests {
         let server = Server.testValue(id: "refresh-reports-failures")
         let toasts = LockIsolated([Toast]())
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1))
         ]
 
         let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
             FavoriteListReducer()
         } withDependencies: {
-            $0.refreshFavorites.execute = { _, _ in
+            $0.refreshOffline.execute = { _, _ in
                 FavoriteRefreshResult(failed: 2, unavailable: 1, updated: 3)
             }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
@@ -94,7 +94,7 @@ struct FavoriteListReducerTests {
         let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
             FavoriteListReducer()
         } withDependencies: {
-            $0.refreshFavorites.execute = { _, _ in FavoriteRefreshResult() }
+            $0.refreshOffline.execute = { _, _ in FavoriteRefreshResult() }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 
@@ -109,8 +109,8 @@ struct FavoriteListReducerTests {
     func test_aRowShowsTheLiveDocumentWhenTheCacheHasOne() async {
         let server = Server.testValue(id: "row-shows-the-live-document")
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1, title: "Stored"))
         ]
         @Shared(.documents(server))
@@ -129,8 +129,8 @@ struct FavoriteListReducerTests {
     func test_aRowFallsBackToTheStoredDocumentWhenTheCacheHasNone() async {
         let server = Server.testValue(id: "row-falls-back-to-the-stored-document")
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1, title: "Stored"))
         ]
 
@@ -148,8 +148,8 @@ struct FavoriteListReducerTests {
     func test_aFavoritesChangeRebuildsTheRows() async {
         let server = Server.testValue(id: "favorites-change-rebuilds-the-rows")
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1)),
             .testValue(document: .testValue(id: 2)),
         ]
@@ -174,15 +174,15 @@ struct FavoriteListReducerTests {
     func test_unfavoritingFromTheDetailPopsBackToTheList() async throws {
         let server = Server.testValue(id: "unfavorite-from-the-detail")
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1))
         ]
 
         let store = TestStore(initialState: FavoriteListReducer.State(server: server)) {
             FavoriteListReducer()
         } withDependencies: {
-            $0.removeFavorite.execute = { [shared = $favorites] id, _ in
+            $0.removeOfflineDocument.execute = { [shared = $favorites] id, _ in
                 shared.withLock { _ = $0.remove(id: id) }
             }
         }
@@ -208,8 +208,8 @@ struct FavoriteListReducerTests {
     func test_aFavoriteRemovedElsewherePopsTheDetail() async throws {
         let server = Server.testValue(id: "favorite-removed-elsewhere")
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1))
         ]
 
@@ -263,8 +263,8 @@ struct FavoriteListReducerTests {
             id: 7
         )
 
-        @Shared(.favorites(server))
-        var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server))
+        var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: document, metadata: .testValue(), notes: [note]),
             .testValue(document: .testValue(id: 8, title: "Linked")),
         ]
@@ -276,7 +276,7 @@ struct FavoriteListReducerTests {
                 networkCalls.withValue { $0 += 1 }
                 return Data()
             }
-            $0.favoritesStore.pdfURL = { _, _ in pdfURL }
+            $0.offlineStore.pdfURL = { _, _ in pdfURL }
             $0.getDocument.execute = { _, _ in
                 networkCalls.withValue { $0 += 1 }
                 return .testValue()

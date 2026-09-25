@@ -12,14 +12,14 @@ struct FavoriteRowReducerTests {
     @Test
     func test_unfavoriteRemovesTheFavorite() async {
         let removed = LockIsolated<Document.Id?>(nil)
-        let favorite = FavoriteDocument.testValue(document: .testValue(id: 7))
+        let favorite = OfflineDocument.testValue(document: .testValue(id: 7))
 
         let store = TestStore(
             initialState: FavoriteRowReducer.State(favorite: favorite, server: .testValue())
         ) {
             FavoriteRowReducer()
         } withDependencies: {
-            $0.removeFavorite.execute = { id, _ in removed.setValue(id) }
+            $0.removeOfflineDocument.execute = { id, _ in removed.setValue(id) }
         }
 
         await store.send(.view(.unfavoriteButtonTapped))
@@ -29,7 +29,7 @@ struct FavoriteRowReducerTests {
 
     @Test
     func test_tappingTheRowAsksToOpenIt() async {
-        let favorite = FavoriteDocument.testValue(document: .testValue(id: 7))
+        let favorite = OfflineDocument.testValue(document: .testValue(id: 7))
 
         let store = TestStore(
             initialState: FavoriteRowReducer.State(favorite: favorite, server: .testValue())

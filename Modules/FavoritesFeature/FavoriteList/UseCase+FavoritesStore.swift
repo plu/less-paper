@@ -12,15 +12,15 @@ import Foundation
 
 extension DownloadDocumentUseCase {
 
-    static var favoritesStore: Self {
+    static var offlineStore: Self {
         Self(execute: { id, server in
-            @Dependency(\.favoritesStore.pdfURL) var pdfURL
+            @Dependency(\.offlineStore.pdfURL) var pdfURL
 
-            @Shared(.favorites(server))
-            var favorites: IdentifiedArrayOf<FavoriteDocument>
+            @Shared(.offlineDocuments(server))
+            var favorites: IdentifiedArrayOf<OfflineDocument>
 
             guard favorites[id: id] != nil else {
-                throw FavoritesStoreError.notStored
+                throw OfflineStoreError.notStored
             }
             return try Data(contentsOf: pdfURL(id, server))
         })
@@ -29,16 +29,16 @@ extension DownloadDocumentUseCase {
 
 extension GetDocumentUseCase {
 
-    // Safe to answer with the stored copy only because `SaveFavoriteUseCase` fetches this endpoint
+    // Safe to answer with the stored copy only because `SaveOfflineDocumentUseCase` fetches this endpoint
     // rather than keeping the list document it was handed: the list copy's `content` is truncated,
     // and serving that here would show a preview of the text as if it were all of it.
-    static var favoritesStore: Self {
+    static var offlineStore: Self {
         Self(execute: { id, server in
-            @Shared(.favorites(server))
-            var favorites: IdentifiedArrayOf<FavoriteDocument>
+            @Shared(.offlineDocuments(server))
+            var favorites: IdentifiedArrayOf<OfflineDocument>
 
             guard let document = favorites[id: id]?.document else {
-                throw FavoritesStoreError.notStored
+                throw OfflineStoreError.notStored
             }
             return document
         })
@@ -49,10 +49,10 @@ extension GetDocumentsByIdsUseCase {
 
     // Whichever of the requested ids are themselves favorites. A linked document that was never
     // favorited cannot resolve offline; showing the ones that are beats failing the whole section.
-    static var favoritesStore: Self {
+    static var offlineStore: Self {
         Self(execute: { input, server in
-            @Shared(.favorites(server))
-            var favorites: IdentifiedArrayOf<FavoriteDocument>
+            @Shared(.offlineDocuments(server))
+            var favorites: IdentifiedArrayOf<OfflineDocument>
 
             return input.ids.compactMap { favorites[id: $0]?.document }
         })
@@ -61,13 +61,13 @@ extension GetDocumentsByIdsUseCase {
 
 extension GetDocumentMetadataUseCase {
 
-    static var favoritesStore: Self {
+    static var offlineStore: Self {
         Self(execute: { id, server in
-            @Shared(.favorites(server))
-            var favorites: IdentifiedArrayOf<FavoriteDocument>
+            @Shared(.offlineDocuments(server))
+            var favorites: IdentifiedArrayOf<OfflineDocument>
 
             guard let metadata = favorites[id: id]?.metadata else {
-                throw FavoritesStoreError.notStored
+                throw OfflineStoreError.notStored
             }
             return metadata
         })
@@ -79,21 +79,21 @@ extension GetNotesUseCase {
     // An empty array is the right answer for a document with no notes and for one that is not
     // stored alike: notes are part of the record, so anything the record does not carry is nothing
     // to show rather than an error to report.
-    static var favoritesStore: Self {
+    static var offlineStore: Self {
         Self(execute: { id, server in
-            @Shared(.favorites(server))
-            var favorites: IdentifiedArrayOf<FavoriteDocument>
+            @Shared(.offlineDocuments(server))
+            var favorites: IdentifiedArrayOf<OfflineDocument>
 
             return favorites[id: id]?.notes ?? []
         })
     }
 }
 
-enum FavoritesStoreError: Error, Equatable {
+enum OfflineStoreError: Error, Equatable {
     case notStored
 }
 
-extension FavoritesStoreError: LocalizedError {
+extension OfflineStoreError: LocalizedError {
 
     var errorDescription: String? {
         switch self {

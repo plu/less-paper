@@ -110,7 +110,7 @@ struct DocumentDetailReducerTests {
         let server = Server.testValue()
         let saved = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
 
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue(
             document: .testValue(id: 7),
@@ -118,7 +118,7 @@ struct DocumentDetailReducerTests {
         )) {
             DocumentDetailReducer()
         } withDependencies: {
-            $0.saveFavorite.execute = { document, _, mode in
+            $0.saveOfflineDocument.execute = { document, _, mode in
                 #expect(mode == .add)
                 saved.setValue(document.id)
             }
@@ -139,7 +139,7 @@ struct DocumentDetailReducerTests {
         let server = Server.testValue()
         let removed = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = [
+        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
@@ -149,7 +149,7 @@ struct DocumentDetailReducerTests {
         )) {
             DocumentDetailReducer()
         } withDependencies: {
-            $0.removeFavorite.execute = { id, _ in removed.setValue(id) }
+            $0.removeOfflineDocument.execute = { id, _ in removed.setValue(id) }
         }
 
         await store.send(.view(.favoriteButtonTapped)) {
@@ -166,7 +166,7 @@ struct DocumentDetailReducerTests {
     func test_view_favoriteButtonTapped_toastsOnFailure() async throws {
         let server = Server.testValue()
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
         let toasts = LockIsolated<[Toast]>([])
 
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue(
@@ -175,7 +175,7 @@ struct DocumentDetailReducerTests {
         )) {
             DocumentDetailReducer()
         } withDependencies: {
-            $0.saveFavorite.execute = { _, _, _ in throw ApiError.testValue() }
+            $0.saveOfflineDocument.execute = { _, _, _ in throw ApiError.testValue() }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 
@@ -189,7 +189,7 @@ struct DocumentDetailReducerTests {
         #expect(toasts.value == [.error("Something went wrong")])
     }
 
-    // A snapshot without network cannot honor an add: SaveFavoriteUseCase's own reads would run
+    // A snapshot without network cannot honor an add: SaveOfflineDocumentUseCase's own reads would run
     // through the same overridden dependencies as everything else on this screen, and there is
     // nothing behind them for a document that was never saved as this one. The view hides the
     // button for this case; this is the reducer holding the same line if something taps anyway.
@@ -197,7 +197,7 @@ struct DocumentDetailReducerTests {
     func test_view_favoriteButtonTapped_doesNothingWhenOfflineSnapshotAndNotFavorited() async throws {
         let server = Server.testValue()
 
-        @Shared(.favorites(server)) var favorites: IdentifiedArrayOf<FavoriteDocument> = []
+        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
 
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue(
             document: .testValue(id: 7),
