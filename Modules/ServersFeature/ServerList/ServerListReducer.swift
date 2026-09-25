@@ -76,7 +76,7 @@ public struct ServerListReducer: Sendable {
                     let server = state.servers[id: id]?.server
                     state.servers.remove(id: id)
                     state.sync()
-                    return .runDeleteFavorites(server: server)
+                    return .runDeleteOfflineDocuments(server: server)
                 case .editServer:
                     return .runGetCredentials(
                         server: state.servers[id: id]?.server

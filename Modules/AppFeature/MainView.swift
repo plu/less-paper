@@ -28,10 +28,10 @@ struct MainView: View {
             .tag(AppTab.documents)
 
             OfflineListView(
-                store: store.scope(state: \.favoriteList, action: \.favoriteList)
+                store: store.scope(state: \.offlineList, action: \.offlineList)
             )
-            .tabItem { Label(.favorites, systemImage: "heart.fill") }
-            .tag(AppTab.favorites)
+            .tabItem { Label(.offline, systemImage: "arrow.down.circle.fill") }
+            .tag(AppTab.offline)
 
             SettingListView(
                 store: store.scope(

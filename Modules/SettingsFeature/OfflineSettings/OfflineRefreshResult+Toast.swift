@@ -10,14 +10,14 @@ extension OfflineRefreshResult {
     // in AppFeature deliberately reports none of this.
     var toast: Toast {
         if failed > 0 {
-            return .error(String(localized: .favoritesRefreshFailed(failed)))
+            return .error(String(localized: .offlineRefreshFailed(failed)))
         }
         if unavailable > 0 {
-            return .error(String(localized: .favoritesRefreshUnavailable(unavailable)))
+            return .error(String(localized: .offlineRefreshUnavailable(unavailable)))
         }
         if updated > 0 {
-            return .success(String(localized: .favoritesRefreshUpdated(updated)))
+            return .success(String(localized: .offlineRefreshUpdated(updated)))
         }
-        return .success(String(localized: .favoritesUpToDate))
+        return .success(String(localized: .offlineUpToDate))
     }
 }

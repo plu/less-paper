@@ -46,7 +46,7 @@ public struct SettingListReducer {
         #endif
         case diagnosticsList(DiagnosticsListReducer)
         case documentTypeList(DocumentTypeListReducer)
-        case favoriteSettings(FavoriteSettingsReducer)
+        case offlineSettings(OfflineSettingsReducer)
         case licenseList(LicenseListReducer)
         case pdfPasswordList(PdfPasswordListReducer)
         case savedViewList(SavedViewListReducer)

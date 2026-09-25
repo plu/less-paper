@@ -12,7 +12,7 @@ import TestSupport
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
-struct FavoriteSettingsViewTests {
+struct OfflineSettingsViewTests {
 
     @Test
     func testSnapshot_populated() async throws {
@@ -50,14 +50,14 @@ struct FavoriteSettingsViewTests {
     // may not land before the image is taken, cannot change what is rendered.
     private func view(isWorking: Bool = false, totalByteCount: Int) -> some View {
         NavigationStack {
-            FavoriteSettingsView(
+            OfflineSettingsView(
                 store: Store(
-                    initialState: FavoriteSettingsReducer.State(
+                    initialState: OfflineSettingsReducer.State(
                         server: .testValue(),
                         isWorking: isWorking,
                         totalByteCount: totalByteCount
                     ),
-                    reducer: { FavoriteSettingsReducer() },
+                    reducer: { OfflineSettingsReducer() },
                     withDependencies: {
                         $0.offlineStore.totalByteCount = { _ in totalByteCount }
                     }

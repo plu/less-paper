@@ -69,163 +69,6 @@
         }
       }
     },
-    "favorites": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favoriten"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favorites"
-          }
-        }
-      }
-    },
-    "favoritesRefreshFailed": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Ein Favorit konnte nicht aktualisiert werden."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld Favoriten konnten nicht aktualisiert werden."
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "One favorite could not be refreshed."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld favorites could not be refreshed."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "favoritesRefreshUnavailable": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Ein Favorit ist nicht mehr auf dem Server."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld Favoriten sind nicht mehr auf dem Server."
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "One favorite is no longer on the server."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld favorites are no longer on the server."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "favoritesRefreshUpdated": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Ein Favorit aktualisiert."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld Favoriten aktualisiert."
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "One favorite updated."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld favorites updated."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "favoritesUpToDate": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favoriten sind aktuell."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favorites are up to date."
-          }
-        }
-      }
-    },
     "github": {
       "extractionState": "manual",
       "localizations": {
@@ -273,6 +116,163 @@
           "stringUnit": {
             "state": "translated",
             "value": "Licenses"
+          }
+        }
+      }
+    },
+    "offline": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
+          }
+        }
+      }
+    },
+    "offlineRefreshFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ein Dokument konnte nicht aktualisiert werden."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Dokumente konnten nicht aktualisiert werden."
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "One document could not be refreshed."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld documents could not be refreshed."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "offlineRefreshUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ein Dokument ist nicht mehr auf dem Server."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Dokumente sind nicht mehr auf dem Server."
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "One document is no longer on the server."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld documents are no longer on the server."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "offlineRefreshUpdated": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Ein Dokument aktualisiert."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld Dokumente aktualisiert."
+                }
+              }
+            }
+          }
+        },
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "One document updated."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld documents updated."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "offlineUpToDate": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline-Dokumente sind aktuell."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline documents are up to date."
           }
         }
       }
@@ -328,19 +328,19 @@
         }
       }
     },
-    "removeAllFavorites": {
+    "removeAllOfflineDocuments": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alle Favoriten entfernen"
+            "value": "Alle Offline-Dokumente entfernen"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remove all favorites"
+            "value": "Remove all offline documents"
           }
         }
       }
@@ -572,13 +572,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Bis zu zwei Aktionen. Eine volle Wischgeste führt die erste aus. In Favoriten steht das Entfernen des Favoriten immer an erster Stelle."
+            "value": "Bis zu zwei Aktionen. Eine volle Wischgeste führt die erste aus. In Offline steht das Entfernen immer an erster Stelle."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Up to two actions. A full swipe runs the first one. In Favorites, removing the favorite always comes first."
+            "value": "Up to two actions. A full swipe runs the first one. In Offline, removing the document always comes first."
           }
         }
       }

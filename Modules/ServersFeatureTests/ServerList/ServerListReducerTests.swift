@@ -80,15 +80,15 @@ struct ServerListReducerTests {
     }
 
     @Test
-    func test_deletingAServerDeletesItsFavorites() async throws {
-        let server = Server.testValue(id: "deleting-a-server-deletes-its-favorites")
+    func test_deletingAServerDeletesItsOfflineDocuments() async throws {
+        let server = Server.testValue(id: "deleting-a-server-deletes-its-offline-documents")
         let deleted = LockIsolated<Server?>(nil)
 
         @Shared(.servers)
         var servers: IdentifiedArrayOf<Server> = [server]
 
         @Shared(.offlineDocuments(server))
-        var favorites: IdentifiedArrayOf<OfflineDocument> = [
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 1))
         ]
 
@@ -105,7 +105,7 @@ struct ServerListReducerTests {
         await store.finish()
 
         #expect(deleted.value?.id == server.id)
-        #expect(favorites.isEmpty)
+        #expect(offlineDocuments.isEmpty)
     }
 
     @Test

@@ -341,23 +341,6 @@
         }
       }
     },
-    "favorites": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favoriten"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Favorites"
-          }
-        }
-      }
-    },
     "fileTypes": {
       "extractionState": "manual",
       "localizations": {
@@ -558,6 +541,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "No servers found"
+          }
+        }
+      }
+    },
+    "offline": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
           }
         }
       }

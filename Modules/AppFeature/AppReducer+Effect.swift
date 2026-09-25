@@ -35,7 +35,7 @@ extension Effect where Action == AppReducer.Action {
         }
     }
 
-    static func runRefreshFavorites(server: Server) -> Self {
+    static func runRefreshOffline(server: Server) -> Self {
         @Dependency(\.refreshOffline.execute) var refreshOffline
 
         // Silent by design: the user did not ask for this one, so neither success nor failure is

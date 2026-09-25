@@ -43,7 +43,7 @@ struct AppReducerTests {
     }
 
     @Test
-    func test_didBecomeActive_refreshesFavorites() async {
+    func test_didBecomeActive_refreshesOfflineDocuments() async {
         let refreshed = LockIsolated(false)
 
         let store = TestStore(initialState: AppReducer.State(main: .testValue())) {

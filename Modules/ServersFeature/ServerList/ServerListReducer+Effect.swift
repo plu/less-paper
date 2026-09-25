@@ -4,7 +4,7 @@ import Foundation
 import SwiftSharing
 
 extension Effect where Action == ServerListReducer.Action {
-    static func runDeleteFavorites(
+    static func runDeleteOfflineDocuments(
         server: Server?
     ) -> Self {
         guard let server else {
@@ -12,7 +12,7 @@ extension Effect where Action == ServerListReducer.Action {
         }
 
         @Dependency(\.offlineStore.deleteAll)
-        var deleteAllFavorites
+        var deleteAllOfflineDocuments
 
         return .run { _ in
             // The record and the file are two different stores by design; a deleted server must not
@@ -22,10 +22,10 @@ extension Effect where Action == ServerListReducer.Action {
             // window in which a refresh's save, already past its download, still sees its record,
             // writes its PDF and recreates the directory being cleared. Dropping the records first
             // means that save fails its own membership check and cleans up after itself instead.
-            @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
-            $favorites.withLock { $0.removeAll() }
+            @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
+            $offlineDocuments.withLock { $0.removeAll() }
 
-            try await deleteAllFavorites(server)
+            try await deleteAllOfflineDocuments(server)
         } catch: { _, _ in
         }
     }

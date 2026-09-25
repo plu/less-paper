@@ -3,8 +3,8 @@ import ComposableArchitecture
 import DesignTokens
 import SwiftUI
 
-@ViewAction(for: FavoriteSettingsReducer.self)
-public struct FavoriteSettingsView: View {
+@ViewAction(for: OfflineSettingsReducer.self)
+public struct OfflineSettingsView: View {
 
     public var body: some View {
         List {
@@ -42,7 +42,7 @@ public struct FavoriteSettingsView: View {
                 Button(role: .destructive) {
                     send(.removeAllButtonTapped)
                 } label: {
-                    Label(.removeAllFavorites, systemImage: "trash")
+                    Label(.removeAllOfflineDocuments, systemImage: "trash")
                 }
                 .disabled(store.isWorking)
                 .listRowBackground(Color.m3SurfaceContainer)
@@ -50,17 +50,17 @@ public struct FavoriteSettingsView: View {
         }
         .background(Color.m3SurfaceContainerLowest)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationTitle(.favorites)
+        .navigationTitle(.offline)
         .scrollContentBackground(.hidden)
         .task { await send(.onAppear).finish() }
     }
 
-    public init(store: StoreOf<FavoriteSettingsReducer>) {
+    public init(store: StoreOf<OfflineSettingsReducer>) {
         self.store = store
     }
 
     @Bindable
-    public var store: StoreOf<FavoriteSettingsReducer>
+    public var store: StoreOf<OfflineSettingsReducer>
 
     private var formattedByteCount: String {
         ByteCountFormatter.string(fromByteCount: Int64(store.totalByteCount), countStyle: .file)

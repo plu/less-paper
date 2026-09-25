@@ -6,7 +6,7 @@ import Foundation
 import SwiftSharing
 
 @Reducer
-public struct FavoriteSettingsReducer: Sendable {
+public struct OfflineSettingsReducer: Sendable {
 
     @ObservableState
     public struct State: Equatable {
@@ -68,8 +68,8 @@ public struct FavoriteSettingsReducer: Sendable {
                     // sees its record, writes its PDF and recreates the directory being cleared.
                     // Dropping the records first means that save fails its own membership check and
                     // cleans up after itself instead.
-                    @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
-                    $favorites.withLock { $0.removeAll() }
+                    @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
+                    $offlineDocuments.withLock { $0.removeAll() }
 
                     do {
                         try await offlineStore.deleteAll(server)
@@ -119,7 +119,7 @@ public struct FavoriteSettingsReducer: Sendable {
                 // `isWorking` is set by `removeConfirmed` rather than here, so declining the
                 // confirmation needs no action of its own to put the buttons back.
                 return .run { send in
-                    guard await presentConfirmation(.removeAllFavorites, String(localized: .favorites)) else {
+                    guard await presentConfirmation(.removeAllOfflineDocuments, String(localized: .offline)) else {
                         return
                     }
                     await send(.removeConfirmed)

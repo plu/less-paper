@@ -11,12 +11,12 @@ import TestSupport
 @Suite(
     .testDependencies()
 )
-struct FavoriteSettingsReducerTests {
+struct OfflineSettingsReducerTests {
 
     @Test
     func test_onAppearLoadsTheSizeOnDisk() async {
-        let store = TestStore(initialState: FavoriteSettingsReducer.State(server: .testValue())) {
-            FavoriteSettingsReducer()
+        let store = TestStore(initialState: OfflineSettingsReducer.State(server: .testValue())) {
+            OfflineSettingsReducer()
         } withDependencies: {
             $0.offlineStore.totalByteCount = { _ in 4096 }
         }
@@ -30,15 +30,15 @@ struct FavoriteSettingsReducerTests {
         let server = Server.testValue()
         let deleted = LockIsolated(false)
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
-        let store = TestStore(initialState: FavoriteSettingsReducer.State(
+        let store = TestStore(initialState: OfflineSettingsReducer.State(
             server: server,
             totalByteCount: 4096
         )) {
-            FavoriteSettingsReducer()
+            OfflineSettingsReducer()
         } withDependencies: {
             $0.deleteConfirmation.present = { _, _ in true }
             $0.offlineStore.deleteAll = { _ in deleted.setValue(true) }
@@ -52,7 +52,7 @@ struct FavoriteSettingsReducerTests {
         }
 
         #expect(deleted.value)
-        #expect($favorites.wrappedValue.isEmpty)
+        #expect($offlineDocuments.wrappedValue.isEmpty)
     }
 
     // Declining leaves both buttons live, which is why `isWorking` is set by `removeConfirmed`
@@ -62,12 +62,12 @@ struct FavoriteSettingsReducerTests {
         let server = Server.testValue(id: "declining-removes-nothing")
         let deleted = LockIsolated(false)
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
-        let store = TestStore(initialState: FavoriteSettingsReducer.State(server: server)) {
-            FavoriteSettingsReducer()
+        let store = TestStore(initialState: OfflineSettingsReducer.State(server: server)) {
+            OfflineSettingsReducer()
         } withDependencies: {
             $0.deleteConfirmation.present = { _, _ in false }
             $0.offlineStore.deleteAll = { _ in deleted.setValue(true) }
@@ -78,7 +78,7 @@ struct FavoriteSettingsReducerTests {
 
         #expect(!deleted.value)
         #expect(store.state.isWorking == false)
-        #expect($favorites.wrappedValue.count == 1)
+        #expect($offlineDocuments.wrappedValue.count == 1)
     }
 
     @Test
@@ -86,15 +86,15 @@ struct FavoriteSettingsReducerTests {
         let server = Server.testValue(id: "failed-remove")
         let toasts = LockIsolated([Toast]())
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
-        let store = TestStore(initialState: FavoriteSettingsReducer.State(
+        let store = TestStore(initialState: OfflineSettingsReducer.State(
             server: server,
             totalByteCount: 4096
         )) {
-            FavoriteSettingsReducer()
+            OfflineSettingsReducer()
         } withDependencies: {
             $0.deleteConfirmation.present = { _, _ in true }
             $0.offlineStore.deleteAll = { _ in throw TestError.someError }
@@ -110,7 +110,7 @@ struct FavoriteSettingsReducerTests {
 
         #expect(toasts.value == [.error("TestError.someError")])
         // The records go first, so a failure to delete the files still leaves none behind.
-        #expect($favorites.wrappedValue.isEmpty)
+        #expect($offlineDocuments.wrappedValue.isEmpty)
     }
 
     @Test
@@ -118,8 +118,8 @@ struct FavoriteSettingsReducerTests {
         let forced = LockIsolated<Bool?>(nil)
         let toasts = LockIsolated([Toast]())
 
-        let store = TestStore(initialState: FavoriteSettingsReducer.State(server: .testValue())) {
-            FavoriteSettingsReducer()
+        let store = TestStore(initialState: OfflineSettingsReducer.State(server: .testValue())) {
+            OfflineSettingsReducer()
         } withDependencies: {
             $0.offlineStore.totalByteCount = { _ in 8192 }
             $0.refreshOffline.execute = { force, _ in
@@ -136,15 +136,15 @@ struct FavoriteSettingsReducerTests {
         await store.finish()
 
         #expect(forced.value == true)
-        #expect(toasts.value == [.success("2 favorites updated.")])
+        #expect(toasts.value == [.success("2 documents updated.")])
     }
 
     @Test
     func test_aFailedRedownloadReports() async {
         let toasts = LockIsolated([Toast]())
 
-        let store = TestStore(initialState: FavoriteSettingsReducer.State(server: .testValue())) {
-            FavoriteSettingsReducer()
+        let store = TestStore(initialState: OfflineSettingsReducer.State(server: .testValue())) {
+            OfflineSettingsReducer()
         } withDependencies: {
             $0.refreshOffline.execute = { _, _ in throw TestError.someError }
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
