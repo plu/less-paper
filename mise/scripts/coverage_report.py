@@ -197,11 +197,18 @@ def file_rows(
 
 
 def render(modules: list[ModuleRow], files: list[FileRow]) -> str:
-    lines = [MARKER, "", "## Coverage", ""]
-
+    # Nothing measured and nothing carried forward: no report, rather than a report saying there is
+    # nothing to report. ci/coverage posts only a non-empty body, so a pull request in this state
+    # keeps no comment instead of gaining one that reads like a broken tool - and it is not even
+    # true that nothing has been tested *yet*, since selective testing will skip the next run too
+    # unless a fingerprint moves.
+    #
+    # A run that measured something, or that carried rows forward from an earlier push, still
+    # rewrites the comment: a table left standing from two pushes ago describes the wrong commit.
     if not modules:
-        lines += ["No modules have been tested for this pull request yet.", ""]
-        return "\n".join(lines)
+        return ""
+
+    lines = [MARKER, "", "## Coverage", ""]
 
     lines += ["| Module | Coverage | Lines |", "| --- | ---: | ---: |"]
     lines += [

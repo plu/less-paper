@@ -38,6 +38,15 @@ body="$(python3 "$MISE_PROJECT_ROOT/mise/scripts/coverage_report.py" \
   --changed-files "$changed" \
   --previous-report "$previous")"
 
+# An empty body means this run measured nothing and had nothing to carry forward. Posting then
+# would put a comment on the pull request whose only content is that there is no content, and
+# rewriting an existing one would be worse still - so neither happens, and whatever the pull
+# request already has stands. The script decides this; see the note on render().
+if [ -z "$body" ]; then
+  echo "Nothing measured and nothing carried forward - leaving the coverage comment alone."
+  exit 0
+fi
+
 if [ -n "$id" ]; then
   gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" -f "body=${body}" > /dev/null
 else

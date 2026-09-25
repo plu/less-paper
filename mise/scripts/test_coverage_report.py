@@ -269,13 +269,20 @@ class RenderTests(unittest.TestCase):
 
         self.assertNotIn("Files changed", body)
 
-    # Selective testing finding nothing to do is a pass, not a failure - but the comment still has
-    # to be rewritten, because a table left standing from two pushes ago describes the wrong commit.
-    def test_says_so_when_nothing_was_tested(self):
-        body = render([], [])
+    # Nothing measured and nothing carried forward: no report at all, rather than a report saying
+    # there is nothing to report. ci/coverage posts only a non-empty body, so a pull request in this
+    # state keeps no comment instead of gaining one that reads like a broken tool.
+    #
+    # A run that measured something, or that carried rows forward from an earlier push, still
+    # rewrites the comment - a table left standing from two pushes ago describes the wrong commit.
+    def test_renders_nothing_when_nothing_was_tested(self):
+        self.assertEqual(render([], []), "")
+
+    def test_still_renders_carried_rows_when_this_run_measured_nothing(self):
+        body = render(merge_modules({"Logging": ModuleRow("Logging", 228, 322)}, []), [])
 
         self.assertTrue(body.startswith(MARKER))
-        self.assertIn("No modules have been tested", body)
+        self.assertIn("Logging", body)
 
 
 class SplitCountsTests(unittest.TestCase):
