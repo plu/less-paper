@@ -52,6 +52,7 @@ public struct SettingListReducer {
         case savedViewList(SavedViewListReducer)
         case serverList(ServerListReducer)
         case storagePathList(StoragePathListReducer)
+        case swipeActionSettings(SwipeActionSettingsReducer)
         case tagList(TagListReducer)
         case tipList(TipListReducer)
         case trashList(TrashListReducer)
@@ -90,6 +91,21 @@ public struct SettingListReducer {
         var canViewTags: Bool { permissions.can(.viewTag) }
 
         var canViewTrash: Bool { permissions.can(.deleteDocument) }
+
+        // A section with a header and no rows reads as something that failed to load. These two are
+        // the only headed sections whose contents are all permission-gated, so they are the only
+        // ones that can empty out.
+        var canAddDocuments: Bool { canImport || canScan }
+
+        var canViewLibrary: Bool {
+            canViewCorrespondents
+                || canViewCustomFields
+                || canViewDocumentTypes
+                || canViewSavedViews
+                || canViewStoragePaths
+                || canViewTags
+                || canViewTrash
+        }
 
         let server: Server
 

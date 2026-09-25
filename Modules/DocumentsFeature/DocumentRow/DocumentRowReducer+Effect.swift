@@ -1,4 +1,5 @@
 import ApiInterface
+import Components
 import ComposableArchitecture
 import Foundation
 
@@ -15,6 +16,30 @@ extension Effect where Action == DocumentRowReducer.Action {
             await send(.delegate(.deleteDocument))
         }
         .cancellable(id: CancelID.confirmDelete)
+    }
+
+    static func runClearInboxTags(
+        document: Document.Id,
+        tags: [Tag.Id],
+        server: Server
+    ) -> Self {
+        @Dependency(\.bulkEditDocuments.execute)
+        var bulkEditDocuments
+
+        let input = BulkEditDocumentsInput(
+            documents: [document],
+            method: .modifyTags(.init(addTags: [], removeTags: tags))
+        )
+
+        return .run { send in
+            try await bulkEditDocuments(input, server)
+            await send(.inboxTagsCleared(tags: tags))
+        } catch: { error, send in
+            await send(.inboxTagsFailed(error))
+        }
+        // Keyed by document, like the two above: clearing an inbox means swiping several rows in a
+        // row, and one shared id would let the second swipe cancel the first document's write.
+        .cancellable(id: CancelID.inboxTags(document))
     }
 
     static func runDownloadDocument(
@@ -58,5 +83,6 @@ extension Effect where Action == DocumentRowReducer.Action {
 private enum CancelID: Hashable {
     case confirmDelete
     case downloadDocument(Document.Id)
+    case inboxTags(Document.Id)
     case toggleFavorite(Document.Id)
 }

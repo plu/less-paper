@@ -4,6 +4,7 @@ import ComposableArchitecture
 import Dependencies
 import DesignTokens
 import DocumentsFeature
+import SwiftSharing
 import SwiftUI
 
 @ViewAction(for: FavoriteRowReducer.self)
@@ -26,16 +27,24 @@ struct FavoriteRowView: View {
         .onTapGesture { send(.rowTapped) }
         .overlay(RoundedRectangle(cornerRadius: Constants.cornerRadius).stroke(Color.m3OutlineVariant, lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
-        .swipeActions {
-            Button(role: .destructive) {
-                send(.unfavoriteButtonTapped)
-            } label: {
-                Label(.unfavorite, systemImage: "heart.slash")
-            }
-        }
+        // Unfavoriting is prepended rather than configured, so it is always there and always what
+        // a full swipe right reaches - this list is the one place that action is the obvious one.
+        // It rides on the scoped row's favorite toggle, which calls the same removeFavorite as this
+        // row's own action and additionally dims the row and reports a failure.
+        .documentSwipeActions(
+            settings: swipeActions,
+            isSelecting: false,
+            leadingPrefix: [.favorite],
+            store: store.scope(state: \.row, action: \.row)
+        )
+        .documentRowDestinations(store: store.scope(state: \.row, action: \.row))
     }
 
+    @Bindable
     var store: StoreOf<FavoriteRowReducer>
+
+    @SharedReader(.documentSwipeActions)
+    private var swipeActions: DocumentSwipeActionSettings
 
     @ViewBuilder
     private func detailsView() -> some View {

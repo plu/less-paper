@@ -297,4 +297,101 @@ struct DocumentRowReducerTests {
 
         #expect(toasts.value == [.error("Something went wrong")])
     }
+
+    @Test
+    func view_clearInboxTagsButtonTapped_removesOnlyTheInboxTags() async throws {
+        let input = LockIsolated<BulkEditDocumentsInput?>(nil)
+        @Shared(.inboxTags(.testValue()))
+        var inboxTags
+        $inboxTags.withLock { $0 = [5, 7] }
+
+        let store = TestStore(
+            initialState: DocumentRowReducer.State.testValue(
+                document: .testValue(id: 3, tags: [5, 6, 7, 8])
+            )
+        ) {
+            DocumentRowReducer()
+        } withDependencies: {
+            $0.bulkEditDocuments.execute = { bulkEditInput, _ in input.setValue(bulkEditInput) }
+        }
+        store.exhaustivity = .off
+
+        await store.send(.view(.clearInboxTagsButtonTapped)) {
+            $0.isUpdating = true
+        }
+        await store.receive(\.inboxTagsCleared) {
+            $0.isUpdating = false
+        }
+        await store.receive(\.delegate, .inboxTagsCleared(tags: [5, 7]))
+        await store.finish()
+
+        let sent = try #require(input.value)
+        #expect(sent.documents == [3])
+        #expect(sent.method == .modifyTags(.init(addTags: [], removeTags: [5, 7])))
+    }
+
+    @Test
+    func view_clearInboxTagsButtonTapped_withoutInboxTagsDoesNothing() async throws {
+        @Shared(.inboxTags(.testValue()))
+        var inboxTags
+        $inboxTags.withLock { $0 = [5, 7] }
+
+        let store = TestStore(
+            initialState: DocumentRowReducer.State.testValue(
+                document: .testValue(id: 4, tags: [6, 8])
+            )
+        ) {
+            DocumentRowReducer()
+        } withDependencies: {
+            $0.bulkEditDocuments.execute = { _, _ in
+                Issue.record("A document the inbox tags do not cover must not be written at all")
+            }
+        }
+
+        await store.send(.view(.clearInboxTagsButtonTapped))
+    }
+
+    @Test
+    func view_clearInboxTagsButtonTapped_error() async throws {
+        let toasts = LockIsolated<[Toast]>([])
+        @Shared(.inboxTags(.testValue()))
+        var inboxTags
+        $inboxTags.withLock { $0 = [5, 7] }
+
+        let store = TestStore(
+            initialState: DocumentRowReducer.State.testValue(
+                document: .testValue(id: 3, tags: [5, 6, 7, 8])
+            )
+        ) {
+            DocumentRowReducer()
+        } withDependencies: {
+            $0.bulkEditDocuments.execute = { _, _ in throw ApiError.testValue() }
+            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
+        }
+
+        await store.send(.view(.clearInboxTagsButtonTapped)) {
+            $0.isUpdating = true
+        }
+        await store.receive(\.inboxTagsFailed) {
+            $0.isUpdating = false
+        }
+
+        #expect(toasts.value == [.error("Something went wrong")])
+    }
+
+    // Notes opens the form rather than the read-only viewer: the point of reaching for notes from a
+    // swipe is to add one, and the viewer can only show what is already there.
+    @Test
+    func view_notesButtonTapped_opensTheFormOnItsNotesSection() async throws {
+        let document = Document.testValue()
+        let store = TestStore(initialState: DocumentRowReducer.State.testValue(
+            document: document
+        )) {
+            DocumentRowReducer()
+        }
+
+        await store.send(.view(.notesButtonTapped)) {
+            $0.destination = .documentForm(.testValue(document: document, section: .notes))
+        }
+    }
 }

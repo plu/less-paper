@@ -15,17 +15,22 @@ public struct DocumentRowReducer: Sendable {
         case downloadSucceeded(url: URL, intent: DownloadIntent)
         case favoriteToggleFailed(Error)
         case favoriteToggleSucceeded
+        case inboxTagsCleared(tags: [Tag.Id])
+        case inboxTagsFailed(Error)
         case view(View)
 
         public enum Delegate {
             case deleteDocument
+            case inboxTagsCleared(tags: [Tag.Id])
             case presentDocumentDetail(Shared<Document>)
         }
 
         public enum View {
+            case clearInboxTagsButtonTapped
             case deleteButtonTapped
             case editButtonTapped
             case favoriteButtonTapped
+            case notesButtonTapped
             case previewButtonTapped
             case rowTapped
             case shareButtonTapped
@@ -70,6 +75,15 @@ public struct DocumentRowReducer: Sendable {
 
         var isBusy: Bool {
             isDownloading || isTogglingFavorite || isUpdating
+        }
+
+        @SharedReader
+        var inboxTagIds: [Tag.Id]
+
+        // The document's own tags that are inbox tags. Empty is what makes the swipe action hide
+        // rather than clear nothing and report otherwise.
+        var inboxTags: [Tag.Id] {
+            document.tags.filter(Set(inboxTagIds).contains)
         }
 
         var isDownloading = false
@@ -120,7 +134,7 @@ public struct DocumentRowReducer: Sendable {
             return titleLineLimit
         }
 
-        init(
+        public init(
             destination: Destination.State? = nil,
             document: Shared<Document>,
             downloadedURL: URL? = nil,
@@ -135,6 +149,7 @@ public struct DocumentRowReducer: Sendable {
             self._document = document
             self.downloadedURL = downloadedURL
             self._favorites = SharedReader(wrappedValue: [], .favorites(server))
+            self._inboxTagIds = SharedReader(wrappedValue: [], .inboxTags(server))
             self.isDownloading = isDownloading
             self.isTogglingFavorite = isTogglingFavorite
             self.isUpdating = isUpdating
@@ -144,6 +159,8 @@ public struct DocumentRowReducer: Sendable {
             permissions = ServerPermissions(server: server)
         }
     }
+
+    public init() {}
 
     public var body: some ReducerOf<Self> {
         BindingReducer()
@@ -166,8 +183,29 @@ public struct DocumentRowReducer: Sendable {
             case .favoriteToggleSucceeded:
                 state.isTogglingFavorite = false
                 return .none
+            case let .inboxTagsCleared(tags: tags):
+                state.isUpdating = false
+                // The undo toast and the restore belong to the list, not here. Clearing the tags is
+                // what drops this row out of the inbox filter, and TCA cancels an element's effects
+                // the moment its id leaves the array - so a toast awaited here is still on screen
+                // when its Undo stops being connected to anything.
+                return .send(.delegate(.inboxTagsCleared(tags: tags)))
+            case let .inboxTagsFailed(error):
+                state.isUpdating = false
+                return .toast(error)
             case let .view(viewAction):
                 switch viewAction {
+                case .clearInboxTagsButtonTapped:
+                    let tags = state.inboxTags
+                    guard !tags.isEmpty else {
+                        return .none
+                    }
+                    state.isUpdating = true
+                    return .runClearInboxTags(
+                        document: state.document.id,
+                        tags: tags,
+                        server: state.server
+                    )
                 case .deleteButtonTapped:
                     return .runConfirmDelete(documentTitle: state.document.title)
                 case .editButtonTapped:
@@ -183,6 +221,15 @@ public struct DocumentRowReducer: Sendable {
                         isFavorited: state.isFavorited,
                         server: state.server
                     )
+                case .notesButtonTapped:
+                    // The form rather than the viewer: reaching for notes is usually reaching to
+                    // add one, and the viewer can only show the ones already there.
+                    state.destination = .documentForm(DocumentFormReducer.State(
+                        document: state.$document,
+                        section: .notes,
+                        server: state.server
+                    ))
+                    return .none
                 case .previewButtonTapped:
                     return state.download(intent: .preview)
                 case .rowTapped:

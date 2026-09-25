@@ -41,37 +41,133 @@ public struct SettingListView: View {
                         Label(.servers, systemImage: "server.rack")
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
+                } header: {
+                    Text(.sectionConnection)
                 } footer: {
                     Text([store.server.username, store.server.alias].joined(separator: "@"))
                 }
 
+                // Everything the server owns, and nothing else: with PDF passwords moved out this
+                // section is entirely permission-gated, so a restricted account loses the whole
+                // thing rather than being left with one stray row under a header about the library.
+                //
+                // A-Z by English title, as every section here is. German sorts differently and is
+                // left alone: reordering per locale would give the two languages different
+                // screenshots for no reader's benefit.
+                if store.canViewLibrary {
+                    Section {
+                        if store.canViewCorrespondents {
+                            NavigationLink(
+                                state: SettingListReducer.Path.State.correspondentList(CorrespondentListReducer.State(server: store.server))
+                            ) {
+                                Label(.correspondents, systemImage: "person")
+                            }
+                            .listRowBackground(Color.m3SurfaceContainer)
+                        }
+
+                        if store.canViewCustomFields {
+                            NavigationLink(
+                                state: SettingListReducer.Path.State.customFieldList(CustomFieldListReducer.State(server: store.server))
+                            ) {
+                                Label(.customFields, systemImage: "list.bullet.rectangle")
+                            }
+                            .listRowBackground(Color.m3SurfaceContainer)
+                        }
+
+                        if store.canViewDocumentTypes {
+                            NavigationLink(
+                                state: SettingListReducer.Path.State.documentTypeList(DocumentTypeListReducer.State(server: store.server))
+                            ) {
+                                Label(.documentTypes, systemImage: "document.badge.gearshape")
+                            }
+                            .listRowBackground(Color.m3SurfaceContainer)
+                        }
+
+                        if store.canViewSavedViews {
+                            NavigationLink(
+                                state: SettingListReducer.Path.State.savedViewList(SavedViewListReducer.State(server: store.server))
+                            ) {
+                                Label(.savedViews, systemImage: "line.3.horizontal.decrease")
+                            }
+                            .listRowBackground(Color.m3SurfaceContainer)
+                        }
+
+                        if store.canViewStoragePaths {
+                            NavigationLink(
+                                state: SettingListReducer.Path.State.storagePathList(StoragePathListReducer.State(server: store.server))
+                            ) {
+                                Label(.storagePaths, systemImage: "folder")
+                            }
+                            .listRowBackground(Color.m3SurfaceContainer)
+                        }
+
+                        if store.canViewTags {
+                            NavigationLink(
+                                state: SettingListReducer.Path.State.tagList(TagListReducer.State(server: store.server))
+                            ) {
+                                Label(.tags, systemImage: "tag")
+                            }
+                            .listRowBackground(Color.m3SurfaceContainer)
+                        }
+
+                        if store.canViewTrash {
+                            NavigationLink(
+                                state: SettingListReducer.Path.State.trashList(TrashListReducer.State(server: store.server))
+                            ) {
+                                Label(.trash, systemImage: "trash")
+                            }
+                            .listRowBackground(Color.m3SurfaceContainer)
+                        }
+                    } header: {
+                        Text(.sectionLibrary)
+                    }
+                }
+
+                if store.canAddDocuments {
+                    Section {
+                        if store.canImport {
+                            Button {
+                                send(.importButtonTapped)
+                            } label: {
+                                Label {
+                                    Text(.import)
+                                        .foregroundStyle(Color.m3OnSurface)
+                                } icon: {
+                                    Image(systemName: "doc.badge.plus")
+                                }
+                            }
+                            .listRowBackground(Color.m3SurfaceContainer)
+                        }
+
+                        if store.canScan {
+                            Button {
+                                send(.scanButtonTapped)
+                            } label: {
+                                Label {
+                                    Text(.scan)
+                                        .foregroundStyle(Color.m3OnSurface)
+                                } icon: {
+                                    Image(systemName: "camera")
+                                }
+                            }
+                            .listRowBackground(Color.m3SurfaceContainer)
+                        }
+                    } header: {
+                        Text(.sectionAddDocuments)
+                    }
+                }
+
+                // Nothing in here reaches the server. Favorites are files downloaded onto this
+                // phone, PDF passwords live in its keychain, and the swipe actions are a preference
+                // held for the app rather than per account - which is why PDF passwords is no
+                // longer filed beside the server's own lists.
                 Section {
-                    if store.canViewCorrespondents {
-                        NavigationLink(
-                            state: SettingListReducer.Path.State.correspondentList(CorrespondentListReducer.State(server: store.server))
-                        ) {
-                            Label(.correspondents, systemImage: "person")
-                        }
-                        .listRowBackground(Color.m3SurfaceContainer)
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.favoriteSettings(FavoriteSettingsReducer.State(server: store.server))
+                    ) {
+                        Label(.favorites, systemImage: "heart")
                     }
-
-                    if store.canViewCustomFields {
-                        NavigationLink(
-                            state: SettingListReducer.Path.State.customFieldList(CustomFieldListReducer.State(server: store.server))
-                        ) {
-                            Label(.customFields, systemImage: "list.bullet.rectangle")
-                        }
-                        .listRowBackground(Color.m3SurfaceContainer)
-                    }
-
-                    if store.canViewDocumentTypes {
-                        NavigationLink(
-                            state: SettingListReducer.Path.State.documentTypeList(DocumentTypeListReducer.State(server: store.server))
-                        ) {
-                            Label(.documentTypes, systemImage: "document.badge.gearshape")
-                        }
-                        .listRowBackground(Color.m3SurfaceContainer)
-                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
 
                     NavigationLink(
                         state: SettingListReducer.Path.State.pdfPasswordList(PdfPasswordListReducer.State())
@@ -80,88 +176,21 @@ public struct SettingListView: View {
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
-                    if store.canViewSavedViews {
-                        NavigationLink(
-                            state: SettingListReducer.Path.State.savedViewList(SavedViewListReducer.State(server: store.server))
-                        ) {
-                            Label(.savedViews, systemImage: "line.3.horizontal.decrease")
-                        }
-                        .listRowBackground(Color.m3SurfaceContainer)
+                    NavigationLink(
+                        state: SettingListReducer.Path.State.swipeActionSettings(SwipeActionSettingsReducer.State())
+                    ) {
+                        Label(.swipeActions, systemImage: "hand.draw")
                     }
-
-                    if store.canViewStoragePaths {
-                        NavigationLink(
-                            state: SettingListReducer.Path.State.storagePathList(StoragePathListReducer.State(server: store.server))
-                        ) {
-                            Label(.storagePaths, systemImage: "folder")
-                        }
-                        .listRowBackground(Color.m3SurfaceContainer)
-                    }
-
-                    if store.canViewTags {
-                        NavigationLink(
-                            state: SettingListReducer.Path.State.tagList(TagListReducer.State(server: store.server))
-                        ) {
-                            Label(.tags, systemImage: "tag")
-                        }
-                        .listRowBackground(Color.m3SurfaceContainer)
-                    }
-
-                    if store.canViewTrash {
-                        NavigationLink(
-                            state: SettingListReducer.Path.State.trashList(TrashListReducer.State(server: store.server))
-                        ) {
-                            Label(.trash, systemImage: "trash")
-                        }
-                        .listRowBackground(Color.m3SurfaceContainer)
-                    }
+                    .listRowBackground(Color.m3SurfaceContainer)
+                } header: {
+                    Text(.sectionThisDevice)
                 }
 
-                Section {
-                    if store.canImport {
-                        Button {
-                            send(.importButtonTapped)
-                        } label: {
-                            Label {
-                                Text(.import)
-                                    .foregroundStyle(Color.m3OnSurface)
-                            } icon: {
-                                Image(systemName: "doc.badge.plus")
-                            }
-                        }
-                        .listRowBackground(Color.m3SurfaceContainer)
-                    }
-
-                    if store.canScan {
-                        Button {
-                            send(.scanButtonTapped)
-                        } label: {
-                            Label {
-                                Text(.scan)
-                                    .foregroundStyle(Color.m3OnSurface)
-                            } icon: {
-                                Image(systemName: "camera")
-                            }
-                        }
-                        .listRowBackground(Color.m3SurfaceContainer)
-                    }
-                }
-
-                // A-Z by English title, matching the section above. German sorts differently and is
-                // left alone: reordering per locale would give the two languages different
-                // screenshots for no reader's benefit.
                 Section {
                     NavigationLink(
                         state: SettingListReducer.Path.State.diagnosticsList(DiagnosticsListReducer.State())
                     ) {
                         Label(.diagnostics, systemImage: "stethoscope")
-                    }
-                    .listRowBackground(Color.m3SurfaceContainer)
-
-                    NavigationLink(
-                        state: SettingListReducer.Path.State.favoriteSettings(FavoriteSettingsReducer.State(server: store.server))
-                    ) {
-                        Label(.favorites, systemImage: "heart")
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
 
@@ -191,6 +220,8 @@ public struct SettingListView: View {
                         }
                     }
                     .listRowBackground(Color.m3SurfaceContainer)
+                } header: {
+                    Text(.sectionAbout)
                 } footer: {
                     HStack {
                         Spacer()
@@ -246,6 +277,8 @@ public struct SettingListView: View {
                 ServerListView(store: store)
             case let .storagePathList(store):
                 StoragePathListView(store: store)
+            case let .swipeActionSettings(store):
+                SwipeActionSettingsView(store: store)
             case let .tagList(store):
                 TagListView(store: store)
             case let .tipList(store):

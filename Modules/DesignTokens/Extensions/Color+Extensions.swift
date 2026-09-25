@@ -48,6 +48,15 @@ public extension Color {
 // `m3Primary` and `m3PrimaryContainer` invert in opposite directions — aliasing either flips the
 // bar in whichever theme it was not chosen for.
 //
+// A swipe action wants the same thing for the same reason, and cannot even ask nicely: the system
+// draws the button's label itself, in white, whatever the label view says — verified by tinting one
+// yellow and watching it come out white anyway. That makes the tint the only lever, so `m3Primary`
+// — a deep teal in light and a bright mint in dark — puts white on mint the moment the theme flips.
+// `m3Error` does the same, dark red to a pale pink.
+//
+// `onSwipeAction` is that system white. Nothing sets it; it is named so the pair it has to survive
+// can be contrast-checked beside every other pair rather than taken on trust.
+//
 // The missing prefix is the signal: an `m3` symbol is a role the Material scheme could regenerate,
 // these are app decisions that no generator will ever produce.
 public extension Color {
@@ -55,7 +64,10 @@ public extension Color {
     static let fieldFillFocused = Color.internalFieldFillFocused
     static let fieldFillReadOnly = Color.internalFieldFillReadOnly
     static let onSheetHeader = Color.internalOnSheetHeader
+    static let onSwipeAction = Color.internalOnSwipeAction
     static let sheetHeader = Color.internalSheetHeader
+    static let swipeAction = Color.internalSwipeAction
+    static let swipeActionDestructive = Color.internalSwipeActionDestructive
 }
 
 public extension Color {
@@ -245,6 +257,20 @@ public extension Color {
                 backgroundName: "sheetHeader",
                 foregroundColor: .onSheetHeader,
                 foregroundName: "onSheetHeader"
+            )
+
+            ColorPreview(
+                backgroundColor: .swipeAction,
+                backgroundName: "swipeAction",
+                foregroundColor: .onSwipeAction,
+                foregroundName: "onSwipeAction"
+            )
+
+            ColorPreview(
+                backgroundColor: .swipeActionDestructive,
+                backgroundName: "swipeActionDestructive",
+                foregroundColor: .onSwipeAction,
+                foregroundName: "onSwipeAction"
             )
 
             ColorPreview(

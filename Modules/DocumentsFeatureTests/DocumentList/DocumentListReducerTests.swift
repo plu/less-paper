@@ -1411,55 +1411,10 @@ struct DocumentListReducerTests {
     }
 
     @Test
-    func view_clearInboxTagsSwiped_removesOnlyTheInboxTags() async throws {
-        let input = LockIsolated<BulkEditDocumentsInput?>(nil)
-        let store = TestStore(initialState: DocumentListReducer.State.testValue(
-            filter: inboxFilter
-        )) {
-            DocumentListReducer()
-        } withDependencies: {
-            $0.bulkEditDocuments.execute = { bulkEditInput, _ in input.setValue(bulkEditInput) }
-            $0.getDocuments.execute = { _, _ in .testValue() }
-            $0.toastPresenter.presentAction = { _, _ in false }
-        }
-        store.exhaustivity = .off
-
-        // Doc 3 carries 5, 6, 7 and 8; only 5 and 7 are inbox tags, and 6 and 8 have to survive.
-        await store.send(.view(.clearInboxTagsSwiped(.testValue(id: 3, tags: [5, 6, 7, 8]))))
-        await store.receive(\.isUpdating) {
-            $0.documents[id: 3]?.isUpdating = true
-        }
-        await store.receive(\.inboxTagsCleared) {
-            $0.documents[id: 3]?.isUpdating = false
-        }
-
-        let sent = try #require(input.value)
-        #expect(sent.documents == [3])
-        #expect(sent.method == .modifyTags(.init(addTags: [], removeTags: [5, 7])))
-    }
-
-    @Test
-    func view_clearInboxTagsSwiped_withoutInboxTagsDoesNothing() async throws {
-        let store = TestStore(initialState: DocumentListReducer.State.testValue(
-            filter: inboxFilter
-        )) {
-            DocumentListReducer()
-        } withDependencies: {
-            $0.bulkEditDocuments.execute = { _, _ in
-                Issue.record("A document the inbox tags do not cover must not be written at all")
-            }
-        }
-
-        await store.send(.view(.clearInboxTagsSwiped(.testValue(id: 4, tags: [6, 8]))))
-    }
-
-    @Test
-    func inboxTagsCleared_refreshesTheListAndTheBadge() async throws {
+    func documents_delegate_inboxTagsCleared_refreshesTheListAndTheBadge() async throws {
         let didGetDocuments = LockIsolated(false)
         let didGetStatistics = LockIsolated(false)
-        let store = TestStore(initialState: DocumentListReducer.State.testValue(
-            filter: inboxFilter
-        )) {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue()) {
             DocumentListReducer()
         } withDependencies: {
             $0.getDocuments.execute = { _, _ in
@@ -1474,7 +1429,7 @@ struct DocumentListReducerTests {
         }
         store.exhaustivity = .off
 
-        await store.send(.inboxTagsCleared(document: 3, tags: [5, 7]))
+        await store.send(.documents(.element(id: 3, action: .delegate(.inboxTagsCleared(tags: [5, 7])))))
         await store.finish()
 
         #expect(didGetDocuments.value)
@@ -1482,87 +1437,65 @@ struct DocumentListReducerTests {
         #expect(didGetStatistics.value)
     }
 
+    // The row that asks for the toast is the row the clear removes from the inbox, and the toast
+    // outlives it by seconds. An effect scoped to that row is cancelled the moment it leaves the
+    // list, and TCA then drops whatever the Undo button sends - silently, because the toast itself
+    // is still on screen. The gate here is what makes the ordering real: an instantly answered
+    // toast hides the bug entirely.
     @Test
-    func inboxTagsCleared_undoPutsTheSameTagsBack() async throws {
-        let input = LockIsolated<BulkEditDocumentsInput?>(nil)
-        let store = TestStore(initialState: DocumentListReducer.State.testValue(
-            filter: inboxFilter
-        )) {
+    func documents_clearInboxTags_undoSurvivesTheRowLeavingTheList() async throws {
+        let inputs = LockIsolated<[BulkEditDocumentsInput]>([])
+        let (undoStream, undoContinuation) = AsyncStream<Bool>.makeStream()
+        @Shared(.inboxTags(.testValue()))
+        var inboxTags
+        $inboxTags.withLock { $0 = [5, 7] }
+
+        let store = TestStore(initialState: DocumentListReducer.State.testValue()) {
             DocumentListReducer()
         } withDependencies: {
-            $0.bulkEditDocuments.execute = { bulkEditInput, _ in input.setValue(bulkEditInput) }
-            $0.getDocuments.execute = { _, _ in .testValue() }
-            $0.toastPresenter.presentAction = { _, _ in true }
+            $0.bulkEditDocuments.execute = { input, _ in inputs.withValue { $0.append(input) } }
+            // Document 3 no longer matches the inbox filter, so the refetch drops its row.
+            $0.getDocuments.execute = { _, _ in
+                .testValue(results: [
+                    .testValue(id: 1),
+                    .testValue(id: 2),
+                    .testValue(id: 4)
+                ])
+            }
+            $0.toastPresenter.presentAction = { _, _ in await undoStream.first { _ in true } ?? false }
         }
         store.exhaustivity = .off
 
-        await store.send(.inboxTagsCleared(document: 3, tags: [5, 7]))
-        await store.receive(\.inboxTagsUndone)
-        await store.receive(\.inboxTagsRestored)
+        await store.send(.documents(.element(id: 3, action: .view(.clearInboxTagsButtonTapped))))
+        await store.receive(\.replaceDocuments)
+        #expect(store.state.documents[id: 3] == nil)
 
-        let sent = try #require(input.value)
-        #expect(sent.documents == [3])
-        #expect(sent.method == .modifyTags(.init(addTags: [5, 7], removeTags: [])))
+        undoContinuation.yield(true)
+        await store.finish()
+
+        #expect(inputs.value.count == 2)
+        #expect(inputs.value.last?.method == .modifyTags(.init(addTags: [5, 7], removeTags: [])))
     }
 
     @Test
-    func inboxTagsCleared_toastLeftAloneRestoresNothing() async throws {
-        let store = TestStore(initialState: DocumentListReducer.State.testValue(
-            filter: inboxFilter
-        )) {
+    func documents_clearInboxTags_toastLeftAloneRestoresNothing() async throws {
+        let inputs = LockIsolated<[BulkEditDocumentsInput]>([])
+        @Shared(.inboxTags(.testValue()))
+        var inboxTags
+        $inboxTags.withLock { $0 = [5, 7] }
+
+        let store = TestStore(initialState: DocumentListReducer.State.testValue()) {
             DocumentListReducer()
         } withDependencies: {
-            $0.bulkEditDocuments.execute = { _, _ in
-                Issue.record("A toast that timed out must not write anything back")
-            }
+            $0.bulkEditDocuments.execute = { input, _ in inputs.withValue { $0.append(input) } }
             $0.getDocuments.execute = { _, _ in .testValue() }
             $0.toastPresenter.presentAction = { _, _ in false }
         }
         store.exhaustivity = .off
 
-        await store.send(.inboxTagsCleared(document: 3, tags: [5, 7]))
+        await store.send(.documents(.element(id: 3, action: .view(.clearInboxTagsButtonTapped))))
         await store.finish()
-    }
 
-    @Test
-    func view_clearInboxTagsSwiped_error() async throws {
-        let toasts = LockIsolated<[Toast]>([])
-        let store = TestStore(initialState: DocumentListReducer.State.testValue(
-            filter: inboxFilter
-        )) {
-            DocumentListReducer()
-        } withDependencies: {
-            $0.bulkEditDocuments.execute = { _, _ in throw ApiError.testValue() }
-            $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
-        }
-
-        await store.send(.view(.clearInboxTagsSwiped(.testValue(id: 3, tags: [5, 6, 7, 8]))))
-        await store.receive(\.isUpdating) {
-            $0.documents[id: 3]?.isUpdating = true
-        }
-        await store.receive(\.inboxTagsFailed) {
-            $0.documents[id: 3]?.isUpdating = false
-        }
-
-        #expect(toasts.value == [.error("Something went wrong")])
-        // The row stays put: nothing left the inbox, so nothing should have left the list.
-        #expect(store.state.documents.ids.elements == [1, 2, 3, 4])
-        #expect(store.state.error == nil)
-    }
-
-    // 5 and 7 are inbox tags here, 6 and 8 are ordinary ones the swipe has to leave behind.
-    private var inboxFilter: DocumentFilter {
-        .testValue(
-            input: .testValue(
-                tag: .init(
-                    rule: .any,
-                    selection: .testValue(any: [
-                        .testValue(id: 5, name: "Inbox"),
-                        .testValue(id: 7, name: "Needs filing")
-                    ])
-                )
-            ),
-            isInbox: true
-        )
+        #expect(inputs.value.count == 1)
     }
 }

@@ -5,7 +5,8 @@ set -euo pipefail
 : "${COVERAGE_PR_NUMBER:?not set - this task only has somewhere to comment on a pull request}"
 
 changed="$(mktemp)"
-trap 'rm -f "$changed"' EXIT
+previous="$(mktemp)"
+trap 'rm -f "$changed" "$previous"' EXIT
 
 # GitHub rather than `git diff`: actions/checkout fetches to depth 1, so neither the base commit
 # nor origin/main is an object this runner can be relied on to have - they survive here only
@@ -14,13 +15,10 @@ trap 'rm -f "$changed"' EXIT
 gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${COVERAGE_PR_NUMBER}/files" \
   --jq '.[] | select(.status != "removed") | .filename' > "$changed"
 
-body="$(python3 "$MISE_PROJECT_ROOT/mise/scripts/coverage_report.py" \
-  --bundle "$MISE_PROJECT_ROOT/test-unit.xcresult" \
-  --repo-root "$MISE_PROJECT_ROOT" \
-  --changed-files "$changed")"
-
-# One comment, rewritten on every push. A column of superseded coverage tables is worse than no
-# table at all - only the newest describes the head being reviewed.
+# One comment, rewritten on every push, and read back first so the report can accumulate. The
+# unit tests run selectively, so a push that touches one module measures that module and no other
+# - and a table built from that run alone would drop everything the earlier pushes measured. The
+# comment is the only store that survives between runs here, so it is the one used.
 #
 # Taken with a parameter expansion rather than `head -1`, which would close the pipe under
 # `set -o pipefail` and fail the step on any pull request with more than one page of comments.
@@ -29,6 +27,16 @@ body="$(python3 "$MISE_PROJECT_ROOT/mise/scripts/coverage_report.py" \
 ids="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${COVERAGE_PR_NUMBER}/comments" \
   --jq '.[] | select(.body | contains("<!-- coverage-report -->")) | .id')"
 id="${ids%%$'\n'*}"
+
+if [ -n "$id" ]; then
+  gh api "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" --jq '.body' > "$previous"
+fi
+
+body="$(python3 "$MISE_PROJECT_ROOT/mise/scripts/coverage_report.py" \
+  --bundle "$MISE_PROJECT_ROOT/test-unit.xcresult" \
+  --repo-root "$MISE_PROJECT_ROOT" \
+  --changed-files "$changed" \
+  --previous-report "$previous")"
 
 if [ -n "$id" ]; then
   gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" -f "body=${body}" > /dev/null
