@@ -81,7 +81,7 @@ public extension DependencyValues {
             return data
         }
 
-        // A favorite row renders page one of the file the store wrote, so the screenshot needs a
+        // An offline row renders page one of the file the store wrote, so the screenshot needs a
         // real PDF where that file would be. The same documents downloadDocument reads, addressed
         // the same way — nothing is written to disk, the row simply reads the repository copy.
         offlineStore.pdfURL = { id, _ in
@@ -91,10 +91,10 @@ public extension DependencyValues {
             return .snapshotDocument(named: document.title)
         }
 
-        // Settings reports the space the favorites take. Summing the real files keeps that figure
+        // Settings reports the space the offline documents take. Summing the real files keeps that figure
         // honest rather than photographing a zero.
         offlineStore.totalByteCount = { _ in
-            corpus.favoriteDocumentIds
+            corpus.offlineDocumentIds
                 .compactMap { id in documents.first { $0.id == id } }
                 .reduce(0) { $0 + Int.snapshotDocumentByteCount(named: $1.title) }
         }
@@ -133,7 +133,7 @@ public func seedSnapshotSharedState(
     var documentTypes: IdentifiedArrayOf<DocumentType> = []
 
     @Shared(.offlineDocuments(server))
-    var favorites: IdentifiedArrayOf<OfflineDocument> = []
+    var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
 
     @Shared(.savedViews(server))
     var savedViews: IdentifiedArrayOf<SavedView> = []
@@ -156,7 +156,7 @@ public func seedSnapshotSharedState(
     $selectedServer.withLock { $0 = server }
     $correspondents.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.correspondents()) }
     $documentTypes.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.documentTypes(in: corpus)) }
-    $favorites.withLock { $0 = IdentifiedArray(uniqueElements: snapshotFavorites(in: corpus)) }
+    $offlineDocuments.withLock { $0 = IdentifiedArray(uniqueElements: snapshotOfflineDocuments(in: corpus)) }
     $savedViews.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.savedViews()) }
     $storagePaths.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.storagePaths(in: corpus)) }
     $tags.withLock { $0 = IdentifiedArray(uniqueElements: SnapshotFixtures.tags(in: corpus)) }
@@ -164,16 +164,16 @@ public func seedSnapshotSharedState(
     $inboxTags.withLock { $0 = SnapshotFixtures.tags(in: corpus).filter(\.isInboxTag).map(\.id) }
 }
 
-// The records a real favoriting would have written, minus the download that wrote the file: the
+// The records a real save would have written, minus the download that wrote the file: the
 // PDF is already in the repository and `offlineStore.pdfURL` points the row straight at it.
 //
 // `storedAt` is fixed rather than `Date()` because it keys the row's thumbnail render — a moving
 // value would re-render on every launch and give the capture something new to wait for.
-private func snapshotFavorites(
+private func snapshotOfflineDocuments(
     in corpus: SnapshotConfiguration.Corpus
 ) -> [OfflineDocument] {
     let documents = SnapshotFixtures.documents()
-    return corpus.favoriteDocumentIds
+    return corpus.offlineDocumentIds
         .compactMap { id in documents.first { $0.id == id } }
         .map { document in
             OfflineDocument(

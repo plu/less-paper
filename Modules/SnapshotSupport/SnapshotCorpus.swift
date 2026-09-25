@@ -20,18 +20,18 @@ extension SnapshotConfiguration.Corpus {
     // screenshot wants a short, readable list rather than everything that happens to be tagged.
     static let inboxDocumentIds: [Document.Id] = [12, 5, 4]
 
-    // The subset kept offline. Three rather than the whole corpus: the favorites screenshot is
+    // The subset kept offline. Three rather than the whole corpus: the Offline screenshot is
     // about the feature, not the size of the shelf, and three rows fill an iPhone screen without
     // the last one being cut in half. They lead with the same document the view and edit screens
     // open, so a reader moving through the set keeps seeing the same manual.
-    static let favoriteDocumentIds: [Document.Id] = [8, 13, 12]
+    static let offlineDocumentIds: [Document.Id] = [8, 13, 12]
 
     var documentIds: [Document.Id] {
         Self.documentIds
     }
 
-    var favoriteDocumentIds: [Document.Id] {
-        Self.favoriteDocumentIds
+    var offlineDocumentIds: [Document.Id] {
+        Self.offlineDocumentIds
     }
 
     var inboxDocumentIds: [Document.Id] {
