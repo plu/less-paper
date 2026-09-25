@@ -11,12 +11,39 @@ import Foundation
 public enum OfflineStorageMigration {
 
     public static func run(in directory: URL = .applicationGroupDirectory) {
-        move(
-            directory.appending(component: "Favorites"),
-            to: directory.appending(component: "Offline")
-        )
+        let manager = FileManager.default
+        let legacyDirectory = directory.appending(component: "Favorites")
+        let offlineDirectory = directory.appending(component: "Offline")
 
-        let contents = (try? FileManager.default.contentsOfDirectory(
+        // One server at a time rather than the whole directory at once. Moving it wholesale would
+        // skip as soon as `Offline` exists, which is exactly what a downgrade leaves behind: one
+        // server migrated by an earlier launch, another written under the old name by the old
+        // build. The second server's record file would still move across on its own - its
+        // destination being free - and the list would come up full of documents whose PDFs are not
+        // there.
+        let legacyServers = (try? manager.contentsOfDirectory(
+            at: legacyDirectory,
+            includingPropertiesForKeys: nil
+        )) ?? []
+
+        if !legacyServers.isEmpty {
+            try? manager.createDirectory(at: offlineDirectory, withIntermediateDirectories: true)
+        }
+
+        for server in legacyServers {
+            move(server, to: offlineDirectory.appending(component: server.lastPathComponent))
+        }
+
+        // Removed only once it is empty. `move` skips a server that already exists at the new path,
+        // and deleting what it skipped is the one outcome nobody can undo.
+        if let remaining = try? manager.contentsOfDirectory(
+            at: legacyDirectory,
+            includingPropertiesForKeys: nil
+        ), remaining.isEmpty {
+            try? manager.removeItem(at: legacyDirectory)
+        }
+
+        let contents = (try? manager.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: nil
         )) ?? []

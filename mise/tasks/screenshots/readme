@@ -19,7 +19,7 @@ fi
 magick \
   "$framed/iPhone 17 Pro Max-01-Inbox_framed.png" \
   "$framed/iPhone 17 Pro Max-02-Documents_framed.png" \
-  "$framed/iPhone 17 Pro Max-08-Favorites_framed.png" \
+  "$framed/iPhone 17 Pro Max-08-Offline_framed.png" \
   "$framed/iPhone 17 Pro Max-03-Search_framed.png" \
   "$framed/iPhone 17 Pro Max-05-View_framed.png" \
   -resize 340x -background none +append -depth 8 -strip \

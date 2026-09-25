@@ -109,9 +109,9 @@ public struct OfflineListReducer: Sendable {
 
         // The offline detail is a window onto a record: removing deletes the PDF, so the screen
         // left behind can show its stored copy but nothing it re-fetches — the viewer's sections
-        // throw `.notStored` — and it has no offline document button left to undo with. It is popped
+        // throw `.notStored` — and it has no Save offline button left to undo with. It is popped
         // wherever the removal came from, since the shared store is the one thing the detail's own
-        // heart, a swipe on the row and "Remove all offline documents" in Settings all go through.
+        // button, a swipe on the row and "Remove all offline documents" in Settings all go through.
         mutating func popDetailsOfRemovedOfflineDocuments() {
             for (id, element) in zip(path.ids, path) {
                 guard case let .documentDetail(detail) = element,
@@ -187,9 +187,9 @@ public struct OfflineListReducer: Sendable {
         .forEach(\.rows, action: \.rows) { OfflineRowReducer() }
         .forEach(\.path, action: \.path)
 
-        // Last, and on every action rather than on the few that remove an offline document: the removal can
-        // arrive from the detail's own heart, from the observer, or from another tab, and this is
-        // the one place all of them are already past by the time it runs.
+        // Last, and on every action rather than on the few that remove an offline document: the
+        // removal can arrive from the detail's own button, from the observer, or from another tab,
+        // and this is the one place all of them are already past by the time it runs.
         Reduce { state, _ in
             state.popDetailsOfRemovedOfflineDocuments()
             return .none

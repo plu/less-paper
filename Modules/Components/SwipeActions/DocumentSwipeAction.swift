@@ -7,8 +7,8 @@ public enum DocumentSwipeAction: String, CaseIterable, Codable, Equatable, Senda
     case delete
     case edit
     case openNotes
-    case preview
     case saveOffline
+    case preview
     case share
 }
 
@@ -45,10 +45,10 @@ extension DocumentSwipeAction: Localizable {
             .swipeActionEdit
         case .openNotes:
             .swipeActionOpenNotes
-        case .preview:
-            .swipeActionPreview
         case .saveOffline:
             .swipeActionOffline
+        case .preview:
+            .swipeActionPreview
         case .share:
             .swipeActionShare
         }
@@ -66,10 +66,10 @@ extension DocumentSwipeAction: Localizable {
             "square.and.pencil"
         case .openNotes:
             "note.text"
-        case .preview:
-            "eye"
         case .saveOffline:
             "arrow.down.circle"
+        case .preview:
+            "eye"
         case .share:
             "square.and.arrow.up"
         }

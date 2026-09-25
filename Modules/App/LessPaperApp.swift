@@ -20,6 +20,10 @@ struct LessPaperApp: App {
         // is opened lazily by whichever state is built first, and a read that happens before the
         // move creates an empty file at the new path - which strands the user's documents at the
         // old one rather than failing in any way they could report.
+        //
+        // Being first in this body is only sufficient because `store` is a `static let`, so it is
+        // not touched until `send(.bootstrap)` below. An instance property with a default value
+        // would be initialised before this body runs, and the migration would be too late.
         OfflineStorageMigration.run()
 
         // Before the DEBUG overrides below, which replace this with an in-memory store: the share
