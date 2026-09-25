@@ -1,13 +1,11 @@
-import Components
 import DesignTokens
 import SwiftUI
 
-// The list's search field, kept apart from `DocumentSearchBarView` so the styling — the `Field`,
-// the icon, the placeholder and every metric — lives in one place and the bar is only about what
-// surrounds it.
-struct DocumentSearchField: View {
+// A list's search field, kept apart from `SearchBar` so the styling — the `Field`, the icon, the
+// placeholder and every metric — lives in one place and the bar is only about what surrounds it.
+public struct SearchField: View {
 
-    var body: some View {
+    public var body: some View {
         Field(padding: .x0) {
             HStack(spacing: .x0) {
                 Image(systemName: "magnifyingglass")
@@ -39,7 +37,7 @@ struct DocumentSearchField: View {
         }
     }
 
-    init(
+    public init(
         isFocused: FocusState<Bool>.Binding,
         submitted: @escaping () -> Void,
         text: Binding<String>

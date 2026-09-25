@@ -34,6 +34,36 @@ struct OfflineListReducerTests {
         #expect(store.state.rows.map(\.id) == [1])
     }
 
+    // The only way a search ends on this list: there is no commit, no filter and no results screen
+    // to leave behind, so nothing else would ever empty the query. The keyboard half belongs to
+    // SearchBar, which drops focus before calling this; the query half is the reducer's.
+    @Test
+    func test_cancellingTheSearchClearsTheQueryAndRestoresEveryRow() async {
+        let server = Server.testValue(id: "cancelling-the-search")
+
+        @Shared(.offlineDocuments(server))
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
+            .testValue(document: .testValue(content: nil, id: 1, title: "Invoice")),
+            .testValue(document: .testValue(content: nil, id: 2, title: "Warranty")),
+        ]
+
+        let store = TestStore(initialState: OfflineListReducer.State(server: server)) {
+            OfflineListReducer()
+        }
+
+        await store.send(\.binding.searchText, "inv") {
+            $0.searchText = "inv"
+            $0.rows.remove(id: 2)
+        }
+
+        await store.send(.view(.searchCancelled)) {
+            $0.searchText = ""
+            $0.rebuildRows()
+        }
+
+        #expect(store.state.rows.map(\.id) == [1, 2])
+    }
+
     // The counters are the whole point of the use case returning a result: pull-to-refresh is a
     // manual gesture, so it says what it did. The automatic refresh in AppFeature stays silent.
     @Test

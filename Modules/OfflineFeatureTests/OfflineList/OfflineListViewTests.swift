@@ -35,6 +35,8 @@ struct OfflineListViewTests {
         )
     }
 
+    // Also the reference that catches the search bar being withheld again: it used to be
+    // attached only when there was something to search, which is exactly the state this renders.
     @Test
     func testSnapshot_empty() async throws {
         let server = Server.testValue(id: "snapshot-empty")
