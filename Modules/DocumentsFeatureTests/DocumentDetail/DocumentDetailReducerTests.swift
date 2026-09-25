@@ -106,11 +106,11 @@ struct DocumentDetailReducerTests {
     }
 
     @Test
-    func test_view_favoriteButtonTapped_savesWhenNotYetFavorited() async throws {
+    func test_view_saveOfflineButtonTapped_savesWhenNotYetSaved() async throws {
         let server = Server.testValue()
         let saved = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
 
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue(
             document: .testValue(id: 7),
@@ -124,22 +124,22 @@ struct DocumentDetailReducerTests {
             }
         }
 
-        await store.send(.view(.favoriteButtonTapped)) {
-            $0.isTogglingFavorite = true
+        await store.send(.view(.saveOfflineButtonTapped)) {
+            $0.isTogglingOffline = true
         }
-        await store.receive(\.favoriteToggleSucceeded) {
-            $0.isTogglingFavorite = false
+        await store.receive(\.offlineToggleSucceeded) {
+            $0.isTogglingOffline = false
         }
 
         #expect(saved.value == 7)
     }
 
     @Test
-    func test_view_favoriteButtonTapped_removesWhenAlreadyFavorited() async throws {
+    func test_view_saveOfflineButtonTapped_removesWhenAlreadySaved() async throws {
         let server = Server.testValue()
         let removed = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
@@ -152,21 +152,21 @@ struct DocumentDetailReducerTests {
             $0.removeOfflineDocument.execute = { id, _ in removed.setValue(id) }
         }
 
-        await store.send(.view(.favoriteButtonTapped)) {
-            $0.isTogglingFavorite = true
+        await store.send(.view(.saveOfflineButtonTapped)) {
+            $0.isTogglingOffline = true
         }
-        await store.receive(\.favoriteToggleSucceeded) {
-            $0.isTogglingFavorite = false
+        await store.receive(\.offlineToggleSucceeded) {
+            $0.isTogglingOffline = false
         }
 
         #expect(removed.value == 7)
     }
 
     @Test
-    func test_view_favoriteButtonTapped_toastsOnFailure() async throws {
+    func test_view_saveOfflineButtonTapped_toastsOnFailure() async throws {
         let server = Server.testValue()
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
         let toasts = LockIsolated<[Toast]>([])
 
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue(
@@ -179,11 +179,11 @@ struct DocumentDetailReducerTests {
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 
-        await store.send(.view(.favoriteButtonTapped)) {
-            $0.isTogglingFavorite = true
+        await store.send(.view(.saveOfflineButtonTapped)) {
+            $0.isTogglingOffline = true
         }
-        await store.receive(\.favoriteToggleFailed) {
-            $0.isTogglingFavorite = false
+        await store.receive(\.offlineToggleFailed) {
+            $0.isTogglingOffline = false
         }
 
         #expect(toasts.value == [.error("Something went wrong")])
@@ -194,10 +194,10 @@ struct DocumentDetailReducerTests {
     // nothing behind them for a document that was never saved as this one. The view hides the
     // button for this case; this is the reducer holding the same line if something taps anyway.
     @Test
-    func test_view_favoriteButtonTapped_doesNothingWhenOfflineSnapshotAndNotFavorited() async throws {
+    func test_view_saveOfflineButtonTapped_doesNothingWhenOfflineSnapshotAndNotSaved() async throws {
         let server = Server.testValue()
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
 
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue(
             document: .testValue(id: 7),
@@ -207,7 +207,7 @@ struct DocumentDetailReducerTests {
             DocumentDetailReducer()
         }
 
-        await store.send(.view(.favoriteButtonTapped))
+        await store.send(.view(.saveOfflineButtonTapped))
     }
 
     @Test

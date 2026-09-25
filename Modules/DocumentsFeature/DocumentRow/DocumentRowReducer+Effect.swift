@@ -56,13 +56,13 @@ extension Effect where Action == DocumentRowReducer.Action {
         .cancellable(id: CancelID.downloadDocument(document.id))
     }
 
-    static func runToggleFavorite(
+    static func runToggleOffline(
         document: Document,
-        isFavorited: Bool,
+        isSavedOffline: Bool,
         server: Server
     ) -> Self {
         .run { send in
-            if isFavorited {
+            if isSavedOffline {
                 @Dependency(\.removeOfflineDocument.execute)
                 var removeOfflineDocument
                 try await removeOfflineDocument(document.id, server)
@@ -71,11 +71,11 @@ extension Effect where Action == DocumentRowReducer.Action {
                 var saveOfflineDocument
                 try await saveOfflineDocument(document, server, .add)
             }
-            await send(.favoriteToggleSucceeded)
+            await send(.offlineToggleSucceeded)
         } catch: { error, send in
-            await send(.favoriteToggleFailed(error))
+            await send(.offlineToggleFailed(error))
         }
-        .cancellable(id: CancelID.toggleFavorite(document.id))
+        .cancellable(id: CancelID.toggleOffline(document.id))
     }
 }
 
@@ -84,5 +84,5 @@ private enum CancelID: Hashable {
     case confirmDelete
     case downloadDocument(Document.Id)
     case inboxTags(Document.Id)
-    case toggleFavorite(Document.Id)
+    case toggleOffline(Document.Id)
 }

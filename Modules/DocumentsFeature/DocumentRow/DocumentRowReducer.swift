@@ -13,8 +13,8 @@ public struct DocumentRowReducer: Sendable {
         case delegate(Delegate)
         case downloadFailed(Error)
         case downloadSucceeded(url: URL, intent: DownloadIntent)
-        case favoriteToggleFailed(Error)
-        case favoriteToggleSucceeded
+        case offlineToggleFailed(Error)
+        case offlineToggleSucceeded
         case inboxTagsCleared(tags: [Tag.Id])
         case inboxTagsFailed(Error)
         case view(View)
@@ -29,7 +29,7 @@ public struct DocumentRowReducer: Sendable {
             case clearInboxTagsButtonTapped
             case deleteButtonTapped
             case editButtonTapped
-            case favoriteButtonTapped
+            case saveOfflineButtonTapped
             case notesButtonTapped
             case previewButtonTapped
             case rowTapped
@@ -71,10 +71,10 @@ public struct DocumentRowReducer: Sendable {
         var downloadedURL: URL?
 
         @SharedReader
-        var favorites: IdentifiedArrayOf<OfflineDocument>
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
         var isBusy: Bool {
-            isDownloading || isTogglingFavorite || isUpdating
+            isDownloading || isTogglingOffline || isUpdating
         }
 
         @SharedReader
@@ -88,11 +88,11 @@ public struct DocumentRowReducer: Sendable {
 
         var isDownloading = false
 
-        var isFavorited: Bool {
-            favorites[id: document.id] != nil
+        var isSavedOffline: Bool {
+            offlineDocuments[id: document.id] != nil
         }
 
-        var isTogglingFavorite = false
+        var isTogglingOffline = false
 
         var isUpdating = false
 
@@ -139,7 +139,7 @@ public struct DocumentRowReducer: Sendable {
             document: Shared<Document>,
             downloadedURL: URL? = nil,
             isDownloading: Bool = false,
-            isTogglingFavorite: Bool = false,
+            isTogglingOffline: Bool = false,
             isUpdating: Bool = false,
             quickLookPreview: URL? = nil,
             server: Server,
@@ -148,10 +148,10 @@ public struct DocumentRowReducer: Sendable {
             self.destination = destination
             self._document = document
             self.downloadedURL = downloadedURL
-            self._favorites = SharedReader(wrappedValue: [], .offlineDocuments(server))
+            self._offlineDocuments = SharedReader(wrappedValue: [], .offlineDocuments(server))
             self._inboxTagIds = SharedReader(wrappedValue: [], .inboxTags(server))
             self.isDownloading = isDownloading
-            self.isTogglingFavorite = isTogglingFavorite
+            self.isTogglingOffline = isTogglingOffline
             self.isUpdating = isUpdating
             self.quickLookPreview = quickLookPreview
             self.server = server
@@ -177,11 +177,11 @@ public struct DocumentRowReducer: Sendable {
                 state.isDownloading = false
                 state.present(url: url, intent: intent)
                 return .none
-            case let .favoriteToggleFailed(error):
-                state.isTogglingFavorite = false
+            case let .offlineToggleFailed(error):
+                state.isTogglingOffline = false
                 return .toast(error)
-            case .favoriteToggleSucceeded:
-                state.isTogglingFavorite = false
+            case .offlineToggleSucceeded:
+                state.isTogglingOffline = false
                 return .none
             case let .inboxTagsCleared(tags: tags):
                 state.isUpdating = false
@@ -214,11 +214,11 @@ public struct DocumentRowReducer: Sendable {
                         server: state.server
                     ))
                     return .none
-                case .favoriteButtonTapped:
-                    state.isTogglingFavorite = true
-                    return .runToggleFavorite(
+                case .saveOfflineButtonTapped:
+                    state.isTogglingOffline = true
+                    return .runToggleOffline(
                         document: state.document,
-                        isFavorited: state.isFavorited,
+                        isSavedOffline: state.isSavedOffline,
                         server: state.server
                     )
                 case .notesButtonTapped:

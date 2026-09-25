@@ -6,7 +6,7 @@ import SwiftUI
 public extension View {
 
     // `leadingPrefix` is for an action a screen always offers whatever the user configured - the
-    // Favorites list puts unfavoriting there, so a full swipe right always removes the favorite.
+    // Offline list puts removal there, so a full swipe right always takes the document off it.
     // Clearing inbox tags is the trailing equivalent and is not a parameter: it applies to any
     // document carrying inbox tags, on every list, so no caller gets to forget it.
     func documentSwipeActions(
@@ -53,9 +53,9 @@ public extension View {
             Button {
                 store.send(.view(action.rowAction))
             } label: {
-                Image(systemName: action.swipeImage(isFavorited: store.isFavorited))
+                Image(systemName: action.swipeImage(isSavedOffline: store.isSavedOffline))
             }
-            .accessibilityLabel(action.swipeLabel(isFavorited: store.isFavorited))
+            .accessibilityLabel(action.swipeLabel(isSavedOffline: store.isSavedOffline))
             .disabled(store.isBusy)
             // Not m3Primary/m3Error: both invert between themes, and the system draws this
             // button's label in white regardless of what the label view asks for - so a tint that
@@ -76,7 +76,7 @@ private extension DocumentSwipeAction {
         case .edit:
             .editButtonTapped
         case .saveOffline:
-            .favoriteButtonTapped
+            .saveOfflineButtonTapped
         case .openNotes:
             .notesButtonTapped
         case .preview:
@@ -88,17 +88,17 @@ private extension DocumentSwipeAction {
 
     // Saving offline is the one action whose button reports state rather than naming itself, the
     // same way the context menu's does: on a document already saved it has to read as the undo.
-    func swipeImage(isFavorited: Bool) -> String {
-        guard self == .saveOffline, isFavorited else {
+    func swipeImage(isSavedOffline: Bool) -> String {
+        guard self == .saveOffline, isSavedOffline else {
             return systemImage
         }
         return "arrow.down.circle.fill"
     }
 
-    func swipeLabel(isFavorited: Bool) -> LocalizedStringResource {
-        guard self == .saveOffline, isFavorited else {
+    func swipeLabel(isSavedOffline: Bool) -> LocalizedStringResource {
+        guard self == .saveOffline, isSavedOffline else {
             return localized
         }
-        return .unfavorite
+        return .removeFromOffline
     }
 }

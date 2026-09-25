@@ -194,9 +194,9 @@ struct OfflineListReducerTests {
 
         await store.send(.path(.element(
             id: 0,
-            action: .documentDetail(.view(.favoriteButtonTapped))
+            action: .documentDetail(.view(.saveOfflineButtonTapped))
         )))
-        await store.receive(\.path[id: 0].documentDetail.favoriteToggleSucceeded)
+        await store.receive(\.path[id: 0].documentDetail.offlineToggleSucceeded)
         await store.finish()
 
         #expect(store.state.path.isEmpty)

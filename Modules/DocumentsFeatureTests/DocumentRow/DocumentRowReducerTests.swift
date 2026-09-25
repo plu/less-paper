@@ -182,11 +182,11 @@ struct DocumentRowReducerTests {
     }
 
     @Test
-    func test_favoriteButtonSavesWhenNotYetFavorited() async {
+    func test_saveOfflineButtonSavesWhenNotYetSaved() async {
         let server = Server.testValue()
         let saved = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
 
         let store = TestStore(
             initialState: DocumentRowReducer.State(document: Shared(value: .testValue(id: 7)), server: server)
@@ -199,22 +199,22 @@ struct DocumentRowReducerTests {
             }
         }
 
-        await store.send(.view(.favoriteButtonTapped)) {
-            $0.isTogglingFavorite = true
+        await store.send(.view(.saveOfflineButtonTapped)) {
+            $0.isTogglingOffline = true
         }
-        await store.receive(\.favoriteToggleSucceeded) {
-            $0.isTogglingFavorite = false
+        await store.receive(\.offlineToggleSucceeded) {
+            $0.isTogglingOffline = false
         }
 
         #expect(saved.value == 7)
     }
 
     @Test
-    func test_favoriteButtonRemovesWhenAlreadyFavorited() async {
+    func test_saveOfflineButtonRemovesWhenAlreadySaved() async {
         let server = Server.testValue()
         let removed = LockIsolated<Document.Id?>(nil)
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = [
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = [
             .testValue(document: .testValue(id: 7))
         ]
 
@@ -226,11 +226,11 @@ struct DocumentRowReducerTests {
             $0.removeOfflineDocument.execute = { id, _ in removed.setValue(id) }
         }
 
-        await store.send(.view(.favoriteButtonTapped)) {
-            $0.isTogglingFavorite = true
+        await store.send(.view(.saveOfflineButtonTapped)) {
+            $0.isTogglingOffline = true
         }
-        await store.receive(\.favoriteToggleSucceeded) {
-            $0.isTogglingFavorite = false
+        await store.receive(\.offlineToggleSucceeded) {
+            $0.isTogglingOffline = false
         }
 
         #expect(removed.value == 7)
@@ -273,10 +273,10 @@ struct DocumentRowReducerTests {
     }
 
     @Test
-    func test_favoriteButtonTapped_toastsOnFailure() async {
+    func test_saveOfflineButtonTapped_toastsOnFailure() async {
         let server = Server.testValue()
 
-        @Shared(.offlineDocuments(server)) var favorites: IdentifiedArrayOf<OfflineDocument> = []
+        @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
         let toasts = LockIsolated<[Toast]>([])
 
         let store = TestStore(
@@ -288,11 +288,11 @@ struct DocumentRowReducerTests {
             $0.toastPresenter.present = { value in toasts.withValue { $0.append(value) } }
         }
 
-        await store.send(.view(.favoriteButtonTapped)) {
-            $0.isTogglingFavorite = true
+        await store.send(.view(.saveOfflineButtonTapped)) {
+            $0.isTogglingOffline = true
         }
-        await store.receive(\.favoriteToggleFailed) {
-            $0.isTogglingFavorite = false
+        await store.receive(\.offlineToggleFailed) {
+            $0.isTogglingOffline = false
         }
 
         #expect(toasts.value == [.error("Something went wrong")])

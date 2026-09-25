@@ -240,8 +240,8 @@ struct DocumentViewerReducerTests {
         }
     }
 
-    // A viewer opened from a favorite's detail is itself a snapshot, and a linked document reached
-    // through it is not the document the Favorites tab already vouched for — its own edit form must
+    // A viewer opened from an offline document's detail is itself a snapshot, and a linked document reached
+    // through it is not the document the Offline tab already vouched for — its own edit form must
     // stay just as unreachable.
     @Test
     func openingALinkFromAnOfflineSnapshotCarriesTheFlagIntoTheLinkedDetail() async throws {

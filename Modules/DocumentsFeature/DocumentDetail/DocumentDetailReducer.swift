@@ -11,8 +11,8 @@ public struct DocumentDetailReducer: Sendable {
         case delegate(Delegate)
         case destination(PresentationAction<Destination.Action>)
         case downloadResult(DownloadResult)
-        case favoriteToggleFailed(Error)
-        case favoriteToggleSucceeded
+        case offlineToggleFailed(Error)
+        case offlineToggleSucceeded
         case view(View)
 
         // The parent owns the collection this document belongs to, so it performs the deletion and
@@ -24,7 +24,7 @@ public struct DocumentDetailReducer: Sendable {
         public enum View {
             case deleteButtonTapped
             case editDocumentButtonTapped
-            case favoriteButtonTapped
+            case saveOfflineButtonTapped
             case onAppear
             case previewButtonTapped
             case retryDownloadButtonTapped
@@ -44,8 +44,8 @@ public struct DocumentDetailReducer: Sendable {
         var destination: Destination.State?
 
         // Public because whoever owns the stack this screen is pushed onto has to be able to see
-        // which document it is showing: the Favorites tab pops it when that document stops being a
-        // favorite.
+        // which document it is showing: the Offline tab pops it when that document stops being
+        // saved offline.
         @Shared
         public var document: Document
 
@@ -56,19 +56,19 @@ public struct DocumentDetailReducer: Sendable {
         }
 
         @SharedReader
-        var favorites: IdentifiedArrayOf<OfflineDocument>
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
-        var isFavorited: Bool {
-            favorites[id: document.id] != nil
+        var isSavedOffline: Bool {
+            offlineDocuments[id: document.id] != nil
         }
 
-        // A favorite is a snapshot: it reads what was saved, and every user-initiated write the
+        // An offline document is a snapshot: it reads what was saved, and every user-initiated write the
         // detail path can otherwise reach — the edit form's save, its ASN lookup, its notes
         // composer and delete, its document picker — must stay unreachable, since none of those
-        // dependencies are among the ones the Favorites tab overrides for reading.
+        // dependencies are among the ones the Offline tab overrides for reading.
         let isOfflineSnapshot: Bool
 
-        var isTogglingFavorite = false
+        var isTogglingOffline = false
 
         // Stored rather than computed from `server`: constructing a ServerPermissions reads two
         // files and arms two file watchers, and a computed property would do that on every render.
@@ -91,16 +91,16 @@ public struct DocumentDetailReducer: Sendable {
             document: Shared<Document>,
             downloadResult: DownloadResult? = nil,
             isOfflineSnapshot: Bool = false,
-            isTogglingFavorite: Bool = false,
+            isTogglingOffline: Bool = false,
             quickLookPreview: URL? = nil,
             server: Server
         ) {
             self.destination = destination
             self._document = document
             self.downloadResult = downloadResult
-            self._favorites = SharedReader(wrappedValue: [], .offlineDocuments(server))
+            self._offlineDocuments = SharedReader(wrappedValue: [], .offlineDocuments(server))
             self.isOfflineSnapshot = isOfflineSnapshot
-            self.isTogglingFavorite = isTogglingFavorite
+            self.isTogglingOffline = isTogglingOffline
             self.quickLookPreview = quickLookPreview
             self.server = server
             permissions = ServerPermissions(server: server)
@@ -123,11 +123,11 @@ public struct DocumentDetailReducer: Sendable {
             case let .downloadResult(result):
                 state.downloadResult = result
                 return .none
-            case let .favoriteToggleFailed(error):
-                state.isTogglingFavorite = false
+            case let .offlineToggleFailed(error):
+                state.isTogglingOffline = false
                 return .toast(error)
-            case .favoriteToggleSucceeded:
-                state.isTogglingFavorite = false
+            case .offlineToggleSucceeded:
+                state.isTogglingOffline = false
                 return .none
             case let .view(viewAction):
                 switch viewAction {
@@ -150,19 +150,19 @@ public struct DocumentDetailReducer: Sendable {
                         server: state.server
                     ))
                     return .none
-                case .favoriteButtonTapped:
+                case .saveOfflineButtonTapped:
                     // Saving means SaveOfflineDocumentUseCase's own reads run too, and a snapshot has
                     // those pinned to the record it already has — not to whatever this document
-                    // turns out to be. Unfavoriting is fine: RemoveOfflineDocumentUseCase touches none of
+                    // turns out to be. Removing is fine: RemoveOfflineDocumentUseCase touches none of
                     // the overridden dependencies. The view hides the button for the case this
                     // guards, so this is the belt to that braces.
-                    guard !state.isOfflineSnapshot || state.isFavorited else {
+                    guard !state.isOfflineSnapshot || state.isSavedOffline else {
                         return .none
                     }
-                    state.isTogglingFavorite = true
-                    return .runToggleFavorite(
+                    state.isTogglingOffline = true
+                    return .runToggleOffline(
                         document: state.document,
-                        isFavorited: state.isFavorited,
+                        isSavedOffline: state.isSavedOffline,
                         server: state.server
                     )
                 case .onAppear:
