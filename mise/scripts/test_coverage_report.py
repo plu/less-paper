@@ -15,12 +15,15 @@ from coverage_report import (
     changed_source_files,
     file_rows,
     instrumented_modules,
+    merge_modules,
     module_for_target,
     module_for_test_bundle,
     module_rows,
+    parse_previous,
     percent,
     relative_path,
     render,
+    split_counts,
 )
 
 
@@ -272,7 +275,120 @@ class RenderTests(unittest.TestCase):
         body = render([], [])
 
         self.assertTrue(body.startswith(MARKER))
-        self.assertIn("No modules were tested", body)
+        self.assertIn("No modules have been tested", body)
+
+
+class SplitCountsTests(unittest.TestCase):
+    def test_reads_a_counts_cell(self):
+        self.assertEqual(split_counts("12/17"), (12, 17))
+
+    def test_rejects_an_empty_cell(self):
+        self.assertIsNone(split_counts(""))
+
+    def test_rejects_a_cell_that_is_not_two_numbers(self):
+        self.assertIsNone(split_counts("not measured"))
+
+
+class ParsePreviousTests(unittest.TestCase):
+    def test_reads_back_a_report_this_script_rendered(self):
+        body = render(
+            [ModuleRow("Components", 10, 20), ModuleRow("DocumentsFeature", 30, 40)],
+            [
+                FileRow("Modules/Components/A.swift", 1, 2),
+                FileRow("Modules/DocumentsFeature/B.swift", None, None),
+            ],
+        )
+
+        modules, files = parse_previous(body)
+
+        self.assertEqual(
+            modules,
+            {
+                "Components": ModuleRow("Components", 10, 20),
+                "DocumentsFeature": ModuleRow("DocumentsFeature", 30, 40),
+            },
+        )
+        self.assertEqual(files["Modules/Components/A.swift"], FileRow("Modules/Components/A.swift", 1, 2))
+        self.assertIsNone(files["Modules/DocumentsFeature/B.swift"].covered)
+
+    def test_ignores_the_table_headers(self):
+        modules, _ = parse_previous(render([ModuleRow("Components", 1, 2)], []))
+
+        self.assertEqual(set(modules), {"Components"})
+
+    def test_survives_a_comment_with_no_tables(self):
+        self.assertEqual(parse_previous("nothing to see"), ({}, {}))
+
+
+class MergeModulesTests(unittest.TestCase):
+    # The reported case: three modules measured by earlier pushes, a fourth measured now.
+    def test_keeps_modules_an_earlier_push_measured(self):
+        previous = {
+            "A": ModuleRow("A", 1, 2),
+            "B": ModuleRow("B", 3, 4),
+            "C": ModuleRow("C", 5, 6),
+        }
+
+        merged = merge_modules(previous, [ModuleRow("D", 7, 8)])
+
+        self.assertEqual([row.name for row in merged], ["A", "B", "C", "D"])
+
+    def test_a_rerun_module_replaces_its_earlier_numbers(self):
+        merged = merge_modules({"A": ModuleRow("A", 1, 2)}, [ModuleRow("A", 9, 10)])
+
+        self.assertEqual(merged, [ModuleRow("A", 9, 10)])
+
+    def test_orders_the_merged_rows_by_name(self):
+        merged = merge_modules({"Z": ModuleRow("Z", 1, 2)}, [ModuleRow("A", 3, 4)])
+
+        self.assertEqual([row.name for row in merged], ["A", "Z"])
+
+
+class FileRowsCarryForwardTests(unittest.TestCase):
+    def test_carries_a_measurement_this_run_did_not_make(self):
+        rows = file_rows(
+            {"targets": []},
+            ["Modules/A/x.swift"],
+            set(),
+            ROOT,
+            {"Modules/A/x.swift": FileRow("Modules/A/x.swift", 3, 4)},
+        )
+
+        self.assertEqual(rows, [FileRow("Modules/A/x.swift", 3, 4)])
+
+    def test_this_run_beats_the_carried_measurement(self):
+        coverage = {
+            "targets": [
+                target("A.framework", 1, 2, [source_file("/repo/Modules/A/x.swift", 1, 2)])
+            ]
+        }
+
+        rows = file_rows(
+            coverage,
+            ["Modules/A/x.swift"],
+            {"A"},
+            ROOT,
+            {"Modules/A/x.swift": FileRow("Modules/A/x.swift", 99, 100)},
+        )
+
+        self.assertEqual(rows, [FileRow("Modules/A/x.swift", 1, 2)])
+
+    # A file that left the pull request is not in `changed`, so it cannot be carried forever.
+    def test_does_not_resurrect_a_file_that_is_no_longer_changed(self):
+        rows = file_rows(
+            {"targets": []},
+            [],
+            set(),
+            ROOT,
+            {"Modules/A/gone.swift": FileRow("Modules/A/gone.swift", 3, 4)},
+        )
+
+        self.assertEqual(rows, [])
+
+    def test_still_reports_not_measured_when_nothing_ever_measured_it(self):
+        rows = file_rows({"targets": []}, ["Modules/A/x.swift"], set(), ROOT, {})
+
+        self.assertEqual(rows, [FileRow("Modules/A/x.swift", None, None)])
 
 
 if __name__ == "__main__":

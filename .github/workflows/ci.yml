@@ -82,8 +82,11 @@ jobs:
       # to the run that produced it. A step summary on a green check is something nobody opens, and
       # the audience here is a reviewer who was not looking for coverage.
       #
-      # Runs even when the tests failed, so the comment always describes the current head. Leaving
-      # a table standing from two pushes ago would be read as describing this one.
+      # Runs even when the tests failed, so the comment always describes the current head. The
+      # report accumulates rather than being rebuilt: selective testing means one push measures one
+      # module, and a table showing only that module would read as if the rest had gone unmeasured.
+      # A carried row is still true for this head - a module is skipped precisely because nothing it
+      # depends on moved - and a push that does move it replaces its row.
       #
       # continue-on-error: whether the job is green is entirely a question of whether the tests
       # passed, never of whether the comment could be posted. A fork pull request gets a read-only
