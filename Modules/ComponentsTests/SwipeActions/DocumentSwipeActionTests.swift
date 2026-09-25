@@ -14,16 +14,18 @@ struct DocumentSwipeActionTests {
     }
 
     // The raw value is what reaches disk, so renaming a case silently drops that action from every
-    // stored configuration.
+    // stored configuration. `favorite` was renamed to `saveOffline` and is the one case that has
+    // been: it survives only because `init(storedRawValue:)` translates it, which
+    // `decodingTranslatesTheLegacyFavoriteRawValue` is what actually holds.
     @Test
     func rawValuesAreStable() async throws {
         #expect(DocumentSwipeAction.allCases.map(\.rawValue) == [
             "clearInboxTags",
             "delete",
             "edit",
-            "favorite",
             "openNotes",
             "preview",
+            "saveOffline",
             "share"
         ])
     }

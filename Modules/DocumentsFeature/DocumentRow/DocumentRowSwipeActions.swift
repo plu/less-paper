@@ -75,7 +75,7 @@ private extension DocumentSwipeAction {
             .deleteButtonTapped
         case .edit:
             .editButtonTapped
-        case .favorite:
+        case .saveOffline:
             .favoriteButtonTapped
         case .openNotes:
             .notesButtonTapped
@@ -86,17 +86,17 @@ private extension DocumentSwipeAction {
         }
     }
 
-    // Favorite is the one action whose button reports state rather than naming itself, the same way
-    // the context menu's does: on a document already favorited it has to read as the undo.
+    // Saving offline is the one action whose button reports state rather than naming itself, the
+    // same way the context menu's does: on a document already saved it has to read as the undo.
     func swipeImage(isFavorited: Bool) -> String {
-        guard self == .favorite, isFavorited else {
+        guard self == .saveOffline, isFavorited else {
             return systemImage
         }
-        return "heart.slash"
+        return "arrow.down.circle.fill"
     }
 
     func swipeLabel(isFavorited: Bool) -> LocalizedStringResource {
-        guard self == .favorite, isFavorited else {
+        guard self == .saveOffline, isFavorited else {
             return localized
         }
         return .unfavorite

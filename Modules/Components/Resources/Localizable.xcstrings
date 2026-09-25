@@ -222,19 +222,19 @@
         }
       }
     },
-    "swipeActionFavorite": {
+    "swipeActionOffline": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Favorit"
+            "value": "Offline"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Favorite"
+            "value": "Offline"
           }
         }
       }

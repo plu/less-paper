@@ -111,9 +111,9 @@ struct DocumentSwipeActionPlanTests {
 
     @Test
     func aPrependedActionIsNotRepeatedWhenAlsoConfigured() async throws {
-        let plan = makePlan(configured: [.favorite, .share], prepending: [.favorite])
+        let plan = makePlan(configured: [.saveOffline, .share], prepending: [.saveOffline])
 
-        #expect(plan.actions == [.favorite, .share])
+        #expect(plan.actions == [.saveOffline, .share])
     }
 
     private func makePlan(
