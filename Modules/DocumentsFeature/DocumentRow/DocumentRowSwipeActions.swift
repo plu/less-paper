@@ -50,7 +50,10 @@ extension View {
             }
             .accessibilityLabel(action.swipeLabel(isFavorited: store.isFavorited))
             .disabled(store.isBusy)
-            .tint(action.isDestructive ? .m3Error : .m3Primary)
+            // Not m3Primary/m3Error: both invert between themes, and the system draws this
+            // button's label in white regardless of what the label view asks for - so a tint that
+            // goes light in dark mode puts white on mint, or white on pale pink.
+            .tint(action.isDestructive ? .swipeActionDestructive : .swipeAction)
         }
     }
 }
