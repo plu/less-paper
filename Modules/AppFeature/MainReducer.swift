@@ -1,7 +1,7 @@
 import ApiInterface
 import ComposableArchitecture
 import DocumentsFeature
-import FavoritesFeature
+import OfflineFeature
 import SettingsFeature
 
 @Reducer
@@ -9,7 +9,7 @@ public struct MainReducer {
 
     public enum Action {
         case documentList(DocumentListReducer.Action)
-        case favoriteList(FavoriteListReducer.Action)
+        case favoriteList(OfflineListReducer.Action)
         case inbox(DocumentListReducer.Action)
         case selectedTab(AppTab)
         case settingList(SettingListReducer.Action)
@@ -20,7 +20,7 @@ public struct MainReducer {
 
         var documentList: DocumentListReducer.State
 
-        var favoriteList: FavoriteListReducer.State
+        var favoriteList: OfflineListReducer.State
 
         var inbox: DocumentListReducer.State
 
@@ -51,7 +51,7 @@ public struct MainReducer {
             DocumentListReducer()
         }
         Scope(state: \.favoriteList, action: \.favoriteList) {
-            FavoriteListReducer()
+            OfflineListReducer()
         }
         Scope(state: \.inbox, action: \.inbox) {
             DocumentListReducer()

@@ -7,8 +7,8 @@ import DocumentsFeature
 import SwiftSharing
 import SwiftUI
 
-@ViewAction(for: FavoriteRowReducer.self)
-struct FavoriteRowView: View {
+@ViewAction(for: OfflineRowReducer.self)
+struct OfflineRowView: View {
 
     var body: some View {
         AdaptiveStack(
@@ -41,7 +41,7 @@ struct FavoriteRowView: View {
     }
 
     @Bindable
-    var store: StoreOf<FavoriteRowReducer>
+    var store: StoreOf<OfflineRowReducer>
 
     @SharedReader(.documentSwipeActions)
     private var swipeActions: DocumentSwipeActionSettings
@@ -57,10 +57,10 @@ struct FavoriteRowView: View {
 
     @ViewBuilder
     private func imageView() -> some View {
-        FavoriteThumbnail(
+        OfflineThumbnail(
             url: pdfURL,
             size: imageSize,
-            storedAt: store.favorite.storedAt,
+            storedAt: store.offlineDocument.storedAt,
             renderedImage: renderedThumbnail
         )
         .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
@@ -82,8 +82,8 @@ struct FavoriteRowView: View {
 
     @ViewBuilder
     private func unavailableBadge() -> some View {
-        if store.favorite.isUnavailable {
-            Text(.favoriteUnavailable)
+        if store.offlineDocument.isUnavailable {
+            Text(.offlineUnavailable)
                 .capsule(backgroundColor: .m3Error, font: .footnote, foregroundColor: .m3OnError)
                 .padding(.x3)
         }
@@ -101,7 +101,7 @@ struct FavoriteRowView: View {
 
     private var pdfURL: URL {
         @Dependency(\.offlineStore.pdfURL) var pdfURL
-        return pdfURL(store.favorite.id, store.server)
+        return pdfURL(store.offlineDocument.id, store.server)
     }
 
     private var tags: [Tag] {
@@ -134,23 +134,23 @@ struct FavoriteRowView: View {
 
 #Preview {
     List {
-        FavoriteRowView(
+        OfflineRowView(
             store: Store(
-                initialState: FavoriteRowReducer.State(favorite: .testValue(), server: .testValue()),
+                initialState: OfflineRowReducer.State(offlineDocument: .testValue(), server: .testValue()),
                 reducer: {
-                    FavoriteRowReducer()
+                    OfflineRowReducer()
                 }
             )
         )
 
-        FavoriteRowView(
+        OfflineRowView(
             store: Store(
-                initialState: FavoriteRowReducer.State(
-                    favorite: .testValue(isUnavailable: true),
+                initialState: OfflineRowReducer.State(
+                    offlineDocument: .testValue(isUnavailable: true),
                     server: .testValue()
                 ),
                 reducer: {
-                    FavoriteRowReducer()
+                    OfflineRowReducer()
                 }
             )
         )

@@ -1,4 +1,4 @@
-@testable import FavoritesFeature
+@testable import OfflineFeature
 
 import ApiInterface
 import ComposableArchitecture
@@ -12,13 +12,13 @@ import UIKit
 @Suite(
     // The image is handed to the row directly, so this path only keys the `.task` that a synchronous
     // snapshot never runs. It has to resolve, not to point at anything.
-    .testDependencies { $0.offlineStore.pdfURL = { id, _ in URL(filePath: "/favorites/\(id).pdf") } },
+    .testDependencies { $0.offlineStore.pdfURL = { id, _ in URL(filePath: "/offline/\(id).pdf") } },
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
-struct FavoriteRowViewTests {
+struct OfflineRowViewTests {
 
-    // The reference that has to match DocumentRowViewTests. A favorite row shipped looking nothing
+    // The reference that has to match DocumentRowViewTests. An offline document row shipped looking nothing
     // like a document row because the thumbnail renders in a `.task`, which a synchronous snapshot
     // never waits for — so every other reference shows the placeholder. This one hands the image in
     // and captures the row as it actually appears.
@@ -28,7 +28,7 @@ struct FavoriteRowViewTests {
         try singlePagePDF().write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
 
-        let image = try #require(await FavoriteThumbnail.render(url: url, size: imageSize))
+        let image = try #require(await OfflineThumbnail.render(url: url, size: imageSize))
 
         assertSnapshot(
             of: row(renderedThumbnail: image),
@@ -52,13 +52,13 @@ struct FavoriteRowViewTests {
 
     private func row(renderedThumbnail: UIImage?) -> some View {
         List {
-            FavoriteRowView(
+            OfflineRowView(
                 store: Store(
-                    initialState: FavoriteRowReducer.State(
-                        favorite: .testValue(document: .testValue(id: 1, title: "Invoice")),
-                        server: .testValue(id: "favorite-row-view-tests")
+                    initialState: OfflineRowReducer.State(
+                        offlineDocument: .testValue(document: .testValue(id: 1, title: "Invoice")),
+                        server: .testValue(id: "offline-row-view-tests")
                     ),
-                    reducer: { FavoriteRowReducer() }
+                    reducer: { OfflineRowReducer() }
                 ),
                 renderedThumbnail: renderedThumbnail
             )

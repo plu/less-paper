@@ -7,7 +7,7 @@ import SwiftUI
 // over the same dim placeholder — because a favourite row sits beside document rows everywhere else
 // in the app and any difference here reads as a different kind of row rather than a different
 // source of picture.
-struct FavoriteThumbnail: View {
+struct OfflineThumbnail: View {
 
     var body: some View {
         Group {
@@ -31,7 +31,7 @@ struct FavoriteThumbnail: View {
 
     // The render happens in a `.task`, which never runs during a synchronous snapshot capture — so
     // without a way to seed the image, every reference shows the placeholder and the row's most
-    // visible element is untestable. That is how a favorite row that looked nothing like a document
+    // visible element is untestable. That is how an offline document row that looked nothing like a document
     // row reached a build. Previews use it too.
     init(url: URL, size: CGSize, storedAt: Date, renderedImage: UIImage? = nil) {
         self.url = url

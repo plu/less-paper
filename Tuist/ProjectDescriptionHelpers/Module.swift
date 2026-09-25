@@ -45,8 +45,6 @@ public enum Module: String, CaseIterable {
     case diagnosticsFeatureTests = "DiagnosticsFeatureTests"
     case documentsFeature = "DocumentsFeature"
     case documentsFeatureTests = "DocumentsFeatureTests"
-    case favoritesFeature = "FavoritesFeature"
-    case favoritesFeatureTests = "FavoritesFeatureTests"
     case fileTasksFeature = "FileTasksFeature"
     case fileTasksFeatureTests = "FileTasksFeatureTests"
     case forwardAuthFeature = "ForwardAuthFeature"
@@ -59,6 +57,8 @@ public enum Module: String, CaseIterable {
     case loggingTests = "LoggingTests"
     case marketingKit = "MarketingKit"
     case marketingKitTests = "MarketingKitTests"
+    case offlineFeature = "OfflineFeature"
+    case offlineFeatureTests = "OfflineFeatureTests"
     case pdfPasswordsFeature = "PdfPasswordsFeature"
     case pdfPasswordsFeatureTests = "PdfPasswordsFeatureTests"
     case permissionsFeature = "PermissionsFeature"
@@ -143,13 +143,13 @@ extension Module {
              .diagnosticsFeature,
              .documentTypesFeature,
              .documentsFeature,
-             .favoritesFeature,
              .fileTasksFeature,
              .forwardAuthFeature,
              .imageFeature,
              .licensesFeature,
              .logging,
              .marketingKit,
+             .offlineFeature,
              .pdfPasswordsFeature,
              .permissionsFeature,
              .savedViewsFeature,
@@ -175,13 +175,13 @@ extension Module {
              .diagnosticsFeatureTests,
              .documentTypesFeatureTests,
              .documentsFeatureTests,
-             .favoritesFeatureTests,
              .fileTasksFeatureTests,
              .forwardAuthFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
              .loggingTests,
              .marketingKitTests,
+             .offlineFeatureTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
              .savedViewsFeatureTests,
@@ -253,13 +253,13 @@ extension Module {
              .diagnosticsFeature,
              .documentTypesFeature,
              .documentsFeature,
-             .favoritesFeature,
              .fileTasksFeature,
              .forwardAuthFeature,
              .imageFeature,
              .licensesFeature,
              .logging,
              .marketingKit,
+             .offlineFeature,
              .pdfPasswordsFeature,
              .permissionsFeature,
              .savedViewsFeature,
@@ -284,13 +284,13 @@ extension Module {
              .diagnosticsFeatureTests,
              .documentTypesFeatureTests,
              .documentsFeatureTests,
-             .favoritesFeatureTests,
              .fileTasksFeatureTests,
              .forwardAuthFeatureTests,
              .imageFeatureTests,
              .licensesFeatureTests,
              .loggingTests,
              .marketingKitTests,
+             .offlineFeatureTests,
              .pdfPasswordsFeatureTests,
              .permissionsFeatureTests,
              .savedViewsFeatureTests,

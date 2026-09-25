@@ -3,26 +3,26 @@ import ComposableArchitecture
 import Foundation
 import SwiftSharing
 
-extension Effect where Action == FavoriteListReducer.Action {
+extension Effect where Action == OfflineListReducer.Action {
 
-    static func runFavoritesObserver(server: Server) -> Self {
+    static func runOfflineDocumentsObserver(server: Server) -> Self {
         @Shared(.offlineDocuments(server))
-        var favorites: IdentifiedArrayOf<OfflineDocument>
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
         return .publisher {
-            $favorites
+            $offlineDocuments
                 .publisher
                 .receive(on: RunLoop.main)
                 .removeDuplicates()
-                .map(Action.favoritesChanged)
+                .map(Action.offlineDocumentsChanged)
         }
         .cancellable(
-            id: FavoriteListCancelID.observeFavorites,
+            id: OfflineListCancelID.observeOfflineDocuments,
             cancelInFlight: true
         )
     }
 
-    static func runRefreshFavorites(server: Server) -> Self {
+    static func runRefreshOffline(server: Server) -> Self {
         @Dependency(\.refreshOffline.execute)
         var refreshOffline
 
@@ -40,6 +40,6 @@ extension Effect where Action == FavoriteListReducer.Action {
     }
 }
 
-enum FavoriteListCancelID {
-    case observeFavorites
+enum OfflineListCancelID {
+    case observeOfflineDocuments
 }

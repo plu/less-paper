@@ -6,7 +6,7 @@ import Foundation
 import Tagged
 
 @Reducer
-public struct FavoriteListReducer: Sendable {
+public struct OfflineListReducer: Sendable {
 
     @Reducer
     public enum Path {
@@ -33,10 +33,10 @@ public struct FavoriteListReducer: Sendable {
 
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
-        case favoritesChanged(IdentifiedArrayOf<OfflineDocument>)
+        case offlineDocumentsChanged(IdentifiedArrayOf<OfflineDocument>)
         case path(StackActionOf<Path>)
         case refreshResult(Result<OfflineRefreshResult, Error>)
-        case rows(IdentifiedActionOf<FavoriteRowReducer>)
+        case rows(IdentifiedActionOf<OfflineRowReducer>)
         case view(View)
 
         public enum View {
@@ -52,19 +52,19 @@ public struct FavoriteListReducer: Sendable {
         var path = StackState<Path.State>()
 
         // Stored rather than computed: `.forEach` scopes a child store out of stored state, and a
-        // computed property has nothing for it to scope. Rebuilt whenever the favorites or the
+        // computed property has nothing for it to scope. Rebuilt whenever the offline documents or the
         // search text move.
-        var rows: IdentifiedArrayOf<FavoriteRowReducer.State> = []
+        var rows: IdentifiedArrayOf<OfflineRowReducer.State> = []
 
         var searchText = ""
 
         let server: Server
 
         @Shared
-        var favorites: IdentifiedArrayOf<OfflineDocument>
+        var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
         // The `.inMemory` cache the documents and inbox lists project their rows out of. Read-side
-        // only here: a favorite carries its own copy of the document, so without this the list
+        // only here: an offline document carries its own copy of the document, so without this the list
         // would show the pre-edit copy for the rest of the session — a refresh runs on pull or on
         // foreground, and an in-session edit is neither.
         @Shared
@@ -72,19 +72,19 @@ public struct FavoriteListReducer: Sendable {
 
         public init(server: Server) {
             self.server = server
-            self._favorites = Shared(wrappedValue: [], .offlineDocuments(server))
+            self._offlineDocuments = Shared(wrappedValue: [], .offlineDocuments(server))
             self._documentCache = Shared(wrappedValue: [], .documents(server))
             rebuildRows()
         }
 
-        var visibleFavorites: IdentifiedArrayOf<OfflineDocument> {
+        var visibleOfflineDocuments: IdentifiedArrayOf<OfflineDocument> {
             guard !searchText.isEmpty else {
-                return favorites
+                return offlineDocuments
             }
 
             let needle = searchText.lowercased()
-            return favorites.filter { favorite in
-                let document = displayed(favorite)
+            return offlineDocuments.filter { offlineDocument in
+                let document = displayed(offlineDocument)
                 let haystack = [
                     document.title,
                     document.content ?? "",
@@ -98,24 +98,24 @@ public struct FavoriteListReducer: Sendable {
         }
 
         mutating func rebuildRows() {
-            rows = IdentifiedArray(uniqueElements: visibleFavorites.map { favorite in
-                FavoriteRowReducer.State(
-                    document: reference(to: favorite),
-                    favorite: favorite,
+            rows = IdentifiedArray(uniqueElements: visibleOfflineDocuments.map { offlineDocument in
+                OfflineRowReducer.State(
+                    document: reference(to: offlineDocument),
+                    offlineDocument: offlineDocument,
                     server: server
                 )
             })
         }
 
-        // The offline detail is a window onto a record: unfavoriting deletes the PDF, so the screen
+        // The offline detail is a window onto a record: removing deletes the PDF, so the screen
         // left behind can show its stored copy but nothing it re-fetches — the viewer's sections
-        // throw `.notStored` — and it has no favorite button left to undo with. It is popped
+        // throw `.notStored` — and it has no offline document button left to undo with. It is popped
         // wherever the removal came from, since the shared store is the one thing the detail's own
-        // heart, a swipe on the row and "Remove all favorites" in Settings all go through.
-        mutating func popDetailsOfRemovedFavorites() {
+        // heart, a swipe on the row and "Remove all offline documents" in Settings all go through.
+        mutating func popDetailsOfRemovedOfflineDocuments() {
             for (id, element) in zip(path.ids, path) {
                 guard case let .documentDetail(detail) = element,
-                      favorites[id: detail.document.id] == nil
+                      offlineDocuments[id: detail.document.id] == nil
                 else {
                     continue
                 }
@@ -124,14 +124,14 @@ public struct FavoriteListReducer: Sendable {
             }
         }
 
-        private func displayed(_ favorite: OfflineDocument) -> Document {
-            documentCache[id: favorite.id] ?? favorite.document
+        private func displayed(_ offlineDocument: OfflineDocument) -> Document {
+            documentCache[id: offlineDocument.id] ?? offlineDocument.document
         }
 
         // The live copy when the cache has one, the stored snapshot otherwise. A cold launch and an
         // offline session get the snapshot, which is exactly when it is the only truth available.
-        private func reference(to favorite: OfflineDocument) -> Shared<Document> {
-            Shared($documentCache[id: favorite.id]) ?? Shared(value: favorite.document)
+        private func reference(to offlineDocument: OfflineDocument) -> Shared<Document> {
+            Shared($documentCache[id: offlineDocument.id]) ?? Shared(value: offlineDocument.document)
         }
     }
 
@@ -142,8 +142,8 @@ public struct FavoriteListReducer: Sendable {
             case .binding(\.searchText):
                 state.rebuildRows()
                 return .none
-            case .favoritesChanged:
-                // Nothing is written back: the observer exists so a favorite removed by a swipe,
+            case .offlineDocumentsChanged:
+                // Nothing is written back: the observer exists so an offline document removed by a swipe,
                 // or added from the documents list, leaves and enters this list without waiting
                 // for the next appearance.
                 state.rebuildRows()
@@ -156,12 +156,12 @@ public struct FavoriteListReducer: Sendable {
                 case let .failure(error):
                     return .toast(error)
                 }
-            case let .rows(.element(id: id, action: .delegate(.open(favorite)))):
+            case let .rows(.element(id: id, action: .delegate(.open(offlineDocument)))):
                 state.path.append(.documentDetail(DocumentDetailReducer.State(
                     // The row's own reference, so an edit made in the detail reaches the row
                     // behind it rather than a copy of it.
-                    document: state.rows[id: id]?.$document ?? Shared(value: favorite.document),
-                    // A favorite is a snapshot: read everything, change nothing.
+                    document: state.rows[id: id]?.$document ?? Shared(value: offlineDocument.document),
+                    // An offline document is a snapshot: read everything, change nothing.
                     isOfflineSnapshot: true,
                     server: state.server
                 )))
@@ -169,29 +169,29 @@ public struct FavoriteListReducer: Sendable {
             case let .view(viewAction):
                 switch viewAction {
                 case .onAppear:
-                    return .runFavoritesObserver(server: state.server)
+                    return .runOfflineDocumentsObserver(server: state.server)
                 case .onDisappear:
-                    return .cancel(id: FavoriteListCancelID.observeFavorites)
+                    return .cancel(id: OfflineListCancelID.observeOfflineDocuments)
                 case .onRefresh:
                     // Nothing guards against a second pull here, and nothing needs to: the effect
                     // shares its cancel id with AppFeature's automatic refresh, so overlap is
                     // settled by `cancelInFlight`. An in-flight flag would be worse than useless —
                     // a cancelled effect delivers no result to clear it, and the list would be
                     // locked out of pull-to-refresh for the rest of the session.
-                    return .runRefreshFavorites(server: state.server)
+                    return .runRefreshOffline(server: state.server)
                 }
             case .binding, .path, .rows:
                 return .none
             }
         }
-        .forEach(\.rows, action: \.rows) { FavoriteRowReducer() }
+        .forEach(\.rows, action: \.rows) { OfflineRowReducer() }
         .forEach(\.path, action: \.path)
 
-        // Last, and on every action rather than on the few that remove a favorite: the removal can
+        // Last, and on every action rather than on the few that remove an offline document: the removal can
         // arrive from the detail's own heart, from the observer, or from another tab, and this is
         // the one place all of them are already past by the time it runs.
         Reduce { state, _ in
-            state.popDetailsOfRemovedFavorites()
+            state.popDetailsOfRemovedOfflineDocuments()
             return .none
         }
     }
@@ -199,4 +199,4 @@ public struct FavoriteListReducer: Sendable {
     public init() {}
 }
 
-extension FavoriteListReducer.Path.State: Equatable {}
+extension OfflineListReducer.Path.State: Equatable {}

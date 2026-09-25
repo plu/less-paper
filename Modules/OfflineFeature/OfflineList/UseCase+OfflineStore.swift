@@ -3,7 +3,7 @@ import ComposableArchitecture
 import Foundation
 
 // The five fetches the document detail screen makes on the way to displaying a document, answered
-// from the favorite instead of the server. Pointing the existing screen at these is what makes it
+// from the offline document instead of the server. Pointing the existing screen at these is what makes it
 // readable with no connection without a second implementation of it.
 //
 // Reads only. The writes that screen can make — updateDocument, createNote, deleteNote,
@@ -17,9 +17,9 @@ extension DownloadDocumentUseCase {
             @Dependency(\.offlineStore.pdfURL) var pdfURL
 
             @Shared(.offlineDocuments(server))
-            var favorites: IdentifiedArrayOf<OfflineDocument>
+            var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
-            guard favorites[id: id] != nil else {
+            guard offlineDocuments[id: id] != nil else {
                 throw OfflineStoreError.notStored
             }
             return try Data(contentsOf: pdfURL(id, server))
@@ -35,9 +35,9 @@ extension GetDocumentUseCase {
     static var offlineStore: Self {
         Self(execute: { id, server in
             @Shared(.offlineDocuments(server))
-            var favorites: IdentifiedArrayOf<OfflineDocument>
+            var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
-            guard let document = favorites[id: id]?.document else {
+            guard let document = offlineDocuments[id: id]?.document else {
                 throw OfflineStoreError.notStored
             }
             return document
@@ -47,14 +47,14 @@ extension GetDocumentUseCase {
 
 extension GetDocumentsByIdsUseCase {
 
-    // Whichever of the requested ids are themselves favorites. A linked document that was never
-    // favorited cannot resolve offline; showing the ones that are beats failing the whole section.
+    // Whichever of the requested ids are themselves offline documents. A linked document that was never
+    // saved offline cannot resolve there; showing the ones that are beats failing the whole section.
     static var offlineStore: Self {
         Self(execute: { input, server in
             @Shared(.offlineDocuments(server))
-            var favorites: IdentifiedArrayOf<OfflineDocument>
+            var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
-            return input.ids.compactMap { favorites[id: $0]?.document }
+            return input.ids.compactMap { offlineDocuments[id: $0]?.document }
         })
     }
 }
@@ -64,9 +64,9 @@ extension GetDocumentMetadataUseCase {
     static var offlineStore: Self {
         Self(execute: { id, server in
             @Shared(.offlineDocuments(server))
-            var favorites: IdentifiedArrayOf<OfflineDocument>
+            var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
-            guard let metadata = favorites[id: id]?.metadata else {
+            guard let metadata = offlineDocuments[id: id]?.metadata else {
                 throw OfflineStoreError.notStored
             }
             return metadata
@@ -82,9 +82,9 @@ extension GetNotesUseCase {
     static var offlineStore: Self {
         Self(execute: { id, server in
             @Shared(.offlineDocuments(server))
-            var favorites: IdentifiedArrayOf<OfflineDocument>
+            var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
-            return favorites[id: id]?.notes ?? []
+            return offlineDocuments[id: id]?.notes ?? []
         })
     }
 }

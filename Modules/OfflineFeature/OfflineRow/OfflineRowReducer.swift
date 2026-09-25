@@ -5,20 +5,20 @@ import Foundation
 import Tagged
 
 @Reducer
-public struct FavoriteRowReducer: Sendable {
+public struct OfflineRowReducer: Sendable {
 
     @ObservableState
     public struct State: Equatable, Identifiable {
 
-        public var id: Document.Id { favorite.id }
+        public var id: Document.Id { offlineDocument.id }
 
-        // What the row renders, which is not always `favorite.document`: the list hands over the
+        // What the row renders, which is not always `offline document.document`: the list hands over the
         // live cache entry where there is one, so an edit made elsewhere in the session shows here
         // too. The stored copy is what a cold launch and an offline session get.
         @Shared
         var document: Document
 
-        var favorite: OfflineDocument
+        var offlineDocument: OfflineDocument
 
         // The document list's row, scoped in only for what a swipe can do. Its own tap and its
         // delegates are not wired: this list opens rows its own way, and the one delegate that has
@@ -27,17 +27,17 @@ public struct FavoriteRowReducer: Sendable {
 
         let server: Server
 
-        public init(document: Shared<Document>, favorite: OfflineDocument, server: Server) {
+        public init(document: Shared<Document>, offlineDocument: OfflineDocument, server: Server) {
             self._document = document
-            self.favorite = favorite
+            self.offlineDocument = offlineDocument
             self.row = DocumentRowReducer.State(document: document, server: server)
             self.server = server
         }
 
-        public init(favorite: OfflineDocument, server: Server) {
+        public init(offlineDocument: OfflineDocument, server: Server) {
             self.init(
-                document: Shared(value: favorite.document),
-                favorite: favorite,
+                document: Shared(value: offlineDocument.document),
+                offlineDocument: offlineDocument,
                 server: server
             )
         }
@@ -55,7 +55,7 @@ public struct FavoriteRowReducer: Sendable {
 
         public enum View {
             case rowTapped
-            case unfavoriteButtonTapped
+            case removeFromOfflineButtonTapped
         }
     }
 
@@ -82,8 +82,8 @@ public struct FavoriteRowReducer: Sendable {
             case .row:
                 return .none
             case .view(.rowTapped):
-                return .send(.delegate(.open(state.favorite)))
-            case .view(.unfavoriteButtonTapped):
+                return .send(.delegate(.open(state.offlineDocument)))
+            case .view(.removeFromOfflineButtonTapped):
                 let id = state.id
                 let server = state.server
                 return .run { _ in
