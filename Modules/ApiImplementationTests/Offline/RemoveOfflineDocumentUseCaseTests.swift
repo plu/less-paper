@@ -37,9 +37,9 @@ struct RemoveOfflineDocumentUseCaseTests {
 
     // The record goes first so that a `.refreshExisting` save cannot pass its in-lock membership
     // check after the file is already gone and write a record pointing at nothing. That ordering
-    // means a failed file delete leaves the bytes behind rather than the record — an untracked
-    // file wastes space, an untracked-PDF record is an offline document that cannot be opened offline. The
-    // error still propagates, so the caller learns the storage total is now wrong.
+    // means a failed file delete leaves the bytes behind rather than the record — an untracked file
+    // wastes space, an untracked-PDF record is an offline document that cannot be opened offline.
+    // The error still propagates, so the caller learns the storage total is now wrong.
     @Test
     func test_removesTheRecordEvenWhenTheDeleteFails() async {
         let server = Self.server("delete-fails")

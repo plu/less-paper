@@ -52,8 +52,8 @@ public struct OfflineListReducer: Sendable {
         var path = StackState<Path.State>()
 
         // Stored rather than computed: `.forEach` scopes a child store out of stored state, and a
-        // computed property has nothing for it to scope. Rebuilt whenever the offline documents or the
-        // search text move.
+        // computed property has nothing for it to scope. Rebuilt whenever the offline documents or
+        // the search text move.
         var rows: IdentifiedArrayOf<OfflineRowReducer.State> = []
 
         var searchText = ""
@@ -64,9 +64,9 @@ public struct OfflineListReducer: Sendable {
         var offlineDocuments: IdentifiedArrayOf<OfflineDocument>
 
         // The `.inMemory` cache the documents and inbox lists project their rows out of. Read-side
-        // only here: an offline document carries its own copy of the document, so without this the list
-        // would show the pre-edit copy for the rest of the session — a refresh runs on pull or on
-        // foreground, and an in-session edit is neither.
+        // only here: an offline document carries its own copy of the document, so without this the
+        // list would show the pre-edit copy for the rest of the session — a refresh runs on pull or
+        // on foreground, and an in-session edit is neither.
         @Shared
         var documentCache: IdentifiedArrayOf<Document>
 
@@ -143,9 +143,9 @@ public struct OfflineListReducer: Sendable {
                 state.rebuildRows()
                 return .none
             case .offlineDocumentsChanged:
-                // Nothing is written back: the observer exists so an offline document removed by a swipe,
-                // or added from the documents list, leaves and enters this list without waiting
-                // for the next appearance.
+                // Nothing is written back: the observer exists so an offline document removed by a
+                // swipe, or added from the documents list, leaves and enters this list without
+                // waiting for the next appearance.
                 state.rebuildRows()
                 return .none
             case let .refreshResult(result):

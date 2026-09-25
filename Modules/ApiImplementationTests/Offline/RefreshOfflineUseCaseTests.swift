@@ -134,9 +134,9 @@ struct RefreshOfflineUseCaseTests {
         #expect(result.unavailable == 1)
     }
 
-    // The count is what the manual refresh reports, and it reports news: an offline document already badged
-    // stays badged and stays silent, or one deleted document would push an error toast ahead of
-    // every later "N offline documents updated".
+    // The count is what the manual refresh reports, and it reports news: an offline document
+    // already badged stays badged and stays silent, or one deleted document would push an error
+    // toast ahead of every later "N offline documents updated".
     @Test
     func test_anOfflineDocumentAlreadyUnavailableIsNotCountedAgain() async throws {
         let server = Self.server("already-unavailable")
@@ -159,7 +159,8 @@ struct RefreshOfflineUseCaseTests {
     }
 
     // The one that matters most: a failed request knows nothing about what the server holds.
-    // Marking on failure would badge every offline document the first time the app opens on a plane.
+    // Marking on failure would badge every offline document the first time the app opens on a
+    // plane.
     @Test
     func test_aFailedPhaseOneMarksNothing() async {
         let server = Self.server("failed-phase-one")
@@ -203,8 +204,8 @@ struct RefreshOfflineUseCaseTests {
     }
 
     // Phase one works from a snapshot taken before the request. Writing that snapshot back
-    // wholesale would resurrect an offline document the user removed while the request was in flight —
-    // as a record pointing at a PDF `RemoveOfflineDocumentUseCase` has already deleted.
+    // wholesale would resurrect an offline document the user removed while the request was in
+    // flight — as a record pointing at a PDF `RemoveOfflineDocumentUseCase` has already deleted.
     @Test
     func test_anOfflineDocumentRemovedDuringPhaseOneIsNotResurrected() async throws {
         let server = Self.server("removed-mid-flight")
@@ -251,8 +252,8 @@ struct RefreshOfflineUseCaseTests {
 
     // A failed phase two must not hide itself. Phase one has already stored the server's new
     // `modified`, so a gate comparing against that would find them equal on the next refresh and
-    // never retry the notes, metadata and PDF that failed to download — the offline document would stay
-    // stale until someone hit "Redownload all".
+    // never retry the notes, metadata and PDF that failed to download — the offline document
+    // would stay stale until someone hit "Redownload all".
     @Test
     func test_aFailedSaveIsRetriedByTheNextRefresh() async throws {
         let server = Self.server("failed-save-retried")

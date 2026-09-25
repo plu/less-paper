@@ -11,7 +11,7 @@ extension SaveOfflineDocumentUseCase: @retroactive DependencyKey {
 
 private extension SaveOfflineDocumentUseCase {
 
-    static func execute(document: Document, server: Server, mode: SaveOfflineMode) async throws {
+    static func execute(document: Document, server: Server, mode: SaveOfflineDocumentMode) async throws {
         @Dependency(\.date.now) var now
         @Dependency(\.downloadDocument.execute) var downloadDocument
         @Dependency(\.offlineStore) var store
@@ -23,8 +23,8 @@ private extension SaveOfflineDocumentUseCase {
         // half-written offline document.
 
         // The document handed in came from a list response, which paperless truncates
-        // (`truncate_content=true`), so its `content` is a preview. An offline document has to hold the whole
-        // thing or the offline viewer shows partial text and says nothing about it.
+        // (`truncate_content=true`), so its `content` is a preview. An offline document has to hold
+        // the whole thing or the offline viewer shows partial text and says nothing about it.
         let full = try await getDocument(document.id, server)
         let notes = try await getNotes(document.id, server)
         let metadata = try await getMetadata(document.id, server)
@@ -33,8 +33,8 @@ private extension SaveOfflineDocumentUseCase {
 
         @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
 
-        // Checked and written under one lock: a refresh must not resurrect an offline document the user
-        // removed while the fetch above was in flight, and a remove must not be able to land
+        // Checked and written under one lock: a refresh must not resurrect an offline document the
+        // user removed while the fetch above was in flight, and a remove must not be able to land
         // between the check and the write.
         let wrote = $offlineDocuments.withLock { offlineDocuments -> Bool in
             guard mode == .add || offlineDocuments[id: document.id] != nil else {

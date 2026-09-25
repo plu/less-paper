@@ -10,18 +10,18 @@ import UIKit
 
 @MainActor
 @Suite(
-    // The image is handed to the row directly, so this path only keys the `.task` that a synchronous
-    // snapshot never runs. It has to resolve, not to point at anything.
+    // The image is handed to the row directly, so this path only keys the `.task` that a
+    // synchronous snapshot never runs. It has to resolve, not to point at anything.
     .testDependencies { $0.offlineStore.pdfURL = { id, _ in URL(filePath: "/offline/\(id).pdf") } },
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
 struct OfflineRowViewTests {
 
-    // The reference that has to match DocumentRowViewTests. An offline document row shipped looking nothing
-    // like a document row because the thumbnail renders in a `.task`, which a synchronous snapshot
-    // never waits for — so every other reference shows the placeholder. This one hands the image in
-    // and captures the row as it actually appears.
+    // The reference that has to match DocumentRowViewTests. An offline document row shipped
+    // looking nothing like a document row because the thumbnail renders in a `.task`, which a
+    // synchronous snapshot never waits for — so every other reference shows the placeholder. This
+    // one hands the image in and captures the row as it actually appears.
     @Test
     func testSnapshot_withThumbnail() async throws {
         let url = URL.temporaryDirectory.appending(component: "\(UUID().uuidString).pdf")

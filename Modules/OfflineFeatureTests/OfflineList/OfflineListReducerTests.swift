@@ -141,9 +141,9 @@ struct OfflineListReducerTests {
         #expect(store.state.rows[id: 1]?.document.title == "Stored")
     }
 
-    // A swipe on a row, or a document saved offline from another tab, writes the shared store rather
-    // than this reducer's state. The observer started by `onAppear` is what carries that back, so
-    // the list does not have to wait for its next appearance to show it.
+    // A swipe on a row, or a document saved offline from another tab, writes the shared store
+    // rather than this reducer's state. The observer started by `onAppear` is what carries that
+    // back, so the list does not have to wait for its next appearance to show it.
     @Test
     func test_anOfflineDocumentsChangeRebuildsTheRows() async {
         let server = Server.testValue(id: "offline-documents-change-rebuilds-the-rows")
@@ -230,7 +230,8 @@ struct OfflineListReducerTests {
 
     // The detail screen is the network screen, run against the record. It opens the detail and each
     // of the viewer's four sections, which between them reach the five read dependencies the Path
-    // overrides: downloadDocument, getDocument, getDocumentMetadata, getDocumentsByIds and getNotes.
+    // overrides: downloadDocument, getDocument, getDocumentMetadata, getDocumentsByIds and
+    // getNotes.
     //
     // What it catches: a new call site of any of those five, from anywhere the detail screen
     // reaches, and — if the loop below is extended with it — a new viewer section.
@@ -238,8 +239,8 @@ struct OfflineListReducerTests {
     // What it cannot catch, because there is no choke point to assert on: a *newly introduced*
     // dependency. The count works by stubbing five named use cases, and a sixth would fall through
     // to its own `testValue` — every use case in this codebase ships a working one rather than an
-    // unimplemented trap (`GetDocumentUseCase.testValue` returns `Document.testValue()`), so the new
-    // call would hand back fixture data, increment nothing, and leave this test green while the
+    // unimplemented trap (`GetDocumentUseCase.testValue` returns `Document.testValue()`), so the
+    // new call would hand back fixture data, increment nothing, and leave this test green while the
     // offline screen broke. Adding a dependency to the detail screen means adding it here too.
     @Test
     func test_theDetailScreenReadsFromTheStoreRatherThanTheNetwork() async throws {

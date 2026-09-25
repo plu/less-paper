@@ -158,9 +158,9 @@ public struct SettingListView: View {
                 }
 
                 // Nothing in here reaches the server. Offline documents are files downloaded onto
-                // this phone, PDF passwords live in its keychain, and the swipe actions are a preference
-                // held for the app rather than per account - which is why PDF passwords is no
-                // longer filed beside the server's own lists.
+                // this phone, PDF passwords live in its keychain, and the swipe actions are a
+                // preference held for the app rather than per account - which is why PDF passwords
+                // is no longer filed beside the server's own lists.
                 Section {
                     NavigationLink(
                         state: SettingListReducer.Path.State.offlineSettings(OfflineSettingsReducer.State(server: store.server))

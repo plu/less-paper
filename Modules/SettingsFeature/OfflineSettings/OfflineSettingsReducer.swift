@@ -63,11 +63,11 @@ public struct OfflineSettingsReducer: Sendable {
             case .removeConfirmed:
                 state.isWorking = true
                 return .run { [server = state.server] send in
-                    // The records go first, as in RemoveOfflineDocumentUseCase. Deleting the files first
-                    // leaves a window in which a refresh's save, already past its download, still
-                    // sees its record, writes its PDF and recreates the directory being cleared.
-                    // Dropping the records first means that save fails its own membership check and
-                    // cleans up after itself instead.
+                    // The records go first, as in RemoveOfflineDocumentUseCase. Deleting the files
+                    // first leaves a window in which a refresh's save, already past its download,
+                    // still sees its record, writes its PDF and recreates the directory being
+                    // cleared. Dropping the records first means that save fails its own membership
+                    // check and cleans up after itself instead.
                     @Shared(.offlineDocuments(server)) var offlineDocuments: IdentifiedArrayOf<OfflineDocument> = []
                     $offlineDocuments.withLock { $0.removeAll() }
 

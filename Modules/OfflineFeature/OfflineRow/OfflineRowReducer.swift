@@ -12,9 +12,9 @@ public struct OfflineRowReducer: Sendable {
 
         public var id: Document.Id { offlineDocument.id }
 
-        // What the row renders, which is not always `offline document.document`: the list hands over the
-        // live cache entry where there is one, so an edit made elsewhere in the session shows here
-        // too. The stored copy is what a cold launch and an offline session get.
+        // What the row renders, which is not always `offline document.document`: the list hands
+        // over the live cache entry where there is one, so an edit made elsewhere in the session
+        // shows here too. The stored copy is what a cold launch and an offline session get.
         @Shared
         var document: Document
 

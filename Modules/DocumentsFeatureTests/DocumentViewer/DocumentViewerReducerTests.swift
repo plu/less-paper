@@ -240,9 +240,9 @@ struct DocumentViewerReducerTests {
         }
     }
 
-    // A viewer opened from an offline document's detail is itself a snapshot, and a linked document reached
-    // through it is not the document the Offline tab already vouched for — its own edit form must
-    // stay just as unreachable.
+    // A viewer opened from an offline document's detail is itself a snapshot, and a linked document
+    // reached through it is not the document the Offline tab already vouched for — its own edit
+    // form must stay just as unreachable.
     @Test
     func openingALinkFromAnOfflineSnapshotCarriesTheFlagIntoTheLinkedDetail() async throws {
         let linked = Document.testValue(id: 2, title: "Contract")

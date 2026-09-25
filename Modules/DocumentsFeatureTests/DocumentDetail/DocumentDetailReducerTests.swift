@@ -189,8 +189,8 @@ struct DocumentDetailReducerTests {
         #expect(toasts.value == [.error("Something went wrong")])
     }
 
-    // A snapshot without network cannot honor an add: SaveOfflineDocumentUseCase's own reads would run
-    // through the same overridden dependencies as everything else on this screen, and there is
+    // A snapshot without network cannot honor an add: SaveOfflineDocumentUseCase's own reads would
+    // run through the same overridden dependencies as everything else on this screen, and there is
     // nothing behind them for a document that was never saved as this one. The view hides the
     // button for this case; this is the reducer holding the same line if something taps anyway.
     @Test

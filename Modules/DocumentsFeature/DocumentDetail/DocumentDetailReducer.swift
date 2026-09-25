@@ -62,10 +62,10 @@ public struct DocumentDetailReducer: Sendable {
             offlineDocuments[id: document.id] != nil
         }
 
-        // An offline document is a snapshot: it reads what was saved, and every user-initiated write the
-        // detail path can otherwise reach — the edit form's save, its ASN lookup, its notes
-        // composer and delete, its document picker — must stay unreachable, since none of those
-        // dependencies are among the ones the Offline tab overrides for reading.
+        // An offline document is a snapshot: it reads what was saved, and every user-initiated
+        // write the detail path can otherwise reach — the edit form's save, its ASN lookup, its
+        // notes composer and delete, its document picker — must stay unreachable, since none of
+        // those dependencies are among the ones the Offline tab overrides for reading.
         let isOfflineSnapshot: Bool
 
         var isTogglingOffline = false
@@ -151,10 +151,10 @@ public struct DocumentDetailReducer: Sendable {
                     ))
                     return .none
                 case .saveOfflineButtonTapped:
-                    // Saving means SaveOfflineDocumentUseCase's own reads run too, and a snapshot has
-                    // those pinned to the record it already has — not to whatever this document
-                    // turns out to be. Removing is fine: RemoveOfflineDocumentUseCase touches none of
-                    // the overridden dependencies. The view hides the button for the case this
+                    // Saving means SaveOfflineDocumentUseCase's own reads run too, and a snapshot
+                    // has those pinned to the record it already has — not to whatever this document
+                    // turns out to be. Removing is fine: RemoveOfflineDocumentUseCase touches none
+                    // of the overridden dependencies. The view hides the button for the case this
                     // guards, so this is the belt to that braces.
                     guard !state.isOfflineSnapshot || state.isSavedOffline else {
                         return .none

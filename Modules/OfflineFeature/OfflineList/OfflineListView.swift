@@ -59,9 +59,9 @@ public struct OfflineListView: View {
     @Bindable
     public var store: StoreOf<OfflineListReducer>
 
-    // Two different nothings: nothing saved offline yet, which is worth explaining, and a search that
-    // matched none of what is here, which is not. Without the second a filtered-out list is a blank
-    // screen that looks like the offline documents have gone.
+    // Two different nothings: nothing saved offline yet, which is worth explaining, and a search
+    // that matched none of what is here, which is not. Without the second a filtered-out list is a
+    // blank screen that looks like the offline documents have gone.
     @ViewBuilder
     private func emptyListView() -> some View {
         if store.offlineDocuments.isEmpty {

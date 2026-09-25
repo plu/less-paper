@@ -46,8 +46,8 @@ struct OfflineListViewTests {
         )
     }
 
-    // A search that matches nothing is not the same nothing as having no offline documents, and the two
-    // states are one `else if` apart — which is what makes a reference worth having for each.
+    // A search that matches nothing is not the same nothing as having no offline documents, and the
+    // two states are one `else if` apart — which is what makes a reference worth having for each.
     @Test
     func testSnapshot_noSearchResults() async throws {
         let server = Server.testValue(id: "snapshot-no-search-results")
@@ -70,8 +70,8 @@ struct OfflineListViewTests {
         )
     }
 
-    // The badge only shows on an offline document the last refresh could not find on the server, which is
-    // the one row state no other reference covers.
+    // The badge only shows on an offline document the last refresh could not find on the server,
+    // which is the one row state no other reference covers.
     @Test
     func testSnapshot_unavailable() async throws {
         let server = Server.testValue(id: "snapshot-unavailable")

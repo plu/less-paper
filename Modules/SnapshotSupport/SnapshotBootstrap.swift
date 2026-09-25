@@ -91,8 +91,8 @@ public extension DependencyValues {
             return .snapshotDocument(named: document.title)
         }
 
-        // Settings reports the space the offline documents take. Summing the real files keeps that figure
-        // honest rather than photographing a zero.
+        // Settings reports the space the offline documents take. Summing the real files keeps that
+        // figure honest rather than photographing a zero.
         offlineStore.totalByteCount = { _ in
             corpus.offlineDocumentIds
                 .compactMap { id in documents.first { $0.id == id } }

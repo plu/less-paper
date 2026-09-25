@@ -45,18 +45,19 @@ private extension RefreshOfflineUseCase {
 
         $offlineDocuments.withLock { offlineDocuments in
             for offlineDocument in stored {
-                // `stored` is a snapshot taken before the request. An offline document removed while it was
-                // in flight must stay removed: writing it back would leave a record pointing at a
-                // PDF `RemoveOfflineDocumentUseCase` has already deleted.
+                // `stored` is a snapshot taken before the request. An offline document removed
+                // while it was in flight must stay removed: writing it back would leave a
+                // record pointing at a PDF `RemoveOfflineDocumentUseCase` has already deleted.
                 guard offlineDocuments[id: offlineDocument.id] != nil else {
                     continue
                 }
 
                 guard let document = fresh[offlineDocument.id] else {
-                    // The flag is set either way; only the transition is counted. An offline document that
-                    // was already missing is not news, and reporting it again would put an error
-                    // toast ahead of "N offline documents updated" on every manual refresh from here on —
-                    // the same stale complaint forever, and never a word about the real work.
+                    // The flag is set either way; only the transition is counted. An offline
+                    // document that was already missing is not news, and reporting it again would
+                    // put an error toast ahead of "N offline documents updated" on every manual
+                    // refresh from here on — the same stale complaint forever, and never a word
+                    // about the real work.
                     if !offlineDocument.isUnavailable {
                         unavailable += 1
                     }

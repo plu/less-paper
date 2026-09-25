@@ -31,8 +31,8 @@ struct OfflineThumbnail: View {
 
     // The render happens in a `.task`, which never runs during a synchronous snapshot capture — so
     // without a way to seed the image, every reference shows the placeholder and the row's most
-    // visible element is untestable. That is how an offline document row that looked nothing like a document
-    // row reached a build. Previews use it too.
+    // visible element is untestable. That is how an offline document row that looked nothing like a
+    // document row reached a build. Previews use it too.
     init(url: URL, size: CGSize, storedAt: Date, renderedImage: UIImage? = nil) {
         self.url = url
         self.size = size

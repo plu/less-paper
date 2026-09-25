@@ -70,8 +70,8 @@ struct SaveOfflineDocumentUseCaseTests {
         #expect($offlineDocuments.wrappedValue[id: 7]?.document.content == full.content)
     }
 
-    // A failed download must leave nothing behind: a record without its PDF is an offline document that
-    // cannot be read offline, which is the one thing it exists to do.
+    // A failed download must leave nothing behind: a record without its PDF is an offline document
+    // that cannot be read offline, which is the one thing it exists to do.
     @Test
     func test_writesNoRecordWhenTheDownloadFails() async {
         let server = Self.server("download-fails")
@@ -93,8 +93,8 @@ struct SaveOfflineDocumentUseCaseTests {
         #expect($offlineDocuments.wrappedValue.isEmpty)
     }
 
-    // A refresh must not put back an offline document the user removed while its fetch was in flight, and
-    // losing that race must not strand the PDF the save had already written.
+    // A refresh must not put back an offline document the user removed while its fetch was in
+    // flight, and losing that race must not strand the PDF the save had already written.
     @Test
     func test_aRefreshSaveDoesNotResurrectAnOfflineDocumentRemovedMidFlight() async throws {
         let server = Self.server("removed-mid-save")
