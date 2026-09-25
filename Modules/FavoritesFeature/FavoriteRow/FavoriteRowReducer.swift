@@ -1,5 +1,6 @@
 import ApiInterface
 import ComposableArchitecture
+import DocumentsFeature
 import Foundation
 import Tagged
 
@@ -18,11 +19,18 @@ public struct FavoriteRowReducer: Sendable {
         var document: Document
 
         var favorite: FavoriteDocument
+
+        // The document list's row, scoped in only for what a swipe can do. Its own tap and its
+        // delegates are not wired: this list opens rows its own way, and the one delegate that has
+        // to be answered - delete - is handled below.
+        var row: DocumentRowReducer.State
+
         let server: Server
 
         public init(document: Shared<Document>, favorite: FavoriteDocument, server: Server) {
             self._document = document
             self.favorite = favorite
+            self.row = DocumentRowReducer.State(document: document, server: server)
             self.server = server
         }
 
@@ -37,6 +45,7 @@ public struct FavoriteRowReducer: Sendable {
 
     public enum Action: ViewAction {
         case delegate(Delegate)
+        case row(DocumentRowReducer.Action)
         case view(View)
 
         @CasePathable
@@ -51,9 +60,26 @@ public struct FavoriteRowReducer: Sendable {
     }
 
     public var body: some ReducerOf<Self> {
+        Scope(state: \.row, action: \.row) {
+            DocumentRowReducer()
+        }
         Reduce { state, action in
             switch action {
             case .delegate:
+                return .none
+            // The row asks; this list is the only thing here that can answer. Without it a Delete
+            // swipe would raise its confirmation, be confirmed, and do nothing at all.
+            case .row(.delegate(.deleteDocument)):
+                let id = state.id
+                let server = state.server
+                return .run { _ in
+                    @Dependency(\.deleteDocuments.execute)
+                    var deleteDocuments
+                    try await deleteDocuments([id], server)
+                } catch: { error, _ in
+                    reportIssue(error)
+                }
+            case .row:
                 return .none
             case .view(.rowTapped):
                 return .send(.delegate(.open(state.favorite)))

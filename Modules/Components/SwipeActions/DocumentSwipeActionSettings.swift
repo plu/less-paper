@@ -3,63 +3,38 @@ import SwiftSharing
 
 public struct DocumentSwipeActionSettings: Codable, Equatable, Sendable {
 
-    public struct Edges: Equatable, Sendable {
-        public var leading: [DocumentSwipeAction]
-        public var trailing: [DocumentSwipeAction]
-
-        public init(
-            leading: [DocumentSwipeAction],
-            trailing: [DocumentSwipeAction]
-        ) {
-            self.leading = leading
-            self.trailing = trailing
-        }
-    }
-
     // A third button is a menu the user has to stop and read, and a full swipe only ever fires the
     // first one anyway. The long-press menu is where the complete list already lives.
     public static let maximumActionsPerEdge = 2
 
-    public var documents: Edges
-    public var inbox: Edges
-
-    private enum CodingKeys: String, CodingKey {
-        case documents, inbox
-    }
-
-    public init(
-        documents: Edges = .init(leading: [.edit], trailing: [.clearInboxTags]),
-        inbox: Edges = .init(leading: [.edit], trailing: [.clearInboxTags])
-    ) {
-        self.documents = documents
-        self.inbox = inbox
-    }
-
-    // Absent keys fall back to the defaults for the same reason the edges tolerate unknown actions:
-    // a file written by a newer build must cost the user only the part this one cannot read.
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let defaults = Self()
-        documents = try container.decodeIfPresent(Edges.self, forKey: .documents) ?? defaults.documents
-        inbox = try container.decodeIfPresent(Edges.self, forKey: .inbox) ?? defaults.inbox
-    }
-}
-
-extension DocumentSwipeActionSettings.Edges: Codable {
+    // One configuration for every document list. The lists show the same rows, and a swipe is worth
+    // having only once you have stopped looking at it - which a binding that changes between screens
+    // never lets you do.
+    public var leading: [DocumentSwipeAction]
+    public var trailing: [DocumentSwipeAction]
 
     private enum CodingKeys: String, CodingKey {
         case leading, trailing
     }
 
-    // Decoded through the raw strings rather than the enum: a synthesised decoder throws on a case
-    // it does not know, which would discard the whole preference rather than the one action a newer
-    // build named.
+    public init(
+        leading: [DocumentSwipeAction] = [.edit],
+        trailing: [DocumentSwipeAction] = [.share]
+    ) {
+        self.leading = leading
+        self.trailing = trailing
+    }
+
+    // Decoded through the raw strings rather than the enum, and every key optional: a synthesised
+    // decoder throws on a case or a key it does not know, which would discard the whole preference
+    // rather than the one part a newer build wrote.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = Self()
         leading = try container.decodeIfPresent([String].self, forKey: .leading)?
-            .compactMap(DocumentSwipeAction.init(rawValue:)) ?? []
+            .compactMap(DocumentSwipeAction.init(rawValue:)) ?? defaults.leading
         trailing = try container.decodeIfPresent([String].self, forKey: .trailing)?
-            .compactMap(DocumentSwipeAction.init(rawValue:)) ?? []
+            .compactMap(DocumentSwipeAction.init(rawValue:)) ?? defaults.trailing
     }
 
     public func encode(to encoder: Encoder) throws {

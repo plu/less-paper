@@ -12,6 +12,14 @@ public enum DocumentSwipeAction: String, CaseIterable, Codable, Equatable, Senda
     case share
 }
 
+public extension DocumentSwipeAction {
+
+    // Clearing inbox tags is not among these. It is offered automatically, and only on a document
+    // that actually has inbox tags, so putting it in Settings would ask the user to choose
+    // something that is neither theirs to turn off nor meaningful on most rows.
+    static let configurable = allCases.filter { $0 != .clearInboxTags }
+}
+
 extension DocumentSwipeAction: Localizable {
 
     public var localized: LocalizedStringResource {

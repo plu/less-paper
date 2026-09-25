@@ -8,10 +8,16 @@ public struct SwipeActionSettingsView: View {
 
     public var body: some View {
         List {
-            section(.swipeActionsInboxLeading, screen: .inbox, edge: .leading)
-            section(.swipeActionsInboxTrailing, screen: .inbox, edge: .trailing)
-            section(.swipeActionsDocumentsLeading, screen: .documents, edge: .leading)
-            section(.swipeActionsDocumentsTrailing, screen: .documents, edge: .trailing)
+            section(
+                .swipeActionsLeading,
+                footer: .swipeActionsLeadingFooter,
+                edge: .leading
+            )
+            section(
+                .swipeActionsTrailing,
+                footer: .swipeActionsTrailingFooter,
+                edge: .trailing
+            )
             Section {
                 Button(role: .destructive) {
                     send(.resetButtonTapped)
@@ -37,14 +43,14 @@ public struct SwipeActionSettingsView: View {
     @ViewBuilder
     private func section(
         _ title: LocalizedStringResource,
-        screen: SwipeActionSettingsReducer.Screen,
+        footer: LocalizedStringResource,
         edge: SwipeActionSettingsReducer.Edge
     ) -> some View {
-        let selected = store.settings[screen, edge]
+        let selected = store.settings[edge]
         Section {
-            ForEach(DocumentSwipeAction.allCases, id: \.self) { action in
+            ForEach(DocumentSwipeAction.configurable, id: \.self) { action in
                 Button {
-                    send(.actionTapped(screen: screen, edge: edge, action: action))
+                    send(.actionTapped(edge: edge, action: action))
                 } label: {
                     HStack {
                         Label {
@@ -72,7 +78,7 @@ public struct SwipeActionSettingsView: View {
         } header: {
             Text(title)
         } footer: {
-            Text(.swipeActionsFooter)
+            Text(footer)
         }
     }
 }

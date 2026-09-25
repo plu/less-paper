@@ -37,7 +37,7 @@ public struct InboxView: View {
                         .onAppear { send(.onRowAppear(rowStore.document)) }
                         .padding(.x3)
                         .documentSwipeActions(
-                            edges: swipeActions.inbox,
+                            settings: swipeActions,
                             isSelecting: store.documentSelection.isActive,
                             store: rowStore
                         )

@@ -134,7 +134,7 @@ public struct DocumentRowReducer: Sendable {
             return titleLineLimit
         }
 
-        init(
+        public init(
             destination: Destination.State? = nil,
             document: Shared<Document>,
             downloadedURL: URL? = nil,
@@ -159,6 +159,8 @@ public struct DocumentRowReducer: Sendable {
             permissions = ServerPermissions(server: server)
         }
     }
+
+    public init() {}
 
     public var body: some ReducerOf<Self> {
         BindingReducer()

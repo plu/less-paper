@@ -464,87 +464,36 @@
         }
       }
     },
-    "swipeActionsDocumentsLeading": {
+    "swipeActionsLeading": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dokumente — nach rechts"
+            "value": "Nach rechts wischen"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Documents — swipe right"
+            "value": "Swipe right"
           }
         }
       }
     },
-    "swipeActionsDocumentsTrailing": {
+    "swipeActionsLeadingFooter": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dokumente — nach links"
+            "value": "Bis zu zwei Aktionen. Eine volle Wischgeste führt die erste aus. In Favoriten steht das Entfernen des Favoriten immer an erster Stelle."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Documents — swipe left"
-          }
-        }
-      }
-    },
-    "swipeActionsFooter": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bis zu zwei Aktionen pro Seite. Eine volle Wischgeste führt die erste aus."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Up to two actions per side. A full swipe runs the first one."
-          }
-        }
-      }
-    },
-    "swipeActionsInboxLeading": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eingang — nach rechts"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Inbox — swipe right"
-          }
-        }
-      }
-    },
-    "swipeActionsInboxTrailing": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eingang — nach links"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Inbox — swipe left"
+            "value": "Up to two actions. A full swipe runs the first one. In Favorites, removing the favorite always comes first."
           }
         }
       }
@@ -562,6 +511,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset to defaults"
+          }
+        }
+      }
+    },
+    "swipeActionsTrailing": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nach links wischen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe left"
+          }
+        }
+      }
+    },
+    "swipeActionsTrailingFooter": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bis zu zwei Aktionen. Eine volle Wischgeste führt die erste aus. Bei Dokumenten mit Posteingangs-Tags wird das Entfernen dieser Tags automatisch an erster Stelle ergänzt."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to two actions. A full swipe runs the first one. On a document with inbox tags, clearing them is added automatically and comes first."
           }
         }
       }

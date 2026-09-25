@@ -3,15 +3,21 @@ import ComposableArchitecture
 import DesignTokens
 import SwiftUI
 
-extension View {
+public extension View {
 
+    // `leadingPrefix` is for an action a screen always offers whatever the user configured - the
+    // Favorites list puts unfavoriting there, so a full swipe right always removes the favorite.
+    // Clearing inbox tags is the trailing equivalent and is not a parameter: it applies to any
+    // document carrying inbox tags, on every list, so no caller gets to forget it.
     func documentSwipeActions(
-        edges: DocumentSwipeActionSettings.Edges,
+        settings: DocumentSwipeActionSettings,
         isSelecting: Bool,
+        leadingPrefix: [DocumentSwipeAction] = [],
         store: StoreOf<DocumentRowReducer>
     ) -> some View {
         let leading = DocumentSwipeActionPlan(
-            configured: edges.leading,
+            configured: settings.leading,
+            prepending: leadingPrefix,
             canDelete: store.canDelete,
             canEdit: store.canEdit,
             canViewNotes: store.canViewNotes,
@@ -19,7 +25,8 @@ extension View {
             isSelecting: isSelecting
         )
         let trailing = DocumentSwipeActionPlan(
-            configured: edges.trailing,
+            configured: settings.trailing,
+            prepending: [.clearInboxTags],
             canDelete: store.canDelete,
             canEdit: store.canEdit,
             canViewNotes: store.canViewNotes,
@@ -38,7 +45,7 @@ extension View {
     // Never `role: .destructive`, Delete included: it removes the row the moment the button is
     // tapped, before the confirmation has been answered - the trap TrashRowView documents.
     @ViewBuilder
-    private func documentSwipeButtons(
+    internal func documentSwipeButtons(
         for plan: DocumentSwipeActionPlan,
         store: StoreOf<DocumentRowReducer>
     ) -> some View {

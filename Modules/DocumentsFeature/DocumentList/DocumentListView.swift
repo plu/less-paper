@@ -111,7 +111,7 @@ public struct DocumentListView: View {
                 .onAppear { send(.onRowAppear(rowStore.document)) }
                 .padding(.x3)
                 .documentSwipeActions(
-                    edges: swipeActions.documents,
+                    settings: swipeActions,
                     isSelecting: store.documentSelection.isActive,
                     store: rowStore
                 )

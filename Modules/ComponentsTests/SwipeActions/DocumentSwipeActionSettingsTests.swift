@@ -7,20 +7,26 @@ import Testing
 struct DocumentSwipeActionSettingsTests {
 
     @Test
-    func defaultsAreEditLeadingAndClearInboxTrailingOnBothScreens() async throws {
+    func defaultsAreEditOneWayAndShareTheOther() async throws {
         let settings = DocumentSwipeActionSettings()
 
-        #expect(settings.inbox.leading == [.edit])
-        #expect(settings.inbox.trailing == [.clearInboxTags])
-        #expect(settings.documents.leading == [.edit])
-        #expect(settings.documents.trailing == [.clearInboxTags])
+        #expect(settings.leading == [.edit])
+        #expect(settings.trailing == [.share])
+    }
+
+    // Clearing inbox tags is added for you, on any document that has them, so offering it as a
+    // choice would be offering to turn off something that is not a choice.
+    @Test
+    func clearInboxTagsIsNotConfigurable() async throws {
+        #expect(!DocumentSwipeAction.configurable.contains(.clearInboxTags))
+        #expect(DocumentSwipeAction.configurable.count == DocumentSwipeAction.allCases.count - 1)
     }
 
     @Test
     func roundTripsThroughJSON() async throws {
         let settings = DocumentSwipeActionSettings(
-            documents: .init(leading: [.favorite], trailing: [.delete, .share]),
-            inbox: .init(leading: [.edit, .preview], trailing: [.clearInboxTags])
+            leading: [.edit, .preview],
+            trailing: [.delete, .share]
         )
 
         let data = try JSONEncoder().encode(settings)
@@ -34,32 +40,24 @@ struct DocumentSwipeActionSettingsTests {
     @Test
     func decodingDropsUnknownActionsAndKeepsTheRest() async throws {
         let json = Data("""
-        {
-          "documents": { "leading": ["edit"], "trailing": ["share"] },
-          "inbox": { "leading": ["teleport", "edit"], "trailing": ["clearInboxTags"] }
-        }
+        { "leading": ["teleport", "edit"], "trailing": ["share"] }
         """.utf8)
 
         let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
 
-        #expect(decoded.inbox.leading == [.edit])
-        #expect(decoded.inbox.trailing == [.clearInboxTags])
-        #expect(decoded.documents.leading == [.edit])
-        #expect(decoded.documents.trailing == [.share])
+        #expect(decoded.leading == [.edit])
+        #expect(decoded.trailing == [.share])
     }
 
     @Test
     func anEdgeOfOnlyUnknownActionsDecodesEmptyRatherThanThrowing() async throws {
         let json = Data("""
-        {
-          "documents": { "leading": ["teleport"], "trailing": [] },
-          "inbox": { "leading": [], "trailing": [] }
-        }
+        { "leading": ["teleport"], "trailing": [] }
         """.utf8)
 
         let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
 
-        #expect(decoded.documents.leading.isEmpty)
+        #expect(decoded.leading.isEmpty)
     }
 
     // The same "a newer build must not brick an older one" rule, one level up: a missing key would
@@ -67,16 +65,13 @@ struct DocumentSwipeActionSettingsTests {
     @Test
     func decodingToleratesMissingKeys() async throws {
         let json = Data("""
-        {
-          "inbox": { "leading": ["share"] }
-        }
+        { "leading": ["favorite"] }
         """.utf8)
 
         let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
 
-        #expect(decoded.inbox.leading == [.share])
-        #expect(decoded.inbox.trailing.isEmpty)
-        // A whole missing screen falls back to its default rather than to nothing.
-        #expect(decoded.documents == DocumentSwipeActionSettings().documents)
+        #expect(decoded.leading == [.favorite])
+        // A missing edge falls back to its default rather than to nothing.
+        #expect(decoded.trailing == DocumentSwipeActionSettings().trailing)
     }
 }

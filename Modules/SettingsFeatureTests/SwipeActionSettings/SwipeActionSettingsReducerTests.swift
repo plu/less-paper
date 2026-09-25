@@ -19,8 +19,8 @@ struct SwipeActionSettingsReducerTests {
         }
         store.state.$settings.withLock { $0 = .init() }
 
-        await store.send(.view(.actionTapped(screen: .inbox, edge: .leading, action: .share))) {
-            $0.$settings.withLock { $0.inbox.leading = [.edit, .share] }
+        await store.send(.view(.actionTapped(edge: .leading, action: .share))) {
+            $0.$settings.withLock { $0.leading = [.edit, .share] }
         }
     }
 
@@ -31,8 +31,8 @@ struct SwipeActionSettingsReducerTests {
         }
         store.state.$settings.withLock { $0 = .init() }
 
-        await store.send(.view(.actionTapped(screen: .inbox, edge: .leading, action: .edit))) {
-            $0.$settings.withLock { $0.inbox.leading = [] }
+        await store.send(.view(.actionTapped(edge: .leading, action: .edit))) {
+            $0.$settings.withLock { $0.leading = [] }
         }
     }
 
@@ -43,12 +43,12 @@ struct SwipeActionSettingsReducerTests {
             SwipeActionSettingsReducer()
         }
         store.state.$settings.withLock {
-            $0 = .init(inbox: .init(leading: [.edit, .share], trailing: []))
+            $0 = .init(leading: [.edit, .share], trailing: [])
         }
 
-        await store.send(.view(.actionTapped(screen: .inbox, edge: .leading, action: .preview)))
+        await store.send(.view(.actionTapped(edge: .leading, action: .preview)))
 
-        #expect(store.state.settings.inbox.leading == [.edit, .share])
+        #expect(store.state.settings.leading == [.edit, .share])
     }
 
     @Test
@@ -57,10 +57,7 @@ struct SwipeActionSettingsReducerTests {
             SwipeActionSettingsReducer()
         }
         store.state.$settings.withLock {
-            $0 = .init(
-                documents: .init(leading: [], trailing: []),
-                inbox: .init(leading: [], trailing: [])
-            )
+            $0 = .init(leading: [], trailing: [])
         }
 
         await store.send(.view(.resetButtonTapped)) {

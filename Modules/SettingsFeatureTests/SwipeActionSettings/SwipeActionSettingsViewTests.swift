@@ -29,10 +29,7 @@ struct SwipeActionSettingsViewTests {
     @Test
     func testSnapshot_fullAndEmptyEdges() async throws {
         assertSnapshot(
-            of: view(settings: .init(
-                documents: .init(leading: [], trailing: []),
-                inbox: .init(leading: [.edit, .share], trailing: [.delete])
-            )),
+            of: view(settings: .init(leading: [.edit, .share], trailing: [.delete])),
             as: .image(layout: .fixed(width: 390, height: 2400)),
             named: "fullAndEmptyEdges"
         )

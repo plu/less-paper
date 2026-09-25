@@ -79,8 +79,46 @@ struct DocumentSwipeActionPlanTests {
         #expect(!plan.allowsFullSwipe)
     }
 
+    // Clearing inbox tags is prepended by the renderer on the trailing edge, never configured, so
+    // it has to come first and own the full swipe even when the user put something else there.
+    @Test
+    func aPrependedActionComesFirstAndTakesTheFullSwipe() async throws {
+        let plan = makePlan(configured: [.share], prepending: [.clearInboxTags])
+
+        #expect(plan.actions == [.clearInboxTags, .share])
+        #expect(plan.allowsFullSwipe)
+    }
+
+    @Test
+    func aPrependedActionThatDoesNotApplyIsLeftOut() async throws {
+        let plan = makePlan(
+            configured: [.share],
+            prepending: [.clearInboxTags],
+            hasInboxTags: false
+        )
+
+        #expect(plan.actions == [.share])
+    }
+
+    // The cap is about how many buttons a person can read mid-gesture, so an action the app added
+    // on their behalf does not get to raise it.
+    @Test
+    func aPrependedActionTruncatesRatherThanExceedingTheCap() async throws {
+        let plan = makePlan(configured: [.share, .edit], prepending: [.clearInboxTags])
+
+        #expect(plan.actions == [.clearInboxTags, .share])
+    }
+
+    @Test
+    func aPrependedActionIsNotRepeatedWhenAlsoConfigured() async throws {
+        let plan = makePlan(configured: [.favorite, .share], prepending: [.favorite])
+
+        #expect(plan.actions == [.favorite, .share])
+    }
+
     private func makePlan(
         configured: [DocumentSwipeAction],
+        prepending: [DocumentSwipeAction] = [],
         canDelete: Bool = true,
         canEdit: Bool = true,
         canViewNotes: Bool = true,
@@ -89,6 +127,7 @@ struct DocumentSwipeActionPlanTests {
     ) -> DocumentSwipeActionPlan {
         DocumentSwipeActionPlan(
             configured: configured,
+            prepending: prepending,
             canDelete: canDelete,
             canEdit: canEdit,
             canViewNotes: canViewNotes,

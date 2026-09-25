@@ -6,11 +6,6 @@ import SwiftSharing
 @Reducer
 public struct SwipeActionSettingsReducer: Sendable {
 
-    public enum Screen: Equatable, Sendable {
-        case documents
-        case inbox
-    }
-
     public enum Edge: Equatable, Sendable {
         case leading
         case trailing
@@ -29,7 +24,7 @@ public struct SwipeActionSettingsReducer: Sendable {
         case view(View)
 
         public enum View {
-            case actionTapped(screen: Screen, edge: Edge, action: DocumentSwipeAction)
+            case actionTapped(edge: Edge, action: DocumentSwipeAction)
             case resetButtonTapped
         }
     }
@@ -41,9 +36,9 @@ public struct SwipeActionSettingsReducer: Sendable {
             switch action {
             case let .view(viewAction):
                 switch viewAction {
-                case let .actionTapped(screen: screen, edge: edge, action: action):
+                case let .actionTapped(edge: edge, action: action):
                     state.$settings.withLock { settings in
-                        settings.toggle(action, on: screen, edge: edge)
+                        settings.toggle(action, on: edge)
                     }
                     return .none
                 case .resetButtonTapped:
@@ -59,10 +54,9 @@ extension DocumentSwipeActionSettings {
 
     mutating func toggle(
         _ action: DocumentSwipeAction,
-        on screen: SwipeActionSettingsReducer.Screen,
-        edge: SwipeActionSettingsReducer.Edge
+        on edge: SwipeActionSettingsReducer.Edge
     ) {
-        var actions = self[screen, edge]
+        var actions = self[edge]
         if let index = actions.firstIndex(of: action) {
             actions.remove(at: index)
         } else {
@@ -73,35 +67,24 @@ extension DocumentSwipeActionSettings {
             }
             actions.append(action)
         }
-        self[screen, edge] = actions
+        self[edge] = actions
     }
 
-    subscript(
-        screen: SwipeActionSettingsReducer.Screen,
-        edge: SwipeActionSettingsReducer.Edge
-    ) -> [DocumentSwipeAction] {
+    subscript(edge: SwipeActionSettingsReducer.Edge) -> [DocumentSwipeAction] {
         get {
-            switch (screen, edge) {
-            case (.documents, .leading):
-                documents.leading
-            case (.documents, .trailing):
-                documents.trailing
-            case (.inbox, .leading):
-                inbox.leading
-            case (.inbox, .trailing):
-                inbox.trailing
+            switch edge {
+            case .leading:
+                leading
+            case .trailing:
+                trailing
             }
         }
         set {
-            switch (screen, edge) {
-            case (.documents, .leading):
-                documents.leading = newValue
-            case (.documents, .trailing):
-                documents.trailing = newValue
-            case (.inbox, .leading):
-                inbox.leading = newValue
-            case (.inbox, .trailing):
-                inbox.trailing = newValue
+            switch edge {
+            case .leading:
+                leading = newValue
+            case .trailing:
+                trailing = newValue
             }
         }
     }
