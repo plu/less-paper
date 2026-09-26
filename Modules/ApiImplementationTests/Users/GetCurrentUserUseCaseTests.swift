@@ -5,8 +5,11 @@ import Dependencies
 import Foundation
 import SwiftSharing
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct GetCurrentUserUseCaseTests {
 
     @Test

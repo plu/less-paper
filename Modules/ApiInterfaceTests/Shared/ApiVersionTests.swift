@@ -2,8 +2,11 @@
 
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct ApiVersionTests {
 
     @Test

@@ -2,10 +2,13 @@
 
 import SwiftUI
 import Testing
+import TestSupport
 import UIKit
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct MarketingRenderTests {
 
     // The size is the whole point. frameit's silent failure was producing a plausible image of the

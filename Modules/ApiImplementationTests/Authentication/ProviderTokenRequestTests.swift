@@ -2,8 +2,11 @@
 
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct ProviderTokenRequestTests {
 
     // allauth answers a flat body with 400 and two errors that both name `token` - "This field is

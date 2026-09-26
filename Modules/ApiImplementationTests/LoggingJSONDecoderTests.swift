@@ -5,8 +5,11 @@ import Dependencies
 import Foundation
 import Logging
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct LoggingJSONDecoderTests {
 
     private struct Document: Decodable {

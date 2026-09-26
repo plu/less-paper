@@ -3,8 +3,11 @@ import Dependencies
 import Testing
 
 @testable import ApiImplementation
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct UpdateCacheUseCaseTests {
 
     // UpdateCacheUseCase awaits every one of these, so a test that omits one fails on an

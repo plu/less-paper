@@ -4,6 +4,7 @@ import ApiInterface
 import Foundation
 import SwiftUI
 import Testing
+import TestSupport
 import UIKit
 
 // Renders every committed capture into a finished App Store image.
@@ -18,7 +19,9 @@ import UIKit
 // marker works and mise/tasks/screenshots/frame writes and removes it; changing it would mean
 // changing that task too, so it stays until there is a reason beyond tidiness.
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct MarketingRenderAllTests {
 
     // nonisolated because .enabled(if:) evaluates its closure outside the main actor.

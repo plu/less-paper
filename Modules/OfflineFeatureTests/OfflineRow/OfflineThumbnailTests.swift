@@ -2,10 +2,13 @@
 
 import Foundation
 import Testing
+import TestSupport
 import UIKit
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct OfflineThumbnailTests {
 
     // Every snapshot suite points `pdfURL` at a path with no file behind it, so all four references

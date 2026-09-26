@@ -1,7 +1,10 @@
 import Testing
+import TestSupport
 import TipsFeature
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct TipTests {
 
     // These ids are permanent: App Store Connect will not let one be renamed or reused, so a typo

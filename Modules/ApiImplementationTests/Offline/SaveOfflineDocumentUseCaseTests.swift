@@ -4,8 +4,11 @@ import Foundation
 import IdentifiedCollections
 import SwiftSharing
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct SaveOfflineDocumentUseCaseTests {
 
     // A server per test, so the shared offline documents file cannot collide under swift-testing's

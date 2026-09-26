@@ -6,9 +6,12 @@ import Foundation
 import IdentifiedCollections
 import SwiftSharing
 import Testing
+import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct DocumentStatisticsRefreshTests {
 
     @Test

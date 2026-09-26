@@ -3,8 +3,11 @@
 import Foundation
 import Logging
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct ImageCacheUsageTests {
 
     @Test

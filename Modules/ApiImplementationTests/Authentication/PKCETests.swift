@@ -3,8 +3,11 @@
 import CryptoKit
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct PKCETests {
 
     // The worked example from RFC 7636 appendix B, which is the only way to know the encoding is

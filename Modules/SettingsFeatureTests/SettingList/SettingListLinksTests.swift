@@ -2,9 +2,12 @@
 
 import Foundation
 import Testing
+import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct SettingListLinksTests {
 
     // The two halves that are silently wrong rather than broken: a mistyped id opens a stranger's

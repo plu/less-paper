@@ -2,8 +2,11 @@
 
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct UserDefaultsAppGroupTests {
 
     // The whole point of the accessor is that two separately opened handles land on the same

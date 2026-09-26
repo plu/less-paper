@@ -4,8 +4,11 @@ import ApiInterface
 import Dependencies
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct OIDCSessionTests {
 
     // MARK: Step 3, building the authorization URL

@@ -8,6 +8,7 @@ import TestSupport
 
 @MainActor
 @Suite(
+    .testDependencies(),
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
