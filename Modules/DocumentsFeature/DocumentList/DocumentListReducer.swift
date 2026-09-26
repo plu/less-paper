@@ -488,7 +488,6 @@ public struct DocumentListReducer: Sendable {
                     sortField: state.filter.input.sort.field
                 )
             case let .search(.delegate(.savedViewTapped(savedView))):
-                state.clearForPendingFetch()
                 return .send(.view(.savedViewButtonTapped(savedView)))
             // Selection mode and search results cannot both be on screen, and the user typing is
             // the later of the two intents.
@@ -504,10 +503,14 @@ public struct DocumentListReducer: Sendable {
                 return .none
             case let .view(viewAction):
                 switch viewAction {
+                // Cleared rather than left to be replaced: the navigation title is read from
+                // `filter`, so rows outliving the switch sit under the name of a view whose rules
+                // are not the ones that produced them. Same reason on `savedViewButtonTapped`.
                 case .allDocumentsButtonTapped:
                     state.error = nil
                     state.filter = .init()
                     state.search = DocumentSearchReducer.State(server: state.server)
+                    state.clearForPendingFetch()
                     return .runGetDocuments(
                         filterRules: state.filter.input.filterRules,
                         server: state.server,
@@ -668,6 +671,7 @@ public struct DocumentListReducer: Sendable {
                         sortField: savedView.sortField
                     )
                     state.filter.savedView = savedView
+                    state.clearForPendingFetch()
                     return .runGetDocuments(
                         filterRules: state.filter.input.filterRules,
                         server: state.server,

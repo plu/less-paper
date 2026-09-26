@@ -159,6 +159,8 @@ struct DocumentListReducerTests {
         await store.send(.view(.allDocumentsButtonTapped)) {
             $0.filter = .init()
             $0.search = .testValue()
+            $0.documents = []
+            $0.totalNumberOfDocuments = 0
         }
         await store.receive(\.replaceDocuments, .testValue(
             count: 77,
@@ -608,6 +610,8 @@ struct DocumentListReducerTests {
         await store.send(.view(.savedViewButtonTapped(savedView))) {
             $0.filter.input = .testValue(searchRuleType: .titleContent, searchValue: "Lego")
             $0.filter.savedView = savedView
+            $0.documents = []
+            $0.totalNumberOfDocuments = 0
         }
         await store.receive(\.replaceDocuments, .testValue(
             count: 77,

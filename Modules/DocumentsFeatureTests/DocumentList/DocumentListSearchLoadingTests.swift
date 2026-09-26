@@ -6,9 +6,10 @@ import Foundation
 import Testing
 import TestSupport
 
-// Covers `clearForPendingFetch()`: while a search-applied filter is refetching, the previous rows
-// must not linger on screen looking current. `DocumentListEmptyView` already renders empty rows
-// with `isLoaded == false` as a spinner, so clearing both together is what puts it on screen.
+// Covers `clearForPendingFetch()`: while a switch of what the list is showing is refetching, the
+// previous rows must not linger on screen looking current. `DocumentListEmptyView` already renders
+// empty rows with `isLoaded == false` as a spinner, so clearing both together is what puts it on
+// screen.
 @MainActor
 @Suite(
     .testDependencies()
@@ -83,17 +84,16 @@ struct DocumentListSearchLoadingTests {
         }
         store.exhaustivity = .off
 
-        await store.send(.search(.delegate(.savedViewTapped(savedView)))) {
+        await store.send(.search(.delegate(.savedViewTapped(savedView))))
+        await store.receive(\.view) {
+            $0.error = nil
+            $0.filter.input = .testValue(searchRuleType: .titleContent, searchValue: "Lego")
+            $0.filter.savedView = savedView
             $0.documents = []
             $0.documentSelection.allLoadedDocuments = []
             $0.isLoaded = false
             $0.nextPage = nil
             $0.totalNumberOfDocuments = 0
-        }
-        await store.receive(\.view) {
-            $0.error = nil
-            $0.filter.input = .testValue(searchRuleType: .titleContent, searchValue: "Lego")
-            $0.filter.savedView = savedView
         }
     }
 
@@ -143,12 +143,17 @@ struct DocumentListSearchLoadingTests {
         #expect(store.state.isLoaded == true)
     }
 
-    // A non-search refetch: its current behaviour (reset the filter, keep the rows on screen while
-    // it refetches) is deliberate and must stay exactly as it is.
+    // The two entries of the saved-views menu, which set the navigation title from `filter` before
+    // the fetch returns: leaving the rows up showed one view's documents under another one's name.
     @Test
-    func view_allDocumentsButtonTapped_doesNotClearRows() async throws {
+    func view_savedViewButtonTapped_clearsRowsAndShowsSpinner() async throws {
+        let savedView = SavedView.testValue(
+            filterRules: [.init(ruleType: .titleContent, value: "Lego")]
+        )
         let store = TestStore(initialState: DocumentListReducer.State.testValue(
-            isLoaded: true
+            filter: .testValue(savedView: .testValue(id: 9, name: "Invoices")),
+            isLoaded: true,
+            nextPage: .testValue()
         )) {
             DocumentListReducer()
         } withDependencies: {
@@ -156,15 +161,38 @@ struct DocumentListSearchLoadingTests {
         }
         store.exhaustivity = .off
 
-        let documentsBefore = store.state.documents
+        await store.send(.view(.savedViewButtonTapped(savedView))) {
+            $0.filter.savedView = savedView
+            $0.documents = []
+            $0.documentSelection.allLoadedDocuments = []
+            $0.isLoaded = false
+            $0.nextPage = nil
+            $0.totalNumberOfDocuments = 0
+        }
+    }
+
+    @Test
+    func view_allDocumentsButtonTapped_clearsRowsAndShowsSpinner() async throws {
+        let store = TestStore(initialState: DocumentListReducer.State.testValue(
+            filter: .testValue(savedView: .testValue()),
+            isLoaded: true,
+            nextPage: .testValue()
+        )) {
+            DocumentListReducer()
+        } withDependencies: {
+            $0.getDocuments.execute = { _, _ in .testValue() }
+        }
+        store.exhaustivity = .off
 
         await store.send(.view(.allDocumentsButtonTapped)) {
             $0.error = nil
             $0.filter = .init()
             $0.search = DocumentSearchReducer.State(server: $0.server)
+            $0.documents = []
+            $0.documentSelection.allLoadedDocuments = []
+            $0.isLoaded = false
+            $0.nextPage = nil
+            $0.totalNumberOfDocuments = 0
         }
-
-        #expect(store.state.documents == documentsBefore)
-        #expect(store.state.isLoaded == true)
     }
 }
