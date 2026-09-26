@@ -112,7 +112,7 @@ public struct AuditLogEntry: Decodable, Equatable, Identifiable, Sendable {
     }
 
     public enum Change: Equatable, Sendable {
-        case customField(field: String, value: String?)
+        case customField(field: String, value: String)
         case field(key: String, old: JSONValue?, new: JSONValue?)
         case relation(key: String, operation: String, objects: [String])
     }

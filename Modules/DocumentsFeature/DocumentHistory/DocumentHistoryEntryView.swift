@@ -55,8 +55,8 @@ struct DocumentHistoryEntryView: View {
         Text(actionTitle)
             .padding(.horizontal, .x2)
             .padding(.vertical, 2)
-            .background(isCreate ? Color.m3PrimaryContainer : Color.m3SecondaryContainer)
-            .foregroundStyle(isCreate ? Color.m3OnPrimaryContainer : Color.m3OnSecondaryContainer)
+            .background(isCreate ? Color.m3PrimaryContainer : Color.m3SurfaceContainerHighest)
+            .foregroundStyle(isCreate ? Color.m3OnPrimaryContainer : Color.m3OnSurfaceVariant)
             .clipShape(Capsule())
     }
 

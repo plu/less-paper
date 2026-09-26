@@ -49,6 +49,41 @@ struct DocumentHistoryViewTests {
     }
 
     @Test
+    func testSnapshot_darkMode() async throws {
+        assertSnapshot(
+            of: view(state: .testValue(entries: [
+                .testValue(
+                    actor: .testValue(id: 2, username: "johannes"),
+                    changes: [.field(key: "tags", old: .number(7), new: .array([.number(1), .number(7)]))],
+                    id: 3,
+                    timestamp: now.addingTimeInterval(-11 * 3600)
+                ),
+                .testValue(
+                    actor: nil,
+                    changes: [
+                        .field(key: "document_type", old: nil, new: .string("1")),
+                        .relation(key: "tags", operation: "add", objects: ["Privat"]),
+                    ],
+                    id: 2,
+                    timestamp: now.addingTimeInterval(-21 * 3600)
+                ),
+                .testValue(
+                    action: .create,
+                    actor: nil,
+                    changes: [.field(key: "title", old: nil, new: .string("Elternbrief"))],
+                    id: 1,
+                    timestamp: now.addingTimeInterval(-22 * 3600)
+                ),
+            ])),
+            as: .image(
+                layout: .device(config: .iPhone12),
+                traits: .init(userInterfaceStyle: .dark)
+            ),
+            named: "darkMode"
+        )
+    }
+
+    @Test
     func testSnapshot_empty() async throws {
         assertSnapshot(
             of: view(state: .testValue(entries: [])),

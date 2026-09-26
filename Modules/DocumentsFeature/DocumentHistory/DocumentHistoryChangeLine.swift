@@ -1,5 +1,4 @@
 import ApiInterface
-import Dependencies
 import Foundation
 
 struct DocumentHistoryChangeLine: Equatable {
@@ -44,9 +43,7 @@ extension DocumentHistoryChangeLine {
         case "storage_path":
             return resolve(value) { StoragePath.Id(rawValue: $0).get(server)?.path }
         case "tags":
-            @Dependency(\.apiCache)
-            var apiCache
-            return resolve(value) { apiCache.tag(Tag.Id(rawValue: $0), server)?.name }
+            return resolve(value) { Tag.Id(rawValue: $0).get(server)?.name }
         default:
             return value.auditLogText
         }

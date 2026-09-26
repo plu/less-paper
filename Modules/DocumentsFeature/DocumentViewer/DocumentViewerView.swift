@@ -9,11 +9,11 @@ import SwiftUI
 struct DocumentViewerView: View {
     var body: some View {
         // Inverted from DocumentFormView on both counts: content here is a plain Text that needs
-        // the sheet to scroll it, and the notes list spans the sheet edge to edge and insets its
-        // own rows instead.
+        // the sheet to scroll it, and Custom fields, History and Notes span the sheet edge to edge
+        // and inset their own rows instead.
         Sheet(
             isScrollingEnabled: store.isContentScrollable,
-            padding: store.section == .customFields || store.section == .history || store.section == .notes ? 0 : .x4
+            padding: [.customFields, .history, .notes].contains(store.section) ? 0 : .x4
         ) {
             SheetHeader(
                 title: store.section.localized,
