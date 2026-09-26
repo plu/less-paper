@@ -43,7 +43,7 @@ Probed against `paperless-ngx:3.0.5` on the dev instance:
 
 | Shape | Example | Meaning |
 | --- | --- | --- |
-| `[old, new]` | `"correspondent": ["None", "8"]` | A scalar field changed. Both sides are strings; ids arrive as strings, and "no value" is the string `"None"`. |
+| `[old, new]` | `"correspondent": ["None", "8"]` | A field changed. Each side is usually a string — ids arrive as strings, and "no value" is the string `"None"` — but not always: note changes send a number (`"Note Added": ["None", 40]`), and a tag change written outside the bulk editor sends raw ids (`"tags": [97, [96, 97]]`, or `[null, [102]]`). That last one is where the web's *Tags: 7* comes from. |
 | `{"type": "m2m", …}` | `{"type": "m2m", "operation": "add", "objects": ["Audio"]}` | A many-to-many relation (tags) gained or lost objects, already resolved to names. |
 | `{"type": "custom_field", …}` | `{"type": "custom_field", "field": "Invoice", "value": "42"}` | A custom field instance changed. |
 
@@ -99,9 +99,10 @@ public struct AuditLogEntry: Decodable, Equatable, Identifiable, Sendable {
     public let id: Id
     public let timestamp: Date
 
-    public enum Action: String, Decodable, Sendable {
+    public enum Action: Equatable, Sendable {
         case create
         case delete
+        case other(String)
         case update
     }
 
@@ -112,7 +113,7 @@ public struct AuditLogEntry: Decodable, Equatable, Identifiable, Sendable {
 
     public enum Change: Equatable, Sendable {
         case customField(field: String, value: String?)
-        case field(key: String, old: String?, new: String?)
+        case field(key: String, old: JSONValue?, new: JSONValue?)
         case relation(key: String, operation: String, objects: [String])
     }
 }
@@ -123,8 +124,11 @@ public struct AuditLogEntry: Decodable, Equatable, Identifiable, Sendable {
 
 `changes` decodes from the JSON object into an array of `Change`. The object's key order is not
 guaranteed to survive `JSONDecoder`, so the decoder sorts by key — the web's `keyvalue` pipe sorts
-the same way, which keeps the two listings in the same order. `"None"` on either side of a scalar
-pair decodes to `nil`. A value that matches none of the three shapes is skipped rather than failing
+the same way, which keeps the two listings in the same order. The two sides of a pair stay
+`JSONValue`, because they are not always strings (see the table above); `"None"` and `null` both
+decode to `nil`. `action` decodes leniently: django-auditlog also knows an `access` action, and
+anything outside create, update and delete lands in `.other` with its raw text rather than failing
+the entry. A value that matches none of the three shapes is skipped rather than failing
 the whole entry: the audit log is written by many server paths, and one unexpected shape should
 cost one line, not the section.
 
@@ -212,13 +216,16 @@ refetch. A retry button re-runs the load after an error.
 Each entry is one row, mirroring the web:
 
 - **Header:** relative time (*11 hours ago*), then the actor's username or *System*, then the action
-  as a badge — tinted for *Create*, neutral otherwise.
+  as a badge — tinted for *Create*, neutral otherwise. An `.other` action shows its raw text
+  title-cased. The reference date comes from `@Dependency(\.date.now)`, so snapshots stay fixed.
 - **One line per change:**
   - `.field` — the key title-cased with underscores kept (*Document_type*, matching the web), then
     the new value. For `correspondent`, `document_type`, `storage_path` and `owner` the id is
     resolved to a name through the cached `.correspondents`, `.documentTypes`, `.storagePaths` and
     `.users` lists, falling back to the raw id when the cache has no match. `storage_path` resolves
-    to the path, as the web does. `content` is cut to its first 100 characters with an ellipsis. A
+    to the path, as the web does. `tags` — which on the web shows raw ids — resolves each id through
+    the cached tags the same way, so the app reads *Tags: Invoice, Paid* where the web reads
+    *Tags: 7*. `content` is cut to its first 100 characters with an ellipsis. A
     `nil` new value shows as an em dash.
   - `.relation` — the operation title-cased, then the key, then the objects comma-joined:
     *Add Tags: Privat*.
@@ -226,7 +233,8 @@ Each entry is one row, mirroring the web:
 
 Changed values render in a monospaced, tinted style, the counterpart of the web's `<code>`.
 
-Resolving names happens in the view layer from `@SharedReader` caches, not in the reducer: the
+Resolving names goes through the existing `Correspondent.Id.get(_:)`-style helpers on
+`@Dependency(\.apiCache)`, called from a small formatter the view uses — not from the reducer: the
 entries are the server's truth, and a renamed correspondent should read with its current name
 without refetching the history.
 
