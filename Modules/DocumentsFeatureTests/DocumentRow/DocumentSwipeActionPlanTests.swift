@@ -2,8 +2,11 @@
 
 import Components
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct DocumentSwipeActionPlanTests {
 
     @Test

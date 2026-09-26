@@ -4,9 +4,12 @@ import ComposableArchitecture
 import Foundation
 import Logging
 import Testing
+import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct DiagnosticsListReducerTests {
 
     @Test

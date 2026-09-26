@@ -6,8 +6,11 @@ import Foundation
 import IdentifiedCollections
 import SwiftSharing
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct GetDocumentTypesUseCaseTests {
 
     @Test

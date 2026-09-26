@@ -6,9 +6,12 @@ import ComposableArchitecture
 import Foundation
 import SwiftSharing
 import Testing
+import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct CorrespondentListReducerTests {
 
     @Test

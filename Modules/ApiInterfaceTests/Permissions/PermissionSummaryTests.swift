@@ -1,8 +1,11 @@
 @testable import ApiInterface
 
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct PermissionSummaryTests {
 
     @Test

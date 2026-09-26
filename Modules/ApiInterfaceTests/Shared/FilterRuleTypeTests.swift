@@ -2,8 +2,11 @@
 
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct FilterRuleTypeTests {
 
     // paperless-ngx numbers its rule types 0...49 with no gaps. A saved view carrying one this app

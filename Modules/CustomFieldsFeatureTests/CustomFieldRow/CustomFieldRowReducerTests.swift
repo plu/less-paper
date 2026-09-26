@@ -9,7 +9,9 @@ import Testing
 import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct CustomFieldRowReducerTests {
 
     @Test

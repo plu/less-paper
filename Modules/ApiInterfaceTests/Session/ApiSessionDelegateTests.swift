@@ -2,8 +2,11 @@
 
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct ApiSessionDelegateRedirectTests {
 
     // A proxy sends the user to its portal on a different name. That is the bounce we must catch.

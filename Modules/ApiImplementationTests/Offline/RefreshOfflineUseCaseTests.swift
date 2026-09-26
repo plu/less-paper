@@ -4,8 +4,11 @@ import Foundation
 import IdentifiedCollections
 import SwiftSharing
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct RefreshOfflineUseCaseTests {
 
     private static let stored = Date(timeIntervalSince1970: 1_000)

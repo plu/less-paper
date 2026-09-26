@@ -4,8 +4,11 @@ import ApiInterface
 import ComposableArchitecture
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct ForwardAuthReducerTests {
 
     // A bounce names the host in a popup first. The browser only opens once the user has agreed

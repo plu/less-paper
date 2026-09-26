@@ -2,8 +2,11 @@ import ApiInterface
 import Dependencies
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct OfflineStoreTests {
 
     // A server per test, so the directories cannot collide. swift-testing runs a suite's tests in

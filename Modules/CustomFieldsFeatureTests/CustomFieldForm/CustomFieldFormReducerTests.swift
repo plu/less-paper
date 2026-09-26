@@ -8,7 +8,9 @@ import Testing
 import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct CustomFieldFormReducerTests {
 
     @Test

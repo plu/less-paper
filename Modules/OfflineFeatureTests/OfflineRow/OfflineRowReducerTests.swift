@@ -4,9 +4,12 @@ import ApiInterface
 import ComposableArchitecture
 import Foundation
 import Testing
+import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct OfflineRowReducerTests {
 
     @Test

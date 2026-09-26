@@ -3,8 +3,11 @@ import Foundation
 import Testing
 
 @testable import ApiImplementation
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct OfflineStorageMigrationTests {
 
     // A directory per test: swift-testing runs a suite's tests in parallel, and these all write.

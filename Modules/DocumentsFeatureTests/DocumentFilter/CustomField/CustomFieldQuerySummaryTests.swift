@@ -5,8 +5,11 @@ import CustomDump
 import Foundation
 import IdentifiedCollections
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct CustomFieldQuerySummaryTests {
 
     private let fields: IdentifiedArrayOf<CustomField> = [

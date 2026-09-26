@@ -2,8 +2,11 @@
 
 import SwiftUI
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct PopupPresenterTests {
 
     @Test

@@ -2,8 +2,11 @@
 
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct UISettingsTests {
 
     // Captured from /api/ui_settings/ on a live instance. Note what user does NOT contain: no

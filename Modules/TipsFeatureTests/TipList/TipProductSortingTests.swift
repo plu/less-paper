@@ -2,8 +2,11 @@
 
 import Foundation
 import Testing
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct TipProductSortingTests {
 
     // StoreKit promises no order at all, so the input here is deliberately scrambled rather than

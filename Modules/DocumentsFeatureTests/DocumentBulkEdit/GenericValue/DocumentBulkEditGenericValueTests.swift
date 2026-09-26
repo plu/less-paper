@@ -5,7 +5,9 @@ import Foundation
 import Testing
 import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct DocumentBulkEditGenericValueTests {
 
     @Test

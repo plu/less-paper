@@ -3,8 +3,11 @@ import Dependencies
 import Testing
 
 @testable import ApiImplementation
+import TestSupport
 
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct StoreTokenUseCaseTests {
 
     @Test

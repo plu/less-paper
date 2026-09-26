@@ -5,9 +5,12 @@ import Components
 import ComposableArchitecture
 import Foundation
 import Testing
+import TestSupport
 
 @MainActor
-@Suite
+@Suite(
+    .testDependencies()
+)
 struct ServerFormReducerTests {
 
     @Test
