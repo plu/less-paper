@@ -273,6 +273,22 @@ struct DocumentRowReducerTests {
     }
 
     @Test
+    func canViewHistoryNeedsViewLogEntry() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        @Shared(.auditLogEnabled(server)) var auditLogEnabled: Bool?
+        $currentUser.withLock { $0 = .testValue(id: 5, isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument] }
+        $auditLogEnabled.withLock { $0 = true }
+
+        let state = DocumentRowReducer.State.testValue(document: .testValue(owner: 5), server: server)
+
+        #expect(!state.canViewHistory)
+    }
+
+    @Test
     func test_saveOfflineButtonTapped_toastsOnFailure() async {
         let server = Server.testValue()
 

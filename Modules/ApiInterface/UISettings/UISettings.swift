@@ -98,6 +98,12 @@ public extension UISettings.Settings {
     var version: String {
         raw["version"]?.stringValue ?? ""
     }
+
+    // nil when the key is absent, which must read as "unknown" rather than "disabled" - History
+    // stays offered until the server says otherwise.
+    var auditLogEnabled: Bool? {
+        raw["auditlog_enabled"]?.boolValue
+    }
 }
 
 public extension UISettings.Settings {
@@ -132,10 +138,14 @@ public extension UISettings.Settings {
 
     static func testValue(
         savedViews: UISettings.Settings.SavedViews? = nil,
-        version: String = "2.18.4"
+        version: String = "2.18.4",
+        auditLogEnabled: Bool? = nil
     ) -> Self {
         var settings = Self(raw: ["version": .string(version)])
 
+        if let auditLogEnabled {
+            settings.raw["auditlog_enabled"] = .bool(auditLogEnabled)
+        }
         settings.savedViews = savedViews
         return settings
     }

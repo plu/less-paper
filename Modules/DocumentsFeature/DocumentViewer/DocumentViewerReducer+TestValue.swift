@@ -8,6 +8,7 @@ extension DocumentViewerReducer.State {
     static func testValue(
         document: Document = .testValue(),
         hasLoadedContent: Bool = false,
+        history: [AuditLogEntry]? = nil,
         isOfflineSnapshot: Bool = false,
         loadError: String? = nil,
         metadata: DocumentMetadata? = nil,
@@ -22,6 +23,7 @@ extension DocumentViewerReducer.State {
             server: server
         )
         state.hasLoadedContent = hasLoadedContent
+        state.history.entries = history
         state.loadError = loadError
         state.metadata.metadata = metadata
         state.notes.notes = notes

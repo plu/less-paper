@@ -11,6 +11,7 @@ public struct DocumentViewerReducer: Sendable {
         case customFields(DocumentCustomFieldsReducer.Action)
         case destination(PresentationAction<Destination.Action>)
         case documentResult(Result<Document, Error>)
+        case history(DocumentHistoryReducer.Action)
         case metadata(DocumentMetadataReducer.Action)
         case notes(DocumentNotesReducer.Action)
         case view(View)
@@ -41,6 +42,8 @@ public struct DocumentViewerReducer: Sendable {
 
         var customFields: DocumentCustomFieldsReducer.State
 
+        var history: DocumentHistoryReducer.State
+
         // The list payload carries a truncated content string, so `document.content` is never a
         // reliable signal that the full text has arrived. This flag is.
         var hasLoadedContent = false
@@ -58,6 +61,9 @@ public struct DocumentViewerReducer: Sendable {
             case .customFields:
                 // The section scrolls its own content so the scroll view reaches the sheet's
                 // edges, which the sheet's own padding would inset.
+                return false
+            case .history:
+                // The list scrolls itself, as Notes does.
                 return false
             case .metadata:
                 guard let value = metadata.metadata, metadata.loadError == nil else {
@@ -88,6 +94,8 @@ public struct DocumentViewerReducer: Sendable {
 
         var canViewNotes: Bool { permissions.can(.viewNote) }
 
+        var canViewHistory: Bool { permissions.canViewHistory(of: document) }
+
         var section: DocumentViewerSection
 
         let server: Server
@@ -101,6 +109,10 @@ public struct DocumentViewerReducer: Sendable {
             self._document = document
             self.customFields = DocumentCustomFieldsReducer.State(
                 document: document,
+                server: server
+            )
+            self.history = DocumentHistoryReducer.State(
+                documentId: document.wrappedValue.id,
                 server: server
             )
             self.isOfflineSnapshot = isOfflineSnapshot
@@ -124,6 +136,9 @@ public struct DocumentViewerReducer: Sendable {
         BindingReducer()
         Scope(state: \.customFields, action: \.customFields) {
             DocumentCustomFieldsReducer()
+        }
+        Scope(state: \.history, action: \.history) {
+            DocumentHistoryReducer()
         }
         Scope(state: \.metadata, action: \.metadata) {
             DocumentMetadataReducer()
@@ -186,7 +201,7 @@ public struct DocumentViewerReducer: Sendable {
                         server: state.server
                     )
                 }
-            case .binding, .metadata, .notes:
+            case .binding, .history, .metadata, .notes:
                 return .none
             }
         }

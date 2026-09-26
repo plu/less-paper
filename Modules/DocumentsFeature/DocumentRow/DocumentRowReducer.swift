@@ -106,6 +106,8 @@ public struct DocumentRowReducer: Sendable {
 
         var canViewNotes: Bool { permissions.can(.viewNote) }
 
+        var canViewHistory: Bool { permissions.canViewHistory(of: document) }
+
         var quickLookPreview: URL?
 
         var shareItem: ShareItem?

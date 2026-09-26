@@ -63,6 +63,24 @@ struct GetCurrentUserUseCaseTests {
         }
     }
 
+    @Test
+    func cachesTheAuditLogFlagFromUISettings() async throws {
+        let server = Server.testValue()
+
+        try await withDependencies {
+            $0.uiSettingsRepository.getUISettings = { _, _ in
+                .testValue(settings: .testValue(auditLogEnabled: false))
+            }
+        } operation: {
+            _ = try await GetCurrentUserUseCase.liveValue.execute(server)
+
+            @Shared(.auditLogEnabled(server))
+            var auditLogEnabled: Bool?
+
+            #expect(auditLogEnabled == false)
+        }
+    }
+
     @Shared(.currentUser(.testValue()))
     private var cache: User?
 }

@@ -199,6 +199,10 @@ struct DocumentViewerReducerTests {
         notes.section = .notes
         #expect(!notes.isContentScrollable)
 
+        var history = loaded
+        history.section = .history
+        #expect(!history.isContentScrollable)
+
         var content = loaded
         content.section = .content
         #expect(content.isContentScrollable)
@@ -342,5 +346,37 @@ struct DocumentViewerReducerTests {
 
         #expect(state.canViewNotes)
         #expect(!state.permissions.can(.addNote))
+    }
+
+    @Test
+    func theSectionMenuDropsHistoryOnAnotherUsersDocument() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        @Shared(.auditLogEnabled(server)) var auditLogEnabled: Bool?
+        $currentUser.withLock { $0 = .testValue(id: 5, isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .viewLogEntry] }
+        $auditLogEnabled.withLock { $0 = true }
+
+        let state = DocumentViewerReducer.State.testValue(document: .testValue(owner: 6), server: server)
+
+        #expect(!state.canViewHistory)
+    }
+
+    @Test
+    func theSectionMenuOffersHistoryOnTheUsersOwnDocument() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        @Shared(.auditLogEnabled(server)) var auditLogEnabled: Bool?
+        $currentUser.withLock { $0 = .testValue(id: 5, isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .viewLogEntry] }
+        $auditLogEnabled.withLock { $0 = true }
+
+        let state = DocumentViewerReducer.State.testValue(document: .testValue(owner: 5), server: server)
+
+        #expect(state.canViewHistory)
     }
 }
