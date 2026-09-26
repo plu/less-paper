@@ -24,9 +24,12 @@ public struct ServerPermissions: Equatable, Sendable {
 
     @Shared var currentUser: User?
 
+    @Shared var auditLogEnabled: Bool?
+
     public init(server: Server) {
         _permissions = Shared(wrappedValue: nil, .permissions(server))
         _currentUser = Shared(wrappedValue: nil, .currentUser(server))
+        _auditLogEnabled = Shared(wrappedValue: nil, .auditLogEnabled(server))
     }
 
     public func can(_ permission: Permission) -> Bool {
@@ -40,5 +43,18 @@ public struct ServerPermissions: Equatable, Sendable {
         // Superuser first, matching the web UI. Django hands a superuser every permission anyway, so
         // this is belt and braces - and it stays true if that ever stops.
         return currentUser?.isSuperuser == true || permissions.contains(permission)
+    }
+
+    // Mirrors the history endpoint's own checks: 400 when the audit log is off, 403 without
+    // view_logentry or on someone else's document unless superuser. Each unknown counts as allowed,
+    // as in can(), so a fresh install offers the section and lets the server refuse it.
+    public func canViewHistory(of document: Document) -> Bool {
+        guard auditLogEnabled != false, can(.viewLogEntry) else {
+            return false
+        }
+        guard let owner = document.owner, let currentUser else {
+            return true
+        }
+        return currentUser.isSuperuser || owner == currentUser.id
     }
 }
