@@ -21,6 +21,9 @@ private extension GetCurrentUserUseCase {
         @Shared(.permissions(server))
         var permissions: [Permission]?
 
+        @Shared(.auditLogEnabled(server))
+        var auditLogEnabled: Bool?
+
         @Dependency(\.uiSettingsRepository)
         var uiSettingsRepository
 
@@ -34,6 +37,7 @@ private extension GetCurrentUserUseCase {
 
         $cache.withLock { $0 = uiSettings.user }
         $permissions.withLock { $0 = uiSettings.permissions }
+        $auditLogEnabled.withLock { $0 = uiSettings.settings.auditLogEnabled }
 
         return uiSettings.user
     }

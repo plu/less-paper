@@ -25,6 +25,17 @@ public extension SharedReaderKey where Self == FileStorageKey<[Permission]?> {
     }
 }
 
+public extension SharedReaderKey where Self == FileStorageKey<Bool?> {
+
+    static func auditLogEnabled(_ server: Server) -> Self {
+        .fileStorage(
+            .applicationGroupDirectory.appending(component: "\(server.id)-audit-log-enabled.json"),
+            decoder: .apiDecoder,
+            encoder: .apiEncoder
+        )
+    }
+}
+
 public extension SharedReaderKey where Self == FileStorageKey<IdentifiedArrayOf<Correspondent>>.Default {
 
     static func correspondents(_ server: Server) -> Self {

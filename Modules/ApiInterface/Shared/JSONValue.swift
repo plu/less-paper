@@ -80,4 +80,11 @@ public extension JSONValue {
         }
         return Int(value)
     }
+
+    var boolValue: Bool? {
+        guard case let .bool(value) = self else {
+            return nil
+        }
+        return value
+    }
 }

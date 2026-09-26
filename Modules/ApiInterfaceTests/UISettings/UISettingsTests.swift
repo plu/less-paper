@@ -66,4 +66,25 @@ struct UISettingsTests {
 
         #expect(settings.permissions == nil)
     }
+
+    @Test
+    func auditLogEnabled_readsTheFlagFromRawSettings() throws {
+        let settings = try JSONDecoder.apiDecoder.decode(
+            UISettings.Settings.self,
+            from: Data(#"{"auditlog_enabled": false, "version": "3.0.5"}"#.utf8)
+        )
+
+        #expect(settings.auditLogEnabled == false)
+    }
+
+    // Absent, not false: an unknown flag must not hide History.
+    @Test
+    func auditLogEnabled_isNilWhenTheServerDoesNotSendIt() throws {
+        let settings = try JSONDecoder.apiDecoder.decode(
+            UISettings.Settings.self,
+            from: Data(#"{"version": "3.0.5"}"#.utf8)
+        )
+
+        #expect(settings.auditLogEnabled == nil)
+    }
 }
