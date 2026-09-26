@@ -106,6 +106,22 @@ struct DocumentDetailReducerTests {
     }
 
     @Test
+    func canViewHistoryFollowsTheAuditLogFlag() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        @Shared(.auditLogEnabled(server)) var auditLogEnabled: Bool?
+        $currentUser.withLock { $0 = .testValue(id: 5, isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewLogEntry] }
+        $auditLogEnabled.withLock { $0 = false }
+
+        let state = DocumentDetailReducer.State.testValue(document: .testValue(owner: 5), server: server)
+
+        #expect(!state.canViewHistory)
+    }
+
+    @Test
     func test_view_saveOfflineButtonTapped_savesWhenNotYetSaved() async throws {
         let server = Server.testValue()
         let saved = LockIsolated<Document.Id?>(nil)

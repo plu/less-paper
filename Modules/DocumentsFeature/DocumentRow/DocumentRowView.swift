@@ -98,10 +98,13 @@ struct DocumentRowView: View {
             }
         }
 
-        // Without view_note the endpoint answers 403, so Notes drops out here rather than opening
-        // onto a section with nothing to show.
+        // Notes and History answer 403 without their permissions, so they drop out here rather
+        // than opening onto a section with nothing to show.
         DocumentViewerMenu(
-            sections: DocumentViewerSection.allCases.filter { $0 != .notes || store.canViewNotes }
+            sections: DocumentViewerSection.visible(
+                canViewHistory: store.canViewHistory,
+                canViewNotes: store.canViewNotes
+            )
         ) { send(.viewButtonTapped($0)) }
 
         // The reversible actions are A-Z; Delete is held out below the divider rather than taking

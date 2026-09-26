@@ -13,7 +13,7 @@ struct DocumentViewerView: View {
         // own rows instead.
         Sheet(
             isScrollingEnabled: store.isContentScrollable,
-            padding: store.section == .customFields || store.section == .notes ? 0 : .x4
+            padding: store.section == .customFields || store.section == .history || store.section == .notes ? 0 : .x4
         ) {
             SheetHeader(
                 title: store.section.localized,
@@ -33,6 +33,8 @@ struct DocumentViewerView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .customFields:
                 DocumentCustomFieldsView(store: customFieldsStore)
+            case .history:
+                DocumentHistoryView(store: historyStore)
             case .metadata:
                 DocumentMetadataView(store: metadataStore)
             case .notes:
@@ -73,6 +75,10 @@ struct DocumentViewerView: View {
         store.scope(state: \.customFields, action: \.customFields)
     }
 
+    private var historyStore: StoreOf<DocumentHistoryReducer> {
+        store.scope(state: \.history, action: \.history)
+    }
+
     private var metadataStore: StoreOf<DocumentMetadataReducer> {
         store.scope(state: \.metadata, action: \.metadata)
     }
@@ -85,11 +91,13 @@ struct DocumentViewerView: View {
     private func sectionMenu() -> some View {
         Menu {
             Picker("", selection: $store.section) {
-                // Without view_note the endpoint answers 403, so Notes drops out here rather than
-                // opening onto a section with nothing to show. Gating the entrance one screen
-                // earlier is not enough: this picker is a second way into the same section.
+                // Sections the server would refuse drop out here too. Gating the entrance one screen
+                // earlier is not enough: this picker is a second way into the same sheet.
                 ForEach(
-                    DocumentViewerSection.allCases.filter { $0 != .notes || store.canViewNotes },
+                    DocumentViewerSection.visible(
+                        canViewHistory: store.canViewHistory,
+                        canViewNotes: store.canViewNotes
+                    ),
                     id: \.self
                 ) {
                     Text($0.localized).tag($0)

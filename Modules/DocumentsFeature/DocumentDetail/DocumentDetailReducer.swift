@@ -82,6 +82,8 @@ public struct DocumentDetailReducer: Sendable {
         // there is nothing to show and nothing that could be added.
         var canViewNotes: Bool { permissions.can(.viewNote) }
 
+        var canViewHistory: Bool { permissions.canViewHistory(of: document) }
+
         var quickLookPreview: URL?
 
         let server: Server
