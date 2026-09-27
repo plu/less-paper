@@ -54,11 +54,29 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func contextMenu() -> some View {
-        // Save offline cannot sit in the A-Z run below: its label flips between "Save offline" and
+        // Three groups: the actions that run straight away, the two that open a submenu, and Delete
+        // on its own, one deliberate reach from the rest - alphabetically it would be the top, one
+        // mistap from Edit.
+        //
+        // Edit is Open > Details under a name of its own: changing a document is the reason most
+        // people reach for this menu, and a submenu is one step too many for that.
+        if store.canEdit {
+            Button {
+                send(.openButtonTapped(.details))
+            } label: {
+                Label(.edit, systemImage: "square.and.pencil")
+            }
+        }
+
+        Button {
+            send(.previewButtonTapped)
+        } label: {
+            Label(.preview, systemImage: "eye")
+        }
+
+        // Last in its group rather than sorted in: its label flips between "Save offline" and
         // "Remove from Offline" as the state it reports changes, so an alphabetical position would
-        // move it under the user's thumb between taps. Held first instead. No divider under it — it
-        // is one of the reversible actions, and a divider would imply it is set apart the way
-        // Delete is.
+        // move it under the user's thumb between taps.
         Button {
             send(.saveOfflineButtonTapped)
         } label: {
@@ -68,8 +86,10 @@ struct DocumentRowView: View {
             )
         }
 
-        // Every section, the editable ones included: there is no separate Edit entry, because the
-        // sheet opens a section editable whenever the user may change the document.
+        Divider()
+
+        // Every section, the editable ones included: the sheet opens a section editable whenever
+        // the user may change the document.
         DocumentOpenMenu(
             sections: DocumentSheetSection.visible(
                 isEditable: store.canEdit,
@@ -77,12 +97,6 @@ struct DocumentRowView: View {
                 canViewNotes: store.canViewNotes
             )
         ) { send(.openButtonTapped($0)) }
-
-        Button {
-            send(.previewButtonTapped)
-        } label: {
-            Label(.preview, systemImage: "eye")
-        }
 
         DocumentShareMenu(documentId: store.document.id, server: store.server) {
             // A row has no file yet, so this asks for one: the download runs and the share sheet
@@ -94,12 +108,10 @@ struct DocumentRowView: View {
             }
         }
 
-        // The reversible actions are A-Z; Delete is held out below the divider rather than taking
-        // whatever row its initial earns it — alphabetically that is the top, one mistap from the
-        // rest. Same shape as the bulk edit overflow menu.
-        Divider()
-
+        // Inside the check, so a user who cannot delete is not left with a divider under nothing.
         if store.canDelete {
+            Divider()
+
             Button(role: .destructive) {
                 send(.deleteButtonTapped)
             } label: {

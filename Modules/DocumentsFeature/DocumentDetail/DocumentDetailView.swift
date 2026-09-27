@@ -42,7 +42,28 @@ public struct DocumentDetailView: View {
             // Not disabled while the download is in flight: only Preview needs the PDF, so the
             // menu still carries Share and Open before one has arrived.
             Menu {
-                // First rather than sorted in with the rest, for the same reason as the row's menu:
+                // The same three groups as the row's menu: the actions that run straight away, the
+                // two submenus, and Delete a deliberate reach from the rest.
+                //
+                // Edit repeats the toolbar button beside this menu so the two menus read the same;
+                // a snapshot is read-only, so neither offers it there.
+                if store.isEditable {
+                    Button {
+                        send(.editDocumentButtonTapped)
+                    } label: {
+                        Label(.edit, systemImage: "square.and.pencil")
+                    }
+                }
+
+                if store.downloadedURL != nil {
+                    Button {
+                        send(.previewButtonTapped)
+                    } label: {
+                        Label(.preview, systemImage: "eye")
+                    }
+                }
+
+                // Last in its group rather than sorted in, for the same reason as the row's menu:
                 // the label changes with state, so ordering it by its initial would move it under
                 // the user's thumb as they used it.
                 //
@@ -62,21 +83,12 @@ public struct DocumentDetailView: View {
                     .disabled(store.isTogglingOffline)
                 }
 
-                openMenu()
+                Divider()
 
-                if store.downloadedURL != nil {
-                    Button {
-                        send(.previewButtonTapped)
-                    } label: {
-                        Label(.preview, systemImage: "eye")
-                    }
-                }
+                openMenu()
 
                 shareMenu()
 
-                // Held out below the divider rather than sorted in with the rest, the same way the
-                // row's menu holds it: the reversible actions are together, and the one that is not
-                // is a deliberate reach away from them.
                 if !store.isOfflineSnapshot, store.canDelete {
                     Divider()
 
