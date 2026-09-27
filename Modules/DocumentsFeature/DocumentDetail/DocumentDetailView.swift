@@ -43,18 +43,8 @@ public struct DocumentDetailView: View {
             // menu still carries Share and Open before one has arrived.
             Menu {
                 // The same three groups as the row's menu: the actions that run straight away, the
-                // two submenus, and Delete a deliberate reach from the rest.
-                //
-                // Edit repeats the toolbar button beside this menu so the two menus read the same;
-                // a snapshot is read-only, so neither offers it there.
-                if store.isEditable {
-                    Button {
-                        send(.editDocumentButtonTapped)
-                    } label: {
-                        Label(.edit, systemImage: "square.and.pencil")
-                    }
-                }
-
+                // two submenus, and Delete a deliberate reach from the rest. Without the row's Edit:
+                // the toolbar button beside this menu already is one.
                 if store.downloadedURL != nil {
                     Button {
                         send(.previewButtonTapped)
