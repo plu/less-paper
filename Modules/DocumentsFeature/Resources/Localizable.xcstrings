@@ -1730,23 +1730,6 @@
         }
       }
     },
-    "editDocument": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dokument bearbeiten"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edit document"
-          }
-        }
-      }
-    },
     "editDocumentType": {
       "extractionState": "manual",
       "localizations": {
@@ -2587,6 +2570,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$(selected)lld of %2$(total)lld selected"
+          }
+        }
+      }
+    },
+    "open": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öffnen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
           }
         }
       }
@@ -3727,23 +3727,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Value"
-          }
-        }
-      }
-    },
-    "view": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Anzeigen"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "View"
           }
         }
       }

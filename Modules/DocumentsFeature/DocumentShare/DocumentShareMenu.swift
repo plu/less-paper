@@ -2,7 +2,7 @@ import ApiInterface
 import SwiftUI
 
 // Driven from one place so a change reaches the document detail toolbar and the row's context menu
-// at once, the same reason DocumentViewerMenu exists.
+// at once, the same reason DocumentOpenMenu exists.
 //
 // The document itself is passed in rather than built here: detail shares a file it has already
 // downloaded, while a row has to download one first, and those are different views.

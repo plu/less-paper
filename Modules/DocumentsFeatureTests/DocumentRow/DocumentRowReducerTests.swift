@@ -15,7 +15,7 @@ import TestSupport
 struct DocumentRowReducerTests {
 
     @Test
-    func test_destination_documentForm_delegate_documentUpdated() async throws {
+    func test_destination_documentSheet_delegate_documentUpdated() async throws {
         let document = Document.testValue()
         let store = TestStore(initialState: DocumentRowReducer.State.testValue(
             document: document
@@ -23,22 +23,22 @@ struct DocumentRowReducerTests {
             DocumentRowReducer()
         }
 
-        await store.send(.view(.editButtonTapped(.details))) {
-            $0.destination = .documentForm(.testValue())
+        await store.send(.view(.openButtonTapped(.details))) {
+            $0.destination = .documentSheet(.testValue())
         }
-        await store.send(.destination(.presented(.documentForm(.delegate(.documentUpdated))))) {
+        await store.send(.destination(.presented(.documentSheet(.delegate(.documentUpdated))))) {
             $0.destination = nil
         }
     }
 
-    @Test(arguments: DocumentViewerSection.allCases)
-    func test_view_viewButtonTapped(section: DocumentViewerSection) async throws {
+    @Test(arguments: DocumentSheetSection.allCases)
+    func test_view_openButtonTapped(section: DocumentSheetSection) async throws {
         let store = TestStore(initialState: DocumentRowReducer.State.testValue()) {
             DocumentRowReducer()
         }
 
-        await store.send(.view(.viewButtonTapped(section))) {
-            $0.destination = .documentViewer(.testValue(section: section))
+        await store.send(.view(.openButtonTapped(section))) {
+            $0.destination = .documentSheet(.testValue(section: section))
         }
     }
 
@@ -86,20 +86,6 @@ struct DocumentRowReducerTests {
 
         await store.send(.view(.rowTapped))
         await store.receive(\.delegate, .presentDocumentDetail(Shared(value: document)))
-    }
-
-    @Test
-    func test_view_editButtonTapped() async throws {
-        let document = Document.testValue()
-        let store = TestStore(initialState: DocumentRowReducer.State.testValue(
-            document: document
-        )) {
-            DocumentRowReducer()
-        }
-
-        await store.send(.view(.editButtonTapped(.details))) {
-            $0.destination = .documentForm(.testValue())
-        }
     }
 
     @Test
@@ -393,19 +379,5 @@ struct DocumentRowReducerTests {
         }
 
         #expect(toasts.value == [.error("Something went wrong")])
-    }
-
-    @Test
-    func view_editButtonTapped_opensTheFormOnTheSectionItNames() async throws {
-        let document = Document.testValue()
-        let store = TestStore(initialState: DocumentRowReducer.State.testValue(
-            document: document
-        )) {
-            DocumentRowReducer()
-        }
-
-        await store.send(.view(.editButtonTapped(.notes))) {
-            $0.destination = .documentForm(.testValue(document: document, section: .notes))
-        }
     }
 }

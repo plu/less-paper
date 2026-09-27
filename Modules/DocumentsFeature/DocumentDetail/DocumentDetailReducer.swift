@@ -24,18 +24,17 @@ public struct DocumentDetailReducer: Sendable {
         public enum View {
             case deleteButtonTapped
             case editDocumentButtonTapped
+            case openButtonTapped(DocumentSheetSection)
             case saveOfflineButtonTapped
             case onAppear
             case previewButtonTapped
             case retryDownloadButtonTapped
-            case viewButtonTapped(DocumentViewerSection)
         }
     }
 
     @Reducer
     public enum Destination {
-        case documentForm(DocumentFormReducer)
-        case documentViewer(DocumentViewerReducer)
+        case documentSheet(DocumentSheetReducer)
     }
 
     @ObservableState
@@ -75,6 +74,10 @@ public struct DocumentDetailReducer: Sendable {
         var permissions: ServerPermissions
 
         var canEdit: Bool { permissions.can(.changeDocument) }
+
+        // The same rule the sheet applies to itself, so the Edit button and the Details entry
+        // never offer a door the sheet would then show read-only.
+        var isEditable: Bool { canEdit && !isOfflineSnapshot }
 
         var canDelete: Bool { permissions.can(.deleteDocument) }
 
@@ -119,7 +122,7 @@ public struct DocumentDetailReducer: Sendable {
             // and it is what decides whether this screen is popped or dismissed.
             case .delegate:
                 return .none
-            case .destination(.presented(.documentForm(.delegate(.documentUpdated)))):
+            case .destination(.presented(.documentSheet(.delegate(.documentUpdated)))):
                 state.destination = nil
                 return .none
             case let .downloadResult(result):
@@ -141,14 +144,32 @@ public struct DocumentDetailReducer: Sendable {
                     }
                     return .runConfirmDelete(documentTitle: state.document.title, id: state.document.id)
                 case .editDocumentButtonTapped:
-                    // A snapshot changes nothing: this stays unreachable even if something manages
-                    // to send it with the edit button hidden, since it is the only door to the
-                    // form's save, its ASN lookup, its notes composer and delete, and its picker.
-                    guard !state.isOfflineSnapshot else {
+                    // The sheet refuses writes from a snapshot itself; this keeps the button's
+                    // promise too, since Details is the one section with nothing to show read-only.
+                    guard state.isEditable else {
                         return .none
                     }
-                    state.destination = .documentForm(DocumentFormReducer.State(
+                    state.destination = .documentSheet(DocumentSheetReducer.State(
                         document: state.$document,
+                        section: .details,
+                        server: state.server
+                    ))
+                    return .none
+                case let .openButtonTapped(section):
+                    // The menu offers only these; refusing the rest here keeps a snapshot out of
+                    // Details however the action arrives.
+                    guard DocumentSheetSection.visible(
+                        isEditable: state.isEditable,
+                        canViewHistory: state.canViewHistory,
+                        canViewNotes: state.canViewNotes
+                    ).contains(section)
+                    else {
+                        return .none
+                    }
+                    state.destination = .documentSheet(DocumentSheetReducer.State(
+                        document: state.$document,
+                        isOfflineSnapshot: state.isOfflineSnapshot,
+                        section: section,
                         server: state.server
                     ))
                     return .none
@@ -177,14 +198,6 @@ public struct DocumentDetailReducer: Sendable {
                     )
                 case .previewButtonTapped:
                     state.quickLookPreview = state.downloadResult?.value?.url
-                    return .none
-                case let .viewButtonTapped(section):
-                    state.destination = .documentViewer(DocumentViewerReducer.State(
-                        document: state.$document,
-                        isOfflineSnapshot: state.isOfflineSnapshot,
-                        section: section,
-                        server: state.server
-                    ))
                     return .none
                 case .retryDownloadButtonTapped:
                     state.downloadResult = nil

@@ -37,11 +37,11 @@ struct CrossTabDocumentSyncTests {
         ])
 
         let updatedDocument = Document.testValue(id: 7, title: "Renamed")
-        let store = TestStore(initialState: DocumentFormReducer.State(
+        let store = TestStore(initialState: DocumentSheetReducer.State(
             document: documentListRows[id: 7]!.$document,
             server: server
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.updateResult(.success(updatedDocument))) {

@@ -10,10 +10,10 @@ import TestSupport
 struct DocumentSwipeActionSettingsTests {
 
     @Test
-    func defaultsAreEditDetailsOneWayAndShareTheOther() async throws {
+    func defaultsAreOpenDetailsOneWayAndShareTheOther() async throws {
         let settings = DocumentSwipeActionSettings()
 
-        #expect(settings.leading == [.editDetails])
+        #expect(settings.leading == [.openDetails])
         #expect(settings.trailing == [.share])
     }
 
@@ -28,7 +28,7 @@ struct DocumentSwipeActionSettingsTests {
     @Test
     func roundTripsThroughJSON() async throws {
         let settings = DocumentSwipeActionSettings(
-            leading: [.editDetails, .preview],
+            leading: [.openDetails, .preview],
             trailing: [.delete, .share]
         )
 
@@ -48,7 +48,7 @@ struct DocumentSwipeActionSettingsTests {
 
         let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
 
-        #expect(decoded.leading == [.editDetails])
+        #expect(decoded.leading == [.openDetails])
         #expect(decoded.trailing == [.share])
     }
 
@@ -92,18 +92,31 @@ struct DocumentSwipeActionSettingsTests {
         #expect(decoded.leading == [.saveOffline])
     }
 
-    // `edit` and `openNotes` are what a shipped build wrote before the actions split per section.
-    // Each maps onto the section it opened, so the swipe keeps doing what it did.
+    // `edit` is what a shipped build wrote before the actions were per section, and the view- and
+    // edit- pairs are what a build wrote before the sheet decided the mode itself. Each lands on
+    // the section it opened, so the swipe keeps going where it went.
     @Test
-    func decodingTranslatesThePreSectionEditAndNotesRawValues() async throws {
+    func decodingTranslatesEarlierPerSectionRawValues() async throws {
         let json = Data("""
-        { "leading": ["edit"], "trailing": ["openNotes"] }
+        { "leading": ["edit", "viewHistory"], "trailing": ["editNotes", "viewContent"] }
         """.utf8)
 
         let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
 
-        #expect(decoded.leading == [.editDetails])
-        #expect(decoded.trailing == [.editNotes])
+        #expect(decoded.leading == [.openDetails, .openHistory])
+        #expect(decoded.trailing == [.openNotes, .openContent])
+    }
+
+    // Both halves of a former pair name one section now, so an edge that held both keeps one.
+    @Test
+    func decodingCollapsesAViewAndEditPairIntoOneAction() async throws {
+        let json = Data("""
+        { "leading": ["viewContent", "editContent"], "trailing": [] }
+        """.utf8)
+
+        let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
+
+        #expect(decoded.leading == [.openContent])
     }
 
     // A downgrade and an upgrade can leave both spellings in one edge, and the alias turns them

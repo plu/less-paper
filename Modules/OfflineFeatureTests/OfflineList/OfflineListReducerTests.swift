@@ -361,26 +361,26 @@ struct OfflineListReducerTests {
         await store.send(.rows(.element(id: 7, action: .delegate(.open(offlineDocument)))))
         await store.send(.path(.element(id: 0, action: .documentDetail(.view(.onAppear)))))
 
-        for section in DocumentViewerSection.allCases {
+        for section in DocumentSheetSection.allCases {
             await store.send(.path(.element(
                 id: 0,
-                action: .documentDetail(.view(.viewButtonTapped(section)))
+                action: .documentDetail(.view(.openButtonTapped(section)))
             )))
             await store.send(.path(.element(
                 id: 0,
-                action: .documentDetail(.destination(.presented(.documentViewer(.view(.onAppear)))))
+                action: .documentDetail(.destination(.presented(.documentSheet(.view(.onAppear)))))
             )))
             await store.send(.path(.element(
                 id: 0,
-                action: .documentDetail(.destination(.presented(.documentViewer(.customFields(.view(.onAppear))))))
+                action: .documentDetail(.destination(.presented(.documentSheet(.readOnlyCustomFields(.view(.onAppear))))))
             )))
             await store.send(.path(.element(
                 id: 0,
-                action: .documentDetail(.destination(.presented(.documentViewer(.metadata(.view(.onAppear))))))
+                action: .documentDetail(.destination(.presented(.documentSheet(.metadata(.view(.onAppear))))))
             )))
             await store.send(.path(.element(
                 id: 0,
-                action: .documentDetail(.destination(.presented(.documentViewer(.notes(.view(.onAppear))))))
+                action: .documentDetail(.destination(.presented(.documentSheet(.notes(.view(.onAppear))))))
             )))
         }
 

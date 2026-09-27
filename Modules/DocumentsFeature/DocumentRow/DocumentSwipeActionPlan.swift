@@ -13,7 +13,6 @@ extension DocumentSwipeActionPlan {
         prepending: [DocumentSwipeAction] = [],
         canDelete: Bool,
         canEdit: Bool,
-        canViewCustomFields: Bool,
         canViewHistory: Bool,
         canViewNotes: Bool,
         hasInboxTags: Bool,
@@ -26,8 +25,14 @@ extension DocumentSwipeActionPlan {
             return
         }
 
-        // The same gates the row's menus apply: DocumentViewerSection.visible for the View
-        // actions, and the form's section picker for the Edit ones.
+        // The Open actions answer to DocumentSheetSection.visible, the same filter as the row's Open
+        // menu, so a swipe never opens a section the menu would not have offered.
+        let visibleSections = DocumentSheetSection.visible(
+            isEditable: canEdit,
+            canViewHistory: canViewHistory,
+            canViewNotes: canViewNotes
+        )
+
         func applies(_ action: DocumentSwipeAction) -> Bool {
             switch action {
             case .clearInboxTags:
@@ -36,17 +41,9 @@ extension DocumentSwipeActionPlan {
                 canEdit && hasInboxTags
             case .delete:
                 canDelete
-            case .editContent, .editDetails:
-                canEdit
-            case .editCustomFields:
-                canEdit && canViewCustomFields
-            case .viewHistory:
-                canViewHistory
-            case .editNotes, .viewNotes:
-                // Not change_document for Edit notes: nothing in the form's notes section is
-                // staged, and adding a note answers to add_note, which the composer checks itself.
-                canViewNotes
-            case .preview, .saveOffline, .share, .viewContent, .viewCustomFields, .viewMetadata:
+            case .openContent, .openCustomFields, .openDetails, .openHistory, .openMetadata, .openNotes:
+                action.section.map { visibleSections.contains($0) } ?? false
+            case .preview, .saveOffline, .share:
                 true
             }
         }
@@ -65,5 +62,27 @@ extension DocumentSwipeActionPlan {
             // empty edge reads false here, which is what stops it swiping open onto nothing.
             allowsFullSwipe: actions.first.map { !$0.isDestructive } ?? false
         )
+    }
+}
+
+extension DocumentSwipeAction {
+
+    var section: DocumentSheetSection? {
+        switch self {
+        case .openContent:
+            .content
+        case .openCustomFields:
+            .customFields
+        case .openDetails:
+            .details
+        case .openHistory:
+            .history
+        case .openMetadata:
+            .metadata
+        case .openNotes:
+            .notes
+        case .clearInboxTags, .delete, .preview, .saveOffline, .share:
+            nil
+        }
     }
 }

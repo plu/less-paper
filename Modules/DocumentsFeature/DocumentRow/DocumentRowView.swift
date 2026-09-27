@@ -40,15 +40,9 @@ struct DocumentRowView: View {
         .overlay { downloadProgressView() }
         .quickLookPreview($store.quickLookPreview)
         .sheet(
-            item: $store.scope(state: \.destination?.documentForm, action: \.destination.documentForm)
+            item: $store.scope(state: \.destination?.documentSheet, action: \.destination.documentSheet)
         ) { store in
-            DocumentFormView(store: store)
-                .presentationDetents([.large])
-        }
-        .sheet(
-            item: $store.scope(state: \.destination?.documentViewer, action: \.destination.documentViewer)
-        ) { store in
-            DocumentViewerView(store: store)
+            DocumentSheetView(store: store)
                 .presentationDetents([.large])
         }
     }
@@ -60,23 +54,15 @@ struct DocumentRowView: View {
 
     @ViewBuilder
     private func contextMenu() -> some View {
-        // Save offline cannot sit in the A-Z run below: its label flips between "Save offline" and
-        // "Remove from Offline" as the state it reports changes, so an alphabetical position would
-        // move it under the user's thumb between taps. Held first instead. No divider under it — it
-        // is one of the reversible actions, and a divider would imply it is set apart the way
-        // Delete is.
-        Button {
-            send(.saveOfflineButtonTapped)
-        } label: {
-            Label(
-                store.isSavedOffline ? .removeFromOffline : .saveOffline,
-                systemImage: store.isSavedOffline ? "arrow.down.circle.fill" : "arrow.down.circle"
-            )
-        }
-
+        // Three groups: the actions that run straight away, the two that open a submenu, and Delete
+        // on its own, one deliberate reach from the rest - alphabetically it would be the top, one
+        // mistap from Edit.
+        //
+        // Edit is Open > Details under a name of its own: changing a document is the reason most
+        // people reach for this menu, and a submenu is one step too many for that.
         if store.canEdit {
             Button {
-                send(.editButtonTapped(.details))
+                send(.openButtonTapped(.details))
             } label: {
                 Label(.edit, systemImage: "square.and.pencil")
             }
@@ -88,6 +74,30 @@ struct DocumentRowView: View {
             Label(.preview, systemImage: "eye")
         }
 
+        // Last in its group rather than sorted in: its label flips between "Save offline" and
+        // "Remove from Offline" as the state it reports changes, so an alphabetical position would
+        // move it under the user's thumb between taps.
+        Button {
+            send(.saveOfflineButtonTapped)
+        } label: {
+            Label(
+                store.isSavedOffline ? .removeFromOffline : .saveOffline,
+                systemImage: store.isSavedOffline ? "arrow.down.circle.fill" : "arrow.down.circle"
+            )
+        }
+
+        Divider()
+
+        // Every section, the editable ones included: the sheet opens a section editable whenever
+        // the user may change the document.
+        DocumentOpenMenu(
+            sections: DocumentSheetSection.visible(
+                isEditable: store.canEdit,
+                canViewHistory: store.canViewHistory,
+                canViewNotes: store.canViewNotes
+            )
+        ) { send(.openButtonTapped($0)) }
+
         DocumentShareMenu(documentId: store.document.id, server: store.server) {
             // A row has no file yet, so this asks for one: the download runs and the share sheet
             // follows it. The links below it need nothing downloaded.
@@ -98,21 +108,10 @@ struct DocumentRowView: View {
             }
         }
 
-        // Notes and History answer 403 without their permissions, so they drop out here rather
-        // than opening onto a section with nothing to show.
-        DocumentViewerMenu(
-            sections: DocumentViewerSection.visible(
-                canViewHistory: store.canViewHistory,
-                canViewNotes: store.canViewNotes
-            )
-        ) { send(.viewButtonTapped($0)) }
-
-        // The reversible actions are A-Z; Delete is held out below the divider rather than taking
-        // whatever row its initial earns it — alphabetically that is the top, one mistap from the
-        // rest. Same shape as the bulk edit overflow menu.
-        Divider()
-
+        // Inside the check, so a user who cannot delete is not left with a divider under nothing.
         if store.canDelete {
+            Divider()
+
             Button(role: .destructive) {
                 send(.deleteButtonTapped)
             } label: {

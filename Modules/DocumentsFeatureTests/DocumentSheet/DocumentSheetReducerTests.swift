@@ -12,14 +12,14 @@ import TestSupport
 @Suite(
     .testDependencies()
 )
-struct DocumentFormReducerTests {
+struct DocumentSheetReducerTests {
 
     @Test
     func test_destination_correspondentForm_delegate_correspondentSaved() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             destination: .correspondentForm(.testValue(correspondent: nil))
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.destination(.presented(.correspondentForm(.delegate(.correspondentSaved(.testValue())))))) {
@@ -30,10 +30,10 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_destination_documentTypeForm_delegate_documentTypeSaved() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             destination: .documentTypeForm(.testValue(documentType: nil))
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.destination(.presented(.documentTypeForm(.delegate(.documentTypeSaved(.testValue())))))) {
@@ -44,10 +44,10 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_destination_storagePathForm_delegate_storagePathSaved() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             destination: .storagePathForm(.testValue(storagePath: nil))
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.destination(.presented(.storagePathForm(.delegate(.storagePathSaved(.testValue())))))) {
@@ -58,10 +58,10 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_destination_tagForm_delegate_tagSaved() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             destination: .tagForm(.testValue(tag: nil))
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.apiCache.tag = { _, _ in .testValue() }
         }
@@ -74,8 +74,8 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_view_createCorrespondentButtonTapped() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
-            DocumentFormReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.createCorrespondentButtonTapped)) {
@@ -85,8 +85,8 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_view_createDocumentTypeButtonTapped() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
-            DocumentFormReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.createDocumentTypeButtonTapped)) {
@@ -96,8 +96,8 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_view_createStoragePathButtonTapped() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
-            DocumentFormReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.createStoragePathButtonTapped)) {
@@ -107,8 +107,8 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_view_createTagButtonTapped() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
-            DocumentFormReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.createTagButtonTapped)) {
@@ -119,10 +119,10 @@ struct DocumentFormReducerTests {
     @Test
     func test_view_closeButtonTapped() async throws {
         let dismissCalls = LockIsolated(0)
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             destination: .documentTypeForm(.testValue())
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.dismiss = .init {
                 dismissCalls.withValue { $0 += 1 }
@@ -137,10 +137,10 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_view_getNextArchiveSerialNumberButtonTapped() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             destination: .documentTypeForm(.testValue())
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getNextArchiveSerialNumber.execute = { _ in 88 }
         }
@@ -159,10 +159,10 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_view_resetButtonTapped() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             document: .testValue()
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         #expect(store.state.isModified == false)
@@ -184,11 +184,11 @@ struct DocumentFormReducerTests {
     func test_updateResult_success_writesThroughSharedDocument() async throws {
         let updatedDocument = Document.testValue(title: "some new title")
         let document = Shared(value: Document.testValue())
-        let store = TestStore(initialState: DocumentFormReducer.State(
+        let store = TestStore(initialState: DocumentSheetReducer.State(
             document: document,
             server: .testValue()
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.updateResult(.success(updatedDocument))) {
@@ -203,11 +203,11 @@ struct DocumentFormReducerTests {
     func test_view_saveButtonTapped_success() async throws {
         let updatedDocument = Document.testValue(title: "some new title")
         let document = Shared(value: Document.testValue())
-        let store = TestStore(initialState: DocumentFormReducer.State(
+        let store = TestStore(initialState: DocumentSheetReducer.State(
             document: document,
             server: .testValue()
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.updateDocument.execute = { _, _, _ in
                 updatedDocument
@@ -234,10 +234,10 @@ struct DocumentFormReducerTests {
     @Test
     func test_view_saveButtonTapped_failure() async throws {
         let toasts = LockIsolated<[Toast]>([])
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             document: .testValue()
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.toastPresenter.present = { value in
                 toasts.withValue { $0.append(value) }
@@ -264,11 +264,11 @@ struct DocumentFormReducerTests {
     func test_view_onAppear_seedsContentFromFullDocument() async throws {
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
         let document = Shared(value: Document.testValue(content: "Some invoice"))
-        let store = TestStore(initialState: DocumentFormReducer.State(
+        let store = TestStore(initialState: DocumentSheetReducer.State(
             document: document,
             server: .testValue()
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in full }
         }
@@ -291,10 +291,10 @@ struct DocumentFormReducerTests {
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
         // The fetch is held open so the edit below genuinely happens mid-flight.
         let gate = AsyncStream<Void>.makeStream()
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             document: .testValue(content: "Some invoice")
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in
                 await gate.stream.first { _ in true }
@@ -324,8 +324,8 @@ struct DocumentFormReducerTests {
     @Test
     func test_view_onAppear_failure_setsLoadError() async throws {
         let toasts = LockIsolated<[Toast]>([])
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
-            DocumentFormReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in throw ApiError.testValue() }
             $0.toastPresenter.present = { value in
@@ -351,10 +351,10 @@ struct DocumentFormReducerTests {
     @Test
     func test_view_retryLoadButtonTapped_afterFailure_refetches() async throws {
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             loadError: "The request timed out."
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in full }
         }
@@ -374,8 +374,8 @@ struct DocumentFormReducerTests {
     func test_view_onAppear_doesNotRefetchOnceLoaded() async throws {
         let calls = LockIsolated(0)
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
-            DocumentFormReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in
                 calls.withValue { $0 += 1 }
@@ -394,8 +394,8 @@ struct DocumentFormReducerTests {
     @Test
     func test_contentEdit_flipsIsModified() async throws {
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
-            DocumentFormReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in full }
         }
@@ -422,10 +422,10 @@ struct DocumentFormReducerTests {
     @Test
     func test_view_saveButtonTapped_beforeLoad_omitsContent() async throws {
         let inputs = LockIsolated<[UpdateDocumentInput]>([])
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             document: .testValue(content: "Some invoice")
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.updateDocument.execute = { _, input, _ in
                 inputs.withValue { $0.append(input) }
@@ -450,8 +450,8 @@ struct DocumentFormReducerTests {
     func test_view_saveButtonTapped_sendsContentOnlyWhenChanged() async throws {
         let inputs = LockIsolated<[UpdateDocumentInput]>([])
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
-            DocumentFormReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in full }
             $0.updateDocument.execute = { _, input, _ in
@@ -479,10 +479,10 @@ struct DocumentFormReducerTests {
 
     @Test
     func test_view_resetButtonTapped_beforeLoad_leavesContentNil() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             document: .testValue(content: "Some invoice")
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.resetButtonTapped))
@@ -493,8 +493,8 @@ struct DocumentFormReducerTests {
     @Test
     func test_view_resetButtonTapped_restoresLoadedContent() async throws {
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue()) {
-            DocumentFormReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in full }
         }
@@ -521,7 +521,7 @@ struct DocumentFormReducerTests {
         $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
         $permissions.withLock { $0 = [.viewDocument, .addTag] }
 
-        let state = DocumentFormReducer.State.testValue(server: server)
+        let state = DocumentSheetReducer.State.testValue(server: server)
 
         #expect(state.canCreateTag)
         // add_tag must not open any of the other four.
@@ -542,7 +542,7 @@ struct DocumentFormReducerTests {
         $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
         $permissions.withLock { $0 = [.viewDocument, .viewTag] }
 
-        let state = DocumentFormReducer.State.testValue(server: server)
+        let state = DocumentSheetReducer.State.testValue(server: server)
 
         #expect(state.canViewTag)
         // view_tag must not open any of the other four.
@@ -563,7 +563,7 @@ struct DocumentFormReducerTests {
         $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
         $permissions.withLock { $0 = [.viewDocument, .viewCorrespondent] }
 
-        let state = DocumentFormReducer.State.testValue(server: server)
+        let state = DocumentSheetReducer.State.testValue(server: server)
 
         #expect(state.canViewCorrespondent)
         #expect(!state.canCreateCorrespondent)
@@ -572,7 +572,7 @@ struct DocumentFormReducerTests {
     @Test
     func pickersAreShownWhenNothingHasBeenRead() {
         // Fail open: an unread cache leaves the form exactly as it looks today.
-        let state = DocumentFormReducer.State.testValue(server: .testValue())
+        let state = DocumentSheetReducer.State.testValue(server: .testValue())
 
         #expect(state.canViewCorrespondent)
         #expect(state.canViewDocumentType)
@@ -592,7 +592,7 @@ struct DocumentFormReducerTests {
             $0 = [.viewDocument, .addCorrespondent, .addDocumentType, .addStoragePath, .addCustomField]
         }
 
-        let state = DocumentFormReducer.State.testValue(server: server)
+        let state = DocumentSheetReducer.State.testValue(server: server)
 
         // The mirror of the test above: a gate wired to a permission nothing here grants would
         // pass that one and fail this.
@@ -612,7 +612,7 @@ struct DocumentFormReducerTests {
         $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
         $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
 
-        let state = DocumentFormReducer.State.testValue(server: server)
+        let state = DocumentSheetReducer.State.testValue(server: server)
 
         // change_document is what gets a user into this form at all; it says nothing about notes.
         #expect(!state.canViewNotes)
@@ -627,7 +627,7 @@ struct DocumentFormReducerTests {
         $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
         $permissions.withLock { $0 = [.viewDocument, .viewNote] }
 
-        let state = DocumentFormReducer.State.testValue(server: server)
+        let state = DocumentSheetReducer.State.testValue(server: server)
 
         #expect(state.canViewNotes)
         #expect(!state.canCreateTag)

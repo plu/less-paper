@@ -9,16 +9,22 @@ import StoragePathsFeature
 import Tagged
 import TagsFeature
 
+// Every section of a document, in one sheet: what used to be a read-only viewer and a separate
+// edit form. Each section is editable when the user may change the document and read-only
+// otherwise, so the menus that open it name a section and never a mode.
 @Reducer
-public struct DocumentFormReducer: Sendable {
+public struct DocumentSheetReducer: Sendable {
     public enum Action: BindableAction, ViewAction {
         case binding(BindingAction<State>)
         case delegate(Delegate)
         case destination(PresentationAction<Destination.Action>)
         case documentResult(Result<Document, Error>)
+        case history(DocumentHistoryReducer.Action)
         case linkedCustomFieldDocuments(IdentifiedArrayOf<Document>)
+        case metadata(DocumentMetadataReducer.Action)
         case nextArchiveSerialNumber(Int)
         case notes(DocumentNotesReducer.Action)
+        case readOnlyCustomFields(DocumentCustomFieldsReducer.Action)
         case updateResult(Result<Document, Error>)
         case view(View)
 
@@ -45,10 +51,14 @@ public struct DocumentFormReducer: Sendable {
         }
     }
 
+    // Swift allows the mutual recursion with DocumentDetailReducer, whose own Destination holds
+    // this sheet; only the synthesised Equatable needs the hand-written conformance at the bottom
+    // of this file, which every Destination in this codebase carries.
     @Reducer
     public enum Destination {
         case correspondentForm(CorrespondentFormReducer)
         case customFieldForm(CustomFieldFormReducer)
+        case documentDetail(DocumentDetailReducer)
         case documentPicker(DocumentPickerReducer)
         case documentTypeForm(DocumentTypeFormReducer)
         case storagePathForm(StoragePathFormReducer)
@@ -70,6 +80,8 @@ public struct DocumentFormReducer: Sendable {
         @Shared
         var document: Document
 
+        var history: DocumentHistoryReducer.State
+
         var input: DocumentFormInput
 
         var isContentModified: Bool {
@@ -87,6 +99,51 @@ public struct DocumentFormReducer: Sendable {
             input != DocumentFormInput(document: document, server: server) || isContentModified
         }
 
+        // Carried so a linked document opened from here inherits it: that document is a fresh
+        // DocumentDetailReducer, not the one the Offline tab already marked, and would otherwise
+        // reach the network same as any other document's.
+        let isOfflineSnapshot: Bool
+
+        // An offline document is a snapshot: it reads what was saved, and every write this sheet
+        // can otherwise reach - save, the ASN lookup, the create forms, the document picker, the
+        // notes composer and delete - must stay unreachable, since none of those dependencies are
+        // among the ones the Offline tab overrides for reading.
+        var isEditable: Bool {
+            canEdit && !isOfflineSnapshot
+        }
+
+        // Custom fields answer to their own view_customfield: without it the definitions endpoint
+        // is refused, and the editor has nothing to offer in its add menu. The values the document
+        // already carries still show, read-only.
+        var isCustomFieldsEditable: Bool {
+            isEditable && canViewCustomField
+        }
+
+        // Only the sections that scroll as one column get the sheet's scroll view. Editable
+        // content is a TextEditor that scrolls itself; the lists - notes, history, read-only
+        // custom fields - span the sheet edge to edge and scroll themselves too. The loading,
+        // error and empty states are centred instead, which a scroll view would pin to the top.
+        var isSheetScrollable: Bool {
+            switch section {
+            case .content:
+                guard !isEditable, let content, loadError == nil else {
+                    return false
+                }
+                return !content.isEmpty
+            case .customFields:
+                return isCustomFieldsEditable && !input.customFields.isEmpty
+            case .details:
+                return true
+            case .history, .notes:
+                return false
+            case .metadata:
+                guard let value = metadata.metadata, metadata.loadError == nil else {
+                    return false
+                }
+                return !value.isEmpty
+            }
+        }
+
         var isUpdating = false
 
         // Resolved titles for every documentlink value on the document, so the capsules can name
@@ -95,9 +152,22 @@ public struct DocumentFormReducer: Sendable {
 
         var loadError: String?
 
+        var metadata: DocumentMetadataReducer.State
+
         var notes: DocumentNotesReducer.State
 
-        var section = DocumentFormSection.details
+        var readOnlyCustomFields: DocumentCustomFieldsReducer.State
+
+        var section = DocumentSheetSection.details
+
+        // The sheet's own picker narrows through the same filter as the menus that open it.
+        var visibleSections: [DocumentSheetSection] {
+            DocumentSheetSection.visible(
+                isEditable: isEditable,
+                canViewHistory: canViewHistory,
+                canViewNotes: canViewNotes
+            )
+        }
 
         let server: Server
 
@@ -119,6 +189,10 @@ public struct DocumentFormReducer: Sendable {
         // Stored rather than computed from `server`: constructing a ServerPermissions reads two
         // files and arms two file watchers, and a computed property would do that on every render.
         var permissions: ServerPermissions
+
+        var canEdit: Bool { permissions.can(.changeDocument) }
+
+        var canViewHistory: Bool { permissions.canViewHistory(of: document) }
 
         var canCreateTag: Bool { permissions.can(.addTag) }
 
@@ -147,20 +221,34 @@ public struct DocumentFormReducer: Sendable {
         var canViewNotes: Bool { permissions.can(.viewNote) }
 
         init(
-            destination: DocumentFormReducer.Destination.State? = nil,
+            destination: DocumentSheetReducer.Destination.State? = nil,
             document: Shared<Document>,
-            section: DocumentFormSection = .details,
+            isOfflineSnapshot: Bool = false,
+            section: DocumentSheetSection = .details,
             server: Server
         ) {
             self.destination = destination
             self._document = document
+            self.history = DocumentHistoryReducer.State(
+                documentId: document.wrappedValue.id,
+                server: server
+            )
+            self.isOfflineSnapshot = isOfflineSnapshot
             self.section = section
             self.input = DocumentFormInput(
                 document: document.wrappedValue,
                 server: server
             )
+            self.metadata = DocumentMetadataReducer.State(
+                documentId: document.wrappedValue.id,
+                server: server
+            )
             self.notes = DocumentNotesReducer.State(
                 documentId: document.wrappedValue.id,
+                server: server
+            )
+            self.readOnlyCustomFields = DocumentCustomFieldsReducer.State(
+                document: document,
                 server: server
             )
             self.server = server
@@ -173,13 +261,36 @@ public struct DocumentFormReducer: Sendable {
         }
     }
 
+    public init() {}
+
     public var body: some ReducerOf<Self> {
         BindingReducer()
+        Scope(state: \.history, action: \.history) {
+            DocumentHistoryReducer()
+        }
+        Scope(state: \.metadata, action: \.metadata) {
+            DocumentMetadataReducer()
+        }
         Scope(state: \.notes, action: \.notes) {
             DocumentNotesReducer()
         }
+        Scope(state: \.readOnlyCustomFields, action: \.readOnlyCustomFields) {
+            DocumentCustomFieldsReducer()
+        }
         Reduce { state, action in
             switch action {
+            case let .readOnlyCustomFields(.delegate(.openDocument(document))):
+                state.destination = .documentDetail(DocumentDetailReducer.State(
+                    document: Shared(value: document),
+                    isOfflineSnapshot: state.isOfflineSnapshot,
+                    server: state.server
+                ))
+                return .none
+            // The detail here shows a LINKED document opened from a custom field, not the one this
+            // sheet is showing, so deleting it dismisses the detail and leaves the sheet be.
+            case let .destination(.presented(.documentDetail(.delegate(.deleteDocument(id))))):
+                state.destination = nil
+                return .runDeleteDocument(id: id, server: state.server)
             case let .destination(.presented(.correspondentForm(.delegate(.correspondentSaved(correspondent))))):
                 state.destination = nil
                 state.input.correspondent = correspondent
@@ -249,6 +360,11 @@ public struct DocumentFormReducer: Sendable {
                     state.$document.withLock { $0 = document }
                     return .send(.delegate(.documentUpdated))
                 }
+            // Every write this sheet can start, refused when it is read-only. The view hides each
+            // control, so this is the belt to those braces - the one that holds an offline
+            // snapshot's promise even if a control is ever left showing.
+            case let .view(viewAction) where !state.isEditable && viewAction.isWrite:
+                return .none
             case let .view(viewAction):
                 switch viewAction {
                 case let .addCustomFieldTapped(id):
@@ -297,7 +413,11 @@ public struct DocumentFormReducer: Sendable {
                 case .getNextArchiveSerialNumberButtonTapped:
                     return .runGetNextArchiveSerialNumber(server: state.server)
                 case .onAppear:
-                    let resolveLinked = Effect.runResolveLinkedCustomFieldDocuments(state)
+                    // Read-only custom fields resolve their own links; the editor's lookup is for
+                    // the staged values, which a read-only sheet never has.
+                    let resolveLinked: Effect<Action> = state.isCustomFieldsEditable
+                        ? .runResolveLinkedCustomFieldDocuments(state)
+                        : .none
                     // A failed load is not retried silently on the next appearance; that is what
                     // the retry button is for. The title lookup still runs: it is keyed off the
                     // staged values, not off whether the full document has arrived.
@@ -344,7 +464,7 @@ public struct DocumentFormReducer: Sendable {
                         server: state.server
                     )
                 }
-            case .binding, .delegate, .destination, .notes:
+            case .binding, .delegate, .destination, .history, .metadata, .notes, .readOnlyCustomFields:
                 return .none
             }
         }
@@ -352,4 +472,26 @@ public struct DocumentFormReducer: Sendable {
     }
 }
 
-extension DocumentFormReducer.Destination.State: Equatable {}
+private extension DocumentSheetReducer.Action.View {
+
+    var isWrite: Bool {
+        switch self {
+        case .addCustomFieldTapped,
+             .createCorrespondentButtonTapped,
+             .createCustomFieldButtonTapped,
+             .createDocumentTypeButtonTapped,
+             .createStoragePathButtonTapped,
+             .createTagButtonTapped,
+             .documentLinkTapped,
+             .getNextArchiveSerialNumberButtonTapped,
+             .removeCustomFieldTapped,
+             .resetButtonTapped,
+             .saveButtonTapped:
+            true
+        case .closeButtonTapped, .onAppear, .retryLoadButtonTapped:
+            false
+        }
+    }
+}
+
+extension DocumentSheetReducer.Destination.State: Equatable {}

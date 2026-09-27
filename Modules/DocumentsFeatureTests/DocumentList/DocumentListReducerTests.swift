@@ -110,7 +110,7 @@ struct DocumentListReducerTests {
     }
 
     @Test
-    func test_path_documentDetail_destination_documentForm_delegate_documentUpdated() async throws {
+    func test_path_documentDetail_destination_documentSheet_delegate_documentUpdated() async throws {
         let document = Document.testValue(id: 1, title: "Original Title")
 
         let store = TestStore(initialState: DocumentListReducer.State.testValue(
@@ -119,7 +119,7 @@ struct DocumentListReducerTests {
             ],
             path: .init([
                 .documentDetail(.testValue(
-                    destination: .documentForm(.testValue()),
+                    destination: .documentSheet(.testValue()),
                     document: document
                 ))
             ])
@@ -129,7 +129,7 @@ struct DocumentListReducerTests {
 
         await store.send(.path(.element(
             id: 0,
-            action: .documentDetail(.destination(.presented(.documentForm(.delegate(.documentUpdated)))))
+            action: .documentDetail(.destination(.presented(.documentSheet(.delegate(.documentUpdated)))))
         ))) {
             $0.path[id: 0, case: \.documentDetail]?.destination = nil
         }
@@ -928,7 +928,7 @@ struct DocumentListReducerTests {
     func test_replaceDocuments_keepsWhatTheRowIsShowing() async throws {
         let document = Document.testValue(id: 7, title: "Invoice")
         let row = DocumentRowReducer.State.testValue(
-            destination: .documentForm(.testValue(document: document)),
+            destination: .documentSheet(.testValue(document: document)),
             document: document,
             isDownloading: true
         )
@@ -955,7 +955,7 @@ struct DocumentListReducerTests {
         let store = TestStore(initialState: DocumentListReducer.State.testValue(
             documents: [
                 .testValue(document: .testValue(id: 7)),
-                .testValue(destination: .documentForm(.testValue()), document: .testValue(id: 8)),
+                .testValue(destination: .documentSheet(.testValue()), document: .testValue(id: 8)),
             ]
         )) {
             DocumentListReducer()

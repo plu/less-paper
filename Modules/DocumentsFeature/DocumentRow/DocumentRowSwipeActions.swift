@@ -20,7 +20,6 @@ public extension View {
             prepending: leadingPrefix,
             canDelete: store.canDelete,
             canEdit: store.canEdit,
-            canViewCustomFields: store.canViewCustomFields,
             canViewHistory: store.canViewHistory,
             canViewNotes: store.canViewNotes,
             hasInboxTags: !store.inboxTags.isEmpty,
@@ -31,7 +30,6 @@ public extension View {
             prepending: [.clearInboxTags],
             canDelete: store.canDelete,
             canEdit: store.canEdit,
-            canViewCustomFields: store.canViewCustomFields,
             canViewHistory: store.canViewHistory,
             canViewNotes: store.canViewNotes,
             hasInboxTags: !store.inboxTags.isEmpty,
@@ -77,30 +75,24 @@ private extension DocumentSwipeAction {
             .clearInboxTagsButtonTapped
         case .delete:
             .deleteButtonTapped
-        case .editContent:
-            .editButtonTapped(.content)
-        case .editCustomFields:
-            .editButtonTapped(.customFields)
-        case .editDetails:
-            .editButtonTapped(.details)
-        case .editNotes:
-            .editButtonTapped(.notes)
+        case .openContent:
+            .openButtonTapped(.content)
+        case .openCustomFields:
+            .openButtonTapped(.customFields)
+        case .openDetails:
+            .openButtonTapped(.details)
+        case .openHistory:
+            .openButtonTapped(.history)
+        case .openMetadata:
+            .openButtonTapped(.metadata)
+        case .openNotes:
+            .openButtonTapped(.notes)
         case .preview:
             .previewButtonTapped
         case .saveOffline:
             .saveOfflineButtonTapped
         case .share:
             .shareButtonTapped
-        case .viewContent:
-            .viewButtonTapped(.content)
-        case .viewCustomFields:
-            .viewButtonTapped(.customFields)
-        case .viewHistory:
-            .viewButtonTapped(.history)
-        case .viewMetadata:
-            .viewButtonTapped(.metadata)
-        case .viewNotes:
-            .viewButtonTapped(.notes)
         }
     }
 

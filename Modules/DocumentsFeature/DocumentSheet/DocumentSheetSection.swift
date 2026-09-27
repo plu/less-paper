@@ -1,14 +1,15 @@
 import Foundation
 
-public enum DocumentViewerSection: CaseIterable, Sendable {
+public enum DocumentSheetSection: CaseIterable, Sendable {
     case content
     case customFields
+    case details
     case history
     case metadata
     case notes
 }
 
-extension DocumentViewerSection {
+extension DocumentSheetSection {
 
     var localized: LocalizedStringResource {
         switch self {
@@ -16,6 +17,8 @@ extension DocumentViewerSection {
             .content
         case .customFields:
             .customFields
+        case .details:
+            .details
         case .history:
             .history
         case .metadata:
@@ -31,6 +34,8 @@ extension DocumentViewerSection {
             "text.alignleft"
         case .customFields:
             "list.bullet.rectangle"
+        case .details:
+            "square.and.pencil"
         case .history:
             "clock.arrow.circlepath"
         case .metadata:
@@ -41,16 +46,22 @@ extension DocumentViewerSection {
     }
 }
 
-extension DocumentViewerSection {
+extension DocumentSheetSection {
 
-    // The one place a section is dropped for lack of permission. Three menus open this sheet — the
-    // detail toolbar, the row's context menu and the sheet's own picker — and each copy of the
+    // The one place a section is dropped. Three menus open this sheet — the detail toolbar, the
+    // row's context menu and the sheet's own picker — plus the swipe actions, and each copy of the
     // filter was one more place to forget a new section.
-    static func visible(canViewHistory: Bool, canViewNotes: Bool) -> [Self] {
+    //
+    // Details is the only section with nothing to show read-only: it exists to change the fields,
+    // and the detail screen already names the document they describe. Notes and History answer 403
+    // without their permissions.
+    static func visible(isEditable: Bool, canViewHistory: Bool, canViewNotes: Bool) -> [Self] {
         allCases.filter { section in
             switch section {
             case .content, .customFields, .metadata:
                 true
+            case .details:
+                isEditable
             case .history:
                 canViewHistory
             case .notes:

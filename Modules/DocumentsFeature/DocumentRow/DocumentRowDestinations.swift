@@ -22,15 +22,9 @@ private struct DocumentRowDestinations: ViewModifier {
                 ShareSheet(url: item.url)
             }
             .sheet(
-                item: $store.scope(state: \.destination?.documentForm, action: \.destination.documentForm)
+                item: $store.scope(state: \.destination?.documentSheet, action: \.destination.documentSheet)
             ) { store in
-                DocumentFormView(store: store)
-                    .presentationDetents([.large])
-            }
-            .sheet(
-                item: $store.scope(state: \.destination?.documentViewer, action: \.destination.documentViewer)
-            ) { store in
-                DocumentViewerView(store: store)
+                DocumentSheetView(store: store)
                     .presentationDetents([.large])
             }
     }

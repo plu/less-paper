@@ -33,22 +33,27 @@ public struct DocumentDetailView: View {
         .navigationTitle(store.document.title)
         .quickLookPreview($store.quickLookPreview)
         .sheet(
-            item: $store.scope(state: \.destination?.documentForm, action: \.destination.documentForm)
+            item: $store.scope(state: \.destination?.documentSheet, action: \.destination.documentSheet)
         ) { store in
-            DocumentFormView(store: store)
-                .presentationDetents([.large])
-        }
-        .sheet(
-            item: $store.scope(state: \.destination?.documentViewer, action: \.destination.documentViewer)
-        ) { store in
-            DocumentViewerView(store: store)
+            DocumentSheetView(store: store)
                 .presentationDetents([.large])
         }
         .toolbar {
             // Not disabled while the download is in flight: only Preview needs the PDF, so the
-            // menu still carries Share and View before one has arrived.
+            // menu still carries Share and Open before one has arrived.
             Menu {
-                // First rather than sorted in with the rest, for the same reason as the row's menu:
+                // The same three groups as the row's menu: the actions that run straight away, the
+                // two submenus, and Delete a deliberate reach from the rest. Without the row's Edit:
+                // the toolbar button beside this menu already is one.
+                if store.downloadedURL != nil {
+                    Button {
+                        send(.previewButtonTapped)
+                    } label: {
+                        Label(.preview, systemImage: "eye")
+                    }
+                }
+
+                // Last in its group rather than sorted in, for the same reason as the row's menu:
                 // the label changes with state, so ordering it by its initial would move it under
                 // the user's thumb as they used it.
                 //
@@ -68,21 +73,12 @@ public struct DocumentDetailView: View {
                     .disabled(store.isTogglingOffline)
                 }
 
-                if store.downloadedURL != nil {
-                    Button {
-                        send(.previewButtonTapped)
-                    } label: {
-                        Label(.preview, systemImage: "eye")
-                    }
-                }
+                Divider()
+
+                openMenu()
 
                 shareMenu()
 
-                viewerMenu()
-
-                // Held out below the divider rather than sorted in with the rest, the same way the
-                // row's menu holds it: the reversible actions are together, and the one that is not
-                // is a deliberate reach away from them.
                 if !store.isOfflineSnapshot, store.canDelete {
                     Divider()
 
@@ -102,9 +98,9 @@ public struct DocumentDetailView: View {
                 }
             }
 
-            // A snapshot is read-only: its edit form is the only door to a network write this
-            // screen can otherwise reach, so it is not offered here at all.
-            if !store.isOfflineSnapshot, store.canEdit {
+            // A shortcut to Open > Details, the section edited most. A snapshot is read-only, so it
+            // is not offered there at all.
+            if store.isEditable {
                 Button(action: {
                     send(.editDocumentButtonTapped)
                 }) {
@@ -125,15 +121,14 @@ public struct DocumentDetailView: View {
     private var horizontalSizeClass
 
     @ViewBuilder
-    private func viewerMenu() -> some View {
-        // Notes and History answer 403 without their permissions, so they drop out here rather
-        // than opening onto a section with nothing to show.
-        DocumentViewerMenu(
-            sections: DocumentViewerSection.visible(
+    private func openMenu() -> some View {
+        DocumentOpenMenu(
+            sections: DocumentSheetSection.visible(
+                isEditable: store.isEditable,
                 canViewHistory: store.canViewHistory,
                 canViewNotes: store.canViewNotes
             )
-        ) { send(.viewButtonTapped($0)) }
+        ) { send(.openButtonTapped($0)) }
     }
 
     @ViewBuilder

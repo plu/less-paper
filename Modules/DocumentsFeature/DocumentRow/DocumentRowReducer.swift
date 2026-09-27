@@ -28,12 +28,11 @@ public struct DocumentRowReducer: Sendable {
         public enum View {
             case clearInboxTagsButtonTapped
             case deleteButtonTapped
-            case editButtonTapped(DocumentFormSection)
+            case openButtonTapped(DocumentSheetSection)
             case saveOfflineButtonTapped
             case previewButtonTapped
             case rowTapped
             case shareButtonTapped
-            case viewButtonTapped(DocumentViewerSection)
         }
     }
 
@@ -44,8 +43,7 @@ public struct DocumentRowReducer: Sendable {
 
     @Reducer
     public enum Destination {
-        case documentForm(DocumentFormReducer)
-        case documentViewer(DocumentViewerReducer)
+        case documentSheet(DocumentSheetReducer)
     }
 
     @ObservableState
@@ -102,8 +100,6 @@ public struct DocumentRowReducer: Sendable {
         var canEdit: Bool { permissions.can(.changeDocument) }
 
         var canDelete: Bool { permissions.can(.deleteDocument) }
-
-        var canViewCustomFields: Bool { permissions.can(.viewCustomField) }
 
         var canViewNotes: Bool { permissions.can(.viewNote) }
 
@@ -183,7 +179,7 @@ public struct DocumentRowReducer: Sendable {
         BindingReducer()
         Reduce { state, action in
             switch action {
-            case .destination(.presented(.documentForm(.delegate(.documentUpdated)))):
+            case .destination(.presented(.documentSheet(.delegate(.documentUpdated)))):
                 state.destination = nil
                 return .none
             case let .downloadFailed(error):
@@ -225,8 +221,18 @@ public struct DocumentRowReducer: Sendable {
                     )
                 case .deleteButtonTapped:
                     return .runConfirmDelete(documentTitle: state.document.title)
-                case let .editButtonTapped(section):
-                    state.destination = .documentForm(DocumentFormReducer.State(
+                case let .openButtonTapped(section):
+                    // The menu and the swipe plan offer only these; refusing the rest here keeps
+                    // the three from drifting apart.
+                    guard DocumentSheetSection.visible(
+                        isEditable: state.canEdit,
+                        canViewHistory: state.canViewHistory,
+                        canViewNotes: state.canViewNotes
+                    ).contains(section)
+                    else {
+                        return .none
+                    }
+                    state.destination = .documentSheet(DocumentSheetReducer.State(
                         document: state.$document,
                         section: section,
                         server: state.server
@@ -245,13 +251,6 @@ public struct DocumentRowReducer: Sendable {
                     return .send(.delegate(.presentDocumentDetail(state.$document)))
                 case .shareButtonTapped:
                     return state.download(intent: .share)
-                case let .viewButtonTapped(section):
-                    state.destination = .documentViewer(DocumentViewerReducer.State(
-                        document: state.$document,
-                        section: section,
-                        server: state.server
-                    ))
-                    return .none
                 }
             case .binding, .delegate, .destination:
                 return .none

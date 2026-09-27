@@ -8,19 +8,25 @@ import Testing
 import TestSupport
 
 @MainActor
+// The sheet stages a DocumentFormInput even read-only, and that resolves each attached field
+// through the cache. The default stub answers every id with the same field, which collides as soon
+// as a document carries two; these sections read their definitions from the shared array instead.
 @Suite(
-    .testDependencies(),
+    .testDependencies {
+        $0.apiCache.customField = { _, _ in nil }
+    },
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
-struct DocumentViewerViewTests {
+struct DocumentSheetReadOnlyViewTests {
 
     @Test
     func testSnapshot_content() async throws {
         assertSnapshot(
             of: view(state: .testValue(
-                document: .testValue(content: content),
-                hasLoadedContent: true
+                content: content,
+                isOfflineSnapshot: true,
+                section: .content
             )),
             as: .image(layout: .device(config: .iPhone12))
         )
@@ -36,7 +42,7 @@ struct DocumentViewerViewTests {
             }
         } operation: {
             assertSnapshot(
-                of: view(state: .testValue()),
+                of: view(state: .testValue(isOfflineSnapshot: true, section: .content)),
                 as: .image(layout: .device(config: .iPhone12)),
                 named: "loading"
             )
@@ -46,7 +52,7 @@ struct DocumentViewerViewTests {
     @Test
     func testSnapshot_content_error() async throws {
         assertSnapshot(
-            of: view(state: .testValue(loadError: "The request timed out.")),
+            of: view(state: .testValue(isOfflineSnapshot: true, loadError: "The request timed out.", section: .content)),
             as: .image(layout: .device(config: .iPhone12)),
             named: "error"
         )
@@ -56,8 +62,9 @@ struct DocumentViewerViewTests {
     func testSnapshot_content_empty() async throws {
         assertSnapshot(
             of: view(state: .testValue(
-                document: .testValue(content: ""),
-                hasLoadedContent: true
+                content: "",
+                isOfflineSnapshot: true,
+                section: .content
             )),
             as: .image(layout: .device(config: .iPhone12)),
             named: "empty"
@@ -68,7 +75,7 @@ struct DocumentViewerViewTests {
     func testSnapshot_notes() async throws {
         assertSnapshot(
             of: view(state: .testValue(
-                hasLoadedContent: true,
+                isOfflineSnapshot: true,
                 notes: [
                     .testValue(),
                     .testValue(
@@ -89,7 +96,7 @@ struct DocumentViewerViewTests {
     func testSnapshot_metadata() async throws {
         assertSnapshot(
             of: view(state: .testValue(
-                hasLoadedContent: true,
+                isOfflineSnapshot: true,
                 metadata: .testValue(),
                 section: .metadata
             )),
@@ -102,8 +109,9 @@ struct DocumentViewerViewTests {
     func testSnapshot_darkMode() async throws {
         assertSnapshot(
             of: view(state: .testValue(
-                document: .testValue(content: content),
-                hasLoadedContent: true
+                content: content,
+                isOfflineSnapshot: true,
+                section: .content
             )),
             as: .image(
                 layout: .device(config: .iPhone12),
@@ -128,12 +136,12 @@ struct DocumentViewerViewTests {
     Due                   153.48
     """
 
-    private func view(state: DocumentViewerReducer.State) -> some View {
-        DocumentViewerView(
+    private func view(state: DocumentSheetReducer.State) -> some View {
+        DocumentSheetView(
             store: Store(
                 initialState: state,
                 reducer: {
-                    DocumentViewerReducer()
+                    DocumentSheetReducer()
                 }
             )
         )
@@ -150,17 +158,18 @@ struct DocumentViewerViewTests {
             ],
             id: 1
         )
-        var state = DocumentViewerReducer.State.testValue(
+        var state = DocumentSheetReducer.State.testValue(
             document: document,
+            isOfflineSnapshot: true,
             section: .customFields
         )
-        state.customFields.$customFields.withLock {
+        state.readOnlyCustomFields.$customFields.withLock {
             $0 = [
                 .testValue(dataType: .boolean, id: 3, name: "bool2"),
                 .testValue(dataType: .documentLink, id: 6, name: "link"),
             ]
         }
-        state.customFields.linkedDocuments = [.testValue(id: 2, title: "Test")]
+        state.readOnlyCustomFields.linkedDocuments = [.testValue(id: 2, title: "Test")]
 
         assertSnapshot(
             of: view(state: state),
