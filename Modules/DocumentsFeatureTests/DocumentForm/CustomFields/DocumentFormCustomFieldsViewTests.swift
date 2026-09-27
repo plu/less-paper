@@ -66,7 +66,7 @@ struct DocumentFormCustomFieldsViewTests {
         definitions: [CustomField],
         attached: [DocumentFormCustomField]
     ) async throws {
-        var state = DocumentFormReducer.State.testValue(
+        var state = DocumentSheetReducer.State.testValue(
             customFields: IdentifiedArray(uniqueElements: definitions),
             section: .customFields,
             server: .testValue(id: serverId)
@@ -78,7 +78,7 @@ struct DocumentFormCustomFieldsViewTests {
         ]
 
         assertSnapshot(
-            of: DocumentFormView(
+            of: DocumentSheetView(
                 store: Store(initialState: state) {
                     EmptyReducer()
                 }

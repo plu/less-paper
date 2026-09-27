@@ -12,17 +12,17 @@ import TestSupport
 @Suite(
     .testDependencies()
 )
-struct DocumentViewerReducerTests {
+struct DocumentSheetReadOnlyReducerTests {
 
     @Test
     func test_view_onAppear_writesFullDocumentIntoTheSharedValue() async throws {
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
         let document = Shared(value: Document.testValue(content: "Some invoice"))
-        let store = TestStore(initialState: DocumentViewerReducer.State(
+        let store = TestStore(initialState: DocumentSheetReducer.State(
             document: document,
             server: .testValue()
         )) {
-            DocumentViewerReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in full }
         }
@@ -32,7 +32,7 @@ struct DocumentViewerReducerTests {
         }
         await store.receive(\.documentResult.success, full) {
             $0.isLoadingDocument = false
-            $0.hasLoadedContent = true
+            $0.content = full.content
             $0.$document.withLock { $0 = full }
         }
 
@@ -42,8 +42,8 @@ struct DocumentViewerReducerTests {
     @Test
     func test_view_onAppear_failure_setsLoadErrorAndToasts() async throws {
         let toasts = LockIsolated<[Toast]>([])
-        let store = TestStore(initialState: DocumentViewerReducer.State.testValue()) {
-            DocumentViewerReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in throw ApiError.testValue() }
             $0.toastPresenter.present = { value in
@@ -59,7 +59,7 @@ struct DocumentViewerReducerTests {
             $0.loadError = ApiError.testValue().localizedDescription
         }
 
-        #expect(store.state.hasLoadedContent == false)
+        #expect(store.state.content == nil)
         #expect(toasts.value.count == 1)
 
         // Re-appearing must not silently retry; only the retry button may.
@@ -70,8 +70,8 @@ struct DocumentViewerReducerTests {
     func test_view_onAppear_doesNotRefetchOnceLoaded() async throws {
         let calls = LockIsolated(0)
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
-        let store = TestStore(initialState: DocumentViewerReducer.State.testValue()) {
-            DocumentViewerReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in
                 calls.withValue { $0 += 1 }
@@ -90,10 +90,10 @@ struct DocumentViewerReducerTests {
     @Test
     func test_view_retryLoadButtonTapped_afterFailure_refetches() async throws {
         let full = Document.testValue(content: "Some invoice, and all the rest of the OCR text")
-        let store = TestStore(initialState: DocumentViewerReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             loadError: "The request timed out."
         )) {
-            DocumentViewerReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in full }
         }
@@ -104,7 +104,7 @@ struct DocumentViewerReducerTests {
         }
         await store.receive(\.documentResult.success, full) {
             $0.isLoadingDocument = false
-            $0.hasLoadedContent = true
+            $0.content = full.content
             $0.$document.withLock { $0 = full }
         }
     }
@@ -113,8 +113,8 @@ struct DocumentViewerReducerTests {
     func test_view_retryLoadButtonTapped_whileLoading_doesNotRefetch() async throws {
         let calls = LockIsolated(0)
         let gate = AsyncStream<Void>.makeStream()
-        let store = TestStore(initialState: DocumentViewerReducer.State.testValue()) {
-            DocumentViewerReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in
                 calls.withValue { $0 += 1 }
@@ -137,8 +137,8 @@ struct DocumentViewerReducerTests {
     @Test
     func test_binding_section_doesNotRefetch() async throws {
         let calls = LockIsolated(0)
-        let store = TestStore(initialState: DocumentViewerReducer.State.testValue()) {
-            DocumentViewerReducer()
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue()) {
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocument.execute = { _, _ in
                 calls.withValue { $0 += 1 }
@@ -159,10 +159,10 @@ struct DocumentViewerReducerTests {
     @Test
     func test_metadata_loadsThroughTheScopedChild() async throws {
         let metadata = DocumentMetadata.testValue()
-        let store = TestStore(initialState: DocumentViewerReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             section: .metadata
         )) {
-            DocumentViewerReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocumentMetadata.execute = { _, _ in metadata }
         }
@@ -178,43 +178,53 @@ struct DocumentViewerReducerTests {
 
     // The sheet scrolls the metadata card stack, but not the states that are centred in it.
     @Test
-    func test_isContentScrollable_perSection() async throws {
-        let loaded = DocumentViewerReducer.State.testValue(
-            document: .testValue(content: "Some content"),
-            hasLoadedContent: true,
+    func test_isSheetScrollable_perSection() async throws {
+        let loaded = DocumentSheetReducer.State.testValue(
+            content: "Some content",
+            isOfflineSnapshot: true,
             metadata: .testValue(),
             notes: [.testValue()],
             section: .metadata
         )
 
-        #expect(loaded.isContentScrollable)
+        #expect(loaded.isSheetScrollable)
 
-        var loading = DocumentViewerReducer.State.testValue(section: .metadata)
-        #expect(!loading.isContentScrollable)
+        var loading = DocumentSheetReducer.State.testValue(section: .metadata)
+        #expect(!loading.isSheetScrollable)
 
         loading.metadata.loadError = "The request timed out."
-        #expect(!loading.isContentScrollable)
+        #expect(!loading.isSheetScrollable)
 
         var notes = loaded
         notes.section = .notes
-        #expect(!notes.isContentScrollable)
+        #expect(!notes.isSheetScrollable)
 
         var history = loaded
         history.section = .history
-        #expect(!history.isContentScrollable)
+        #expect(!history.isSheetScrollable)
 
         var content = loaded
         content.section = .content
-        #expect(content.isContentScrollable)
+        #expect(content.isSheetScrollable)
+    }
+
+    // Editable content is a TextEditor, which scrolls itself; the sheet scrolling around it would
+    // fight it for the gesture.
+    @Test
+    func test_isSheetScrollable_editableContentScrollsItself() async throws {
+        let state = DocumentSheetReducer.State.testValue(content: "Some content", section: .content)
+
+        #expect(state.isEditable)
+        #expect(!state.isSheetScrollable)
     }
 
     @Test
     func test_view_closeButtonTapped() async throws {
         let dismissCalls = LockIsolated(0)
-        let store = TestStore(initialState: DocumentViewerReducer.State.testValue(
-            hasLoadedContent: true
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
+            content: "Some content"
         )) {
-            DocumentViewerReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.dismiss = .init {
                 dismissCalls.withValue { $0 += 1 }
@@ -227,39 +237,39 @@ struct DocumentViewerReducerTests {
     }
 
     // The whole document, not just its fields: presenting DocumentDetailReducer here works because
-    // Swift permits the mutual recursion with its own Destination, which holds a viewer.
+    // Swift permits the mutual recursion with its own Destination, which holds this sheet.
     @Test
     func openingALinkPresentsThatDocumentsDetail() async throws {
         let linked = Document.testValue(id: 2, title: "Contract")
         let store = TestStore(
-            initialState: DocumentViewerReducer.State.testValue(section: .customFields)
+            initialState: DocumentSheetReducer.State.testValue(section: .customFields)
         ) {
-            DocumentViewerReducer()
+            DocumentSheetReducer()
         }
 
-        await store.send(.customFields(.delegate(.openDocument(linked)))) {
+        await store.send(.readOnlyCustomFields(.delegate(.openDocument(linked)))) {
             $0.destination = .documentDetail(
                 DocumentDetailReducer.State(document: Shared(value: linked), server: $0.server)
             )
         }
     }
 
-    // A viewer opened from an offline document's detail is itself a snapshot, and a linked document
-    // reached through it is not the document the Offline tab already vouched for — its own edit
-    // form must stay just as unreachable.
+    // A sheet opened from an offline document's detail is itself a snapshot, and a linked document
+    // reached through it is not the document the Offline tab already vouched for — its own edits
+    // must stay just as unreachable.
     @Test
     func openingALinkFromAnOfflineSnapshotCarriesTheFlagIntoTheLinkedDetail() async throws {
         let linked = Document.testValue(id: 2, title: "Contract")
         let store = TestStore(
-            initialState: DocumentViewerReducer.State.testValue(
+            initialState: DocumentSheetReducer.State.testValue(
                 isOfflineSnapshot: true,
                 section: .customFields
             )
         ) {
-            DocumentViewerReducer()
+            DocumentSheetReducer()
         }
 
-        await store.send(.customFields(.delegate(.openDocument(linked)))) {
+        await store.send(.readOnlyCustomFields(.delegate(.openDocument(linked)))) {
             $0.destination = .documentDetail(
                 DocumentDetailReducer.State(
                     document: Shared(value: linked),
@@ -274,12 +284,12 @@ struct DocumentViewerReducerTests {
     func dismissingTheSheetClearsTheDestination() async throws {
         let linked = Document.testValue(id: 2, title: "Contract")
         let store = TestStore(
-            initialState: DocumentViewerReducer.State.testValue(section: .customFields)
+            initialState: DocumentSheetReducer.State.testValue(section: .customFields)
         ) {
-            DocumentViewerReducer()
+            DocumentSheetReducer()
         }
 
-        await store.send(.customFields(.delegate(.openDocument(linked)))) {
+        await store.send(.readOnlyCustomFields(.delegate(.openDocument(linked)))) {
             $0.destination = .documentDetail(
                 DocumentDetailReducer.State(document: Shared(value: linked), server: $0.server)
             )
@@ -290,22 +300,22 @@ struct DocumentViewerReducerTests {
         }
     }
 
-    // The viewer is built from the list payload and replaces $document once the full document
+    // The sheet is built from the list payload and replaces $document once the full document
     // arrives. The section shares that document rather than copying it at init, or fields the list
     // payload omitted would never appear.
     @Test
     func theSectionSeesFieldsThatArriveWithTheFullDocument() async throws {
         let store = TestStore(
-            initialState: DocumentViewerReducer.State.testValue(
+            initialState: DocumentSheetReducer.State.testValue(
                 document: .testValue(customFields: [], id: 1),
                 section: .customFields
             )
         ) {
-            DocumentViewerReducer()
+            DocumentSheetReducer()
         }
         store.exhaustivity = .off
 
-        #expect(store.state.customFields.document.customFields.isEmpty)
+        #expect(store.state.readOnlyCustomFields.document.customFields.isEmpty)
 
         let full = Document.testValue(
             customFields: [.init(field: 3, value: .bool(true))],
@@ -313,7 +323,7 @@ struct DocumentViewerReducerTests {
         )
         await store.send(.documentResult(.success(full)))
 
-        #expect(store.state.customFields.document.customFields.count == 1)
+        #expect(store.state.readOnlyCustomFields.document.customFields.count == 1)
     }
 
     @Test
@@ -325,12 +335,75 @@ struct DocumentViewerReducerTests {
         $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
         $permissions.withLock { $0 = [.viewDocument] }
 
-        let state = DocumentViewerReducer.State.testValue(server: server)
+        let state = DocumentSheetReducer.State.testValue(server: server)
 
         // The sheet is opened from an entrance that was already gated, and then offers its own way
         // back into Notes — so it has to ask the same question again.
         #expect(!state.canViewNotes)
-        #expect(!state.permissions.can(.changeDocument))
+        #expect(!state.visibleSections.contains(.notes))
+    }
+
+    // Without change_document every section opens read-only, and Details - which has nothing to
+    // show read-only - is not offered at all.
+    @Test
+    func aUserWhoCannotEditGetsEverySectionButDetailsReadOnly() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .viewNote, .viewCustomField] }
+
+        let state = DocumentSheetReducer.State.testValue(server: server)
+
+        #expect(!state.isEditable)
+        #expect(!state.isCustomFieldsEditable)
+        #expect(state.visibleSections == [.content, .customFields, .metadata, .notes])
+    }
+
+    // Custom fields answer to their own view_customfield: an editor without it still reads the
+    // values the document carries, just not through the editor, whose add menu would be empty.
+    @Test
+    func anEditorWithoutViewCustomFieldReadsCustomFieldsInstead() {
+        let server = Server.testValue()
+
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
+
+        let state = DocumentSheetReducer.State.testValue(server: server)
+
+        #expect(state.isEditable)
+        #expect(!state.isCustomFieldsEditable)
+        #expect(state.visibleSections.contains(.customFields))
+    }
+
+    // An offline snapshot reads what was saved. Every write the sheet can start is refused even
+    // if one is sent, since none of their dependencies are among those the Offline tab overrides:
+    // an exhaustive store fails on any effect these would run.
+    @Test
+    func anOfflineSnapshotRefusesEveryWrite() async throws {
+        let store = TestStore(
+            initialState: DocumentSheetReducer.State.testValue(
+                content: "Some content",
+                isOfflineSnapshot: true
+            )
+        ) {
+            DocumentSheetReducer()
+        }
+
+        #expect(!store.state.isEditable)
+        #expect(!store.state.visibleSections.contains(.details))
+
+        await store.send(.view(.saveButtonTapped))
+        await store.send(.view(.getNextArchiveSerialNumberButtonTapped))
+        await store.send(.view(.createTagButtonTapped))
+        await store.send(.view(.createCorrespondentButtonTapped))
+        await store.send(.view(.createDocumentTypeButtonTapped))
+        await store.send(.view(.createStoragePathButtonTapped))
+        await store.send(.view(.createCustomFieldButtonTapped))
+        await store.send(.view(.resetButtonTapped))
     }
 
     @Test
@@ -342,7 +415,7 @@ struct DocumentViewerReducerTests {
         $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
         $permissions.withLock { $0 = [.viewDocument, .viewNote] }
 
-        let state = DocumentViewerReducer.State.testValue(server: server)
+        let state = DocumentSheetReducer.State.testValue(server: server)
 
         #expect(state.canViewNotes)
         #expect(!state.permissions.can(.addNote))
@@ -359,7 +432,7 @@ struct DocumentViewerReducerTests {
         $permissions.withLock { $0 = [.viewDocument, .viewLogEntry] }
         $auditLogEnabled.withLock { $0 = true }
 
-        let state = DocumentViewerReducer.State.testValue(document: .testValue(owner: 6), server: server)
+        let state = DocumentSheetReducer.State.testValue(document: .testValue(owner: 6), server: server)
 
         #expect(!state.canViewHistory)
     }
@@ -375,7 +448,7 @@ struct DocumentViewerReducerTests {
         $permissions.withLock { $0 = [.viewDocument, .viewLogEntry] }
         $auditLogEnabled.withLock { $0 = true }
 
-        let state = DocumentViewerReducer.State.testValue(document: .testValue(owner: 5), server: server)
+        let state = DocumentSheetReducer.State.testValue(document: .testValue(owner: 5), server: server)
 
         #expect(state.canViewHistory)
     }

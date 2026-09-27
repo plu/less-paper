@@ -14,26 +14,26 @@ import TestSupport
 struct DocumentDetailReducerTests {
 
     @Test
-    func test_destination_documentForm_delegate_documentUpdated() async throws {
+    func test_destination_documentSheet_delegate_documentUpdated() async throws {
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue(
-            destination: .documentForm(.testValue())
+            destination: .documentSheet(.testValue())
         )) {
             DocumentDetailReducer()
         }
 
-        await store.send(.destination(.presented(.documentForm(.delegate(.documentUpdated))))) {
+        await store.send(.destination(.presented(.documentSheet(.delegate(.documentUpdated))))) {
             $0.destination = nil
         }
     }
 
-    @Test(arguments: DocumentViewerSection.allCases)
-    func test_view_viewButtonTapped(section: DocumentViewerSection) async throws {
+    @Test(arguments: DocumentSheetSection.allCases)
+    func test_view_openButtonTapped(section: DocumentSheetSection) async throws {
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue()) {
             DocumentDetailReducer()
         }
 
-        await store.send(.view(.viewButtonTapped(section))) {
-            $0.destination = .documentViewer(.testValue(section: section))
+        await store.send(.view(.openButtonTapped(section))) {
+            $0.destination = .documentSheet(.testValue(section: section))
         }
     }
 
@@ -44,7 +44,7 @@ struct DocumentDetailReducerTests {
         }
 
         await store.send(.view(.editDocumentButtonTapped)) {
-            $0.destination = .documentForm(.testValue())
+            $0.destination = .documentSheet(.testValue(section: .details))
         }
     }
 
@@ -227,15 +227,26 @@ struct DocumentDetailReducerTests {
     }
 
     @Test
-    func test_view_viewButtonTapped_carriesIsOfflineSnapshotIntoTheViewer() async throws {
+    func test_view_openButtonTapped_refusesDetailsOnAnOfflineSnapshot() async throws {
         let store = TestStore(initialState: DocumentDetailReducer.State.testValue(
             isOfflineSnapshot: true
         )) {
             DocumentDetailReducer()
         }
 
-        await store.send(.view(.viewButtonTapped(.content))) {
-            $0.destination = .documentViewer(.testValue(isOfflineSnapshot: true, section: .content))
+        await store.send(.view(.openButtonTapped(.details)))
+    }
+
+    @Test
+    func test_view_openButtonTapped_carriesIsOfflineSnapshotIntoTheSheet() async throws {
+        let store = TestStore(initialState: DocumentDetailReducer.State.testValue(
+            isOfflineSnapshot: true
+        )) {
+            DocumentDetailReducer()
+        }
+
+        await store.send(.view(.openButtonTapped(.content))) {
+            $0.destination = .documentSheet(.testValue(isOfflineSnapshot: true, section: .content))
         }
     }
 

@@ -38,10 +38,10 @@ struct DocumentFormCustomFieldsReducerTests {
 
     @Test
     func test_view_addCustomFieldTapped() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             server: server("add")
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.addCustomFieldTapped(1))) {
@@ -52,10 +52,10 @@ struct DocumentFormCustomFieldsReducerTests {
     // A boolean has no empty state a Toggle could show, so it attaches as a definite No.
     @Test
     func test_view_addCustomFieldTapped_booleanStartsFalse() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             server: server("addBoolean")
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.addCustomFieldTapped(3))) {
@@ -65,10 +65,10 @@ struct DocumentFormCustomFieldsReducerTests {
 
     @Test
     func test_view_addCustomFieldTapped_ignoresAFieldAlreadyAttached() async throws {
-        var state = DocumentFormReducer.State.testValue(server: server("addAttached"))
+        var state = DocumentSheetReducer.State.testValue(server: server("addAttached"))
         state.input.customFields = [.init(id: 1, value: .text("Ref"))]
         let store = TestStore(initialState: state) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.addCustomFieldTapped(1)))
@@ -76,9 +76,9 @@ struct DocumentFormCustomFieldsReducerTests {
 
     @Test
     func test_view_createCustomFieldButtonTapped() async throws {
-        let state = DocumentFormReducer.State.testValue(server: server("create"))
+        let state = DocumentSheetReducer.State.testValue(server: server("create"))
         let store = TestStore(initialState: state) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.createCustomFieldButtonTapped)) {
@@ -90,9 +90,9 @@ struct DocumentFormCustomFieldsReducerTests {
     // form from the add menu.
     @Test
     func test_destination_customFieldForm_delegate_customFieldSaved() async throws {
-        let state = DocumentFormReducer.State.testValue(server: server("created"))
+        let state = DocumentSheetReducer.State.testValue(server: server("created"))
         let store = TestStore(initialState: state) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
         store.exhaustivity = .off(showSkippedAssertions: false)
         await store.send(.view(.createCustomFieldButtonTapped))
@@ -107,13 +107,13 @@ struct DocumentFormCustomFieldsReducerTests {
 
     @Test
     func test_view_removeCustomFieldTapped() async throws {
-        var state = DocumentFormReducer.State.testValue(server: server("remove"))
+        var state = DocumentSheetReducer.State.testValue(server: server("remove"))
         state.input.customFields = [
             .init(id: 1, value: .text("Ref")),
             .init(id: 3, value: .boolean(true)),
         ]
         let store = TestStore(initialState: state) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.removeCustomFieldTapped(1))) {
@@ -123,11 +123,11 @@ struct DocumentFormCustomFieldsReducerTests {
 
     @Test
     func test_view_documentLinkTapped() async throws {
-        var state = DocumentFormReducer.State.testValue(server: server("link"))
+        var state = DocumentSheetReducer.State.testValue(server: server("link"))
         state.input.customFields = [.init(id: 6, value: .documentLink([2]))]
         state.linkedCustomFieldDocuments = [.testValue(id: 2, title: "Related")]
         let store = TestStore(initialState: state) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.documentLinkTapped(6))) {
@@ -143,7 +143,7 @@ struct DocumentFormCustomFieldsReducerTests {
     // the sheet to close.
     @Test
     func test_destination_documentPicker_delegate_selectionChanged() async throws {
-        var state = DocumentFormReducer.State.testValue(server: server("selection"))
+        var state = DocumentSheetReducer.State.testValue(server: server("selection"))
         state.input.customFields = [.init(id: 6, value: .documentLink([]))]
         state.documentLinkFieldId = 6
         state.destination = .documentPicker(.testValue(
@@ -151,7 +151,7 @@ struct DocumentFormCustomFieldsReducerTests {
             server: state.server
         ))
         let store = TestStore(initialState: state) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.destination(.presented(.documentPicker(.delegate(.selectionChanged([2])))))) {
@@ -164,13 +164,13 @@ struct DocumentFormCustomFieldsReducerTests {
     // off the staged values, not off whether onAppear also has a document to fetch.
     @Test
     func test_view_onAppear_resolvesLinkedCustomFieldDocuments() async throws {
-        var state = DocumentFormReducer.State.testValue(
+        var state = DocumentSheetReducer.State.testValue(
             content: "loaded",
             server: server("resolve")
         )
         state.input.customFields = [.init(id: 6, value: .documentLink([2]))]
         let store = TestStore(initialState: state) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         } withDependencies: {
             $0.getDocumentsByIds.execute = { _, _ in [.testValue(id: 2, title: "Related")] }
         }
@@ -183,11 +183,11 @@ struct DocumentFormCustomFieldsReducerTests {
 
     @Test
     func test_view_onAppear_skipsTheLookupWithNoLinkedValues() async throws {
-        let store = TestStore(initialState: DocumentFormReducer.State.testValue(
+        let store = TestStore(initialState: DocumentSheetReducer.State.testValue(
             content: "loaded",
             server: server("resolveNone")
         )) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.view(.onAppear))
@@ -195,12 +195,12 @@ struct DocumentFormCustomFieldsReducerTests {
 
     @Test
     func test_destination_dismiss_clearsTheDocumentLinkField() async throws {
-        var state = DocumentFormReducer.State.testValue(server: server("dismiss"))
+        var state = DocumentSheetReducer.State.testValue(server: server("dismiss"))
         state.input.customFields = [.init(id: 6, value: .documentLink([]))]
         state.documentLinkFieldId = 6
         state.destination = .documentPicker(.testValue(server: state.server))
         let store = TestStore(initialState: state) {
-            DocumentFormReducer()
+            DocumentSheetReducer()
         }
 
         await store.send(.destination(.dismiss)) {

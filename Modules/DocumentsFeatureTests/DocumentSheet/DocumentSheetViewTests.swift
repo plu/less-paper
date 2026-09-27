@@ -13,16 +13,16 @@ import TestSupport
     .snapshots(record: .environment),
     .tags(.snapshotTests)
 )
-struct DocumentFormViewTests {
+struct DocumentSheetViewTests {
 
     @Test
     func testSnapshot() async throws {
         assertSnapshot(
-            of: DocumentFormView(
+            of: DocumentSheetView(
                 store: Store(
-                    initialState: DocumentFormReducer.State.testValue(),
+                    initialState: DocumentSheetReducer.State.testValue(),
                     reducer: {
-                        DocumentFormReducer()
+                        DocumentSheetReducer()
                     }
                 )
             ),
@@ -43,11 +43,11 @@ struct DocumentFormViewTests {
         $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
 
         assertSnapshot(
-            of: DocumentFormView(
+            of: DocumentSheetView(
                 store: Store(
-                    initialState: DocumentFormReducer.State.testValue(server: server),
+                    initialState: DocumentSheetReducer.State.testValue(server: server),
                     reducer: {
-                        DocumentFormReducer()
+                        DocumentSheetReducer()
                     }
                 )
             ),
@@ -59,14 +59,14 @@ struct DocumentFormViewTests {
     @Test
     func testSnapshot_content() async throws {
         assertSnapshot(
-            of: DocumentFormView(
+            of: DocumentSheetView(
                 store: Store(
-                    initialState: DocumentFormReducer.State.testValue(
+                    initialState: DocumentSheetReducer.State.testValue(
                         content: "Some invoice, and all the rest of the OCR text the server holds.",
                         section: .content
                     ),
                     reducer: {
-                        DocumentFormReducer()
+                        DocumentSheetReducer()
                     }
                 )
             ),
@@ -80,14 +80,14 @@ struct DocumentFormViewTests {
     @Test
     func testSnapshot_contentDarkMode() async throws {
         assertSnapshot(
-            of: DocumentFormView(
+            of: DocumentSheetView(
                 store: Store(
-                    initialState: DocumentFormReducer.State.testValue(
+                    initialState: DocumentSheetReducer.State.testValue(
                         content: "Some invoice, and all the rest of the OCR text the server holds.",
                         section: .content
                     ),
                     reducer: {
-                        DocumentFormReducer()
+                        DocumentSheetReducer()
                     }
                 )
             ),
@@ -109,11 +109,11 @@ struct DocumentFormViewTests {
             }
         } operation: {
             assertSnapshot(
-                of: DocumentFormView(
+                of: DocumentSheetView(
                     store: Store(
-                        initialState: DocumentFormReducer.State.testValue(section: .content),
+                        initialState: DocumentSheetReducer.State.testValue(section: .content),
                         reducer: {
-                            DocumentFormReducer()
+                            DocumentSheetReducer()
                         }
                     )
                 ),
@@ -126,14 +126,14 @@ struct DocumentFormViewTests {
     @Test
     func testSnapshot_contentError() async throws {
         assertSnapshot(
-            of: DocumentFormView(
+            of: DocumentSheetView(
                 store: Store(
-                    initialState: DocumentFormReducer.State.testValue(
+                    initialState: DocumentSheetReducer.State.testValue(
                         loadError: "The request timed out.",
                         section: .content
                     ),
                     reducer: {
-                        DocumentFormReducer()
+                        DocumentSheetReducer()
                     }
                 )
             ),
@@ -145,14 +145,14 @@ struct DocumentFormViewTests {
     @Test
     func testSnapshot_notes() async throws {
         assertSnapshot(
-            of: DocumentFormView(
+            of: DocumentSheetView(
                 store: Store(
-                    initialState: DocumentFormReducer.State.testValue(
+                    initialState: DocumentSheetReducer.State.testValue(
                         notes: [.testValue()],
                         section: .notes
                     ),
                     reducer: {
-                        DocumentFormReducer()
+                        DocumentSheetReducer()
                     }
                 )
             ),
@@ -173,15 +173,15 @@ struct DocumentFormViewTests {
         $permissions.withLock { $0 = [.viewDocument, .viewNote] }
 
         assertSnapshot(
-            of: DocumentFormView(
+            of: DocumentSheetView(
                 store: Store(
-                    initialState: DocumentFormReducer.State.testValue(
+                    initialState: DocumentSheetReducer.State.testValue(
                         notes: [.testValue()],
                         section: .notes,
                         server: server
                     ),
                     reducer: {
-                        DocumentFormReducer()
+                        DocumentSheetReducer()
                     }
                 )
             ),

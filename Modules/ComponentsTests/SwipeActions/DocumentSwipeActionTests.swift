@@ -17,26 +17,23 @@ struct DocumentSwipeActionTests {
     }
 
     // The raw value is what reaches disk, so renaming a case silently drops that action from every
-    // stored configuration. The renamed ones - `favorite`, `edit`, `openNotes` - survive only because
-    // `init(storedRawValue:)` translates them, which the settings decoding tests are what actually
-    // hold.
+    // stored configuration. The renamed ones - `favorite`, `edit`, and the view- and edit- pairs -
+    // survive only because `init(storedRawValue:)` translates them, which the settings decoding
+    // tests are what actually hold.
     @Test
     func rawValuesAreStable() async throws {
         #expect(DocumentSwipeAction.allCases.map(\.rawValue) == [
             "clearInboxTags",
             "delete",
-            "editContent",
-            "editCustomFields",
-            "editDetails",
-            "editNotes",
             "saveOffline",
+            "openContent",
+            "openCustomFields",
+            "openDetails",
+            "openHistory",
+            "openMetadata",
+            "openNotes",
             "preview",
-            "share",
-            "viewContent",
-            "viewCustomFields",
-            "viewHistory",
-            "viewMetadata",
-            "viewNotes"
+            "share"
         ])
     }
 
@@ -62,8 +59,8 @@ struct DocumentSwipeActionTests {
     func anUnknownStoredRawValueIsNotAliased() async throws {
         #expect(DocumentSwipeAction(storedRawValue: "teleport") == nil)
         #expect(DocumentSwipeAction(storedRawValue: "favorite") == .saveOffline)
-        #expect(DocumentSwipeAction(storedRawValue: "edit") == .editDetails)
-        #expect(DocumentSwipeAction(storedRawValue: "openNotes") == .editNotes)
+        #expect(DocumentSwipeAction(storedRawValue: "edit") == .openDetails)
+        #expect(DocumentSwipeAction(storedRawValue: "openNotes") == .openNotes)
         #expect(DocumentSwipeAction(storedRawValue: "share") == .share)
     }
 }

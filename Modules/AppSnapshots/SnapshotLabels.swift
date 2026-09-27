@@ -20,7 +20,7 @@ struct SnapshotLabels {
         close: "Close",
         documents: "Documents",
         edit: "Edit",
-        editDocument: "Edit document",
+        details: "Details",
         offline: "Offline",
         filter: "Filter",
         inbox: "Inbox",
@@ -35,7 +35,7 @@ struct SnapshotLabels {
         close: "Schließen",
         documents: "Dokumente",
         edit: "Bearbeiten",
-        editDocument: "Dokument bearbeiten",
+        details: "Details",
         offline: "Offline",
         filter: "Filter",
         inbox: "Eingang",
@@ -49,7 +49,7 @@ struct SnapshotLabels {
     let close: String
     let documents: String
     let edit: String
-    let editDocument: String
+    let details: String
     let offline: String
     let filter: String
     let inbox: String

@@ -81,7 +81,7 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         XCTAssertTrue(edit.waitUntilHittable(timeout: timeout), "The detail screen showed no Edit button")
         edit.tap()
         XCTAssertTrue(
-            app.staticTexts[labels.editDocument].waitForExistence(timeout: timeout),
+            app.staticTexts[labels.details].waitForExistence(timeout: timeout),
             "The edit sheet never appeared"
         )
         hold(until: 21, from: start, beat: "edit")

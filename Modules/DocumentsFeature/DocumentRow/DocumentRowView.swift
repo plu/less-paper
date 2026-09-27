@@ -40,15 +40,9 @@ struct DocumentRowView: View {
         .overlay { downloadProgressView() }
         .quickLookPreview($store.quickLookPreview)
         .sheet(
-            item: $store.scope(state: \.destination?.documentForm, action: \.destination.documentForm)
+            item: $store.scope(state: \.destination?.documentSheet, action: \.destination.documentSheet)
         ) { store in
-            DocumentFormView(store: store)
-                .presentationDetents([.large])
-        }
-        .sheet(
-            item: $store.scope(state: \.destination?.documentViewer, action: \.destination.documentViewer)
-        ) { store in
-            DocumentViewerView(store: store)
+            DocumentSheetView(store: store)
                 .presentationDetents([.large])
         }
     }
@@ -74,13 +68,15 @@ struct DocumentRowView: View {
             )
         }
 
-        if store.canEdit {
-            Button {
-                send(.editButtonTapped(.details))
-            } label: {
-                Label(.edit, systemImage: "square.and.pencil")
-            }
-        }
+        // Every section, the editable ones included: there is no separate Edit entry, because the
+        // sheet opens a section editable whenever the user may change the document.
+        DocumentOpenMenu(
+            sections: DocumentSheetSection.visible(
+                isEditable: store.canEdit,
+                canViewHistory: store.canViewHistory,
+                canViewNotes: store.canViewNotes
+            )
+        ) { send(.openButtonTapped($0)) }
 
         Button {
             send(.previewButtonTapped)
@@ -97,15 +93,6 @@ struct DocumentRowView: View {
                 Label(.document, systemImage: "doc")
             }
         }
-
-        // Notes and History answer 403 without their permissions, so they drop out here rather
-        // than opening onto a section with nothing to show.
-        DocumentViewerMenu(
-            sections: DocumentViewerSection.visible(
-                canViewHistory: store.canViewHistory,
-                canViewNotes: store.canViewNotes
-            )
-        ) { send(.viewButtonTapped($0)) }
 
         // The reversible actions are A-Z; Delete is held out below the divider rather than taking
         // whatever row its initial earns it — alphabetically that is the top, one mistap from the

@@ -78,7 +78,7 @@ struct DocumentFormCustomFieldsView: View {
     }
 
     @Bindable
-    var store: StoreOf<DocumentFormReducer>
+    var store: StoreOf<DocumentSheetReducer>
 
     private var unattached: [CustomField] {
         store.customFields.filter { store.input.customFields[id: $0.id] == nil }

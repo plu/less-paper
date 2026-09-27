@@ -42,7 +42,7 @@ public struct DocumentFormScreen {
         }
         edit.tap()
 
-        return app.staticTexts["Edit document"].waitForExistence(timeout: timeout)
+        return app.staticTexts["Details"].waitForExistence(timeout: timeout)
     }
 
     // The titled variant, for a journey that uploaded its own document and must not edit whichever
@@ -60,7 +60,7 @@ public struct DocumentFormScreen {
         }
         edit.tap()
 
-        return app.staticTexts["Edit document"].waitForExistence(timeout: timeout)
+        return app.staticTexts["Details"].waitForExistence(timeout: timeout)
     }
 
     // "More options" is the sheet's section menu. "More actions" is the document list's toolbar

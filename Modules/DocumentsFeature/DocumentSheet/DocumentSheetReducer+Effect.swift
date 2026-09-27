@@ -3,7 +3,7 @@ import ComposableArchitecture
 import Foundation
 import IdentifiedCollections
 
-extension Effect where Action == DocumentFormReducer.Action {
+extension Effect where Action == DocumentSheetReducer.Action {
 
     static func runDismiss() -> Self {
         .run { _ in
@@ -11,6 +11,17 @@ extension Effect where Action == DocumentFormReducer.Action {
             var dismiss
 
             await dismiss()
+        }
+    }
+
+    // Failure is swallowed deliberately: the linked detail has already been dismissed by the time
+    // this runs, so there is no screen left to report onto, and the document simply stays. The
+    // list the user returns to re-reads it on its next fetch.
+    static func runDeleteDocument(id: Document.Id, server: Server) -> Self {
+        .run { _ in
+            @Dependency(\.deleteDocuments.execute)
+            var deleteDocuments
+            try? await deleteDocuments([id], server)
         }
     }
 
@@ -27,7 +38,7 @@ extension Effect where Action == DocumentFormReducer.Action {
     // A stored documentlink value holds bare ids; the capsules need titles. An id that does not
     // come back is a deleted document and renders as its id rather than disappearing.
     static func runResolveLinkedCustomFieldDocuments(
-        _ state: DocumentFormReducer.State
+        _ state: DocumentSheetReducer.State
     ) -> Self {
         let ids = state.input.customFields.flatMap { row -> [Document.Id] in
             guard case let .documentLink(ids) = row.value else {
