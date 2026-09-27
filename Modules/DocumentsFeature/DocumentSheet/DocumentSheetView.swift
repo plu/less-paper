@@ -226,7 +226,12 @@ struct DocumentSheetView: View {
                     .accessibilityLabel(.content)
                     .font(.body)
                     .scrollContentBackground(.hidden)
-                    .padding(.x3)
+                    // Margins rather than padding: padding insets the whole text view, scroll
+                    // indicator included, while these inset only the text and leave the indicator
+                    // at the box's edge. It keeps a vertical inset of its own so it does not run
+                    // into the rounded corners.
+                    .contentMargins(.x3, for: .scrollContent)
+                    .contentMargins(.vertical, .x3, for: .scrollIndicators)
                     .background(Color.m3SurfaceContainerLow)
                     .overlay(
                         RoundedRectangle(cornerRadius: Constants.cornerRadius)
