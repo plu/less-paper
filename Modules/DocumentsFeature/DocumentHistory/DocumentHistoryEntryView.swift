@@ -11,7 +11,7 @@ struct DocumentHistoryEntryView: View {
                 Text(relativeTimestamp)
                     .foregroundStyle(Color.m3OnSurfaceVariant)
                 Text(entry.actor?.username ?? String(localized: .system))
-                    .italic()
+                    .fontWeight(.semibold)
                     .foregroundStyle(Color.m3OnSurface)
                 Spacer(minLength: .x2)
                 actionBadge()
@@ -19,9 +19,7 @@ struct DocumentHistoryEntryView: View {
             .font(.caption)
 
             ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                (Text(line.label + ": ").foregroundStyle(Color.m3OnSurface)
-                    + Text(line.value).font(.body.monospaced()).foregroundStyle(Color.m3Primary))
-                    .font(.body)
+                lineView(line: line)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -49,15 +47,33 @@ struct DocumentHistoryEntryView: View {
         RelativeDateTimeFormatter().localizedString(for: entry.timestamp, relativeTo: now)
     }
 
+    // The same capsule a tag gets, so the badge reads as a label rather than a button.
     @ViewBuilder
     private func actionBadge() -> some View {
         let isCreate = entry.action == .create
         Text(actionTitle)
-            .padding(.horizontal, .x2)
-            .padding(.vertical, 2)
-            .background(isCreate ? Color.m3PrimaryContainer : Color.m3SurfaceContainerHighest)
-            .foregroundStyle(isCreate ? Color.m3OnPrimaryContainer : Color.m3OnSurfaceVariant)
-            .clipShape(Capsule())
+            .capsule(
+                backgroundColor: isCreate ? .m3PrimaryContainer : .m3SurfaceContainerHighest,
+                font: .caption,
+                foregroundColor: isCreate ? .m3OnPrimaryContainer : .m3OnSurfaceVariant
+            )
+    }
+
+    // The read-only Field the metadata section uses, so a change reads like the value it set.
+    @ViewBuilder
+    private func lineView(line: DocumentHistoryChangeLine) -> some View {
+        Field(LocalizedStringResource(stringLiteral: line.label)) {
+            Text(line.value)
+                .font(.body)
+                .foregroundStyle(Color.m3OnSurface)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .readOnly()
+        .accessibilityElement()
+        .accessibilityLabel(Text(line.label))
+        .accessibilityValue(line.value)
     }
 
     private var actionTitle: String {

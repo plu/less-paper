@@ -33,13 +33,13 @@ struct DocumentHistoryChangeLineTests {
 
     // Underscores survive, matching the web's titlecase pipe.
     @Test
-    func field_titleCasesTheKeyLikeTheWeb() {
+    func field_titleCasesTheKeySplittingUnderscores() {
         let line = DocumentHistoryChangeLine(
             change: .field(key: "archive_serial_number", old: nil, new: .string("2")),
             server: .testValue()
         )
 
-        #expect(line == .init(label: "Archive_serial_number", value: "2"))
+        #expect(line == .init(label: "Archive Serial Number", value: "2"))
     }
 
     @Test
@@ -80,7 +80,7 @@ struct DocumentHistoryChangeLineTests {
                 server: .testValue()
             )
 
-            #expect(line == .init(label: "Storage_path", value: "Emma/{{ created_year }}"))
+            #expect(line == .init(label: "Storage Path", value: "Emma/{{ created_year }}"))
         }
     }
 
