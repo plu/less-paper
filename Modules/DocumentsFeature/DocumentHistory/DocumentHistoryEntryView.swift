@@ -18,14 +18,20 @@ struct DocumentHistoryEntryView: View {
             }
             .font(.caption)
 
-            ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                lineView(line: line)
+            // Default spacing between the fields, as DocumentMetadataGroupView has.
+            VStack(alignment: .leading) {
+                ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                    lineView(line: line)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.x4)
-        .background(Color.m3SurfaceContainer)
+        // The metadata card's surface, for its reason: on `m3SurfaceContainer` the read-only
+        // field fill is barely distinguishable from the card and the fields read only by outline.
+        .background(Color.m3SurfaceContainerLow)
         .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+        .textSelection(.enabled)
         .accessibilityElement(children: .combine)
         .listRowBackground(Color.clear)
         // The list is edge to edge, so the row carries the sheet's horizontal inset itself.
@@ -50,12 +56,11 @@ struct DocumentHistoryEntryView: View {
     // The same capsule a tag gets, so the badge reads as a label rather than a button.
     @ViewBuilder
     private func actionBadge() -> some View {
-        let isCreate = entry.action == .create
         Text(actionTitle)
             .capsule(
-                backgroundColor: isCreate ? .m3PrimaryContainer : .m3SurfaceContainerHighest,
+                backgroundColor: .m3SurfaceContainerHighest,
                 font: .caption,
-                foregroundColor: isCreate ? .m3OnPrimaryContainer : .m3OnSurfaceVariant
+                foregroundColor: .m3OnSurfaceVariant
             )
     }
 
