@@ -94,9 +94,11 @@ private extension JSONValue {
 
 private extension String {
 
-    // The web's titlecase pipe: first letter of each space-separated word up, the rest down.
+    // The web's titlecase pipe, except that underscores split words too: the web leaves
+    // `Document_type`, which reads as a raw key once it sits in a field label.
     var titleCased: String {
-        split(separator: " ", omittingEmptySubsequences: false)
+        replacingOccurrences(of: "_", with: " ")
+            .split(separator: " ", omittingEmptySubsequences: false)
             .map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
             .joined(separator: " ")
     }
