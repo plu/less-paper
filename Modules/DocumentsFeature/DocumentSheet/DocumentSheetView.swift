@@ -231,7 +231,7 @@ struct DocumentSheetView: View {
                     // at the box's edge. It keeps a vertical inset of its own so it does not run
                     // into the rounded corners.
                     .contentMargins(.x3, for: .scrollContent)
-                    .contentMargins(.vertical, .x3, for: .scrollIndicators)
+                    .contentMargins(.vertical, .x4, for: .scrollIndicators)
                     .background(Color.m3SurfaceContainerLow)
                     .overlay(
                         RoundedRectangle(cornerRadius: Constants.cornerRadius)
