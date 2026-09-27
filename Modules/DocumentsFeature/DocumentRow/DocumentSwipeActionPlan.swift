@@ -13,6 +13,8 @@ extension DocumentSwipeActionPlan {
         prepending: [DocumentSwipeAction] = [],
         canDelete: Bool,
         canEdit: Bool,
+        canViewCustomFields: Bool,
+        canViewHistory: Bool,
         canViewNotes: Bool,
         hasInboxTags: Bool,
         isSelecting: Bool
@@ -24,6 +26,8 @@ extension DocumentSwipeActionPlan {
             return
         }
 
+        // The same gates the row's menus apply: DocumentViewerSection.visible for the View
+        // actions, and the form's section picker for the Edit ones.
         func applies(_ action: DocumentSwipeAction) -> Bool {
             switch action {
             case .clearInboxTags:
@@ -32,11 +36,17 @@ extension DocumentSwipeActionPlan {
                 canEdit && hasInboxTags
             case .delete:
                 canDelete
-            case .edit:
+            case .editContent, .editDetails:
                 canEdit
-            case .openNotes:
+            case .editCustomFields:
+                canEdit && canViewCustomFields
+            case .viewHistory:
+                canViewHistory
+            case .editNotes, .viewNotes:
+                // Not change_document for Edit notes: nothing in the form's notes section is
+                // staged, and adding a note answers to add_note, which the composer checks itself.
                 canViewNotes
-            case .preview, .saveOffline, .share:
+            case .preview, .saveOffline, .share, .viewContent, .viewCustomFields, .viewMetadata:
                 true
             }
         }

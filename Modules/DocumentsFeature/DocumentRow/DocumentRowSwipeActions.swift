@@ -20,6 +20,8 @@ public extension View {
             prepending: leadingPrefix,
             canDelete: store.canDelete,
             canEdit: store.canEdit,
+            canViewCustomFields: store.canViewCustomFields,
+            canViewHistory: store.canViewHistory,
             canViewNotes: store.canViewNotes,
             hasInboxTags: !store.inboxTags.isEmpty,
             isSelecting: isSelecting
@@ -29,6 +31,8 @@ public extension View {
             prepending: [.clearInboxTags],
             canDelete: store.canDelete,
             canEdit: store.canEdit,
+            canViewCustomFields: store.canViewCustomFields,
+            canViewHistory: store.canViewHistory,
             canViewNotes: store.canViewNotes,
             hasInboxTags: !store.inboxTags.isEmpty,
             isSelecting: isSelecting
@@ -73,16 +77,30 @@ private extension DocumentSwipeAction {
             .clearInboxTagsButtonTapped
         case .delete:
             .deleteButtonTapped
-        case .edit:
-            .editButtonTapped
-        case .saveOffline:
-            .saveOfflineButtonTapped
-        case .openNotes:
-            .notesButtonTapped
+        case .editContent:
+            .editButtonTapped(.content)
+        case .editCustomFields:
+            .editButtonTapped(.customFields)
+        case .editDetails:
+            .editButtonTapped(.details)
+        case .editNotes:
+            .editButtonTapped(.notes)
         case .preview:
             .previewButtonTapped
+        case .saveOffline:
+            .saveOfflineButtonTapped
         case .share:
             .shareButtonTapped
+        case .viewContent:
+            .viewButtonTapped(.content)
+        case .viewCustomFields:
+            .viewButtonTapped(.customFields)
+        case .viewHistory:
+            .viewButtonTapped(.history)
+        case .viewMetadata:
+            .viewButtonTapped(.metadata)
+        case .viewNotes:
+            .viewButtonTapped(.notes)
         }
     }
 

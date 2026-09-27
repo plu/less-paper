@@ -28,9 +28,8 @@ public struct DocumentRowReducer: Sendable {
         public enum View {
             case clearInboxTagsButtonTapped
             case deleteButtonTapped
-            case editButtonTapped
+            case editButtonTapped(DocumentFormSection)
             case saveOfflineButtonTapped
-            case notesButtonTapped
             case previewButtonTapped
             case rowTapped
             case shareButtonTapped
@@ -103,6 +102,8 @@ public struct DocumentRowReducer: Sendable {
         var canEdit: Bool { permissions.can(.changeDocument) }
 
         var canDelete: Bool { permissions.can(.deleteDocument) }
+
+        var canViewCustomFields: Bool { permissions.can(.viewCustomField) }
 
         var canViewNotes: Bool { permissions.can(.viewNote) }
 
@@ -224,9 +225,10 @@ public struct DocumentRowReducer: Sendable {
                     )
                 case .deleteButtonTapped:
                     return .runConfirmDelete(documentTitle: state.document.title)
-                case .editButtonTapped:
+                case let .editButtonTapped(section):
                     state.destination = .documentForm(DocumentFormReducer.State(
                         document: state.$document,
+                        section: section,
                         server: state.server
                     ))
                     return .none
@@ -237,15 +239,6 @@ public struct DocumentRowReducer: Sendable {
                         isSavedOffline: state.isSavedOffline,
                         server: state.server
                     )
-                case .notesButtonTapped:
-                    // The form rather than the viewer: reaching for notes is usually reaching to
-                    // add one, and the viewer can only show the ones already there.
-                    state.destination = .documentForm(DocumentFormReducer.State(
-                        document: state.$document,
-                        section: .notes,
-                        server: state.server
-                    ))
-                    return .none
                 case .previewButtonTapped:
                     return state.download(intent: .preview)
                 case .rowTapped:

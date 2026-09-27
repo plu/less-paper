@@ -10,10 +10,10 @@ import TestSupport
 struct DocumentSwipeActionSettingsTests {
 
     @Test
-    func defaultsAreEditOneWayAndShareTheOther() async throws {
+    func defaultsAreEditDetailsOneWayAndShareTheOther() async throws {
         let settings = DocumentSwipeActionSettings()
 
-        #expect(settings.leading == [.edit])
+        #expect(settings.leading == [.editDetails])
         #expect(settings.trailing == [.share])
     }
 
@@ -28,7 +28,7 @@ struct DocumentSwipeActionSettingsTests {
     @Test
     func roundTripsThroughJSON() async throws {
         let settings = DocumentSwipeActionSettings(
-            leading: [.edit, .preview],
+            leading: [.editDetails, .preview],
             trailing: [.delete, .share]
         )
 
@@ -48,7 +48,7 @@ struct DocumentSwipeActionSettingsTests {
 
         let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
 
-        #expect(decoded.leading == [.edit])
+        #expect(decoded.leading == [.editDetails])
         #expect(decoded.trailing == [.share])
     }
 
@@ -90,6 +90,20 @@ struct DocumentSwipeActionSettingsTests {
         let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
 
         #expect(decoded.leading == [.saveOffline])
+    }
+
+    // `edit` and `openNotes` are what a shipped build wrote before the actions split per section.
+    // Each maps onto the section it opened, so the swipe keeps doing what it did.
+    @Test
+    func decodingTranslatesThePreSectionEditAndNotesRawValues() async throws {
+        let json = Data("""
+        { "leading": ["edit"], "trailing": ["openNotes"] }
+        """.utf8)
+
+        let decoded = try JSONDecoder().decode(DocumentSwipeActionSettings.self, from: json)
+
+        #expect(decoded.leading == [.editDetails])
+        #expect(decoded.trailing == [.editNotes])
     }
 
     // A downgrade and an upgrade can leave both spellings in one edge, and the alias turns them

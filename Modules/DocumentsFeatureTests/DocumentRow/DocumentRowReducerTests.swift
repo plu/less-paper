@@ -23,7 +23,7 @@ struct DocumentRowReducerTests {
             DocumentRowReducer()
         }
 
-        await store.send(.view(.editButtonTapped)) {
+        await store.send(.view(.editButtonTapped(.details))) {
             $0.destination = .documentForm(.testValue())
         }
         await store.send(.destination(.presented(.documentForm(.delegate(.documentUpdated))))) {
@@ -97,7 +97,7 @@ struct DocumentRowReducerTests {
             DocumentRowReducer()
         }
 
-        await store.send(.view(.editButtonTapped)) {
+        await store.send(.view(.editButtonTapped(.details))) {
             $0.destination = .documentForm(.testValue())
         }
     }
@@ -395,10 +395,8 @@ struct DocumentRowReducerTests {
         #expect(toasts.value == [.error("Something went wrong")])
     }
 
-    // Notes opens the form rather than the read-only viewer: the point of reaching for notes from a
-    // swipe is to add one, and the viewer can only show what is already there.
     @Test
-    func view_notesButtonTapped_opensTheFormOnItsNotesSection() async throws {
+    func view_editButtonTapped_opensTheFormOnTheSectionItNames() async throws {
         let document = Document.testValue()
         let store = TestStore(initialState: DocumentRowReducer.State.testValue(
             document: document
@@ -406,7 +404,7 @@ struct DocumentRowReducerTests {
             DocumentRowReducer()
         }
 
-        await store.send(.view(.notesButtonTapped)) {
+        await store.send(.view(.editButtonTapped(.notes))) {
             $0.destination = .documentForm(.testValue(document: document, section: .notes))
         }
     }

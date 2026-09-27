@@ -20,7 +20,7 @@ struct SwipeActionSettingsReducerTests {
         store.state.$settings.withLock { $0 = .init() }
 
         await store.send(.view(.actionTapped(edge: .leading, action: .share))) {
-            $0.$settings.withLock { $0.leading = [.edit, .share] }
+            $0.$settings.withLock { $0.leading = [.editDetails, .share] }
         }
     }
 
@@ -31,7 +31,7 @@ struct SwipeActionSettingsReducerTests {
         }
         store.state.$settings.withLock { $0 = .init() }
 
-        await store.send(.view(.actionTapped(edge: .leading, action: .edit))) {
+        await store.send(.view(.actionTapped(edge: .leading, action: .editDetails))) {
             $0.$settings.withLock { $0.leading = [] }
         }
     }
@@ -43,12 +43,12 @@ struct SwipeActionSettingsReducerTests {
             SwipeActionSettingsReducer()
         }
         store.state.$settings.withLock {
-            $0 = .init(leading: [.edit, .share], trailing: [])
+            $0 = .init(leading: [.editDetails, .share], trailing: [])
         }
 
         await store.send(.view(.actionTapped(edge: .leading, action: .preview)))
 
-        #expect(store.state.settings.leading == [.edit, .share])
+        #expect(store.state.settings.leading == [.editDetails, .share])
     }
 
     @Test
