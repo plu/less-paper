@@ -18,7 +18,7 @@ public struct DocumentSwipeActionSettings: Codable, Equatable, Sendable {
     }
 
     public init(
-        leading: [DocumentSwipeAction] = [.edit],
+        leading: [DocumentSwipeAction] = [.editDetails],
         trailing: [DocumentSwipeAction] = [.share]
     ) {
         self.leading = leading

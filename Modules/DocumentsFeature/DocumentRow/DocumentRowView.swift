@@ -76,7 +76,7 @@ struct DocumentRowView: View {
 
         if store.canEdit {
             Button {
-                send(.editButtonTapped)
+                send(.editButtonTapped(.details))
             } label: {
                 Label(.edit, systemImage: "square.and.pencil")
             }

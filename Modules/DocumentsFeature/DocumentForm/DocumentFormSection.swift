@@ -1,6 +1,6 @@
 import Foundation
 
-enum DocumentFormSection: CaseIterable {
+public enum DocumentFormSection: CaseIterable, Sendable {
     case content
     case customFields
     case details
@@ -9,7 +9,7 @@ enum DocumentFormSection: CaseIterable {
 
 extension DocumentFormSection: CustomStringConvertible {
 
-    var description: String {
+    public var description: String {
         switch self {
         case .content:
             String(localized: .content)

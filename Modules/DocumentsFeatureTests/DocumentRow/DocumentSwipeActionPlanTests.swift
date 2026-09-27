@@ -11,24 +11,62 @@ struct DocumentSwipeActionPlanTests {
 
     @Test
     func keepsConfiguredOrder() async throws {
-        let plan = makePlan(configured: [.share, .edit])
+        let plan = makePlan(configured: [.share, .editDetails])
 
-        #expect(plan.actions == [.share, .edit])
+        #expect(plan.actions == [.share, .editDetails])
         #expect(plan.allowsFullSwipe)
     }
 
     @Test
     func dropsActionsThisUserMayNotPerform() async throws {
-        let plan = makePlan(configured: [.edit, .delete], canDelete: false, canEdit: false)
+        let plan = makePlan(configured: [.editDetails, .delete], canDelete: false, canEdit: false)
 
         #expect(plan.actions.isEmpty)
     }
 
     @Test
-    func dropsOpenNotesWithoutThePermission() async throws {
-        let plan = makePlan(configured: [.openNotes, .preview], canViewNotes: false)
+    func dropsEditNotesWithoutThePermission() async throws {
+        let plan = makePlan(configured: [.editNotes, .preview], canViewNotes: false)
 
         #expect(plan.actions == [.preview])
+    }
+
+    @Test
+    func dropsViewNotesWithoutThePermission() async throws {
+        let plan = makePlan(configured: [.viewNotes, .preview], canViewNotes: false)
+
+        #expect(plan.actions == [.preview])
+    }
+
+    // Edit notes asks only for view_note, as Open notes did before it: nothing in the form's notes
+    // section needs change_document.
+    @Test
+    func keepsEditNotesWithoutTheEditPermission() async throws {
+        let plan = makePlan(configured: [.editNotes], canEdit: false)
+
+        #expect(plan.actions == [.editNotes])
+    }
+
+    @Test
+    func dropsEverySectionEditWithoutTheEditPermission() async throws {
+        let plan = makePlan(configured: [.editContent, .editCustomFields, .editDetails], canEdit: false)
+
+        #expect(plan.actions.isEmpty)
+    }
+
+    // The form's picker hides Custom fields without view_customfield; the viewer does not.
+    @Test
+    func dropsEditCustomFieldsButNotViewCustomFieldsWithoutThePermission() async throws {
+        let plan = makePlan(configured: [.editCustomFields, .viewCustomFields], canViewCustomFields: false)
+
+        #expect(plan.actions == [.viewCustomFields])
+    }
+
+    @Test
+    func dropsViewHistoryWithoutThePermission() async throws {
+        let plan = makePlan(configured: [.viewHistory, .viewMetadata], canViewHistory: false)
+
+        #expect(plan.actions == [.viewMetadata])
     }
 
     // Otherwise the swipe reports having cleared tags it never touched.
@@ -76,7 +114,7 @@ struct DocumentSwipeActionPlanTests {
 
     @Test
     func selectionModeSuppressesEverything() async throws {
-        let plan = makePlan(configured: [.edit, .share], isSelecting: true)
+        let plan = makePlan(configured: [.editDetails, .share], isSelecting: true)
 
         #expect(plan.actions.isEmpty)
         #expect(!plan.allowsFullSwipe)
@@ -107,7 +145,7 @@ struct DocumentSwipeActionPlanTests {
     // on their behalf does not get to raise it.
     @Test
     func aPrependedActionTruncatesRatherThanExceedingTheCap() async throws {
-        let plan = makePlan(configured: [.share, .edit], prepending: [.clearInboxTags])
+        let plan = makePlan(configured: [.share, .editDetails], prepending: [.clearInboxTags])
 
         #expect(plan.actions == [.clearInboxTags, .share])
     }
@@ -124,6 +162,8 @@ struct DocumentSwipeActionPlanTests {
         prepending: [DocumentSwipeAction] = [],
         canDelete: Bool = true,
         canEdit: Bool = true,
+        canViewCustomFields: Bool = true,
+        canViewHistory: Bool = true,
         canViewNotes: Bool = true,
         hasInboxTags: Bool = true,
         isSelecting: Bool = false
@@ -133,6 +173,8 @@ struct DocumentSwipeActionPlanTests {
             prepending: prepending,
             canDelete: canDelete,
             canEdit: canEdit,
+            canViewCustomFields: canViewCustomFields,
+            canViewHistory: canViewHistory,
             canViewNotes: canViewNotes,
             hasInboxTags: hasInboxTags,
             isSelecting: isSelecting
