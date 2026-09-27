@@ -35,6 +35,7 @@ let package = Package(
         .package(url: "https://github.com/gonzalezreal/swift-markdown-ui", .upToNextMajor(from: "2.4.1")),
         .package(url: "https://github.com/kean/Get", .upToNextMajor(from: "2.2.1")),
         .package(url: "https://github.com/plu/Nuke", revision: "22301826c0fb20d07ce033c7de2d4dd4fede04f5"),
+        .package(url: "https://github.com/simonbs/Runestone", .upToNextMajor(from: "0.5.1")),
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", .upToNextMajor(from: "1.22.3")),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump", .upToNextMajor(from: "1.3.3")),
         .package(url: "https://github.com/pointfreeco/swift-dependencies", .upToNextMajor(from: "1.10.0")),

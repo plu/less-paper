@@ -222,22 +222,16 @@ struct DocumentSheetView: View {
                 // Not m3SurfaceBright, which the smaller fields use: it is the *brightest* surface,
                 // so against m3Surface it is invisible in light mode and a stark slab in dark. Over
                 // an area this size the outline is what says "editable", not the fill.
-                TextEditor(text: contentBinding())
-                    .accessibilityLabel(.content)
-                    .font(.body)
-                    .scrollContentBackground(.hidden)
-                    // Margins rather than padding: padding insets the whole text view, scroll
-                    // indicator included, while these inset only the text and leave the indicator
-                    // at the box's edge. It keeps a vertical inset of its own so it does not run
-                    // into the rounded corners.
-                    .contentMargins(.x3, for: .scrollContent)
-                    .contentMargins(.vertical, .x4, for: .scrollIndicators)
-                    .background(Color.m3SurfaceContainerLow)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: Constants.cornerRadius)
-                            .stroke(Color.m3OutlineVariant, lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+                DocumentContentEditor(
+                    text: contentBinding(),
+                    accessibilityLabel: String(localized: .content)
+                )
+                .background(Color.m3SurfaceContainerLow)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Constants.cornerRadius)
+                        .stroke(Color.m3OutlineVariant, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
             } else if !content.isEmpty {
                 // Selectable: reading a scan and copying a reference number out of it is the same
                 // trip.

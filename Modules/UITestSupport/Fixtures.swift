@@ -159,6 +159,50 @@ public enum Fixtures {
         }
     }
 
+    // Content is set through the API rather than typed: the point of a long-content journey is a
+    // document too long to type, and OCR decides what an uploaded PDF holds.
+    public static func setContent(
+        _ content: String,
+        ofDocument id: Document.Id,
+        token: String
+    ) async throws {
+        try await withUserDependencies(token: token) {
+            @Dependency(\.getDocument.execute)
+            var getDocument
+            @Dependency(\.updateDocument.execute)
+            var updateDocument
+
+            let document = try await getDocument(id, .testValue())
+            _ = try await updateDocument(
+                id,
+                UpdateDocumentInput(
+                    archiveSerialNumber: document.archiveSerialNumber,
+                    content: content,
+                    correspondent: document.correspondent,
+                    createdDate: document.created,
+                    customFields: document.customFields,
+                    documentType: document.documentType,
+                    storagePath: document.storagePath,
+                    tags: document.tags,
+                    title: document.title
+                ),
+                .testValue()
+            )
+        }
+    }
+
+    public static func content(
+        ofDocument id: Document.Id,
+        token: String
+    ) async throws -> String? {
+        try await withUserDependencies(token: token) {
+            @Dependency(\.getDocument.execute)
+            var getDocument
+
+            return try await getDocument(id, .testValue()).content
+        }
+    }
+
     struct ConsumptionTimeout: Error {
         let title: String
     }

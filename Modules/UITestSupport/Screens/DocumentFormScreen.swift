@@ -72,6 +72,11 @@ public struct DocumentFormScreen {
     }
 
     @discardableResult
+    public func openContentSection() -> Bool {
+        tapMenu(app.buttons["More options"].firstMatch, thenTap: "Content")
+    }
+
+    @discardableResult
     public func attachCustomField(named name: String) -> Bool {
         tapMenu(app.buttons["Add field"].firstMatch, thenTap: name)
     }

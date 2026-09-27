@@ -242,6 +242,7 @@ extension Module {
                 .external(.composableArchitecture),
                 .external(.dependencies),
                 .external(.dependenciesMacros),
+                .external(.runestone),
                 .external(.tagged),
                 .target(.apiInterface),
                 .target(.components),
