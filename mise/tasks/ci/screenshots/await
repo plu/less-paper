@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#MISE description="Wait until every screenshot on the version finished processing"
+set -euo pipefail
+
+# Gate between the screenshots upload and the preview upload in release.yml: the preview attaches
+# seconds after the screenshots land, while App Store Connect still has them processing, and is
+# rejected with "Asset Not in Complete state". ASC_APP_VERSION arrives from the release workflow's
+# resolve step, like the metadata upload it follows.
+# ci:clean wipes untracked files, vendor/bundle included, so the gems are installed per run rather
+# than assumed. bundle check keeps that to a no-op when they are already there.
+bundle config set --local path vendor/bundle
+bundle check >/dev/null 2>&1 || bundle install
+
+: "${ASC_APP_VERSION:?not set - release.yml sets it from the resolve step}"
+
+ASC_KEY_ID="$ALTOOL_KEY_ID" \
+ASC_ISSUER_ID="$ALTOOL_ISSUER_ID" \
+ASC_AUTH_KEY="$ALTOOL_AUTH_KEY" \
+  bundle exec fastlane await_screenshots

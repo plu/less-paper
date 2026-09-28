@@ -69,6 +69,86 @@ platform :ios do
     )
   end
 
+  # The preview upload attaches to the same version seconds after the screenshots land, and
+  # App Store Connect rejects it while any screenshot is still processing: "Asset Not in Complete
+  # state! can't update Image!". The upload step reports success as soon as the bytes arrive, not
+  # when Apple finishes with them, so this polls the version until every screenshot reads COMPLETE.
+  desc "Wait until every screenshot on the version finished processing"
+  lane :await_screenshots do
+    connect_api_key
+
+    version_string = ENV.fetch("ASC_APP_VERSION")
+
+    app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+    UI.user_error!("no app #{APP_IDENTIFIER} on App Store Connect") if app.nil?
+
+    # Asked directly like verify_no_pending_iap does: Spaceship models no screenshot type, and the
+    # token connect_api_key minted is reused. 200 is the endpoint's largest page; this listing
+    # holds dozens of screenshots, not hundreds.
+    token = Spaceship::ConnectAPI.token.text
+    get = lambda do |url|
+      response = Net::HTTP.get_response(URI(url), "Authorization" => "Bearer #{token}")
+      unless response.is_a?(Net::HTTPSuccess)
+        UI.user_error!("could not read #{URI(url).path}: HTTP #{response.code}")
+      end
+      JSON.parse(response.body).fetch("data")
+    end
+
+    versions = get.call(
+      "https://api.appstoreconnect.apple.com/v1/apps/#{app.id}/appStoreVersions" \
+      "?filter[platform]=IOS&filter[versionString]=#{version_string}&limit=1"
+    )
+    UI.user_error!("no iOS version #{version_string} on App Store Connect") if versions.empty?
+    version_id = versions.first.fetch("id")
+
+    locales = get.call(
+      "https://api.appstoreconnect.apple.com/v1/appStoreVersions/#{version_id}" \
+      "/appStoreVersionLocalizations?limit=200"
+    )
+
+    # A FAILED screenshot never becomes COMPLETE, so waiting the full window out on one is pure
+    # waste: name it at once instead. Anything else unfinished is given 30 minutes in 30-second
+    # sleeps; processing usually takes a few, and the release job allows 90.
+    pending = []
+    60.times do |try|
+      pending = []
+      locales.each do |locale|
+        language = locale.dig("attributes", "locale")
+        sets = get.call(
+          "https://api.appstoreconnect.apple.com/v1/appStoreVersionLocalizations/#{locale.fetch("id")}" \
+          "/appScreenshotSets?limit=200"
+        )
+        sets.each do |set|
+          display = set.dig("attributes", "screenshotDisplayType")
+          shots = get.call(
+            "https://api.appstoreconnect.apple.com/v1/appScreenshotSets/#{set.fetch("id")}" \
+            "/appScreenshots?limit=200"
+          )
+          shots.each do |shot|
+            state = shot.dig("attributes", "assetDeliveryState", "state")
+            next if state == "COMPLETE"
+
+            name = "#{language}/#{display}/#{shot.dig("attributes", "fileName")} (#{state})"
+            UI.user_error!("screenshot failed processing, it will never complete: #{name}") if state == "FAILED"
+            pending << name
+          end
+        end
+      end
+      break if pending.empty?
+
+      if try == 59
+        UI.user_error!(
+          "screenshots still processing after 30 minutes: #{pending.first(5).join(", ")}" \
+          "#{pending.count > 5 ? " and #{pending.count - 5} more" : ""}"
+        )
+      end
+      UI.message("#{pending.count} screenshot(s) still processing, waiting 30s")
+      sleep(30)
+    end
+
+    UI.success("every screenshot on #{version_string} finished processing")
+  end
+
   # Previews only. The build ships through altool in mise/tasks/ci/upload and the text through
   # upload_metadata, so this touches neither - the same separation those two keep from each other.
   desc "Upload the App Store preview video to App Store Connect"

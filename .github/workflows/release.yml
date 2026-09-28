@@ -78,6 +78,14 @@ jobs:
       - name: Upload the screenshots
         run: fnox exec -P ci -- mise run ci:screenshots:upload
 
+      # The preview upload attaches seconds after the screenshots land, while App Store Connect
+      # still has them processing — and rejects the preview with "Asset Not in Complete state".
+      # The upload step reports success when the bytes arrive, not when Apple finishes with them.
+      - name: Wait for the screenshots to finish processing
+        run: fnox exec -P ci -- mise run ci:screenshots:await
+        env:
+          ASC_APP_VERSION: ${{ steps.resolve.outputs.version }}
+
       # After the screenshots and before the submission, for the same reason they are: the version
       # has to exist, which the metadata step above creates, and everything has to be attached
       # before review is asked for. The preview is committed, so unlike the screenshots there is

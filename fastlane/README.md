@@ -39,6 +39,14 @@ Upload the App Store listing text from fastlane/metadata
 
 Upload the framed screenshots to App Store Connect
 
+### ios await_screenshots
+
+```sh
+[bundle exec] fastlane ios await_screenshots
+```
+
+Wait until every screenshot on the version finished processing
+
 ### ios upload_previews
 
 ```sh
