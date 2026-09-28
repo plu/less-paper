@@ -1,3 +1,4 @@
+require "digest/md5"
 require "json"
 require "net/http"
 
@@ -74,6 +75,16 @@ platform :ios do
   desc "Upload the App Store preview video to App Store Connect"
   lane :upload_previews do
     connect_api_key
+
+    # The videos change rarely and the store usually holds byte-identical copies already. Uploading
+    # them anyway first deletes the good ones and then trips over Apple's teardown of the delete -
+    # "Asset Not in Complete state! can't update Image!" - while changing nothing visible. So an
+    # unchanged set skips deliver entirely; a real re-record still goes through overwrite below,
+    # which is what reconciles renamed or removed videos too.
+    if previews_in_sync?
+      UI.success("previews already match, skipping upload")
+      next
+    end
 
     deliver(
       app_identifier: APP_IDENTIFIER,
@@ -240,4 +251,74 @@ end
 # The full matrix is about to be recaptured, so anything already there is stale.
 def clear_captures
   FileUtils.rm_f(Dir.glob(File.join(CAPTURES, "*", "*.png")))
+end
+
+# True when every committed preview already sits on the editable version with identical bytes, in
+# which case uploading would only delete good assets to re-upload the same ones. Compares MD5s the
+# way deliver's own checksum skip does, per locale and preview type, so a renamed, removed or
+# re-recorded video still counts as changed. Asked directly like verify_no_pending_iap does.
+def previews_in_sync?
+  app = Spaceship::ConnectAPI::App.find(APP_IDENTIFIER)
+  return false if app.nil?
+
+  version = app.get_edit_app_store_version(platform: "ios")
+  return false if version.nil?
+
+  token = Spaceship::ConnectAPI.token.text
+  get = lambda do |url|
+    response = Net::HTTP.get_response(URI(url), "Authorization" => "Bearer #{token}")
+    return nil unless response.is_a?(Net::HTTPSuccess)
+
+    JSON.parse(response.body).fetch("data")
+  end
+
+  locales = get.call(
+    "https://api.appstoreconnect.apple.com/v1/appStoreVersions/#{version.id}" \
+    "/appStoreVersionLocalizations?limit=200"
+  )
+  return false if locales.nil?
+
+  local_dirs = Dir.children(APP_PREVIEWS).select { |entry| File.directory?(File.join(APP_PREVIEWS, entry)) }
+  return false if local_dirs.empty?
+
+  local_dirs.each do |locale|
+    localization = locales.find { |entry| entry.dig("attributes", "locale") == locale }
+    return false if localization.nil?
+
+    sets = get.call(
+      "https://api.appstoreconnect.apple.com/v1/appStoreVersionLocalizations/#{localization.fetch("id")}" \
+      "/appPreviewSets?limit=200"
+    )
+    # A version with no sets at all is simply one nothing was ever uploaded to.
+    sets = [] if sets.nil?
+
+    local_checksums = Hash.new { |hash, key| hash[key] = [] }
+    Dir.children(File.join(APP_PREVIEWS, locale)).select { |file| %w[.mp4 .mov .m4v].include?(File.extname(file).downcase) }.each do |file|
+      type = Spaceship::ConnectAPI::AppPreviewSet.preview_type_from_filename(file)
+      return false if type.nil?
+
+      local_checksums[type] << Digest::MD5.file(File.join(APP_PREVIEWS, locale, file)).hexdigest
+    end
+
+    remote_checksums = Hash.new { |hash, key| hash[key] = [] }
+    sets.each do |set|
+      shots = get.call(
+        "https://api.appstoreconnect.apple.com/v1/appPreviewSets/#{set.fetch("id")}" \
+        "/appPreviews?limit=200"
+      )
+      return false if shots.nil?
+
+      shots.each do |shot|
+        remote_checksums[set.dig("attributes", "previewType")] << shot.dig("attributes", "sourceFileChecksum")
+      end
+    end
+
+    return false unless local_checksums.keys.sort == remote_checksums.keys.sort
+
+    local_checksums.each do |type, checksums|
+      return false unless checksums.sort == remote_checksums[type].sort
+    end
+  end
+
+  true
 end
