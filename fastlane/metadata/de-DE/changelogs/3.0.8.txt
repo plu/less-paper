@@ -1,0 +1,8 @@
+Sieh dir an, wer ein Dokument wann geändert hat – und öffne jeden Bereich über ein Menü.
+
+• Die Ansicht hat einen neuen Bereich „Verlauf“, der auflistet, wer ein Dokument wann geändert hat – so wie in der Weboberfläche: mit Namen statt IDs, relativen Zeitangaben und „System“ für Änderungen, die der Server selbst vorgenommen hat. Er wird nur angeboten, wenn der Server ein Änderungsprotokoll führt und dein Konto es lesen darf.
+• Aus Ansehen und Bearbeiten wird ein Menü „Öffnen“ mit einem Blatt pro Bereich: Inhalt, benutzerdefinierte Felder, Details, Verlauf, Metadaten und Notizen. Jeder Bereich öffnet sich bearbeitbar, wenn dein Konto das Dokument ändern darf, sonst schreibgeschützt; Details – ohne schreibgeschützte Ansicht – gibt es nur für Benutzer, die bearbeiten dürfen. „Bearbeiten“ bleibt als Abkürzung für Öffnen > Details.
+• Wischgesten decken dieselben Bereiche ab: öffne jeden Bereich direkt aus der Liste. Eine auf Bearbeiten gestellte Geste öffnet weiter Details, und eine auf Notizen öffnen gestellte weiter Notizen.
+• Behoben: Beim Wechsel zu einer anderen gespeicherten Ansicht standen kurz die Dokumente der vorherigen Ansicht unter dem neuen Namen. Die Liste leert sich jetzt und zeigt einen Ladekreis, während sie lädt.
+
+Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.

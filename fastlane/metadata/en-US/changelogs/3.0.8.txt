@@ -1,0 +1,8 @@
+See a document's history, and open every section from one menu.
+
+• The viewer has a new History section that lists who changed a document and when, the way the web UI shows it — with names instead of ids, relative times, and System for changes the server made itself. It is only offered when the server keeps an audit log and your account may read it.
+• View and Edit are now one Open menu with one sheet per section: Content, Custom fields, Details, History, Metadata and Notes. Each section opens editable when your account may change the document and read-only otherwise; Details, which has nothing to show read-only, is offered only to users who can edit. Edit remains as a shortcut to Open > Details.
+• Swipe actions cover the same sections: open any section straight from the list. A swipe you had set to Edit still opens Details, and one you had set to open notes still opens Notes.
+• Fixed: switching to another saved view briefly kept the previous view's documents on screen under the new view's name. The list now clears to a spinner while it loads.
+
+If you hit a problem, please open an issue at https://github.com/plu/less-paper/issues — it is the quickest way to get it fixed.
