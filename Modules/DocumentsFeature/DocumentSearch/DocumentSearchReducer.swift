@@ -25,6 +25,7 @@ public struct DocumentSearchReducer: Sendable {
         public enum Delegate {
             case documentTapped(Document.Id)
             case filterRequested(DocumentFilterInput)
+            case inboxQueryChanged(String)
             case queryCommitted(String)
             case savedViewTapped(SavedView)
         }
@@ -65,7 +66,12 @@ public struct DocumentSearchReducer: Sendable {
 
         let server: Server
 
-        // Bumped by `clearQuery` and by nothing else, which is the field's cue to resign focus.
+        // False on the inbox: the bar filters the rows in place through a title and content rule
+        // rather than querying the global search endpoint, so there are no result cards, no minimum
+        // query length, and the text stays visible while the list filters.
+        let isGlobalSearchEnabled: Bool
+
+        // Bumped by `clearQuery` and by an inbox submit, which is the field's cue to resign focus.
         // The `X` inside the field empties the text through `searchTextChanged` and deliberately
         // leaves the keyboard up; finishing the search — Cancel, submit, or a result that applies
         // a filter — has to put it away, and none of those are things the field itself can see.
@@ -81,12 +87,14 @@ public struct DocumentSearchReducer: Sendable {
 
         public init(
             error: String? = nil,
+            isGlobalSearchEnabled: Bool = true,
             isLoading: Bool = false,
             results: GlobalSearchOutput? = nil,
             searchText: String = "",
             server: Server
         ) {
             self.error = error
+            self.isGlobalSearchEnabled = isGlobalSearchEnabled
             self.isLoading = isLoading
             self.results = results
             self.searchText = searchText
@@ -123,11 +131,17 @@ public struct DocumentSearchReducer: Sendable {
             // Reading state at delivery rather than capturing it: a keystroke inside the debounce
             // window would otherwise search for text the user has already moved on from.
             case .searchDebounced:
+                guard state.isGlobalSearchEnabled else {
+                    return .send(.delegate(.inboxQueryChanged(state.trimmedQuery)))
+                }
                 return .runGlobalSearch(query: state.trimmedQuery, server: state.server)
             // The field's own clear button only wipes the text, which arrives as a
             // `searchTextChanged("")`. Cancel is the one that also has to drop focus, and that
             // half belongs to the view: there is no focus in state to reset here.
             case .view(.cancelButtonTapped):
+                guard state.isGlobalSearchEnabled else {
+                    return clearThenDelegate(&state, .inboxQueryChanged(""))
+                }
                 state.clearQuery()
                 return .runCancelSearch()
             case let .view(.correspondentTapped(correspondent)):
@@ -161,6 +175,18 @@ public struct DocumentSearchReducer: Sendable {
                 }
                 state.clearedQuery = nil
                 state.searchText = searchText
+                // The inbox debounces into a title and content rule on the list itself, which has no
+                // minimum length — unlike the global search endpoint, which answers 400 below three
+                // characters. An emptied field clears the rule at once rather than debouncing it.
+                guard state.isGlobalSearchEnabled else {
+                    guard !state.trimmedQuery.isEmpty else {
+                        return .merge(
+                            .runCancelSearch(),
+                            .send(.delegate(.inboxQueryChanged("")))
+                        )
+                    }
+                    return .runSearchDebounce()
+                }
                 guard state.hasQuery else {
                     state.error = nil
                     state.isLoading = false
@@ -176,6 +202,17 @@ public struct DocumentSearchReducer: Sendable {
                     .filterRequested(.searchResult(storagePath: storagePath))
                 )
             case .view(.submitted):
+                // Live filtering has already applied the query, so submit only flushes a pending
+                // debounce and puts the keyboard away. The text stays: it is the visible record of
+                // the filter the list is showing.
+                guard state.isGlobalSearchEnabled else {
+                    let query = state.trimmedQuery
+                    state.dismissalCount += 1
+                    return .merge(
+                        .runCancelSearch(),
+                        .send(.delegate(.inboxQueryChanged(query)))
+                    )
+                }
                 guard state.hasQuery else {
                     return .none
                 }

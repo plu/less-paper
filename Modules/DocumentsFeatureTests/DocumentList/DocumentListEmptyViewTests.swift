@@ -72,6 +72,25 @@ struct DocumentListEmptyViewTests {
     }
 
     @Test
+    func testSnapshot_inboxSearchNoMatch() async throws {
+        assertSnapshot(
+            of: view(state: .testValue(
+                documents: [],
+                filter: .testValue(
+                    input: .testValue(
+                        searchValue: "Lego",
+                        tag: .init(rule: .any, selection: .init(any: [.testValue()]))
+                    ),
+                    isInbox: true
+                ),
+                isLoaded: true
+            )),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "inboxSearchNoMatch"
+        )
+    }
+
+    @Test
     func testSnapshot_noMatchingDocuments() async throws {
         assertSnapshot(
             of: view(state: .testValue(

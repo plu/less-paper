@@ -144,9 +144,11 @@ public struct DocumentListReducer: Sendable {
         }
 
         // The single switch between the two things the list can be: document rows below the
-        // minimum query length, search results at or above it. The field is a row either way.
+        // minimum query length, search results at or above it. The field is a row either way. The
+        // inbox never takes the results branch: its bar filters the rows in place, so a query there
+        // leaves selection, refresh and the empty view working on documents.
         var isSearching: Bool {
-            search.hasQuery
+            !filter.isInbox && search.hasQuery
         }
 
         @Shared
@@ -202,7 +204,10 @@ public struct DocumentListReducer: Sendable {
             self.isLoadingMore = isLoadingMore
             self.nextPage = nextPage
             self.path = path
-            self.search = search ?? DocumentSearchReducer.State(server: server)
+            self.search = search ?? DocumentSearchReducer.State(
+                isGlobalSearchEnabled: !(filter ?? .init()).isInbox,
+                server: server
+            )
             self.server = server
             self.totalNumberOfDocuments = totalNumberOfDocuments
             permissions = ServerPermissions(server: server)
@@ -251,7 +256,16 @@ public struct DocumentListReducer: Sendable {
             guard filter.isInbox else {
                 return
             }
+            // The live query survives the rebuild: appearing or refreshing with text in the bar
+            // must refetch the filtered inbox, not drop the user back to the unfiltered one while
+            // the bar still shows the query.
+            let searchType = filter.input.searchType
+            let searchValue = filter.input.searchValue
+            let searchRuleType = filter.input.searchRuleType
             filter = .inbox(server: server)
+            filter.input.searchType = searchType
+            filter.input.searchValue = searchValue
+            filter.input.searchRuleType = searchRuleType
         }
 
         func cacheDocuments(_ documents: [Document]) {
@@ -470,6 +484,31 @@ public struct DocumentListReducer: Sendable {
                 state.filter.input = input
                 state.filter.savedView = nil
                 state.clearForPendingFetch()
+                return .runGetDocuments(
+                    filterRules: state.filter.input.filterRules,
+                    server: state.server,
+                    sortDirection: state.filter.input.sort.direction,
+                    sortField: state.filter.input.sort.field
+                )
+            case let .search(.delegate(.inboxQueryChanged(query))):
+                guard state.filter.isInbox else {
+                    return .none
+                }
+                // Submit flushes after the live path has already applied the same query, and cancel
+                // with nothing typed delegates an empty query the filter already holds.
+                guard state.filter.input.searchType != .titleContent || state.filter.input.searchValue != query else {
+                    return .none
+                }
+                state.error = nil
+                state.filter.input.searchType = .titleContent
+                state.filter.input.searchValue = query
+                // Kept on screen rather than cleared like a committed filter: each keystroke
+                // replacing the rows with a spinner would flicker the list while typing.
+                state.isLoadingMore = false
+                guard !state.isInboxWithoutInboxTags else {
+                    state.clearForEmptyInbox()
+                    return .none
+                }
                 return .runGetDocuments(
                     filterRules: state.filter.input.filterRules,
                     server: state.server,

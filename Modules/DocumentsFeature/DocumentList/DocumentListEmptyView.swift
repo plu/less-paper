@@ -49,12 +49,19 @@ struct DocumentListEmptyView: View {
                 title: .noInboxTagConfigured,
                 content: reloadButton
             )
-        } else if store.filter.isInbox {
+        } else if store.filter.isInbox, store.filter.input.searchValue.isEmpty {
             // No button: an empty inbox is the outcome the user wants, and offering a retry implies
             // something might be missing. Pull-to-refresh on the list still works.
             EmptyListView(
                 systemImage: "checkmark.circle",
                 title: .allCaughtUp
+            )
+        } else if store.filter.isInbox {
+            // The live query matched nothing: not an inbox to celebrate, and no button either — the
+            // way out is clearing the bar above, not a filter sheet this tab does not present.
+            EmptyListView(
+                systemImage: "magnifyingglass",
+                title: .noMatchingDocuments
             )
         } else if store.hasActiveFilter {
             EmptyListView(
