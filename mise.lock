@@ -57,6 +57,170 @@ checksum = "sha256:e9e720972a82da9423c8b197b812bc08ed1607b0acc75c66eb25350843a3e
 url = "https://github.com/tuist/tuist/releases/download/4.208.0/tuist.zip"
 url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/556973806"
 
+[[tools.aube]]
+version = "2.5.0"
+backend = "packslip:github.com/aubepkg/aube"
+specifiers = ["2.5.0"]
+
+[tools.aube."platforms.linux-arm64"]
+checksum = "sha256:478cc5c1a34a0df8d6ffa89e7cff8eff835cf480775eff9f3eb649f6daf557b7"
+url = "https://github.com/aubepkg/aube/releases/download/v2.5.0/aube-v2.5.0-aarch64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/aubepkg/aube/.github/workflows/release-plz.yml"
+
+[tools.aube."platforms.linux-arm64-musl"]
+checksum = "sha256:dad68ccd45221c30d2d5d8a96ea40ccd344893673bff19175d9c425d4552747e"
+url = "https://github.com/aubepkg/aube/releases/download/v2.5.0/aube-v2.5.0-aarch64-unknown-linux-musl.tar.gz"
+signer = "sigstore-oidc:https://github.com/aubepkg/aube/.github/workflows/release-plz.yml"
+
+[tools.aube."platforms.linux-x64"]
+checksum = "sha256:15c5371d4f847da83dd51b4d182cd0928dcd52a9d5cea36d07fb44f3776ee72e"
+url = "https://github.com/aubepkg/aube/releases/download/v2.5.0/aube-v2.5.0-x86_64-unknown-linux-gnu.tar.gz"
+signer = "sigstore-oidc:https://github.com/aubepkg/aube/.github/workflows/release-plz.yml"
+
+[tools.aube."platforms.linux-x64-musl"]
+checksum = "sha256:335c0ccd4e2ee4faa1875132ffdd7c21534760021e944e5e638e2a0547421643"
+url = "https://github.com/aubepkg/aube/releases/download/v2.5.0/aube-v2.5.0-x86_64-unknown-linux-musl.tar.gz"
+signer = "sigstore-oidc:https://github.com/aubepkg/aube/.github/workflows/release-plz.yml"
+
+[tools.aube."platforms.macos-arm64"]
+checksum = "sha256:cb40e0e58092ae9aa1781127b0770e73995562dc570113179d17705289517495"
+url = "https://github.com/aubepkg/aube/releases/download/v2.5.0/aube-v2.5.0-aarch64-apple-darwin.tar.gz"
+signer = "sigstore-oidc:https://github.com/aubepkg/aube/.github/workflows/release-plz.yml"
+
+[tools.aube."platforms.windows-x64"]
+checksum = "sha256:4d39e74cc45bf418f9cdf0bd81ac846aefc8b7045077afe8cf3226366dc091fe"
+url = "https://github.com/aubepkg/aube/releases/download/v2.5.0/aube-v2.5.0-x86_64-pc-windows-msvc.zip"
+signer = "sigstore-oidc:https://github.com/aubepkg/aube/.github/workflows/release-plz.yml"
+
+[[tools.colima]]
+version = "0.10.3"
+backend = "aqua:abiosoft/colima"
+specifiers = ["0.10.3"]
+
+[tools.colima."platforms.linux-arm64"]
+checksum = "sha256:ebb69208007484ac36b8a6ba72a797189b0daa88f8b31bc2b563e82b9c91cb70"
+url = "https://github.com/abiosoft/colima/releases/download/v0.10.3/colima-Linux-aarch64"
+url_api = "https://api.github.com/repos/abiosoft/colima/releases/assets/438456730"
+
+[tools.colima."platforms.linux-arm64-musl"]
+checksum = "sha256:ebb69208007484ac36b8a6ba72a797189b0daa88f8b31bc2b563e82b9c91cb70"
+url = "https://github.com/abiosoft/colima/releases/download/v0.10.3/colima-Linux-aarch64"
+url_api = "https://api.github.com/repos/abiosoft/colima/releases/assets/438456730"
+
+[tools.colima."platforms.linux-x64"]
+checksum = "sha256:54ea35f4847815d0a1445dbc2bc3dd6469518a38a9e960449e96b044d248d00d"
+url = "https://github.com/abiosoft/colima/releases/download/v0.10.3/colima-Linux-x86_64"
+url_api = "https://api.github.com/repos/abiosoft/colima/releases/assets/438456720"
+
+[tools.colima."platforms.linux-x64-musl"]
+checksum = "sha256:54ea35f4847815d0a1445dbc2bc3dd6469518a38a9e960449e96b044d248d00d"
+url = "https://github.com/abiosoft/colima/releases/download/v0.10.3/colima-Linux-x86_64"
+url_api = "https://api.github.com/repos/abiosoft/colima/releases/assets/438456720"
+
+[tools.colima."platforms.macos-arm64"]
+checksum = "sha256:980ad8bf61a4ca370243f4cb41401a61276dcd2c2502bee7b9b86f9250169f34"
+url = "https://github.com/abiosoft/colima/releases/download/v0.10.3/colima-Darwin-arm64"
+url_api = "https://api.github.com/repos/abiosoft/colima/releases/assets/438456725"
+
+[tools.colima."platforms.macos-x64"]
+checksum = "sha256:3082737fe8a98afda11cba7d9a20b6e56fe80c6153464beda04bec630758770b"
+url = "https://github.com/abiosoft/colima/releases/download/v0.10.3/colima-Darwin-x86_64"
+url_api = "https://api.github.com/repos/abiosoft/colima/releases/assets/438456722"
+
+[[tools.fnox]]
+version = "1.35.3"
+backend = "github:jdx/fnox"
+specifiers = ["1.35.3"]
+
+[tools.fnox."platforms.linux-arm64"]
+checksum = "sha256:0bf2d91b31d57969e6c12e4677d77f2f648dde81685fa07a6d691560c8cd89f7"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.3/fnox-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/578792289"
+provenance = "github-attestations"
+
+[tools.fnox."platforms.linux-arm64-musl"]
+checksum = "sha256:d0d808ee972747b0868317800772e80f693cb7023ca39a9e75f77c6e9cf57e38"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.3/fnox-aarch64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/578792291"
+provenance = "github-attestations"
+
+[tools.fnox."platforms.linux-x64"]
+checksum = "sha256:69066f81f624d355c83bcb394ba80f6add80c06b7be92c7b178d38af14a25c52"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.3/fnox-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/578792337"
+provenance = "github-attestations"
+
+[tools.fnox."platforms.linux-x64-musl"]
+checksum = "sha256:e0a9bc1e132bc893301cc108afc849412046ebeb3043ef5b4a3de5e45d5f6701"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.3/fnox-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/578792344"
+provenance = "github-attestations"
+
+[tools.fnox."platforms.macos-arm64"]
+checksum = "sha256:49965f9739d053f544aa32599494b3e2442dcf8c116d92a6a4afa5575e9decd3"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.3/fnox-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/578792286"
+provenance = "github-attestations"
+
+[tools.fnox."platforms.macos-x64"]
+checksum = "sha256:f56104dc739e6882e6a85fc32149c372450ba6a6799b31f69766234494bababb"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.3/fnox-x86_64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/578792298"
+provenance = "github-attestations"
+
+[tools.fnox."platforms.windows-x64"]
+checksum = "sha256:6264f8be31e6de99f6f97fa871f6323c9b01d605c0a9b9887e6364fdd74ad4f2"
+url = "https://github.com/jdx/fnox/releases/download/v1.35.3/fnox-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/jdx/fnox/releases/assets/578792327"
+provenance = "github-attestations"
+
+[[tools.gh]]
+version = "2.101.0"
+backend = "aqua:cli/cli"
+specifiers = ["2.101.0"]
+
+[tools.gh."platforms.linux-arm64"]
+checksum = "sha256:b57e8063f18862647c9d22727c32e9da1b963f8bf9db648fe123a6975695640f"
+url = "https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/565857147"
+provenance = "github-attestations"
+
+[tools.gh."platforms.linux-arm64-musl"]
+checksum = "sha256:b57e8063f18862647c9d22727c32e9da1b963f8bf9db648fe123a6975695640f"
+url = "https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_linux_arm64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/565857147"
+provenance = "github-attestations"
+
+[tools.gh."platforms.linux-x64"]
+checksum = "sha256:9bca2d1c16825f109907a23307628a2f0698fbf99662b73a5cf0b020293072b8"
+url = "https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/565857134"
+provenance = "github-attestations"
+
+[tools.gh."platforms.linux-x64-musl"]
+checksum = "sha256:9bca2d1c16825f109907a23307628a2f0698fbf99662b73a5cf0b020293072b8"
+url = "https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/565857134"
+provenance = "github-attestations"
+
+[tools.gh."platforms.macos-arm64"]
+checksum = "sha256:e4303e39d8f07141c4bad4b99b01079f05029c59b27076e8fbc825c985ecdd8b"
+url = "https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_macOS_arm64.zip"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/565857200"
+provenance = "github-attestations"
+
+[tools.gh."platforms.macos-x64"]
+checksum = "sha256:a6fd66c88e2f07d6e4e058173db341d07dd74d58cf8f19ae668293d2bb614ca3"
+url = "https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_macOS_amd64.zip"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/565857203"
+provenance = "github-attestations"
+
+[tools.gh."platforms.windows-x64"]
+checksum = "sha256:bc6c814367b193cd8e713611d61e36013c0ef843b8f516458fe3eda039192794"
+url = "https://github.com/cli/cli/releases/download/v2.101.0/gh_2.101.0_windows_amd64.zip"
+url_api = "https://api.github.com/repos/cli/cli/releases/assets/565857681"
+provenance = "github-attestations"
+
 [[tools.git-lfs]]
 version = "3.8.0"
 backend = "aqua:git-lfs/git-lfs"
@@ -239,44 +403,44 @@ url_api = "https://api.github.com/repos/cli/cli/releases/assets/542974322"
 provenance = "github-attestations"
 
 [[tools."github:getsentry/XcodeBuildMCP"]]
-version = "2.7.0"
+version = "2.7.1"
 backend = "github:getsentry/XcodeBuildMCP"
-specifiers = ["2.7.0"]
+specifiers = ["2.7.1"]
 
 [tools."github:getsentry/XcodeBuildMCP"."platforms.linux-arm64"]
-checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
-url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
-url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+checksum = "sha256:caf15f8e7e7f5775efbcdd7f788bc129439f2921ba57a6ee010b204761a4f7e8"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.1/mobilebuildmcp-2.7.1.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/584518429"
 
 [tools."github:getsentry/XcodeBuildMCP"."platforms.linux-arm64-musl"]
-checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
-url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
-url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+checksum = "sha256:caf15f8e7e7f5775efbcdd7f788bc129439f2921ba57a6ee010b204761a4f7e8"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.1/mobilebuildmcp-2.7.1.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/584518429"
 
 [tools."github:getsentry/XcodeBuildMCP"."platforms.linux-x64"]
-checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
-url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
-url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+checksum = "sha256:caf15f8e7e7f5775efbcdd7f788bc129439f2921ba57a6ee010b204761a4f7e8"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.1/mobilebuildmcp-2.7.1.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/584518429"
 
 [tools."github:getsentry/XcodeBuildMCP"."platforms.linux-x64-musl"]
-checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
-url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
-url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+checksum = "sha256:caf15f8e7e7f5775efbcdd7f788bc129439f2921ba57a6ee010b204761a4f7e8"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.1/mobilebuildmcp-2.7.1.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/584518429"
 
 [tools."github:getsentry/XcodeBuildMCP"."platforms.macos-arm64"]
-checksum = "sha256:bd724a2c0e6ffe027b3f46257e66d626149a64cd045f4867124bd683b3cf081a"
-url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487259354"
+checksum = "sha256:75bb08fbb27306ccab6c52b435d16a39fef01921b49d021142a4bdaa93dbe82b"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.1/mobilebuildmcp-2.7.1-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/584522841"
 
 [tools."github:getsentry/XcodeBuildMCP"."platforms.macos-x64"]
-checksum = "sha256:f62522c07591a0871601b9fe0c30666bcbe3b1d93dc458eb295c8998ac4fa304"
-url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0-darwin-x64.tar.gz"
-url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487259349"
+checksum = "sha256:73a57ce96c78887feadbcf0818e7fd6177e6c161462617bfac3e63a0c287ddf3"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.1/mobilebuildmcp-2.7.1-darwin-x64.tar.gz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/584522838"
 
 [tools."github:getsentry/XcodeBuildMCP"."platforms.windows-x64"]
-checksum = "sha256:648856847fa599a1e4e3d9bd0f2b204ee14928d4e8700d461be803d1960d07d4"
-url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.0/xcodebuildmcp-2.7.0.tgz"
-url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/487256192"
+checksum = "sha256:caf15f8e7e7f5775efbcdd7f788bc129439f2921ba57a6ee010b204761a4f7e8"
+url = "https://github.com/getsentry/XcodeBuildMCP/releases/download/v2.7.1/mobilebuildmcp-2.7.1.tgz"
+url_api = "https://api.github.com/repos/getsentry/XcodeBuildMCP/releases/assets/584518429"
 
 [[tools."github:jdx/aube"]]
 version = "2.2.14"
@@ -502,52 +666,90 @@ checksum = "sha256:7bc65a2eb0829cb16c358ec1725577b9dbd2bb987e924193f1e12f45b458e
 url = "https://github.com/realm/SwiftLint/releases/download/0.65.1/SwiftLint.amd64.zip"
 url_api = "https://api.github.com/repos/realm/SwiftLint/releases/assets/524187612"
 
+[[tools.lima]]
+version = "2.2.0"
+backend = "aqua:lima-vm/lima"
+specifiers = ["2.2.0"]
+
+[tools.lima."platforms.linux-arm64"]
+checksum = "sha256:7c6a09c6844f55f811e9b7b2b60a6070a512c696c8ec752dfdb3c8ed50ed0364"
+url = "https://github.com/lima-vm/lima/releases/download/v2.2.0/lima-2.2.0-Linux-aarch64.tar.gz"
+url_api = "https://api.github.com/repos/lima-vm/lima/releases/assets/484813992"
+provenance = "github-attestations"
+
+[tools.lima."platforms.linux-arm64-musl"]
+checksum = "sha256:7c6a09c6844f55f811e9b7b2b60a6070a512c696c8ec752dfdb3c8ed50ed0364"
+url = "https://github.com/lima-vm/lima/releases/download/v2.2.0/lima-2.2.0-Linux-aarch64.tar.gz"
+url_api = "https://api.github.com/repos/lima-vm/lima/releases/assets/484813992"
+provenance = "github-attestations"
+
+[tools.lima."platforms.linux-x64"]
+checksum = "sha256:a0ea1ccf6b7335a900adb5f8d2b8384457965fecb1ba72f09b4e3e46d12f424a"
+url = "https://github.com/lima-vm/lima/releases/download/v2.2.0/lima-2.2.0-Linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/lima-vm/lima/releases/assets/484813993"
+provenance = "github-attestations"
+
+[tools.lima."platforms.linux-x64-musl"]
+checksum = "sha256:a0ea1ccf6b7335a900adb5f8d2b8384457965fecb1ba72f09b4e3e46d12f424a"
+url = "https://github.com/lima-vm/lima/releases/download/v2.2.0/lima-2.2.0-Linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/lima-vm/lima/releases/assets/484813993"
+provenance = "github-attestations"
+
+[tools.lima."platforms.macos-arm64"]
+checksum = "sha256:bbdef91774885a0d05f7b048c4eb89ae2bcf3a0c252ae7ca7934e63df76d93c3"
+url = "https://github.com/lima-vm/lima/releases/download/v2.2.0/lima-2.2.0-Darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/lima-vm/lima/releases/assets/484813994"
+provenance = "github-attestations"
+
+[tools.lima."platforms.macos-x64"]
+checksum = "sha256:0d6f99c19f6e4bc3c92730c4c29d929e6927f0cb0a0ba1a84383367135a8ff31"
+url = "https://github.com/lima-vm/lima/releases/download/v2.2.0/lima-2.2.0-Darwin-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/lima-vm/lima/releases/assets/484813996"
+provenance = "github-attestations"
+
+[tools.lima."platforms.windows-x64"]
+checksum = "sha256:e7bf7dd2d2e7ab7ce020631f8f7533665f6e6f9068686d3ffcd0f3c438856ea9"
+url = "https://github.com/lima-vm/lima/releases/download/v2.2.0/lima-2.2.0-Windows-AMD64.zip"
+url_api = "https://api.github.com/repos/lima-vm/lima/releases/assets/484814002"
+provenance = "github-attestations"
+
 [[tools.node]]
-version = "26.8.2"
+version = "26.10.0"
 backend = "core:node"
-specifiers = ["26.8.2"]
+specifiers = ["26.10.0"]
 
 [tools.node."platforms.linux-arm64"]
-checksum = "sha256:746cdbf21565b4ea06f77642bb0e85466de8bb722242be2c5e006f272c361c63"
-url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-arm64.tar.gz"
+checksum = "sha256:423a41bff8e2a2fa15e702fefe2919ef95823b2378744daccb8439302534b44f"
+url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-linux-arm64.tar.gz"
 
 [tools.node."platforms.linux-arm64-musl"]
-checksum = "sha256:125437a0b59d69592b8f4bb813a47245337afac8c973d15ab7720f0ec55d182d"
-url = "https://unofficial-builds.nodejs.org/download/release/v26.8.2/node-v26.8.2-linux-arm64-musl.tar.gz"
+checksum = "sha256:d26027bff3197050d2a2b0bfa151b18e8378ed81affa2bf5093804db158979b6"
+url = "https://unofficial-builds.nodejs.org/download/release/v26.10.0/node-v26.10.0-linux-arm64-musl.tar.gz"
 
 [tools.node."platforms.linux-x64"]
-checksum = "sha256:badb3fe6a61b85e1352ca6564dc56b8b7bd5ecd5c474c52acc21dd0cdd586f35"
-url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-x64.tar.gz"
+checksum = "sha256:cb5c9ce9c80d7b8821e3a258543c71b939138cf17c74d5cc44bbe85d6dbc5ad8"
+url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-linux-x64.tar.gz"
 
 [tools.node."platforms.linux-x64-musl"]
-checksum = "sha256:696eb0180248a06c9893f3f07bcc4e2680891c83118c73aaf1de330efd053910"
-url = "https://unofficial-builds.nodejs.org/download/release/v26.8.2/node-v26.8.2-linux-x64-musl.tar.gz"
+checksum = "sha256:e42da94821b9422eb76bf5aaf4de0977e04ba320b8aff6148d895a94b08ee223"
+url = "https://unofficial-builds.nodejs.org/download/release/v26.10.0/node-v26.10.0-linux-x64-musl.tar.gz"
 
 [tools.node."platforms.macos-arm64"]
-checksum = "sha256:974b6d5fb2fc7c33ff2354db0902b4e91c2de01ec8acc6de48e543c97e18c9e1"
-url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-darwin-arm64.tar.gz"
+checksum = "sha256:751fdf7439f115d87ee2a8f3f18c065b6151852068e3e666ac60ac2996f75ac9"
+url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-darwin-arm64.tar.gz"
 
 [tools.node."platforms.macos-x64"]
-checksum = "sha256:adb8feb2d4987df3d72d2ec46f4fc4b58039c859b8c3f0e3cc2d3c6cbaf8629c"
-url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-darwin-x64.tar.gz"
+checksum = "sha256:ebbe9ab9b58ad6bb54390d6e2c862c1afa7d4475fb7e8ae8146acde211bf70df"
+url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-darwin-x64.tar.gz"
 
 [tools.node."platforms.windows-x64"]
-checksum = "sha256:cf02f5d0c06c794b84f277177d5cf3743d0924ca49f6641cd435dd7cb6ee9085"
-url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-win-x64.zip"
+checksum = "sha256:9fef7eca6743a6b910989cd8e78712376b394fcb9b6e1e9c44a0799a287f90c5"
+url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-win-x64.zip"
 
 [[tools.ruby]]
-version = "3.4.10"
+version = "4.0.7"
 backend = "core:ruby"
-specifiers = ["3.4.10"]
-
-[tools.ruby."platforms.windows-x64"]
-checksum = "sha256:89e3c5e235ac88b9b7e8daaf639eaaab74d7c470667354f6bf0f7432f3191ebb"
-url = "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-3.4.10-1/rubyinstaller-3.4.10-1-x64.7z"
-
-[[tools.ruby]]
-version = "3.4.10"
-backend = "core:ruby"
-specifiers = ["3.4.10"]
+specifiers = ["4.0.7"]
 
 [tools.ruby.options]
 compile = "false"
@@ -556,31 +758,39 @@ ruby_build_repo = "https://github.com/rbenv/ruby-build.git"
 ruby_install = "false"
 
 [tools.ruby."platforms.linux-arm64"]
-checksum = "sha256:c0a3e9f1d7847e66b044aeeab394ba5d41f63c3da7ad99017c4b2578e31b205a"
-url = "https://github.com/jdx/ruby/releases/download/3.4.10-2/ruby-3.4.10.arm64_linux.tar.gz"
+checksum = "sha256:453bf09d3991ada482dbcdae5af697ce59aaa5586f3f906a7ff46af5de9afed8"
+url = "https://github.com/jdx/ruby/releases/download/4.0.7-1/ruby-4.0.7.arm64_linux.tar.gz"
 provenance = "github-attestations"
 
 [tools.ruby."platforms.linux-arm64-musl"]
-checksum = "sha256:ecee2d072a14f2d14347dd56dfd8fe5c3130abf5117bfaacbda0f4ef9cc429ec"
-url = "https://cache.ruby-lang.org/pub/ruby/3.4/ruby-3.4.10.tar.gz"
+checksum = "sha256:911ace20f90d068ca0e4dda6d0e4f0f81e52e52f2dd4f4004c721e253412e82d"
+url = "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.7.tar.gz"
 
 [tools.ruby."platforms.linux-x64"]
-checksum = "sha256:81ce58b056ee2765e46785b4c6befb9852d9c3e50ff9385e7eb1cf3e0314d0bd"
-url = "https://github.com/jdx/ruby/releases/download/3.4.10-2/ruby-3.4.10.x86_64_linux.tar.gz"
+checksum = "sha256:32cd7e6ac93126e0f91dc40a0d2e6213f24a38be77937671e6cb82f82ea4ffe2"
+url = "https://github.com/jdx/ruby/releases/download/4.0.7-1/ruby-4.0.7.x86_64_linux.tar.gz"
 provenance = "github-attestations"
 
 [tools.ruby."platforms.linux-x64-musl"]
-checksum = "sha256:ecee2d072a14f2d14347dd56dfd8fe5c3130abf5117bfaacbda0f4ef9cc429ec"
-url = "https://cache.ruby-lang.org/pub/ruby/3.4/ruby-3.4.10.tar.gz"
+checksum = "sha256:911ace20f90d068ca0e4dda6d0e4f0f81e52e52f2dd4f4004c721e253412e82d"
+url = "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.7.tar.gz"
 
 [tools.ruby."platforms.macos-arm64"]
-checksum = "sha256:5aac8b6e16b0938a14f6d23346b5487020d1fea6b5856a33392e5eb37fa1ef62"
-url = "https://github.com/jdx/ruby/releases/download/3.4.10-2/ruby-3.4.10.macos.tar.gz"
+checksum = "sha256:1b239cb6e4f8ba27e890e025c723c00ba781b993ac12aab2029618f347c2206d"
+url = "https://github.com/jdx/ruby/releases/download/4.0.7-1/ruby-4.0.7.macos.tar.gz"
 provenance = "github-attestations"
 
 [tools.ruby."platforms.macos-x64"]
-checksum = "sha256:ecee2d072a14f2d14347dd56dfd8fe5c3130abf5117bfaacbda0f4ef9cc429ec"
-url = "https://cache.ruby-lang.org/pub/ruby/3.4/ruby-3.4.10.tar.gz"
+checksum = "sha256:911ace20f90d068ca0e4dda6d0e4f0f81e52e52f2dd4f4004c721e253412e82d"
+url = "https://cache.ruby-lang.org/pub/ruby/4.0/ruby-4.0.7.tar.gz"
+
+[[tools.ruby]]
+version = "4.0.7"
+backend = "core:ruby"
+
+[tools.ruby."platforms.windows-x64"]
+checksum = "sha256:7a9be96d3448ecbd9a81eccae1f619131dfcc761f2c98dded03ece6c05d0474f"
+url = "https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-4.0.7-1/rubyinstaller-4.0.7-1-x64.7z"
 
 [[tools."spm:mono0926/LicensePlist"]]
 version = "3.28.2"
@@ -592,7 +802,145 @@ checksum = "sha256:b7361afda76eaa56a71082a90462ee8493debd173914d80a3d34707415a54
 url = "https://github.com/mono0926/LicensePlist/releases/download/3.28.2/LicensePlistBinary-macos.artifactbundle.zip"
 url_api = "https://api.github.com/repos/mono0926/LicensePlist/releases/assets/551827951"
 
+[[tools.swiftformat]]
+version = "0.63.0"
+backend = "github:nicklockwood/SwiftFormat"
+specifiers = ["0.63.0"]
+
+[tools.swiftformat.options]
+no_app = "true"
+
+[tools.swiftformat."platforms.linux-arm64"]
+checksum = "sha256:b0335af32e2c5944a17b3e6d916ff4552eb757ed88f68b80fd19415824850717"
+url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat_linux_aarch64.zip"
+url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/536986531"
+
+[tools.swiftformat."platforms.linux-arm64-musl"]
+checksum = "sha256:b0335af32e2c5944a17b3e6d916ff4552eb757ed88f68b80fd19415824850717"
+url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat_linux_aarch64.zip"
+url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/536986531"
+
+[tools.swiftformat."platforms.linux-x64"]
+checksum = "sha256:b4a3cbb8c852a0baaf9adf853e221ff1dabf921a3d8957a602e0bda3af8470f1"
+url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat_linux.zip"
+url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/536986504"
+
+[tools.swiftformat."platforms.linux-x64-musl"]
+checksum = "sha256:b4a3cbb8c852a0baaf9adf853e221ff1dabf921a3d8957a602e0bda3af8470f1"
+url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat_linux.zip"
+url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/536986504"
+
+[tools.swiftformat."platforms.macos-arm64"]
+checksum = "sha256:28c7802e11fa5ae113d903066439c6bb1be20a8ac1ad9709c42616a7e273fb0f"
+url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat.zip"
+url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/536986489"
+
+[tools.swiftformat."platforms.macos-x64"]
+checksum = "sha256:28c7802e11fa5ae113d903066439c6bb1be20a8ac1ad9709c42616a7e273fb0f"
+url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat.zip"
+url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/536986489"
+
+[tools.swiftformat."platforms.windows-x64"]
+checksum = "sha256:28c7802e11fa5ae113d903066439c6bb1be20a8ac1ad9709c42616a7e273fb0f"
+url = "https://github.com/nicklockwood/SwiftFormat/releases/download/0.63.0/swiftformat.zip"
+url_api = "https://api.github.com/repos/nicklockwood/SwiftFormat/releases/assets/536986489"
+
 [[tools.swiftlint]]
 version = "0.65.1"
 backend = "asdf:swiftlint"
 specifiers = ["0.65.1"]
+
+[[tools.tuist]]
+version = "4.209.0"
+backend = "aqua:tuist/tuist"
+specifiers = ["4.209.0"]
+
+[tools.tuist."platforms.linux-arm64"]
+checksum = "sha256:f3ca511361f528859eda8c264dfb7a833060f497a89eca9f6c8fe64f58ae59fe"
+url = "https://github.com/tuist/tuist/releases/download/4.209.0/tuist-linux-aarch64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/578716291"
+
+[tools.tuist."platforms.linux-arm64-musl"]
+checksum = "sha256:f3ca511361f528859eda8c264dfb7a833060f497a89eca9f6c8fe64f58ae59fe"
+url = "https://github.com/tuist/tuist/releases/download/4.209.0/tuist-linux-aarch64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/578716291"
+
+[tools.tuist."platforms.linux-x64"]
+checksum = "sha256:98e0820e08918201f43a693c5a7e12b48fa5f63e15eb0c27c219568177afa848"
+url = "https://github.com/tuist/tuist/releases/download/4.209.0/tuist-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/578716285"
+
+[tools.tuist."platforms.linux-x64-musl"]
+checksum = "sha256:98e0820e08918201f43a693c5a7e12b48fa5f63e15eb0c27c219568177afa848"
+url = "https://github.com/tuist/tuist/releases/download/4.209.0/tuist-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/578716285"
+
+[tools.tuist."platforms.macos-arm64"]
+checksum = "sha256:d390e058348729acfc79e30bcc467aef2aabe3881edbd2c8d43fa7f4d62ea1d7"
+url = "https://github.com/tuist/tuist/releases/download/4.209.0/tuist.zip"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/578716286"
+
+[tools.tuist."platforms.macos-x64"]
+checksum = "sha256:d390e058348729acfc79e30bcc467aef2aabe3881edbd2c8d43fa7f4d62ea1d7"
+url = "https://github.com/tuist/tuist/releases/download/4.209.0/tuist.zip"
+url_api = "https://api.github.com/repos/tuist/tuist/releases/assets/578716286"
+
+[[tools.xcbeautify]]
+version = "3.2.1"
+backend = "aqua:cpisciotta/xcbeautify"
+specifiers = ["3.2.1"]
+
+[tools.xcbeautify."platforms.linux-x64"]
+checksum = "sha256:5302e480b01910fcda9071fcc5a64f0a7fce904965834a1e9ed065bc9638bfe9"
+url = "https://github.com/cpisciotta/xcbeautify/releases/download/3.2.1/xcbeautify-3.2.1-x86_64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/cpisciotta/xcbeautify/releases/assets/388373840"
+
+[tools.xcbeautify."platforms.macos-arm64"]
+checksum = "sha256:ed32972e41bc3aa19588f8b0f4a0209ef70c663ad60bbf4ad84a2de73355d637"
+url = "https://github.com/cpisciotta/xcbeautify/releases/download/3.2.1/xcbeautify-3.2.1-arm64-apple-macosx.zip"
+url_api = "https://api.github.com/repos/cpisciotta/xcbeautify/releases/assets/388376615"
+
+[tools.xcbeautify."platforms.macos-x64"]
+checksum = "sha256:ba65e8efc2ebe8c6f13393aaeb88a0ff849278d9480ee1496affaa3db781ac6e"
+url = "https://github.com/cpisciotta/xcbeautify/releases/download/3.2.1/xcbeautify-3.2.1-x86_64-apple-macosx.zip"
+url_api = "https://api.github.com/repos/cpisciotta/xcbeautify/releases/assets/388376611"
+
+[[tools.xcresultparser]]
+version = "2.2.0"
+backend = "github:a7ex/xcresultparser"
+specifiers = ["2.2.0"]
+
+[tools.xcresultparser."platforms.linux-arm64"]
+checksum = "sha256:83d058fe215ea3b30c50eabc778020c02eadf89f0dcb87decd4b292528d6633a"
+url = "https://github.com/a7ex/xcresultparser/releases/download/2.2.0/xcresultparser.zip"
+url_api = "https://api.github.com/repos/a7ex/xcresultparser/releases/assets/481765086"
+
+[tools.xcresultparser."platforms.linux-arm64-musl"]
+checksum = "sha256:83d058fe215ea3b30c50eabc778020c02eadf89f0dcb87decd4b292528d6633a"
+url = "https://github.com/a7ex/xcresultparser/releases/download/2.2.0/xcresultparser.zip"
+url_api = "https://api.github.com/repos/a7ex/xcresultparser/releases/assets/481765086"
+
+[tools.xcresultparser."platforms.linux-x64"]
+checksum = "sha256:83d058fe215ea3b30c50eabc778020c02eadf89f0dcb87decd4b292528d6633a"
+url = "https://github.com/a7ex/xcresultparser/releases/download/2.2.0/xcresultparser.zip"
+url_api = "https://api.github.com/repos/a7ex/xcresultparser/releases/assets/481765086"
+
+[tools.xcresultparser."platforms.linux-x64-musl"]
+checksum = "sha256:83d058fe215ea3b30c50eabc778020c02eadf89f0dcb87decd4b292528d6633a"
+url = "https://github.com/a7ex/xcresultparser/releases/download/2.2.0/xcresultparser.zip"
+url_api = "https://api.github.com/repos/a7ex/xcresultparser/releases/assets/481765086"
+
+[tools.xcresultparser."platforms.macos-arm64"]
+checksum = "sha256:83d058fe215ea3b30c50eabc778020c02eadf89f0dcb87decd4b292528d6633a"
+url = "https://github.com/a7ex/xcresultparser/releases/download/2.2.0/xcresultparser.zip"
+url_api = "https://api.github.com/repos/a7ex/xcresultparser/releases/assets/481765086"
+
+[tools.xcresultparser."platforms.macos-x64"]
+checksum = "sha256:83d058fe215ea3b30c50eabc778020c02eadf89f0dcb87decd4b292528d6633a"
+url = "https://github.com/a7ex/xcresultparser/releases/download/2.2.0/xcresultparser.zip"
+url_api = "https://api.github.com/repos/a7ex/xcresultparser/releases/assets/481765086"
+
+[tools.xcresultparser."platforms.windows-x64"]
+checksum = "sha256:83d058fe215ea3b30c50eabc778020c02eadf89f0dcb87decd4b292528d6633a"
+url = "https://github.com/a7ex/xcresultparser/releases/download/2.2.0/xcresultparser.zip"
+url_api = "https://api.github.com/repos/a7ex/xcresultparser/releases/assets/481765086"

@@ -17,7 +17,7 @@ public func assertSnapshot<Value, Format>(
     of value: @autoclosure () throws -> Value,
     as snapshotting: Snapshotting<Value, Format>,
     named name: String? = nil,
-    record recording: Bool? = nil,
+    record recording: SnapshotTestingConfiguration.Record? = nil,
     timeout: TimeInterval = 5,
     fileID: StaticString = #fileID,
     file filePath: StaticString = #file,
