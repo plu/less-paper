@@ -5,6 +5,7 @@ extension DocumentSearchReducer.State {
 
     static func testValue(
         error: String? = nil,
+        isGlobalSearchEnabled: Bool = true,
         isLoading: Bool = false,
         results: GlobalSearchOutput? = nil,
         searchText: String = "",
@@ -12,6 +13,7 @@ extension DocumentSearchReducer.State {
     ) -> Self {
         .init(
             error: error,
+            isGlobalSearchEnabled: isGlobalSearchEnabled,
             isLoading: isLoading,
             results: results,
             searchText: searchText,

@@ -10,6 +10,15 @@ public struct InboxView: View {
     public var body: some View {
         AdaptiveNavigationView(path: $store.scope(state: \.path, action: \.path)) {
             List {
+                // Filters the inbox rows in place through a title and content rule, unlike the
+                // documents tab bar, which queries the global search endpoint and swaps in results.
+                DocumentSearchBarView(store: searchStore)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .padding(.bottom, .x3)
+                    .padding(.horizontal, .x3)
+                    .padding(.top, .x3)
                 if store.isTipInvitationVisible {
                     // Animated on both paths: the row is answered at most once in a user's
                     // lifetime, and having it vanish between two frames reads as a glitch rather
@@ -72,6 +81,9 @@ public struct InboxView: View {
             .overlay(DocumentListEmptyView(store: store))
             .refreshable { await send(.onRefresh).finish() }
             .scrollContentBackground(.hidden)
+            // Dismissing on drag like the documents tab: the keyboard would otherwise cover the rows
+            // the query is filtering.
+            .scrollDismissesKeyboard(.immediately)
             .task { await send(.onAppear).finish() }
         } destination: { store in
             switch store.case {
@@ -148,6 +160,13 @@ public struct InboxView: View {
         store.scope(
             state: \.documentSelection,
             action: \.documentSelection
+        )
+    }
+
+    private var searchStore: StoreOf<DocumentSearchReducer> {
+        store.scope(
+            state: \.search,
+            action: \.search
         )
     }
 }
