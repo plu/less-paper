@@ -33,6 +33,7 @@ next release early: <https://testflight.apple.com/join/3CM21m1n>
 - **Saved views** — create, edit and reorder them from the app
 - **Offline** — keep chosen documents on the device, PDF and all, and read them with no server in reach
 - **Document editing** — title, correspondent, document type, storage path, tags, notes and custom fields
+- **History** — see who changed a document and when, from the viewer, the way the web UI shows it
 - **Bulk edit** — apply changes to a whole selection at once, including bulk delete and merge
 - **Import** — share sheet extension for getting documents in from anywhere on the device
 - **Password-protected PDFs** — unlock on import, with passwords remembered in the keychain

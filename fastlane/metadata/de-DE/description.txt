@@ -4,7 +4,7 @@ ALLES WIEDERFINDEN
 Sämtliche Filter der Weboberfläche, inklusive benutzerdefinierter Felder: Titel und Inhalt, Korrespondent, Dokumenttyp, Speicherpfad, Tags, Datum und ASN. Speichere jeden Filter als Ansicht und lege gespeicherte Ansichten direkt in der App an, bearbeite und sortiere sie.
 
 BEARBEITEN, WO DU LIEST
-Korrigiere den Titel, weise einen anderen Korrespondenten zu, ergänze Tags, Notizen oder benutzerdefinierte Felder – direkt am Dokument. Markiere mehrere Dokumente und ändere sie gemeinsam, führe sie zusammen oder lösche sie in einem Schritt.
+Korrigiere den Titel, weise einen anderen Korrespondenten zu, ergänze Tags, Notizen oder benutzerdefinierte Felder – direkt am Dokument: Ein Menü „Öffnen“ führt zu jedem Bereich – Inhalt, benutzerdefinierte Felder, Details, Verlauf, Metadaten und Notizen –, jeder bearbeitbar, wenn dein Konto es erlaubt. Der Verlauf zeigt, wer was wann geändert hat, so wie in der Weboberfläche. Markiere mehrere Dokumente und ändere sie gemeinsam, führe sie zusammen oder lösche sie in einem Schritt.
 
 LESEN, AUCH OHNE SERVER
 Speichere ein Dokument offline, und es bleibt vollständig auf dem Gerät – das PDF, die Notizen, Metadaten und benutzerdefinierten Felder. Der Tab „Offline“ liest diese gespeicherten Kopien: im Flugzeug, im Keller oder überall dort, wo dein Server nicht erreichbar ist. Zum Aktualisieren ziehen – geladen wird nur, was sich wirklich geändert hat.
