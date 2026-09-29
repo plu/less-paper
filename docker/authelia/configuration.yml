@@ -69,3 +69,13 @@ telemetry:
     enabled: false
 
 theme: light
+
+# Passkey login (WebAuthn first factor) for reproducing the App Store review report that
+# sign-in through Authelia fails when the account uses a passkey. The login sheet is a
+# plain WKWebView, and WebAuthn in WKWebView only lights up for associated domains -
+# which an app serving arbitrary self-hosted hosts can never declare - so the passkey
+# ceremony never completes there. One-factor policy means the passkey alone satisfies
+# the rule, matching the reporter's setup.
+webauthn:
+  enable_passkey_login: true
+  display_name: 'Authelia'

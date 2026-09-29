@@ -103,6 +103,35 @@ appears, the login sheet appears, the login completes, and the list refreshes **
 toast**. That's the rendezvous — `shouldRetry` parked the request and replayed it once cookies were
 back in app-group storage.
 
+## 6. Reproducing passkey login (App Store review report)
+
+A reviewer reports sign-in through Authelia fails when the account uses a passkey:
+the login sheet opens, Cloudflare/the portal loads, but the passkey ceremony never
+completes. To reproduce, `docker/authelia/configuration.yml` carries
+`webauthn.enable_passkey_login: true` (one-factor policy, so the passkey alone
+satisfies the rule). Register a passkey from the host browser first — password
+login, then the portal's Security Key / Passkey registration — then attempt the
+same sign-in from the app's login sheet.
+
+Known limitation, not a misconfiguration: the sheet is a plain `WKWebView`
+(`ForwardAuthWebView`), and WebAuthn in `WKWebView` only lights up for associated
+domains — which an app serving arbitrary self-hosted hosts can never declare.
+Apple documents the associated-domain requirement under "Use passkeys in a web
+view"; Yubico and several apps (Mattermost, Authgear) hit the same wall and moved
+authentication to `ASWebAuthenticationSession` / `SFSafariViewController`, which
+support WebAuthn without associated domains. On the affected setup the
+`navigator.credentials.get()` promise never resolves (WebKit bug 240666), so the
+sheet stalls with no error and no cookie ever lands — matching the report.
+
+A system-browser surface is not a drop-in fix here: unlike OAuth it yields no
+token callback, and its cookies live in Safari's jar, unreachable from the
+`AppGroup.cookieStorage` the API session reads. The cookie handoff that makes
+`WKWebView` the right surface for password login is exactly what breaks for
+passkeys. Options under consideration: bridging the WebAuthn ceremony to native
+`ASAuthorizationController` and injecting the assertion back into the page, or a
+native first-factor passkey flow against Authelia's `/api/firstfactor/passkey`
+endpoints.
+
 ## What each piece is doing
 
 - **Authelia (`docker/authelia/`)** — the identity provider and the forward-auth endpoint. Users in
