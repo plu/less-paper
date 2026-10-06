@@ -57,6 +57,26 @@ struct StoragePathsRepositoryTests {
         },
         .tags(.integrationTests)
     )
+    func test_getStoragePaths_acceptsAnAbsoluteURL() async throws {
+        // The `next` link paperless answers with is absolute; the seed never fills a second page,
+        // so the endpoint itself stands in for one. What matters is the absolute URL is used
+        // verbatim rather than rebuilt from the input.
+        let server = Server.testValue()
+        let viaURL = try await repository.getStoragePaths(
+            input: .init(url: server.url.appending(path: "/api/storage_paths/")),
+            server: server
+        )
+
+        #expect(viaURL.count >= viaURL.results.count)
+    }
+
+    @Test(
+        .testDependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
     func crud() async throws {
         var storagePath = try await createStoragePath()
         #expect(storagePath.documentCount == 0)

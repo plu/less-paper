@@ -57,6 +57,26 @@ struct GroupsRepositoryTests {
         },
         .tags(.integrationTests)
     )
+    func test_getGroups_acceptsAnAbsoluteURL() async throws {
+        // The `next` link paperless answers with is absolute; the seed never fills a second page,
+        // so the endpoint itself stands in for one. What matters is the absolute URL is used
+        // verbatim rather than rebuilt from the input.
+        let server = Server.testValue()
+        let viaURL = try await repository.getGroups(
+            input: .init(url: server.url.appending(path: "/api/groups/")),
+            server: server
+        )
+
+        #expect(viaURL.count >= viaURL.results.count)
+    }
+
+    @Test(
+        .testDependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
     func crud() async throws {
         var group = try await createGroup()
         #expect(group.name == "Admins")

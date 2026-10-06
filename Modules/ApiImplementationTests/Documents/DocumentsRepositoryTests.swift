@@ -14,6 +14,95 @@ import TestSupport
 struct DocumentsRepositoryTests {
 
     @Test
+    func bulkEditDocuments_returnsVoid() async throws {
+        try await repository.bulkEditDocuments(
+            input: .init(documents: [1], method: .delete),
+            server: .testValue()
+        )
+    }
+
+    @Test
+    func downloadDocument_returnsTestValue() async throws {
+        let expected = try Data.testValue()
+        let data = try await repository.downloadDocument(
+            id: 1,
+            server: .testValue()
+        )
+
+        #expect(data == expected)
+    }
+
+    @Test
+    func getAllDocumentIds_returnsTestValue() async throws {
+        let output = try await repository.getAllDocumentIds(
+            input: .testValue(),
+            server: .testValue()
+        )
+
+        expectNoDifference(output, .testValue())
+    }
+
+    @Test
+    func getDocument_returnsTestValue() async throws {
+        let output = try await repository.getDocument(
+            id: 1,
+            server: .testValue()
+        )
+
+        expectNoDifference(output, .testValue())
+    }
+
+    @Test
+    func getDocumentMetadata_returnsTestValue() async throws {
+        let output = try await repository.getDocumentMetadata(
+            id: 1,
+            server: .testValue()
+        )
+
+        expectNoDifference(output, .testValue())
+    }
+
+    @Test
+    func getDocuments_returnsTestValue() async throws {
+        let output = try await repository.getDocuments(
+            input: .testValue(),
+            server: .testValue()
+        )
+
+        expectNoDifference(output, .testValue())
+    }
+
+    @Test
+    func getNextArchiveSerialNumber_returnsTestValue() async throws {
+        let output = try await repository.getNextArchiveSerialNumber(
+            server: .testValue()
+        )
+
+        #expect(output == 1)
+    }
+
+    @Test
+    func getSelectionData_returnsTestValue() async throws {
+        let output = try await repository.getSelectionData(
+            input: .init(documents: [1, 2]),
+            server: .testValue()
+        )
+
+        expectNoDifference(output, .testValue())
+    }
+
+    @Test
+    func updateDocument_returnsTestValue() async throws {
+        let output = try await repository.updateDocument(
+            id: 1,
+            input: .testValue(),
+            server: .testValue()
+        )
+
+        expectNoDifference(output, .testValue())
+    }
+
+    @Test
     func createDocument_returnsVoid() async throws {
         let tempURL = try createTempTestFile()
         let input = CreateDocumentInput(
@@ -494,6 +583,68 @@ struct DocumentsRepositoryTests {
 
         _ = try await repository.getSelectionData(
             input: .init(documents: documentIds.results.map(\.id)),
+            server: .testValue()
+        )
+    }
+
+    @Test(
+        .testDependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_getDocuments_acceptsAnAbsoluteURL() async throws {
+        // The `next` link paperless answers with is absolute; the seed never fills a second page,
+        // so the endpoint itself stands in for one. What matters is the absolute URL is used
+        // verbatim rather than rebuilt from the input.
+        let server = Server.testValue()
+        let viaURL = try await repository.getDocuments(
+            input: .testValue(url: server.url.appending(path: "/api/documents/")),
+            server: server
+        )
+
+        #expect(viaURL.count >= viaURL.results.count)
+    }
+
+    @Test(
+        .testDependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_downloadDocument() async throws {
+        let document = try await seededDocument(titled: "Ikea Vimle #1")
+
+        let data = try await repository.downloadDocument(
+            id: document.id,
+            server: .testValue()
+        )
+
+        #expect(!data.isEmpty)
+    }
+
+    @Test(
+        .testDependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
+    func test_updateDocument() async throws {
+        let title = "Update Document Test \(UUID())"
+        let id = try await createTestDocument(title: title)
+
+        let updated = try await repository.updateDocument(
+            id: id,
+            input: .testValue(title: "Updated \(title)"),
+            server: .testValue()
+        )
+        #expect(updated.title == "Updated \(title)")
+
+        try await repository.bulkEditDocuments(
+            input: .init(documents: [id], method: .delete),
             server: .testValue()
         )
     }
