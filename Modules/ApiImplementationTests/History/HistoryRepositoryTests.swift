@@ -1,6 +1,7 @@
 @testable import ApiImplementation
 
 import ApiInterface
+import CustomDump
 import Dependencies
 import Foundation
 import Testing
@@ -10,6 +11,16 @@ import TestSupport
     .testDependencies()
 )
 struct HistoryRepositoryTests {
+
+    @Test
+    func getHistory_returnsTestValue() async throws {
+        let output = try await repository.getHistory(
+            documentId: 1,
+            server: .testValue()
+        )
+
+        expectNoDifference(output, [.testValue()])
+    }
 
     // Every consumed document has at least its create entry, so an empty answer means the request
     // or the decoding went wrong, not that there is no history.

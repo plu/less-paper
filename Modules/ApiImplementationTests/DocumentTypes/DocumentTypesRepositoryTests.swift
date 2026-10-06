@@ -57,6 +57,26 @@ struct DocumentTypesRepositoryTests {
         },
         .tags(.integrationTests)
     )
+    func test_getDocumentTypes_acceptsAnAbsoluteURL() async throws {
+        // The `next` link paperless answers with is absolute; the seed never fills a second page,
+        // so the endpoint itself stands in for one. What matters is the absolute URL is used
+        // verbatim rather than rebuilt from the input.
+        let server = Server.testValue()
+        let viaURL = try await repository.getDocumentTypes(
+            input: .init(url: server.url.appending(path: "/api/document_types/")),
+            server: server
+        )
+
+        #expect(viaURL.count >= viaURL.results.count)
+    }
+
+    @Test(
+        .testDependencies {
+            $0.authenticationProvider = .integrationTest
+            $0.context = .live
+        },
+        .tags(.integrationTests)
+    )
     func crud() async throws {
         var documentType = try await createDocumentType()
         #expect(documentType.documentCount == 0)

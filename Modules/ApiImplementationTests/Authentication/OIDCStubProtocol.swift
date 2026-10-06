@@ -7,6 +7,12 @@ enum OIDCStub {
     case noProviders
     case notFound
     case providers
+    case tokenRedirectNotRegistered
+    case tokenRejected
+    case tokenSecondFactor
+    case tokenSuccess
+    case tokenWithoutIdToken
+    case twoFactorRejected
     case unusableProvider
 
     static let discoveryBody = #"""
@@ -16,15 +22,73 @@ enum OIDCStub {
 
     func statusCode(for url: URL) -> Int {
         switch self {
-        case .notFound where !url.isDiscovery: 404
-        default: 200
+        case .notFound where !url.isDiscovery:
+            404
+        case .tokenSecondFactor where url.isRedeem:
+            401
+        case .tokenRejected where url.isRedeem,
+             .tokenRedirectNotRegistered where url.isToken,
+             .twoFactorRejected where url.isTwoFactor:
+            400
+        case .twoFactorRejected where url.isRedeem:
+            401
+        default:
+            200
         }
     }
 
     /// Routed by URL, because a login makes several different requests and answering them all with
     /// the same body fails at whichever step parses first.
     func body(for url: URL) -> String {
-        url.isDiscovery ? Self.discoveryBody : configBody
+        if url.isDiscovery {
+            Self.discoveryBody
+        } else if url.isToken {
+            tokenBody
+        } else if url.isRedeem {
+            redeemBody
+        } else if url.isTwoFactor {
+            twoFactorBody
+        } else {
+            configBody
+        }
+    }
+
+    private var tokenBody: String {
+        switch self {
+        case .tokenRedirectNotRegistered:
+            #"{"error": "invalid_request", "error_description": "Redirect URI is not registered"}"#
+        case .tokenSecondFactor, .tokenSuccess, .tokenRejected, .twoFactorRejected:
+            #"{"id_token": "the-id-token"}"#
+        case .tokenWithoutIdToken:
+            "{}"
+        case .noProviders, .notFound, .providers, .unusableProvider:
+            configBody
+        }
+    }
+
+    private var redeemBody: String {
+        switch self {
+        case .tokenSecondFactor, .twoFactorRejected:
+            #"{"meta": {"session_token": "the-session-token"}}"#
+        case .tokenSuccess:
+            #"{"meta": {"access_token": "the-access-token"}}"#
+        case .tokenRejected:
+            #"{"errors": [{"code": "token_invalid", "message": "Incorrect authentication credentials.", "param": "token"}]}"#
+        case .noProviders, .notFound, .providers, .tokenRedirectNotRegistered, .tokenWithoutIdToken, .unusableProvider:
+            configBody
+        }
+    }
+
+    private var twoFactorBody: String {
+        switch self {
+        case .tokenSecondFactor:
+            #"{"meta": {"access_token": "the-access-token"}}"#
+        case .twoFactorRejected:
+            #"{"errors": [{"code": "code_invalid", "message": "Incorrect code.", "param": "code"}]}"#
+        case .noProviders, .notFound, .providers, .tokenRedirectNotRegistered, .tokenRejected, .tokenSuccess, .tokenWithoutIdToken,
+             .unusableProvider:
+            configBody
+        }
     }
 
     private var configBody: String {
@@ -33,7 +97,8 @@ enum OIDCStub {
             #"{"data": {"socialaccount": {"providers": []}}}"#
         case .notFound:
             "not paperless"
-        case .providers:
+        case .providers, .tokenRedirectNotRegistered, .tokenRejected, .tokenSecondFactor, .tokenSuccess, .tokenWithoutIdToken,
+             .twoFactorRejected:
             #"""
             {"data": {"socialaccount": {"providers": [
               {"id": "authentik", "name": "Authentik", "client_id": "the-client-id",
@@ -92,5 +157,17 @@ private extension URL {
 
     var isDiscovery: Bool {
         absoluteString.contains("openid-configuration")
+    }
+
+    var isToken: Bool {
+        absoluteString == "https://sso.example.com/token"
+    }
+
+    var isRedeem: Bool {
+        absoluteString.contains("provider/token")
+    }
+
+    var isTwoFactor: Bool {
+        absoluteString.contains("2fa/authenticate")
     }
 }

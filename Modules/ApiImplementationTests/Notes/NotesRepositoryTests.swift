@@ -1,6 +1,7 @@
 @testable import ApiImplementation
 
 import ApiInterface
+import CustomDump
 import Dependencies
 import Foundation
 import Testing
@@ -10,6 +11,38 @@ import TestSupport
     .testDependencies()
 )
 struct NotesRepositoryTests {
+
+    @Test
+    func createNote_returnsTestValue() async throws {
+        let output = try await repository.createNote(
+            documentId: 1,
+            input: .testValue(),
+            server: .testValue()
+        )
+
+        expectNoDifference(output, [.testValue()])
+    }
+
+    @Test
+    func deleteNote_returnsTestValue() async throws {
+        let output = try await repository.deleteNote(
+            documentId: 1,
+            noteId: 2,
+            server: .testValue()
+        )
+
+        #expect(output == [])
+    }
+
+    @Test
+    func getNotes_returnsTestValue() async throws {
+        let output = try await repository.getNotes(
+            documentId: 1,
+            server: .testValue()
+        )
+
+        expectNoDifference(output, [.testValue()])
+    }
 
     @Test(
         .testDependencies {
