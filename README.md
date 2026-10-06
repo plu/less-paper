@@ -55,7 +55,7 @@ next release early: <https://testflight.apple.com/join/3CM21m1n>
 
 If your server offers [OpenID Connect sign-in](https://docs.paperless-ngx.com/advanced_usage/#openid-connect-and-social-authentication), the app shows the same providers on its sign-in screen and runs the login through a system browser sheet. For that flow to complete, the OAuth client your paperless instance uses needs two things on the identity provider:
 
-- **`lesspaper://oidc-callback` registered as a redirect URI** — this is how the browser hands the login back to the app
+- **`atlp://oidc-callback` registered as a redirect URI** — this is how the browser hands the login back to the app
 - **a public (PKCE) code exchange allowed** — like any native client, the app exchanges its authorization code with PKCE and no client secret; a strictly confidential client will reject that exchange
 
 If the browser sheet ends on an error from the provider about the redirect URI, the callback URL above is the thing that's missing.
