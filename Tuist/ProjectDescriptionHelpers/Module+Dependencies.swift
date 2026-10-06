@@ -352,6 +352,7 @@ extension Module {
                 .external(.dependenciesTestSupport),
                 .external(.nuke),
                 .external(.snapshotTesting),
+                .target(.apiInterface),
                 .target(.imageFeature),
                 .target(.logging),
                 .target(.testSupport),
