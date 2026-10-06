@@ -20,4 +20,16 @@ struct DocumentImageTests {
             as: .image(layout: .device(config: .iPhone12))
         )
     }
+
+    @Test
+    func testSnapshot_loading() async throws {
+        withDependencies {
+            $0.imagePipeline = .loadingValue
+        } operation: {
+            assertSnapshot(
+                of: DocumentImage.testValue(),
+                as: .image(layout: .device(config: .iPhone12))
+            )
+        }
+    }
 }
