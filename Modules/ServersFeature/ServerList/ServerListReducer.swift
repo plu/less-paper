@@ -61,14 +61,19 @@ public struct ServerListReducer: Sendable {
                 state.sync()
                 return .none
             case let .getCredentialsResult(credentials, server):
-                state.destination = .serverForm(ServerFormReducer.State(input: .init(
-                    alias: server.alias,
-                    headers: server.headers,
-                    id: server.id,
-                    password: credentials?.password ?? "",
-                    url: server.url,
-                    username: server.username
-                )))
+                state.destination = .serverForm(ServerFormReducer.State(
+                    input: .init(
+                        alias: server.alias,
+                        headers: server.headers,
+                        id: server.id,
+                        password: credentials?.password ?? "",
+                        url: server.url,
+                        username: server.username
+                    ),
+                    // No stored password means no credentials to show: the form edits the record
+                    // and leaves the login alone.
+                    isPasswordlessEdit: credentials?.password == nil
+                ))
                 return .none
             case let .servers(.element(id: id, action: .delegate(delegateAction))):
                 switch delegateAction {

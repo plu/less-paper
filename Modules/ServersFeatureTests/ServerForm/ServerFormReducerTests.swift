@@ -583,4 +583,75 @@ struct ServerFormReducerTests {
             $0.selectedProvider = provider
         }
     }
+
+    // Editing a server that was saved without a password (OIDC, forward-auth) must store the
+    // edited record while leaving the login alone: no token refresh, no keychain write.
+    @Test
+    func test_saveButtonTapped_passwordlessEdit_savesMetadataWithoutRefreshingToken() async throws {
+        let input = ServerFormInput.testValue(alias: "renamed", password: "", username: "")
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: input,
+            isPasswordlessEdit: true
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.storeToken.execute = { _, _, _, _ in
+                Issue.record("metadata save must not refresh the password token")
+            }
+            $0.storeProviderToken.execute = { _, _ in
+                Issue.record("metadata save must not touch the provider token")
+            }
+            $0.storeServerWithoutToken.execute = { _ in
+                Issue.record("metadata save must not rewrite the stored server")
+            }
+            $0.negotiateApiVersion.execute = { _ in 10 }
+            $0.updateCache.execute = { _ in }
+        }
+
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.binding, .set(\.isSaving, true)) {
+            $0.isSaving = true
+        }
+        await store.receive(\.delegate.serverSaved, input.server)
+        await store.receive(\.binding, .set(\.isSaving, false)) {
+            $0.isSaving = false
+        }
+    }
+
+    // The token refreshes only when a password is there to trade: clearing the password field
+    // on a password-server edit keeps the existing login instead of attempting a doomed refresh.
+    @Test
+    func test_saveButtonTapped_clearedPassword_keepsExistingToken() async throws {
+        let input = ServerFormInput.testValue(alias: "renamed", password: "")
+        let store = TestStore(initialState: ServerFormReducer.State(input: input)) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.storeToken.execute = { _, _, _, _ in
+                Issue.record("an empty password has nothing to refresh the token with")
+            }
+            $0.negotiateApiVersion.execute = { _ in 10 }
+            $0.updateCache.execute = { _ in }
+        }
+
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.binding, .set(\.isSaving, true)) {
+            $0.isSaving = true
+        }
+        await store.receive(\.delegate.serverSaved, input.server)
+        await store.receive(\.binding, .set(\.isSaving, false)) {
+            $0.isSaving = false
+        }
+    }
+
+    @Test
+    func test_isSaveValid_passwordlessEdit() {
+        var valid = ServerFormReducer.State(
+            input: .testValue(alias: "renamed", password: "", username: ""),
+            isPasswordlessEdit: true
+        )
+        #expect(valid.isSaveValid)
+
+        valid.input.alias = ""
+        #expect(!valid.isSaveValid)
+    }
 }

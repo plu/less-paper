@@ -126,7 +126,30 @@ struct ServerListReducerTests {
         await store.send(.servers(.element(id: server.id, action: .delegate(.editServer))))
         await store.receive(\.getCredentialsResult) {
             $0.destination = .serverForm(ServerFormReducer.State(
-                input: .testValue(headers: [.testValue()])
+                input: .testValue(headers: [.testValue()]),
+                isPasswordlessEdit: false
+            ))
+        }
+    }
+
+    @Test
+    func test_servers_element_delegate_editServer_passwordlessCredentials() async throws {
+        let server = Server.testValue()
+
+        @Shared(.servers)
+        var servers: IdentifiedArrayOf<Server> = [server]
+
+        let store = TestStore(initialState: ServerListReducer.State()) {
+            ServerListReducer()
+        } withDependencies: {
+            $0.getCredentials.execute = { _ in .testValue(password: nil) }
+        }
+
+        await store.send(.servers(.element(id: server.id, action: .delegate(.editServer))))
+        await store.receive(\.getCredentialsResult) {
+            $0.destination = .serverForm(ServerFormReducer.State(
+                input: .testValue(password: ""),
+                isPasswordlessEdit: true
             ))
         }
     }

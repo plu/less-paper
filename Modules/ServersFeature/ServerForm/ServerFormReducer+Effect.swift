@@ -52,6 +52,32 @@ extension Effect where Action == ServerFormReducer.Action {
         }
         .cancellable(id: CancelID.saveServer)
     }
+
+    static func runSaveServerMetadata(
+        input: ServerFormInput
+    ) -> Self {
+        @Dependency(\.negotiateApiVersion.execute)
+        var negotiateApiVersion
+
+        @Dependency(\.updateCache.execute)
+        var updateCache
+
+        return .run { send in
+            await send(.binding(.set(\.isSaving, true)))
+
+            // No password, no refresh: the stored login stays exactly as it is, so there is
+            // nothing to probe for and nothing to write to the keychain. Version and cache
+            // still re-run against the edited record, or the list shows a stale server.
+            _ = try await negotiateApiVersion(input.server)
+            try await updateCache(input.server)
+            await send(.delegate(.serverSaved(input.server)), animation: .default)
+            await send(.binding(.set(\.isSaving, false)))
+        } catch: { error, send in
+            await send(.error(error))
+            await send(.binding(.set(\.isSaving, false)))
+        }
+        .cancellable(id: CancelID.saveServer)
+    }
 }
 
 extension Effect where Action == ServerFormReducer.Action {

@@ -110,6 +110,34 @@ struct ServerFormViewTests {
         )
     }
 
+    // What editing a server stored without a password looks like: no credential fields, so
+    // the alias and address are editable without anything to trade a token refresh with.
+    @Test
+    func testSnapshot_passwordlessEdit() async throws {
+        assertSnapshot(
+            of: ScrollView {
+                ServerFormView(
+                    store: Store(
+                        initialState: .testValue(
+                            input: .testValue(
+                                password: "",
+                                url: .testValue(string: "http://localhost:8000"),
+                                username: ""
+                            ),
+                            isPasswordlessEdit: true
+                        ),
+                        reducer: {
+                            ServerFormReducer()
+                        }
+                    )
+                )
+            }
+            .background(Color.m3Surface),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "passwordlessEdit"
+        )
+    }
+
     @Test
     func testSnapshot_withProvidersAccessibilityLarge() async throws {
         assertSnapshot(

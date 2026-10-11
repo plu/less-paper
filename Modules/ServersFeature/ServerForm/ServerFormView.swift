@@ -67,7 +67,7 @@ public struct ServerFormView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.primary(isLoading: $store.isSaving))
-            .disabled(store.isSaving || !(store.selectedProvider != nil ? store.input.isProviderLoginValid : store.input.isValid))
+            .disabled(store.isSaving || !store.isSaveValid)
         }
     }
 
@@ -135,7 +135,9 @@ public struct ServerFormView: View {
         VStack(spacing: .x4) {
             urlField()
             providerButtons()
-            if store.selectedProvider == nil {
+            // A server stored without a password has no credentials to show or edit: hiding
+            // the fields is what frees its alias and address from the password gate.
+            if store.selectedProvider == nil, !store.isPasswordlessEdit {
                 usernameField()
                 passwordField()
             }
