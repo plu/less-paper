@@ -63,6 +63,29 @@ struct OIDCPayloadTests {
     }
 
     @Test
+    func test_tokenResponse_namesThePendingFlows() throws {
+        let response = try JSONDecoder().decode(
+            TokenResponse.self,
+            from: Data(
+                #"{"data": {"flows": [{"id": "login"}, {"id": "mfa_authenticate", "is_pending": true}]}, "meta": {"session_token": "session"}}"#
+                    .utf8
+            )
+        )
+
+        #expect(response.pendingFlowIDs == ["mfa_authenticate"])
+    }
+
+    @Test
+    func test_tokenResponse_pendingFlowsAreEmptyWithoutStages() throws {
+        let response = try JSONDecoder().decode(
+            TokenResponse.self,
+            from: Data(#"{"meta": {"session_token": "session"}}"#.utf8)
+        )
+
+        #expect(response.pendingFlowIDs.isEmpty)
+    }
+
+    @Test
     func test_headlessFailure_summaryIsNilWithoutErrors() throws {
         let decoded = try JSONDecoder().decode(
             HeadlessFailure.self,

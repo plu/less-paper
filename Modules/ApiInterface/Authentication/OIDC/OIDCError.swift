@@ -30,10 +30,34 @@ public enum OIDCError: Error, Equatable, Sendable {
     /// The provider rejected the code exchange.
     case tokenExchangeFailed(reason: String)
 
+    /// The provider rejected the code exchange because the client authenticates with a secret.
+    /// A native app has nowhere to keep one, so it always exchanges without it: this client has
+    /// to be turned into a public PKCE client on the provider side.
+    case confidentialClient(provider: String)
+
+    /// paperless accepted the identity but staged a signup instead of logging in, because the
+    /// identity matches no paperless user. A second factor screen can never satisfy this stage,
+    /// so it is reported rather than asked for.
+    case accountNotLinked(provider: String)
+
     /// paperless rejected the identity, or answered in a way that was not understood. Carries what
     /// the server said, because allauth names the field it objected to and that is the whole answer.
     case serverRejectedIdentity(status: Int, reason: String?)
 
     /// A second factor was expected but there is no login waiting for one.
     case noSecondFactorPending
+}
+
+extension OIDCError: LocalizedError {
+
+    public var errorDescription: String? {
+        switch self {
+        case let .accountNotLinked(provider):
+            String(localized: .oidcAccountNotLinked(provider))
+        case let .confidentialClient(provider):
+            String(localized: .oidcConfidentialClient(provider))
+        default:
+            nil
+        }
+    }
 }
