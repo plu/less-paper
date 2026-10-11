@@ -164,6 +164,9 @@ public struct ServerFormReducer: Sendable {
                 case .urlCommitted:
                     return .runLoadProviders(input: state.input)
                 case .saveButtonTapped:
+                    if let provider = state.selectedProvider {
+                        return .runProviderLogin(input: state.input, provider: provider)
+                    }
                     return .runSaveServer(input: state.input)
                 }
             case .binding:

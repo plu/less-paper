@@ -534,4 +534,53 @@ struct ServerFormReducerTests {
             $0.selectedProvider = nil
         }
     }
+
+    @Test
+    func test_saveButtonTapped_withSelection_runsProviderLogin() async throws {
+        let provider = OIDCProvider.testValue()
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(alias: "mine", password: "", username: ""),
+            providers: [provider]
+        )
+        initial.selectedProvider = provider
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.oidcClient.login = { _, _ in .token("the-token") }
+            $0.storeProviderToken.execute = { _, _ in }
+            $0.getCurrentUser.execute = { _ in .testValue(username: "paperless-user") }
+            $0.negotiateApiVersion.execute = { _ in 10 }
+            $0.updateCache.execute = { _ in }
+        }
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.binding, .set(\.isSaving, true)) {
+            $0.isSaving = true
+        }
+        // The provider login effect answers through the action, not directly: runProviderLogin
+        // sends .providerTokenReceived, whose own effect then saves and announces the server.
+        await store.receive(\.providerTokenReceived, "the-token")
+        await store.receive(\.delegate.serverSaved, .testValue(alias: "mine", username: "paperless-user"))
+        await store.receive(\.binding, .set(\.isSaving, false)) {
+            $0.isSaving = false
+        }
+    }
+
+    @Test
+    func test_providerButtonTapped_neverStartsLogin() async throws {
+        let provider = OIDCProvider.testValue()
+        let store = TestStore(initialState: ServerFormReducer.State.testValue(
+            input: .testValue(alias: "mine"),
+            providers: [provider]
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.oidcClient.login = { _, _ in
+                Issue.record("selection must not start a login")
+                return .token("unused")
+            }
+        }
+        await store.send(.view(.providerButtonTapped(provider))) {
+            $0.selectedProvider = provider
+        }
+    }
 }
