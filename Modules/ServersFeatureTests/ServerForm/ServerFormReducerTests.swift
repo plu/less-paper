@@ -103,6 +103,63 @@ struct ServerFormReducerTests {
         #expect(events.value == ["storeServerWithoutToken", "negotiateApiVersion", "updateCache"])
     }
 
+    // A provider login leaves the form's username empty: no password was ever typed. Whatever
+    // paperless reports for the token replaces it, or the list keeps showing "@ url".
+    @Test
+    func test_providerTokenReceived_savesServerWithPaperlessUsername() async throws {
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: .testValue(username: "")
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.storeProviderToken.execute = { _, _ in }
+            $0.getCurrentUser.execute = { _ in .testValue(username: "paperless-user") }
+            $0.negotiateApiVersion.execute = { _ in 10 }
+            $0.updateCache.execute = { _ in }
+        }
+
+        await store.send(.providerTokenReceived("the-token"))
+        await store.receive(\.delegate.serverSaved, .testValue(username: "paperless-user"))
+        await store.receive(\.binding, .set(\.isSaving, false))
+    }
+
+    // Best effort: the token is already stored at this point, so a failed lookup keeps the
+    // form's username rather than stranding a working login.
+    @Test
+    func test_providerTokenReceived_keepsFormUsernameWhenLookupFails() async throws {
+        struct LookupFailed: Error {}
+
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: .testValue(username: "")
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.storeProviderToken.execute = { _, _ in }
+            $0.getCurrentUser.execute = { _ in throw LookupFailed() }
+            $0.negotiateApiVersion.execute = { _ in 10 }
+            $0.updateCache.execute = { _ in }
+        }
+
+        await store.send(.providerTokenReceived("the-token"))
+        await store.receive(\.delegate.serverSaved, .testValue(username: ""))
+        await store.receive(\.binding, .set(\.isSaving, false))
+    }
+
+    @Test
+    func test_isProviderLoginValid() {
+        #expect(ServerFormInput.testValue().isProviderLoginValid)
+    }
+
+    @Test
+    func test_isProviderLoginValid_requiresAnAlias() {
+        #expect(!ServerFormInput.testValue(alias: "").isProviderLoginValid)
+    }
+
+    @Test
+    func test_isProviderLoginValid_requiresAHost() {
+        #expect(!ServerFormInput.testValue(url: .empty).isProviderLoginValid)
+    }
+
     @Test
     func test_view_saveButtonTapped_cacheError() async throws {
         let toasts = LockIsolated<[Toast]>([])

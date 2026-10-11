@@ -159,7 +159,9 @@ public struct ServerFormView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.secondary())
-                    .disabled(store.isSaving)
+                    // An alias is required to save under, same as for the save button: without
+                    // this the login completes and the server lands in the list with no name.
+                    .disabled(store.isSaving || !store.input.isProviderLoginValid)
                 }
 
                 Text(.orUsePassword)
