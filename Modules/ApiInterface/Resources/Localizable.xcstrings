@@ -545,6 +545,40 @@
         }
       }
     },
+    "oidcAccountNotLinked": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ hat dich angemeldet, aber Paperless hat die Anmeldung nicht mit deinem Konto verbunden. Bitte deinen Administrator, Single Sign-on mit deinem Konto zu verknüpfen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ signed you in, but Paperless did not connect it to your account. Ask your administrator to link single sign-on to your account."
+          }
+        }
+      }
+    },
+    "oidcConfidentialClient": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ hat die Anmeldung abgelehnt: Der Client ist vertraulich. Lege ihn als öffentlichen Client mit PKCE an."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ rejected the login: its client is confidential. Turn it into a public client with PKCE enabled."
+          }
+        }
+      }
+    },
     "unsupportedServerApiVersion": {
       "extractionState": "manual",
       "localizations": {

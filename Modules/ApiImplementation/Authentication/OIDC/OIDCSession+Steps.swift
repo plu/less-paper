@@ -82,6 +82,11 @@ extension OIDCSession {
                failure?.errorDescription?.lowercased().contains("redirect") == true {
                 throw OIDCError.redirectURINotRegistered(uri: OIDCSession.redirectURI)
             }
+            // No secret is sent by design, so a client authentication failure means the provider
+            // expects one: the client is confidential and has to become a public PKCE client.
+            if failure?.error == "invalid_client" {
+                throw OIDCError.confidentialClient(provider: provider.name)
+            }
             throw OIDCError.tokenExchangeFailed(reason: failure?.errorDescription ?? failure?.error ?? "status \(status)")
         }
 
@@ -116,11 +121,18 @@ extension OIDCSession {
             return .token(token)
         }
 
-        // 401 with a session token is not a rejection: it is paperless saying the identity was
-        // accepted and a second factor is still owed.
+        // 401 with a session token is not a rejection, but what paperless is still waiting for
+        // decides what the app may do with it. A code only satisfies a second factor stage: any
+        // other pending stage - a signup paperless staged because the identity matches no user -
+        // has to go back as an error naming it, or the user keeps typing codes into a screen
+        // that can never accept one. A response naming no stages at all predates the distinction
+        // and keeps the historical answer.
         if let sessionToken = decoded?.meta.sessionToken {
-            setPendingSessionToken(sessionToken)
-            return .secondFactorRequired
+            if decoded?.data == nil || decoded?.pendingFlowIDs.contains("mfa_authenticate") == true {
+                setPendingSessionToken(sessionToken)
+                return .secondFactorRequired
+            }
+            throw OIDCError.accountNotLinked(provider: provider.name)
         }
 
         throw OIDCError.serverRejectedIdentity(

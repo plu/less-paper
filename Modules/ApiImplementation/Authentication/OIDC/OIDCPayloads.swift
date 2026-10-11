@@ -132,6 +132,22 @@ struct HeadlessFailure: Decodable {
 
 struct TokenResponse: Decodable {
 
+    struct Flow: Decodable {
+
+        let id: String
+        let isPending: Bool?
+
+        enum CodingKeys: String, CodingKey {
+            case id
+            case isPending = "is_pending"
+        }
+    }
+
+    struct Flows: Decodable {
+
+        let flows: [Flow]?
+    }
+
     struct Meta: Decodable {
         let accessToken: String?
         let sessionToken: String?
@@ -142,5 +158,12 @@ struct TokenResponse: Decodable {
         }
     }
 
+    let data: Flows?
     let meta: Meta
+
+    /// The stages paperless is still waiting for, if it named any. A second factor screen is
+    /// only the right answer for one of them.
+    var pendingFlowIDs: [String] {
+        data?.flows?.filter { $0.isPending == true }.map(\.id) ?? []
+    }
 }

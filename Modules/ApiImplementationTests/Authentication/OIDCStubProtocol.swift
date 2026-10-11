@@ -7,9 +7,12 @@ enum OIDCStub {
     case noProviders
     case notFound
     case providers
+    case tokenConfidentialClient
+    case tokenMfaPending
     case tokenRedirectNotRegistered
     case tokenRejected
     case tokenSecondFactor
+    case tokenSignupPending
     case tokenSuccess
     case tokenWithoutIdToken
     case twoFactorRejected
@@ -24,12 +27,16 @@ enum OIDCStub {
         switch self {
         case .notFound where !url.isDiscovery:
             404
-        case .tokenSecondFactor where url.isRedeem:
+        case .tokenSecondFactor where url.isRedeem,
+             .tokenMfaPending where url.isRedeem,
+             .tokenSignupPending where url.isRedeem:
             401
         case .tokenRejected where url.isRedeem,
              .tokenRedirectNotRegistered where url.isToken,
              .twoFactorRejected where url.isTwoFactor:
             400
+        case .tokenConfidentialClient where url.isToken:
+            401
         case .twoFactorRejected where url.isRedeem:
             401
         default:
@@ -55,9 +62,11 @@ enum OIDCStub {
 
     private var tokenBody: String {
         switch self {
+        case .tokenConfidentialClient:
+            #"{"error": "invalid_client", "error_description": "Client authentication failed (e.g., unknown client, no client authentication included, or unsupported authentication method)."}"#
         case .tokenRedirectNotRegistered:
             #"{"error": "invalid_request", "error_description": "Redirect URI is not registered"}"#
-        case .tokenSecondFactor, .tokenSuccess, .tokenRejected, .twoFactorRejected:
+        case .tokenSecondFactor, .tokenMfaPending, .tokenSignupPending, .tokenSuccess, .tokenRejected, .twoFactorRejected:
             #"{"id_token": "the-id-token"}"#
         case .tokenWithoutIdToken:
             "{}"
@@ -70,11 +79,28 @@ enum OIDCStub {
         switch self {
         case .tokenSecondFactor, .twoFactorRejected:
             #"{"meta": {"session_token": "the-session-token"}}"#
+        case .tokenMfaPending:
+            #"""
+            {"status": 401,
+             "data": {"flows": [{"id": "login"},
+                                {"id": "provider_token", "providers": ["pocket-id"]},
+                                {"id": "mfa_authenticate", "is_pending": true, "types": ["totp"]}]},
+             "meta": {"is_authenticated": false, "session_token": "the-session-token"}}
+            """#
+        case .tokenSignupPending:
+            #"""
+            {"status": 401,
+             "data": {"flows": [{"id": "login"},
+                                {"id": "provider_token", "providers": ["pocket-id"]},
+                                {"id": "provider_signup", "is_pending": true}]},
+             "meta": {"is_authenticated": false, "session_token": "the-session-token"}}
+            """#
         case .tokenSuccess:
             #"{"meta": {"access_token": "the-access-token"}}"#
         case .tokenRejected:
             #"{"errors": [{"code": "token_invalid", "message": "Incorrect authentication credentials.", "param": "token"}]}"#
-        case .noProviders, .notFound, .providers, .tokenRedirectNotRegistered, .tokenWithoutIdToken, .unusableProvider:
+        case .noProviders, .notFound, .providers, .tokenConfidentialClient, .tokenRedirectNotRegistered, .tokenWithoutIdToken,
+             .unusableProvider:
             configBody
         }
     }
@@ -85,7 +111,9 @@ enum OIDCStub {
             #"{"meta": {"access_token": "the-access-token"}}"#
         case .twoFactorRejected:
             #"{"errors": [{"code": "code_invalid", "message": "Incorrect code.", "param": "code"}]}"#
-        case .noProviders, .notFound, .providers, .tokenRedirectNotRegistered, .tokenRejected, .tokenSuccess, .tokenWithoutIdToken,
+        case .noProviders, .notFound, .providers, .tokenConfidentialClient, .tokenMfaPending, .tokenRedirectNotRegistered, .tokenRejected,
+             .tokenSuccess,
+             .tokenSignupPending, .tokenWithoutIdToken,
              .unusableProvider:
             configBody
         }
@@ -97,7 +125,9 @@ enum OIDCStub {
             #"{"data": {"socialaccount": {"providers": []}}}"#
         case .notFound:
             "not paperless"
-        case .providers, .tokenRedirectNotRegistered, .tokenRejected, .tokenSecondFactor, .tokenSuccess, .tokenWithoutIdToken,
+        case .providers, .tokenConfidentialClient, .tokenMfaPending, .tokenRedirectNotRegistered, .tokenRejected, .tokenSecondFactor,
+             .tokenSuccess,
+             .tokenSignupPending, .tokenWithoutIdToken,
              .twoFactorRejected:
             #"""
             {"data": {"socialaccount": {"providers": [

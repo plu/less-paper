@@ -113,6 +113,38 @@ struct OIDCLoginFlowTests {
     }
 
     @Test
+    func test_redeem_asksForSecondFactorWhenMfaIsPending() async throws {
+        let session = OIDCSession(session: OIDCStubProtocol.session())
+
+        try await withStub(.tokenMfaPending) {
+            let result = try await session.redeem(
+                idToken: "the-id-token",
+                provider: .testValue(),
+                url: .testValue()
+            )
+
+            #expect(result == .secondFactorRequired)
+        }
+    }
+
+    @Test
+    func test_redeem_reportsAnUnlinkedAccount() async throws {
+        let session = OIDCSession(session: OIDCStubProtocol.session())
+
+        try await withStub(.tokenSignupPending) {
+            let error = await #expect(throws: OIDCError.self) {
+                _ = try await session.redeem(
+                    idToken: "the-id-token",
+                    provider: .testValue(),
+                    url: .testValue()
+                )
+            }
+
+            #expect(error == .accountNotLinked(provider: "Authentik"))
+        }
+    }
+
+    @Test
     func test_exchange_namesAnUnregisteredRedirectURI() async throws {
         let session = OIDCSession(session: OIDCStubProtocol.session())
 
@@ -127,6 +159,24 @@ struct OIDCLoginFlowTests {
             }
 
             #expect(error == .redirectURINotRegistered(uri: OIDCSession.redirectURI))
+        }
+    }
+
+    @Test
+    func test_exchange_namesAConfidentialClient() async throws {
+        let session = OIDCSession(session: OIDCStubProtocol.session())
+
+        try await withStub(.tokenConfidentialClient) {
+            let error = await #expect(throws: OIDCError.self) {
+                _ = try await session.exchange(
+                    code: "the-code",
+                    discovery: .testValue(),
+                    provider: .testValue(),
+                    pkce: PKCE()
+                )
+            }
+
+            #expect(error == .confidentialClient(provider: "Authentik"))
         }
     }
 
