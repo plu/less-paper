@@ -126,6 +126,9 @@ extension Effect where Action == ServerFormReducer.Action {
     /// negotiate the API version and warm the cache - which is what makes a provider login
     /// indistinguishable from a password one everywhere downstream.
     static func runSaveProviderToken(input: ServerFormInput, token: String) -> Self {
+        @Dependency(\.getCurrentUser.execute)
+        var getCurrentUser
+
         @Dependency(\.getForwardAuthIdentity.execute)
         var getForwardAuthIdentity
 
@@ -156,9 +159,21 @@ extension Effect where Action == ServerFormReducer.Action {
             }
 
             try await storeProviderToken(input.server, token)
-            _ = try await negotiateApiVersion(input.server)
-            try await updateCache(input.server)
-            await send(.delegate(.serverSaved(input.server)), animation: .default)
+            // A provider login fills no username: the form fields are meaningless when the
+            // provider authenticates the human. Paperless knows who the token belongs to - the
+            // same authority the forward-auth identity above carries - so whatever it returns
+            // replaces the empty field rather than showing "@ url" wherever a username is
+            // expected. Best effort: the login already succeeded, and losing a working token
+            // over display metadata would strand it.
+            let server: Server
+            if let username = try? await getCurrentUser(input.server).username {
+                server = input.server.with(username: username)
+            } else {
+                server = input.server
+            }
+            _ = try await negotiateApiVersion(server)
+            try await updateCache(server)
+            await send(.delegate(.serverSaved(server)), animation: .default)
             await send(.binding(.set(\.isSaving, false)))
         } catch: { error, send in
             await send(.error(error))

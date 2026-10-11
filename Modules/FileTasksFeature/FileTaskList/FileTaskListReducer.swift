@@ -4,6 +4,7 @@ import ComposableArchitecture
 import Foundation
 import IdentifiedCollections
 import SwiftSharing
+import Tagged
 
 @Reducer
 public struct FileTaskListReducer: Reducer, Sendable {

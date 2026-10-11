@@ -61,6 +61,9 @@ public struct ServerFormReducer: Sendable {
         /// has.
         var providers: [OIDCProvider] = []
 
+        // nil means the password path; non-nil means the OIDC path.
+        var selectedProvider: OIDCProvider?
+
         /// The address `providers` was read from, so a change can be noticed without depending on
         /// which keypath a binding action happens to carry.
         var providersURL: URL?
@@ -74,10 +77,12 @@ public struct ServerFormReducer: Sendable {
 
         public init(
             destination: Destination.State? = nil,
-            input: ServerFormInput = .empty
+            input: ServerFormInput = .empty,
+            selectedProvider: OIDCProvider? = nil
         ) {
             self.destination = destination
             self.input = input
+            self.selectedProvider = selectedProvider
             // Seeded with the address the form opened on, so only a change asks the server. Left
             // nil, the first binding of any kind - a username keystroke - would look like a new
             // address and send a request nobody asked for.
@@ -118,6 +123,11 @@ public struct ServerFormReducer: Sendable {
                 return .runSaveProviderToken(input: state.input, token: token)
             case let .providersLoaded(providers):
                 state.providers = providers
+                if let selected = state.selectedProvider,
+                   !providers.contains(where: { $0.id == selected.id })
+                {
+                    state.selectedProvider = nil
+                }
                 if state.lastLoggedProviderCount != providers.count {
                     state.lastLoggedProviderCount = providers.count
                     log.info(Self.discoveryMessage(count: providers.count), category: .server)
@@ -145,10 +155,18 @@ public struct ServerFormReducer: Sendable {
                     state.input.headers[id: id]?.value = value
                     return .none
                 case let .providerButtonTapped(provider):
-                    return .runProviderLogin(input: state.input, provider: provider)
+                    if state.selectedProvider?.id == provider.id {
+                        state.selectedProvider = nil
+                    } else {
+                        state.selectedProvider = provider
+                    }
+                    return .none
                 case .urlCommitted:
                     return .runLoadProviders(input: state.input)
                 case .saveButtonTapped:
+                    if let provider = state.selectedProvider {
+                        return .runProviderLogin(input: state.input, provider: provider)
+                    }
                     return .runSaveServer(input: state.input)
                 }
             case .binding:
@@ -159,6 +177,7 @@ public struct ServerFormReducer: Sendable {
                     return .none
                 }
                 state.providers = []
+                state.selectedProvider = nil
                 state.providersURL = state.input.url
                 return .runLoadProvidersDebounced()
             case .delegate, .destination:

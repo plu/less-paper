@@ -103,6 +103,63 @@ struct ServerFormReducerTests {
         #expect(events.value == ["storeServerWithoutToken", "negotiateApiVersion", "updateCache"])
     }
 
+    // A provider login leaves the form's username empty: no password was ever typed. Whatever
+    // paperless reports for the token replaces it, or the list keeps showing "@ url".
+    @Test
+    func test_providerTokenReceived_savesServerWithPaperlessUsername() async throws {
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: .testValue(username: "")
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.storeProviderToken.execute = { _, _ in }
+            $0.getCurrentUser.execute = { _ in .testValue(username: "paperless-user") }
+            $0.negotiateApiVersion.execute = { _ in 10 }
+            $0.updateCache.execute = { _ in }
+        }
+
+        await store.send(.providerTokenReceived("the-token"))
+        await store.receive(\.delegate.serverSaved, .testValue(username: "paperless-user"))
+        await store.receive(\.binding, .set(\.isSaving, false))
+    }
+
+    // Best effort: the token is already stored at this point, so a failed lookup keeps the
+    // form's username rather than stranding a working login.
+    @Test
+    func test_providerTokenReceived_keepsFormUsernameWhenLookupFails() async throws {
+        struct LookupFailed: Error {}
+
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: .testValue(username: "")
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.storeProviderToken.execute = { _, _ in }
+            $0.getCurrentUser.execute = { _ in throw LookupFailed() }
+            $0.negotiateApiVersion.execute = { _ in 10 }
+            $0.updateCache.execute = { _ in }
+        }
+
+        await store.send(.providerTokenReceived("the-token"))
+        await store.receive(\.delegate.serverSaved, .testValue(username: ""))
+        await store.receive(\.binding, .set(\.isSaving, false))
+    }
+
+    @Test
+    func test_isProviderLoginValid() {
+        #expect(ServerFormInput.testValue().isProviderLoginValid)
+    }
+
+    @Test
+    func test_isProviderLoginValid_requiresAnAlias() {
+        #expect(!ServerFormInput.testValue(alias: "").isProviderLoginValid)
+    }
+
+    @Test
+    func test_isProviderLoginValid_requiresAHost() {
+        #expect(!ServerFormInput.testValue(url: .empty).isProviderLoginValid)
+    }
+
     @Test
     func test_view_saveButtonTapped_cacheError() async throws {
         let toasts = LockIsolated<[Toast]>([])
@@ -360,6 +417,170 @@ struct ServerFormReducerTests {
             $0.uuid = .incrementing
         } operation: {
             #expect(ServerFormInput.empty.headers.isEmpty)
+        }
+    }
+
+    @Test
+    func test_providerButtonTapped_selectsProvider() async throws {
+        let provider = OIDCProvider.testValue()
+        let store = TestStore(initialState: ServerFormReducer.State.testValue(
+            input: .testValue(alias: ""),
+            providers: [provider]
+        )) {
+            ServerFormReducer()
+        }
+        await store.send(.view(.providerButtonTapped(provider))) {
+            $0.selectedProvider = provider
+        }
+    }
+
+    @Test
+    func test_providerButtonTapped_secondTapClearsSelection() async throws {
+        let provider = OIDCProvider.testValue()
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(alias: "mine"),
+            providers: [provider]
+        )
+        initial.selectedProvider = provider
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        }
+        await store.send(.view(.providerButtonTapped(provider))) {
+            $0.selectedProvider = nil
+        }
+    }
+
+    @Test
+    func test_providerButtonTapped_switchMovesSelection() async throws {
+        let first = OIDCProvider.testValue(id: "authentik")
+        let second = OIDCProvider.testValue(id: "keycloak", name: "Keycloak")
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(alias: "mine", password: "typed-pass", username: "typed-user"),
+            providers: [first, second]
+        )
+        initial.selectedProvider = first
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        }
+        await store.send(.view(.providerButtonTapped(second))) {
+            $0.selectedProvider = second
+        }
+    }
+
+    @Test
+    func test_changingUrl_clearsSelection() async throws {
+        let clock = TestClock()
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(),
+            providers: [.testValue()]
+        )
+        initial.selectedProvider = .testValue()
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.oidcClient.providers = { _ in [] }
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+        await store.send(.binding(.set(\.input.url, URL(string: "http://other.example.com")!))) {
+            $0.input.url = URL(string: "http://other.example.com")!
+            $0.providers = []
+            $0.providersURL = URL(string: "http://other.example.com")!
+            $0.selectedProvider = nil
+        }
+        await clock.advance(by: .milliseconds(600))
+        await store.receive(\.loadProviders)
+        await store.receive(\.providersLoaded)
+    }
+
+    @Test
+    func test_providersLoaded_reorderedIdsKeepsSelection() async throws {
+        let first = OIDCProvider.testValue(id: "authentik")
+        let second = OIDCProvider.testValue(id: "keycloak", name: "Keycloak")
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(),
+            providers: [first, second]
+        )
+        initial.selectedProvider = second
+        initial.lastLoggedProviderCount = 2
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        }
+        await store.send(.providersLoaded([second, first])) {
+            $0.providers = [second, first]
+        }
+    }
+
+    @Test
+    func test_isProviderLoginValid_whitespaceAliasCountsAsNonEmpty() {
+        // Pins the unchanged rule: only truly empty aliases gate. A person would expect
+        // whitespace blocked; changing that is a separate validation change, not this one.
+        #expect(ServerFormInput.testValue(alias: " ").isProviderLoginValid)
+    }
+
+    @Test
+    func test_providersLoaded_clearsSelectionForMissingId() async throws {
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(),
+            providers: [.testValue(id: "authentik")]
+        )
+        initial.selectedProvider = .testValue(id: "authentik")
+        initial.lastLoggedProviderCount = 1
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        }
+        await store.send(.providersLoaded([.testValue(id: "keycloak", name: "Keycloak")])) {
+            $0.providers = [.testValue(id: "keycloak", name: "Keycloak")]
+            $0.selectedProvider = nil
+        }
+    }
+
+    @Test
+    func test_saveButtonTapped_withSelection_runsProviderLogin() async throws {
+        let provider = OIDCProvider.testValue()
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(alias: "mine", password: "", username: ""),
+            providers: [provider]
+        )
+        initial.selectedProvider = provider
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.oidcClient.login = { _, _ in .token("the-token") }
+            $0.storeProviderToken.execute = { _, _ in }
+            $0.getCurrentUser.execute = { _ in .testValue(username: "paperless-user") }
+            $0.negotiateApiVersion.execute = { _ in 10 }
+            $0.updateCache.execute = { _ in }
+        }
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.binding, .set(\.isSaving, true)) {
+            $0.isSaving = true
+        }
+        // The provider login effect answers through the action, not directly: runProviderLogin
+        // sends .providerTokenReceived, whose own effect then saves and announces the server.
+        await store.receive(\.providerTokenReceived, "the-token")
+        await store.receive(\.delegate.serverSaved, .testValue(alias: "mine", username: "paperless-user"))
+        await store.receive(\.binding, .set(\.isSaving, false)) {
+            $0.isSaving = false
+        }
+    }
+
+    @Test
+    func test_providerButtonTapped_neverStartsLogin() async throws {
+        let provider = OIDCProvider.testValue()
+        let store = TestStore(initialState: ServerFormReducer.State.testValue(
+            input: .testValue(alias: "mine"),
+            providers: [provider]
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.oidcClient.login = { _, _ in
+                Issue.record("selection must not start a login")
+                return .token("unused")
+            }
+        }
+        await store.send(.view(.providerButtonTapped(provider))) {
+            $0.selectedProvider = provider
         }
     }
 }

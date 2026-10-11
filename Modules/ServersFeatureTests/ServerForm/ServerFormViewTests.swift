@@ -133,4 +133,26 @@ struct ServerFormViewTests {
             named: "withProvidersAccessibilityLarge"
         )
     }
+
+    @Test
+    func testSnapshot_withSelectedProvider() async throws {
+        var selected = ServerFormReducer.State.testValue(
+            input: .testValue(alias: "", password: "", url: .testValue(string: "http://localhost:8000"), username: ""),
+            providers: [OIDCProvider.testValue(id: "authentik", name: "Authentik")]
+        )
+        selected.selectedProvider = OIDCProvider.testValue(id: "authentik", name: "Authentik")
+        assertSnapshot(
+            of: ScrollView {
+                ServerFormView(
+                    store: Store(
+                        initialState: selected,
+                        reducer: { ServerFormReducer() }
+                    )
+                )
+            }
+            .background(Color.m3Surface),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "withSelectedProvider"
+        )
+    }
 }

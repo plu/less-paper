@@ -32,6 +32,13 @@ extension ServerFormInput {
         ].allSatisfy { !$0.isEmpty }
     }
 
+    /// What a provider login needs: an address to discover against and an alias to save the
+    /// server under. No username or password - the provider authenticates the human, so those
+    /// fields stay empty and must not gate the buttons the way isValid does for the save button.
+    var isProviderLoginValid: Bool {
+        !alias.isEmpty && !(url.host ?? "").isEmpty
+    }
+
     var server: Server {
         .init(
             alias: alias,
