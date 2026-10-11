@@ -50,8 +50,17 @@ public struct ServerFormReducer: Sendable {
 
         var input: ServerFormInput
 
-        var isSaving = false
+        // Set when the form opens for editing a server whose stored credentials hold no
+        // password (OIDC, forward-auth). Data only for now; behavior follows.
+        var isPasswordlessEdit = false
 
+        // Save-button gate. A selected provider and a passwordless edit both validate on
+        // alias plus address; only the password path needs the full set.
+        var isSaveValid: Bool {
+            (selectedProvider != nil || isPasswordlessEdit) ? input.isProviderLoginValid : input.isValid
+        }
+
+        var isSaving = false
         /// Set while a provider login is waiting for its second factor, so the shared MFA sheet
         /// knows which login to finish - the password flow re-runs the save with a code, this one
         /// confirms against the pending provider session.
@@ -78,10 +87,12 @@ public struct ServerFormReducer: Sendable {
         public init(
             destination: Destination.State? = nil,
             input: ServerFormInput = .empty,
+            isPasswordlessEdit: Bool = false,
             selectedProvider: OIDCProvider? = nil
         ) {
             self.destination = destination
             self.input = input
+            self.isPasswordlessEdit = isPasswordlessEdit
             self.selectedProvider = selectedProvider
             // Seeded with the address the form opened on, so only a change asks the server. Left
             // nil, the first binding of any kind - a username keystroke - would look like a new
@@ -166,6 +177,11 @@ public struct ServerFormReducer: Sendable {
                 case .saveButtonTapped:
                     if let provider = state.selectedProvider {
                         return .runProviderLogin(input: state.input, provider: provider)
+                    }
+                    // The token refreshes only when a password is there to trade it with.
+                    // Without one the stored login is kept and only the record is updated.
+                    if state.input.password.isEmpty {
+                        return .runSaveServerMetadata(input: state.input)
                     }
                     return .runSaveServer(input: state.input)
                 }
