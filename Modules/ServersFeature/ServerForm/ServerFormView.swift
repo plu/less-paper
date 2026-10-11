@@ -67,7 +67,7 @@ public struct ServerFormView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.primary(isLoading: $store.isSaving))
-            .disabled(!store.input.isValid)
+            .disabled(store.isSaving || !(store.selectedProvider != nil ? store.input.isProviderLoginValid : store.input.isValid))
         }
     }
 
@@ -135,9 +135,18 @@ public struct ServerFormView: View {
         VStack(spacing: .x4) {
             urlField()
             providerButtons()
-            usernameField()
-            passwordField()
+            if store.selectedProvider == nil {
+                usernameField()
+                passwordField()
+            }
             aliasField()
+        }
+        .onChange(of: store.selectedProvider?.id) { _, newValue in
+            // Clearing the selection leaves focus alone: only moving to a selection with an
+            // empty alias takes over the field.
+            if newValue != nil, store.input.alias.isEmpty {
+                focus = .alias
+            }
         }
     }
 
@@ -148,20 +157,34 @@ public struct ServerFormView: View {
         if !store.providers.isEmpty {
             VStack(spacing: .x3) {
                 ForEach(store.providers) { provider in
-                    Button {
-                        send(.providerButtonTapped(provider))
-                    } label: {
-                        // Truncates at accessibility sizes, as every button here does: ButtonStyle
-                        // pins a scaled height, so a second line has nowhere to go. Consistent with
-                        // the rest of the app rather than a special case, and the reference records
-                        // it rather than hiding it.
-                        Text(.signInWith(provider.name))
-                            .frame(maxWidth: .infinity)
+                    if store.selectedProvider?.id == provider.id {
+                        Button {
+                            send(.providerButtonTapped(provider))
+                        } label: {
+                            // Truncates at accessibility sizes, as every button here does: ButtonStyle
+                            // pins a scaled height, so a second line has nowhere to go. Consistent with
+                            // the rest of the app rather than a special case, and the reference records
+                            // it rather than hiding it.
+                            Label(.signInWith(provider.name), systemImage: "checkmark")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.primary())
+                        .disabled(store.isSaving)
+                        .accessibilityAddTraits(.isSelected)
+                    } else {
+                        Button {
+                            send(.providerButtonTapped(provider))
+                        } label: {
+                            // Truncates at accessibility sizes, as every button here does: ButtonStyle
+                            // pins a scaled height, so a second line has nowhere to go. Consistent with
+                            // the rest of the app rather than a special case, and the reference records
+                            // it rather than hiding it.
+                            Text(.signInWith(provider.name))
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.secondary())
+                        .disabled(store.isSaving)
                     }
-                    .buttonStyle(.secondary())
-                    // An alias is required to save under, same as for the save button: without
-                    // this the login completes and the server lands in the list with no name.
-                    .disabled(store.isSaving || !store.input.isProviderLoginValid)
                 }
 
                 Text(.orUsePassword)
