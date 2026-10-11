@@ -419,4 +419,119 @@ struct ServerFormReducerTests {
             #expect(ServerFormInput.empty.headers.isEmpty)
         }
     }
+
+    @Test
+    func test_providerButtonTapped_selectsProvider() async throws {
+        let provider = OIDCProvider.testValue()
+        let store = TestStore(initialState: ServerFormReducer.State.testValue(
+            input: .testValue(alias: ""),
+            providers: [provider]
+        )) {
+            ServerFormReducer()
+        }
+        await store.send(.view(.providerButtonTapped(provider))) {
+            $0.selectedProvider = provider
+        }
+    }
+
+    @Test
+    func test_providerButtonTapped_secondTapClearsSelection() async throws {
+        let provider = OIDCProvider.testValue()
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(alias: "mine"),
+            providers: [provider]
+        )
+        initial.selectedProvider = provider
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        }
+        await store.send(.view(.providerButtonTapped(provider))) {
+            $0.selectedProvider = nil
+        }
+    }
+
+    @Test
+    func test_providerButtonTapped_switchMovesSelection() async throws {
+        let first = OIDCProvider.testValue(id: "authentik")
+        let second = OIDCProvider.testValue(id: "keycloak", name: "Keycloak")
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(alias: "mine", password: "typed-pass", username: "typed-user"),
+            providers: [first, second]
+        )
+        initial.selectedProvider = first
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        }
+        await store.send(.view(.providerButtonTapped(second))) {
+            $0.selectedProvider = second
+        }
+    }
+
+    @Test
+    func test_changingUrl_clearsSelection() async throws {
+        let clock = TestClock()
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(),
+            providers: [.testValue()]
+        )
+        initial.selectedProvider = .testValue()
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.oidcClient.providers = { _ in [] }
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+        await store.send(.binding(.set(\.input.url, URL(string: "http://other.example.com")!))) {
+            $0.input.url = URL(string: "http://other.example.com")!
+            $0.providers = []
+            $0.providersURL = URL(string: "http://other.example.com")!
+            $0.selectedProvider = nil
+        }
+        await clock.advance(by: .milliseconds(600))
+        await store.receive(\.loadProviders)
+        await store.receive(\.providersLoaded)
+    }
+
+    @Test
+    func test_providersLoaded_reorderedIdsKeepsSelection() async throws {
+        let first = OIDCProvider.testValue(id: "authentik")
+        let second = OIDCProvider.testValue(id: "keycloak", name: "Keycloak")
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(),
+            providers: [first, second]
+        )
+        initial.selectedProvider = second
+        initial.lastLoggedProviderCount = 2
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        }
+        await store.send(.providersLoaded([second, first])) {
+            $0.providers = [second, first]
+        }
+    }
+
+    @Test
+    func test_isProviderLoginValid_whitespaceAliasCountsAsNonEmpty() {
+        // Pins the unchanged rule: only truly empty aliases gate. A person would expect
+        // whitespace blocked; changing that is a separate validation change, not this one.
+        #expect(ServerFormInput.testValue(alias: " ").isProviderLoginValid)
+    }
+
+    @Test
+    func test_providersLoaded_clearsSelectionForMissingId() async throws {
+        var initial = ServerFormReducer.State.testValue(
+            input: .testValue(),
+            providers: [.testValue(id: "authentik")]
+        )
+        initial.selectedProvider = .testValue(id: "authentik")
+        initial.lastLoggedProviderCount = 1
+        let store = TestStore(initialState: initial) {
+            ServerFormReducer()
+        }
+        await store.send(.providersLoaded([.testValue(id: "keycloak", name: "Keycloak")])) {
+            $0.providers = [.testValue(id: "keycloak", name: "Keycloak")]
+            $0.selectedProvider = nil
+        }
+    }
 }
