@@ -51,6 +51,17 @@ struct MarketingScreenshotTests {
         )
     }
 
+    // Closer to the iPad's proportions than to the other iPhone's, which is why it is worth a
+    // reference of its own: the caption takes a larger share of a shorter canvas.
+    @Test(arguments: MarketingScreen.allCases)
+    func testSnapshot_iPhoneDuo(screen: MarketingScreen) async throws {
+        assertSnapshot(
+            of: MarketingScreenshot(capture: Self.capture(for: .iPhoneDuo), screen: screen, device: .iPhoneDuo),
+            as: .image(layout: .fixed(width: 699, height: 1017)),
+            named: screen.fileStem
+        )
+    }
+
     // German gets its own references because German is where a caption overflows: the same sentence
     // is reliably longer, and it was an untested language that let English captions ship on the
     // German screenshots once already.
@@ -78,6 +89,20 @@ struct MarketingScreenshotTests {
                 locale: Locale(identifier: "de-DE")
             ),
             as: .image(layout: .fixed(width: 1024, height: 1366)),
+            named: "\(screen.fileStem)-de"
+        )
+    }
+
+    @Test(arguments: MarketingScreen.allCases)
+    func testSnapshot_iPhoneDuo_german(screen: MarketingScreen) async throws {
+        assertSnapshot(
+            of: MarketingScreenshot(
+                capture: Self.capture(for: .iPhoneDuo),
+                screen: screen,
+                device: .iPhoneDuo,
+                locale: Locale(identifier: "de-DE")
+            ),
+            as: .image(layout: .fixed(width: 699, height: 1017)),
             named: "\(screen.fileStem)-de"
         )
     }

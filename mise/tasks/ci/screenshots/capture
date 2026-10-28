@@ -17,7 +17,7 @@ tuist generate --no-open
 
 # capture_screenshots deletes the committed captures before it builds, and puts nothing back when
 # the build fails. The workflow opens a pull request from whatever is in the tree afterwards, so a
-# failed build that still reached the commit step would offer 32 deletions as the change. Hold a
+# failed build that still reached the commit step would offer 48 deletions as the change. Hold a
 # copy until the run has been through the verifier.
 stash=$(mktemp -d)
 trap 'rm -rf "$stash"' EXIT

@@ -60,7 +60,7 @@ final class SnapshotTests: XCTestCase, UITestNavigation {
         let app = launch()
         XCTAssertTrue(openFeaturedDocument(in: app), "Could not open the featured document")
 
-        let edit = app.navigationBars.buttons[labels.edit].firstMatch
+        let edit = barButton(labels.edit, in: app)
         XCTAssertTrue(edit.waitUntilHittable(timeout: timeout), "The detail screen showed no Edit button")
         edit.tap()
         XCTAssertTrue(

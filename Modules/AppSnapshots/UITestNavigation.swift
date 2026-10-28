@@ -42,6 +42,13 @@ extension UITestNavigation {
         return true
     }
 
+    // Not app.navigationBars, for the same reason tapTab avoids app.tabBars: on the iPhone Duo the
+    // system moves the bar buttons into a rail down the side, which XCUITest reports as a toolbar,
+    // so a navigation bar lookup finds no Edit button there. A plain button matches everywhere.
+    func barButton(_ label: String, in app: XCUIApplication) -> XCUIElement {
+        app.buttons[label].firstMatch
+    }
+
     // Waits on a document row rather than on any cell: the search field is a row of this list and
     // exists before a single document has arrived, so a cell is on screen the moment the tab is.
     func openDocuments(in app: XCUIApplication) -> Bool {
