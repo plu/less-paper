@@ -1,10 +1,19 @@
 # Apple requires one 6.9" iPhone set, and a 13" iPad set for an app that runs on iPad. Everything
-# smaller is scaled from these by App Store Connect, so these two are the whole matrix.
+# smaller is scaled from these by App Store Connect.
+#
+# The iPhone Duo is the exception to that scaling: its sizes match no other class, so it fills only
+# its own APP_IPHONE_DUO slot and needs a set of its own - required for every submission from April
+# 2027. Captured on the outer display, 1398x2034, which is the screen the simulator's main screen
+# is. It also runs on a different iOS from the rest; the screenshots lane in the Fastfile handles
+# that.
 devices([
   "iPhone 17 Pro Max",
-  "iPad Pro 13-inch (M5)"
+  "iPad Pro 13-inch (M5)",
+  "iPhone Duo"
 ])
 
+# Every device but the Duo, which the screenshots lane pins to DUO_SIMULATOR_OS instead.
+#
 # Pinned for the same reason mise/scripts/run_tests.sh passes `-o`: a machine carrying two iOS
 # runtimes has both of these device names twice, and an unpinned run lets fastlane pick. It would
 # capture at the wrong system-UI vintage and go green doing it. Read from mise.toml rather than

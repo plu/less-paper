@@ -77,7 +77,7 @@ final class AppPreviewTests: XCTestCase, UITestNavigation {
         hold(until: 17, from: start, beat: "pdf")
 
         // Beat 6 - editing it where it is being read.
-        let edit = app.navigationBars.buttons[labels.edit].firstMatch
+        let edit = barButton(labels.edit, in: app)
         XCTAssertTrue(edit.waitUntilHittable(timeout: timeout), "The detail screen showed no Edit button")
         edit.tap()
         XCTAssertTrue(

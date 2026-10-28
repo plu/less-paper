@@ -482,7 +482,7 @@ Three things about where it is applied, each deliberate:
 `TEST_SIMULATOR` and `TEST_SIMULATOR_OS` in `mise.toml` are the only place the device is named.
 `mise/scripts/run_tests.sh` and `mise/tasks/screenshots/frame` pass both to `tuist test` as `-d`
 and `-o`; `fastlane/Snapfile` reads `TEST_SIMULATOR_OS` for its `ios_version`;
-`mise/tasks/simulators/prepare` creates that exact pairing when it is missing, along with the two
+`mise/tasks/simulators/prepare` creates that exact pairing when it is missing, along with the
 App Store sizes from `fastlane/Snapfile`. Adding a device the repository drives by name means
 adding it to `required_devices` there too — Tuist and fastlane both resolve by exact name and
 neither creates anything.
@@ -499,6 +499,17 @@ ships iOS 27.0, so an Xcode bump is three edits, not one: `compatibleXcodeVersio
 tidiness: the snapshot references were recorded on this runtime, and a machine carrying a second
 iOS would otherwise let xcodebuild choose — turning every view test red for a reason nobody would
 look for in a device list.
+
+**The iPhone Duo is the one device on another iOS, and that is Apple's doing, not drift.** Xcode
+27.1 ships iOS 27.1 as a runtime for the Duo alone — `simctl create` refuses every other device on
+it with *"Incompatible device"* — so `TEST_SIMULATOR_OS` stays 27.0 and the Duo gets its own pin,
+`DUO_SIMULATOR_OS`. The Snapfile's `ios_version` is one value for all its devices, so the
+`screenshots` lane captures in two passes, the Duo on its own pin; a single pass would not find it
+on 27.0 and fastlane would take whatever iOS it does find it on, warning and carrying on. Its App
+Store set is required from April 2027 and fills only the `APP_IPHONE_DUO` slot, which deliver knows
+from fastlane 2.241.1 — hence the floor in the `Gemfile`. When a general iOS runtime that also
+supports the Duo arrives, fold `DUO_SIMULATOR_OS` back into `TEST_SIMULATOR_OS` and drop the second
+pass.
 
 Two failures are deliberate rather than papered over. A missing **runtime** and a missing **device
 type** both stop the run and print what is available, because the alternative is rendering
@@ -571,9 +582,9 @@ Each has a manual GitHub Action of its own, and Frame also runs on any pull requ
 
 **The captures are committed, so changing a caption costs seconds rather than an hour.** They are
 the expensive artefact and everything downstream of them is cheap. The cost of that choice: each
-re-record stores 28 new LFS blobs, so re-record when the app's UI has moved, not out of habit.
+re-record stores 48 new LFS blobs, so re-record when the app's UI has moved, not out of habit.
 
-Being committed is also why **a failed Record puts them back**. The fastlane lane deletes all 32
+Being committed is also why **a failed Record puts them back**. The fastlane lane deletes all 48
 before it builds and restores nothing when the build fails, so a failure with no connection to them
 — a missing scheme, a simulator that would not boot — used to leave the deletions in the working
 tree, staged for whoever ran `git add -A` next. Both capture tasks now hold a copy and restore it

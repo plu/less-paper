@@ -24,11 +24,27 @@ METADATA = File.expand_path("metadata", __dir__)
 
 APP_IDENTIFIER = "com.aptumtek.app.Paperless".freeze
 
+DUO = "iPhone Duo".freeze
+
 platform :ios do
   desc "Capture the App Store screenshots on every required device and language"
   lane :screenshots do
     clear_captures
-    capture_screenshots(xcodebuild_formatter: "xcbeautify")
+
+    # Two passes because the Snapfile's ios_version is one value for every device, and the Duo is
+    # on a runtime no other device runs on. Left in the single pass, fastlane would not find it on
+    # TEST_SIMULATOR_OS and quietly take whichever iOS it does find it on - the unpinned capture
+    # the Snapfile's ios_version exists to prevent.
+    devices = snapfile_devices
+    capture_screenshots(xcodebuild_formatter: "xcbeautify", devices: devices - [DUO])
+
+    if devices.include?(DUO)
+      capture_screenshots(
+        xcodebuild_formatter: "xcbeautify",
+        devices: [DUO],
+        ios_version: ENV.fetch("DUO_SIMULATOR_OS")
+      )
+    end
   end
 
   # Text only, and screenshots are explicitly skipped so this cannot disturb them. Like the
@@ -246,6 +262,13 @@ def connect_api_key
     key_content: ENV.fetch("ASC_AUTH_KEY"),
     is_key_content_base64: true
   )
+end
+
+# Read the way capture_screenshots reads it, so the Snapfile stays the one place the matrix is named.
+def snapfile_devices
+  config = FastlaneCore::Configuration.create(Snapshot::Options.available_options, {})
+  config.load_configuration_file("Snapfile")
+  config[:devices]
 end
 
 # The full matrix is about to be recaptured, so anything already there is stale.

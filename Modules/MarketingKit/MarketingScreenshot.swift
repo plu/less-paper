@@ -7,7 +7,7 @@ import SwiftUI
 // document rows need to stay legible at the size the App Store actually shows a screenshot.
 //
 // Every dimension is a fraction of the canvas height rather than a point value, because the same
-// layout renders at 1320x2868 and at 2048x2732 and has to look like itself at both.
+// layout renders at 1320x2868, 2048x2732 and 1398x2034 and has to look like itself at each.
 public struct MarketingScreenshot: View {
 
     public var body: some View {

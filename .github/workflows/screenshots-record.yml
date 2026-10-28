@@ -1,6 +1,6 @@
 name: Screenshots - Record
 
-# Manual only, and expensive: the better part of an hour across both devices and both languages.
+# Manual only, and expensive: the better part of an hour across every device and both languages.
 # It never pushes to main - a re-record changes what the store will show, so it arrives as a pull
 # request and gets looked at like one.
 on:

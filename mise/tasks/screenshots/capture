@@ -23,7 +23,7 @@ tuist generate --no-open
 
 # capture_screenshots deletes the committed captures before it builds, and puts nothing back when
 # the build fails. A failure with no connection to them - a missing scheme, a simulator that would
-# not boot - therefore leaves 32 deleted PNGs staged for whoever runs `git add -A` next. Hold a
+# not boot - therefore leaves 48 deleted PNGs staged for whoever runs `git add -A` next. Hold a
 # copy until the run has been through the verifier.
 stash=$(mktemp -d)
 trap 'rm -rf "$stash"' EXIT
