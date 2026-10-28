@@ -1,1 +1,1 @@
-The app now follows your account's permissions — what you may not do is not shown. Plus offline documents, the full filter set, single sign-on and share-sheet import.
+See who changed a document and when, open every section from one menu, and sign in with single sign-on that tells you what to fix when it cannot finish.

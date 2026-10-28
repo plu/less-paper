@@ -1,0 +1,7 @@
+Single sign-on that says what to fix, and servers you can edit without signing in again.
+
+• When single sign-on cannot finish, the app now says why and what to change. A provider whose client is set up as confidential is named as such, with the fix: make it a public client with PKCE. An identity your provider accepted but Paperless has not linked to an account is told to ask the administrator to link it — rather than being sent to a code screen that could never work.
+• Signing in with a single sign-on provider now needs an alias first, as signing in with a password always did, and the saved server shows your Paperless username instead of leaving it blank.
+• Fixed: a server added with single sign-on or through a reverse proxy could not be edited at all — saving asked for a password it never had. The alias, address and headers can now be changed without signing in again, and your sign-in is kept.
+
+If you hit a problem, please open an issue at https://github.com/plu/less-paper/issues — it is the quickest way to get it fixed.
