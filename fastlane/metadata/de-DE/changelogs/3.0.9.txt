@@ -1,0 +1,7 @@
+Single Sign-on, das sagt, was zu tun ist – und Server, die du ohne neue Anmeldung bearbeiten kannst.
+
+• Wenn Single Sign-on nicht abgeschlossen werden kann, sagt die App jetzt, warum und was zu ändern ist. Ist der Client beim Anbieter als vertraulich angelegt, wird das benannt, samt Lösung: ihn als öffentlichen Client mit PKCE anlegen. Hat der Anbieter dich angemeldet, Paperless die Anmeldung aber mit keinem Konto verbunden, bekommst du den Hinweis, deinen Administrator um die Verknüpfung zu bitten – statt einer Code-Abfrage, die nie funktionieren konnte.
+• Die Anmeldung über einen Single-Sign-on-Anbieter verlangt jetzt zuerst einen Alias, wie es die Anmeldung per Passwort schon immer tat, und der gespeicherte Server zeigt deinen Paperless-Benutzernamen, statt ihn leer zu lassen.
+• Behoben: Ein Server, der per Single Sign-on oder über einen Reverse Proxy hinzugefügt wurde, ließ sich gar nicht bearbeiten – das Speichern verlangte ein Passwort, das es nie gab. Alias, Adresse und Header lassen sich jetzt ohne neue Anmeldung ändern, und deine Anmeldung bleibt erhalten.
+
+Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.
