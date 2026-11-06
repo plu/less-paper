@@ -1,0 +1,5 @@
+Die Suche findet wieder Dokumente – auch mit dem neuesten Paperless-ngx.
+
+• Behoben: Mit Paperless-ngx 3.4 und neuer zeigte die Suche gar keine Ergebnisse, sobald ein Dokument zum Suchbegriff passte – nicht einmal die Tags, Korrespondenten oder gespeicherten Ansichten, die ebenfalls passten. Neuere Server schicken für Dokumente in der Suche eine kürzere Antwort, und die App liest sie jetzt. Ältere Server funktionieren weiter wie bisher.
+
+Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.

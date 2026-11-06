@@ -6,7 +6,7 @@ public struct GlobalSearchOutput: Equatable, Sendable {
 
     public let customFields: [CustomField]
 
-    public let documents: [Document]
+    public let documents: [GlobalSearchDocument]
 
     public let documentTypes: [DocumentType]
 
@@ -19,7 +19,7 @@ public struct GlobalSearchOutput: Equatable, Sendable {
     public init(
         correspondents: [Correspondent],
         customFields: [CustomField],
-        documents: [Document],
+        documents: [GlobalSearchDocument],
         documentTypes: [DocumentType],
         savedViews: [SavedView],
         storagePaths: [StoragePath],
@@ -60,7 +60,7 @@ extension GlobalSearchOutput: Decodable {
 
         correspondents = try container.decodeIfPresent([Correspondent].self, forKey: .correspondents) ?? []
         customFields = try container.decodeIfPresent([CustomField].self, forKey: .customFields) ?? []
-        documents = try container.decodeIfPresent([Document].self, forKey: .documents) ?? []
+        documents = try container.decodeIfPresent([GlobalSearchDocument].self, forKey: .documents) ?? []
         documentTypes = try container.decodeIfPresent([DocumentType].self, forKey: .documentTypes) ?? []
         savedViews = try container.decodeIfPresent([SavedView].self, forKey: .savedViews) ?? []
         storagePaths = try container.decodeIfPresent([StoragePath].self, forKey: .storagePaths) ?? []
@@ -73,7 +73,7 @@ public extension GlobalSearchOutput {
     static func testValue(
         correspondents: [Correspondent] = [],
         customFields: [CustomField] = [],
-        documents: [Document] = [],
+        documents: [GlobalSearchDocument] = [],
         documentTypes: [DocumentType] = [],
         savedViews: [SavedView] = [],
         storagePaths: [StoragePath] = [],
