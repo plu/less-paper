@@ -198,7 +198,7 @@ struct DocumentSearchReducerTests {
     // coming back has to return the user to them.
     @Test
     func view_documentTapped_delegatesAndKeepsTheQuery() async throws {
-        let document = Document.testValue(id: 8)
+        let document = GlobalSearchDocument.testValue(id: 8)
         let results = GlobalSearchOutput.testValue(documents: [document])
         let store = TestStore(initialState: DocumentSearchReducer.State.testValue(
             results: results,

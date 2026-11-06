@@ -129,4 +129,43 @@ struct GlobalSearchOutputTests {
 
         expectNoDifference(output, .testValue())
     }
+
+    // Paperless-ngx 3.4 serialises search documents with `fields=("id", "title", "created")`, so
+    // every other document field is absent. A required `added` here once failed the whole response
+    // and left search showing nothing on any query that matched a document.
+    @Test
+    func decode_slimDocuments() async throws {
+        let json = """
+        {
+          "total": 1,
+          "documents": [
+            {
+              "id": 29,
+              "title": "Rensch Haus - Plan",
+              "created": "2022-11-21"
+            }
+          ],
+          "saved_views": [],
+          "correspondents": [],
+          "document_types": [],
+          "storage_paths": [],
+          "custom_fields": [],
+          "tags": []
+        }
+        """
+
+        let output = try JSONDecoder.apiDecoder.decode(
+            GlobalSearchOutput.self,
+            from: #require(json.data(using: .utf8))
+        )
+        let created = try JSONDecoder.apiDecoder.decode(
+            Date.self,
+            from: Data(#""2022-11-21""#.utf8)
+        )
+
+        expectNoDifference(
+            output.documents,
+            [.init(created: created, id: 29, title: "Rensch Haus - Plan")]
+        )
+    }
 }

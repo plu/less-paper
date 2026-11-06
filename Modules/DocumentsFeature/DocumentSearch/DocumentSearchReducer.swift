@@ -34,7 +34,7 @@ public struct DocumentSearchReducer: Sendable {
             case cancelButtonTapped
             case correspondentTapped(Correspondent)
             case customFieldTapped(CustomField)
-            case documentTapped(Document)
+            case documentTapped(GlobalSearchDocument)
             case documentTypeTapped(DocumentType)
             case savedViewTapped(SavedView)
             case searchTextChanged(String)
