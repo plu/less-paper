@@ -11,6 +11,12 @@ shift
 : "${TEST_SIMULATOR:?not set - it comes from mise.toml, so run this through mise}"
 : "${TEST_SIMULATOR_OS:?not set - it comes from mise.toml, so run this through mise}"
 
+# Views format dates with Date.formatted and Text(_:format:), which read TimeZone.current - the
+# simulator's zone, inherited from the host - not the GMT that testDependencies pins. So a snapshot
+# recorded on a Mac in Berlin shows 1:00 where the runner, on UTC, renders 0:00. xcodebuild forwards
+# TEST_RUNNER_<NAME> into the test process as <NAME>, so every machine renders in UTC.
+export TEST_RUNNER_TZ=UTC
+
 # xcodebuild refuses to write over an existing result bundle — "Existing file at
 # -resultBundlePath" — and errors out before running a single test. In CI `ci:clean` has already
 # removed the last one, but locally the second run of a task would otherwise fail while still

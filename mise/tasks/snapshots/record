@@ -17,6 +17,10 @@ set -eou pipefail
 # why this task exists rather than a line in the documentation for people to retype.
 export TEST_RUNNER_SNAPSHOT_RECORD=all
 
+# The same time zone as mise/scripts/run_tests.sh - see there. A reference recorded in any other
+# zone shows every timestamp shifted and fails on CI.
+export TEST_RUNNER_TZ=UTC
+
 # Expanded below as ${only[@]+"${only[@]}"} rather than "${only[@]}": macOS ships bash 3.2, where an
 # empty array under `set -u` is an unbound variable rather than nothing at all.
 only=()
