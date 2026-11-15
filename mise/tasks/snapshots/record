@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-#MISE description="Re-record the snapshot references for one scheme"
-#USAGE arg "<scheme>" help="Scheme whose references to re-record, e.g. Components"
+#MISE description="Re-record the snapshot references for one scheme, or for all of them"
+#USAGE arg "[scheme]" help="Scheme whose references to re-record, e.g. Components. Omit it to re-record every scheme in one run"
 #USAGE flag "--only <only>" help="Restrict the run to one suite or test, e.g. ComponentsTests/ColorTests"
 set -eou pipefail
 
@@ -24,6 +24,17 @@ if [ -n "${usage_only:-}" ]; then
     only=("-only-testing:$usage_only")
 fi
 
+# Without a scheme, tuist tests the workspace scheme: every test target, built once. That is what an
+# Xcode or simulator bump wants - every reference moves - and it is far quicker than one run per
+# scheme, each of which regenerates and rebuilds from scratch. The XCUITest targets are skipped as
+# they are in ci:test:unit: they hold no snapshot references and need a running Paperless-ngx.
+scheme=()
+if [ -n "${usage_scheme:-}" ]; then
+    scheme=("$usage_scheme")
+else
+    scheme=(--skip-ui-tests)
+fi
+
 # Recording always ends non-zero (see below), so the exit code alone cannot tell a run that
 # recorded from a build that fell over before testing - both are just "not 0". The result bundle
 # can, but only by its contents: tuist writes one either way, and a bundle from a failed build is
@@ -45,7 +56,7 @@ bundle="$work_dir/record.xcresult"
 # re-record run fails by design whenever a reference moves, so this is the run that would pay the
 # ten-minute diagnostics timeout most often.
 set +e
-tuist test "$usage_scheme" \
+tuist test "${scheme[@]}" \
     -d "$TEST_SIMULATOR" \
     -o "$TEST_SIMULATOR_OS" \
     --no-selective-testing \
@@ -73,7 +84,7 @@ if [ "$failed" -eq 0 ]; then
     echo >&2
     echo "$ran test(s) ran and none failed, so nothing was recorded." >&2
     echo "In record mode every snapshot assertion fails by design; a passing run executed none." >&2
-    echo "Check that \"$usage_scheme\" has snapshot tests${usage_only:+ and that --only \"$usage_only\" selects one}." >&2
+    echo "Check that \"${usage_scheme:-the workspace}\" has snapshot tests${usage_only:+ and that --only \"$usage_only\" selects one}." >&2
     exit 1
 fi
 
