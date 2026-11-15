@@ -42,7 +42,7 @@ colima = "0.10.3"
 # so on Apple silicon the kernel kills `axe` with SIGKILL before main() and the UI automation tools
 # in XcodeBuildMCP fail with nothing printed. The "universal" tarball is the same build signed with
 # a Developer ID, so it runs straight out of the download.
-"github:cameroncooke/axe" = { version = "1.8.0", matching = "universal" }
+"github:cameroncooke/axe" = { version = "1.8.0", matching = "universal", os = ["macos"] }
 gh = "2.101.0"
 "github:getsentry/XcodeBuildMCP" = "2.7.1"
 aube = "2.5.0"
