@@ -493,19 +493,23 @@ name twice — so a capture runs at whichever system-UI vintage it happened to p
 doing it. It is `ENV.fetch`, not a literal, so a run outside mise fails loudly rather than
 guessing.
 
-**The iOS version is pinned, and it tracks `Tuist.swift`'s `compatibleXcodeVersions`.** Xcode 27.0
-ships iOS 27.0, so an Xcode bump is three edits, not one: `compatibleXcodeVersions`,
-`TEST_SIMULATOR_OS` here, and `lastXcodeUpgradeCheck` in `Workspace.swift`. The pin is not
+**The iOS version is pinned, and it tracks `Tuist.swift`'s `compatibleXcodeVersions`.** Xcode 27.2
+ships iOS 27.2, so an Xcode bump is several edits, not one: `compatibleXcodeVersions`,
+`TEST_SIMULATOR_OS` (and `DUO_SIMULATOR_OS`, when the Duo's runtime moves too) in `mise.toml`,
+`lastXcodeUpgradeCheck` in `Workspace.swift`, and a re-record of every snapshot scheme. The pin is not
 tidiness: the snapshot references were recorded on this runtime, and a machine carrying a second
 iOS would otherwise let xcodebuild choose — turning every view test red for a reason nobody would
 look for in a device list.
 
-**The iPhone Duo is the one device on another iOS, and that is Apple's doing, not drift.** Xcode
-27.1 ships iOS 27.1 as a runtime for the Duo alone — `simctl create` refuses every other device on
-it with *"Incompatible device"* — so `TEST_SIMULATOR_OS` stays 27.0 and the Duo gets its own pin,
-`DUO_SIMULATOR_OS`. The Snapfile's `ios_version` is one value for all its devices, so the
-`screenshots` lane captures in two passes, the Duo on its own pin; a single pass would not find it
-on 27.0 and fastlane would take whatever iOS it does find it on, warning and carrying on. Its App
+**The iPhone Duo is the one device on another runtime, and that is Apple's doing, not drift.**
+Xcode ships a runtime for the Duo alone — `simctl create` refuses every other device on it with
+*"Incompatible device"* — so the Duo gets its own pin, `DUO_SIMULATOR_OS`. Since Xcode 27.2 both
+runtimes report the same version, iOS 27.2, which makes a lookup by version alone ambiguous:
+`simctl` lists the Duo's runtime first, so `simulators:prepare` and `preview:record` pick the runtime
+by version *and* by the device it must support. The Snapfile's `ios_version` is one value for all its
+devices, so the `screenshots` lane captures in two passes, the Duo on its own pin; a single pass
+would not find it on a runtime that lacks it and fastlane would take whatever iOS it does find it
+on, warning and carrying on. Its App
 Store set is required from April 2027 and fills only the `APP_IPHONE_DUO` slot, which deliver knows
 from fastlane 2.241.1 — hence the floor in the `Gemfile`. When a general iOS runtime that also
 supports the Duo arrives, fold `DUO_SIMULATOR_OS` back into `TEST_SIMULATOR_OS` and drop the second

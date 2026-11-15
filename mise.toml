@@ -15,17 +15,18 @@ LANG = "en_US.UTF-8"
 # `simulators:prepare` that creates it cannot drift apart.
 #
 # The iOS version is pinned rather than "whatever is newest", and it tracks Tuist.swift's
-# compatibleXcodeVersions - Xcode 27.0 ships iOS 27.0, so the two move together. The snapshot tests
+# compatibleXcodeVersions - Xcode 27.2 ships iOS 27.2, so the two move together. The snapshot tests
 # compare against images recorded on this runtime: a machine carrying a newer one must not quietly
 # render on it, because every view test would go red for a reason nobody would look for here.
 TEST_SIMULATOR = "iPhone 17 Pro"
-TEST_SIMULATOR_OS = "27.0"
+TEST_SIMULATOR_OS = "27.2"
 
-# The iPhone Duo is not on TEST_SIMULATOR_OS and cannot be: Xcode 27.1 ships iOS 27.1 as a runtime
-# for the Duo alone - `simctl create` refuses every other device on it with "Incompatible device".
-# So the Duo's App Store capture gets a pin of its own, read by the screenshots lane and by
-# `simulators:prepare`.
-DUO_SIMULATOR_OS = "27.1"
+# The iPhone Duo is not on TEST_SIMULATOR_OS's runtime and cannot be: Xcode ships the Duo a runtime
+# of its own - `simctl create` refuses every other device on it with "Incompatible device". Since
+# Xcode 27.2 that runtime carries the same version number as the general one (both iOS 27.2), but it
+# is still a separate runtime, so the Duo keeps a pin of its own, read by the screenshots lane and by
+# `simulators:prepare`, which tell the two apart by the devices each supports.
+DUO_SIMULATOR_OS = "27.2"
 
 [hooks]
 postinstall = "brew bundle"
