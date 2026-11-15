@@ -39,6 +39,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        # The runner keeps its workspace (clean: false), and checkout runs git-lfs - a mise shim - before
+        # it fetches, so mise reads the previous run's config. With lockfile on it then locks every tool
+        # against that stale config and a broken one fails checkout for good, never fetching the fix.
+        env:
+          MISE_LOCKFILE: "false"
         with:
           clean: false
           lfs: true

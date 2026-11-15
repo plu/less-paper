@@ -62,7 +62,7 @@ If the browser sheet ends on an error from the provider about the redirect URI, 
 
 ## Building the app
 
-Building requires Xcode 27.0; everything else is pinned with [mise](https://mise.jdx.dev), which installs Tuist, SwiftLint, SwiftFormat and everything else at the exact versions CI uses.
+Building requires Xcode 27.2; everything else is pinned with [mise](https://mise.jdx.dev), which installs Tuist, SwiftLint, SwiftFormat and everything else at the exact versions CI uses.
 
 ```sh
 mise install       # tools + `brew bundle` via the postinstall hook

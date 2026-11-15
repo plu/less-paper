@@ -31,8 +31,15 @@ for entry in "${required_devices[@]}"; do
     name="${entry%|*}"
     version="${entry##*|}"
 
-    runtime=$(xcrun simctl list runtimes -j | jq -r --arg version "$version" '
-        [.runtimes[] | select(.isAvailable and .platform == "iOS" and .version == $version) | .identifier] | first // ""
+    # Matched on supported device types as well as version, because one version can come as more
+    # than one runtime: Xcode 27.2 installs iOS 27.2 twice, a general runtime and one for the iPhone
+    # Duo alone, and lists the Duo's first. By version only, `first` would hand every other device
+    # the Duo runtime and `simctl create` would refuse it with "Incompatible device".
+    runtime=$(xcrun simctl list runtimes -j | jq -r --arg version "$version" --arg name "$name" '
+        [.runtimes[]
+            | select(.isAvailable and .platform == "iOS" and .version == $version)
+            | select(any(.supportedDeviceTypes[]?; .name == $name))
+            | .identifier] | first // ""
     ')
 
     if [ -z "$runtime" ]; then
