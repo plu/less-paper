@@ -38,6 +38,11 @@ public struct DocumentDetailView: View {
             DocumentSheetView(store: store)
                 .presentationDetents([.large])
         }
+        .sheet(
+            item: $store.scope(state: \.destination?.shareLinks, action: \.destination.shareLinks)
+        ) { store in
+            DocumentShareLinksView(store: store)
+        }
         .toolbar {
             // Not disabled while the download is in flight: only Preview needs the PDF, so the
             // menu still carries Share and Open before one has arrived.
@@ -133,7 +138,11 @@ public struct DocumentDetailView: View {
 
     @ViewBuilder
     private func shareMenu() -> some View {
-        DocumentShareMenu(documentId: store.document.id, server: store.server) {
+        DocumentShareMenu(
+            documentId: store.document.id,
+            server: store.server,
+            shareLinks: store.canShareLinks ? { send(.shareLinksButtonTapped) } : nil
+        ) {
             // Only once the file is here: detail has it downloaded already, so this shares it
             // directly rather than asking for it again.
             if let url = store.downloadedURL {

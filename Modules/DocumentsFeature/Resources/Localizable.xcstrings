@@ -3271,6 +3271,23 @@
         }
       }
     },
+    "shareLink": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Freigabelink…"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share link…"
+          }
+        }
+      }
+    },
     "shareLinkExpires": {
       "extractionState": "manual",
       "localizations": {

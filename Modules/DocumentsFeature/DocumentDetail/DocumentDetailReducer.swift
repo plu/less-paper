@@ -26,6 +26,7 @@ public struct DocumentDetailReducer: Sendable {
             case editDocumentButtonTapped
             case openButtonTapped(DocumentSheetSection)
             case saveOfflineButtonTapped
+            case shareLinksButtonTapped
             case onAppear
             case previewButtonTapped
             case retryDownloadButtonTapped
@@ -35,6 +36,7 @@ public struct DocumentDetailReducer: Sendable {
     @Reducer
     public enum Destination {
         case documentSheet(DocumentSheetReducer)
+        case shareLinks(DocumentShareLinksReducer)
     }
 
     @ObservableState
@@ -78,6 +80,8 @@ public struct DocumentDetailReducer: Sendable {
         // The same rule the sheet applies to itself, so the Edit button and the Details entry
         // never offer a door the sheet would then show read-only.
         var isEditable: Bool { canEdit && !isOfflineSnapshot }
+
+        var canShareLinks: Bool { permissions.can(.addShareLink) && isEditable }
 
         var canDelete: Bool { permissions.can(.deleteDocument) }
 
@@ -196,6 +200,15 @@ public struct DocumentDetailReducer: Sendable {
                         document: state.document,
                         server: state.server
                     )
+                case .shareLinksButtonTapped:
+                    guard state.canShareLinks else {
+                        return .none
+                    }
+                    state.destination = .shareLinks(DocumentShareLinksReducer.State(
+                        document: state.document,
+                        server: state.server
+                    ))
+                    return .none
                 case .previewButtonTapped:
                     state.quickLookPreview = state.downloadResult?.value?.url
                     return .none
@@ -206,6 +219,9 @@ public struct DocumentDetailReducer: Sendable {
                         server: state.server
                     )
                 }
+            case .destination(.presented(.shareLinks(.delegate(.close)))):
+                state.destination = nil
+                return .none
             case .binding, .destination:
                 return .none
             }
