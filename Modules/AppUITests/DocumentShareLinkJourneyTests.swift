@@ -42,7 +42,9 @@ final class DocumentShareLinkJourneyTests: UITestCase {
         XCTAssertTrue(never.waitUntilHittable(timeout: timeout), "The expiry menu has no Never")
         never.tap()
 
-        app.buttons["Create link"].firstMatch.tap()
+        let create = app.buttons["Create link"].firstMatch
+        XCTAssertTrue(create.waitUntilHittable(timeout: timeout), "The sheet has no Create link button")
+        create.tap()
 
         // The system share sheet shows up in this app's hierarchy. Its close button is addressed by
         // the identifier UIKit gives it: the app's own sheet has a "Close" button too, and by label
@@ -64,9 +66,15 @@ final class DocumentShareLinkJourneyTests: UITestCase {
             app.staticTexts["Never expires"].waitForExistence(timeout: timeout),
             "The created link was not listed with Never expires"
         )
-        XCTAssertEqual(app.staticTexts.matching(identifier: "Never expires").count, 1)
+        XCTAssertEqual(
+            app.staticTexts.matching(identifier: "Never expires").count,
+            1,
+            "Exactly one link should be listed after creating one"
+        )
 
-        app.buttons["Delete"].firstMatch.tap()
+        let delete = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Delete '")).firstMatch
+        XCTAssertTrue(delete.waitUntilHittable(timeout: timeout), "The created link has no delete button")
+        delete.tap()
         let confirm = app.buttons["Confirm"].firstMatch
         XCTAssertTrue(confirm.waitUntilHittable(timeout: timeout), "Delete did not ask for confirmation")
         confirm.tap()

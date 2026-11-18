@@ -236,6 +236,7 @@ struct DocumentShareLinksReducerTests {
         await store.receive(\.createResult) {
             $0.isCreating = false
         }
+        await store.finish()
         #expect(toasts.value == [.error(TestError.someError.localizedDescription)])
         #expect(store.state.links == [existing])
         #expect(store.state.shareItem == nil)
@@ -305,6 +306,7 @@ struct DocumentShareLinksReducerTests {
         await store.send(.view(.deleteButtonTapped(1)))
         await store.receive(\.deleteConfirmed)
         await store.receive(\.deleteResult)
+        await store.finish()
         #expect(toasts.value == [.error(TestError.someError.localizedDescription)])
         #expect(store.state.links == [link])
     }
@@ -390,6 +392,42 @@ struct DocumentShareLinksReducerTests {
             $0.isCreating = false
             $0.links = [created]
             $0.shareItem = ShareItem(url: created.url(server: .testValue())!)
+        }
+    }
+
+    @Test
+    func test_create_whileLoadInFlight_keepsCreatedLink() async throws {
+        let created = ShareLink.testValue(id: 2, slug: "new")
+        let loaded = ShareLink.testValue(id: 1, slug: "old")
+        let gate = AsyncStream<Void>.makeStream()
+        let store = TestStore(initialState: DocumentShareLinksReducer.State.testValue()) {
+            DocumentShareLinksReducer()
+        } withDependencies: {
+            $0.getShareLinks.execute = { _, _ in
+                for await _ in gate.stream {
+                    break
+                }
+                return [loaded]
+            }
+            $0.createShareLink.execute = { _, _ in created }
+        }
+
+        await store.send(.view(.onAppear)) {
+            $0.isLoading = true
+        }
+        await store.send(.view(.createButtonTapped)) {
+            $0.isCreating = true
+        }
+        await store.receive(\.createResult) {
+            $0.isCreating = false
+            $0.links = [created]
+            $0.shareItem = ShareItem(url: created.url(server: .testValue())!)
+        }
+
+        gate.continuation.yield()
+        await store.receive(\.linksResult) {
+            $0.isLoading = false
+            $0.links = [created, loaded]
         }
     }
 

@@ -25,17 +25,21 @@ struct DocumentShareLinkRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: .x3) {
+            HStack(spacing: .x0) {
                 Button(action: onCopy) {
                     Image(systemName: "doc.on.doc")
-                        .accessibilityLabel(.copyLink)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(.rect)
+                        .accessibilityLabel(.copyLink(link.slug))
                 }
                 .buttonStyle(.borderless)
 
                 if let onDelete {
                     Button(action: onDelete) {
                         Image(systemName: "trash")
-                            .accessibilityLabel(.delete)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(.rect)
+                            .accessibilityLabel(.deleteLinkNamed(link.slug))
                     }
                     .buttonStyle(.borderless)
                 }

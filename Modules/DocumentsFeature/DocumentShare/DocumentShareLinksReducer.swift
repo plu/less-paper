@@ -115,7 +115,11 @@ public struct DocumentShareLinksReducer: Sendable {
                     return .toast(error)
                 case let .success(links):
                     state.loadError = nil
-                    state.links = IdentifiedArray(uniqueElements: links)
+                    // A create can land before the first list does; its link is not in that
+                    // response and must not be dropped.
+                    let loaded = IdentifiedArray(uniqueElements: links)
+                    let created = state.links?.filter { loaded[id: $0.id] == nil } ?? []
+                    state.links = IdentifiedArray(uniqueElements: created + loaded)
                     return .none
                 }
             case let .view(viewAction):

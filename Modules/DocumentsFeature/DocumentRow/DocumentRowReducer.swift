@@ -101,8 +101,8 @@ public struct DocumentRowReducer: Sendable {
 
         var canEdit: Bool { permissions.can(.changeDocument) }
 
-        // A row has no offline-snapshot flag: the Offline tab's rows hide their write actions by
-        // the same permission checks, so `canEdit` is all there is to honour here.
+        // OfflineRowView composes its own row with swipe actions only and never shows this context
+        // menu, so `canEdit` is all there is to honour here.
         var canShareLinks: Bool { permissions.can(.addShareLink) && canEdit }
 
         var canDelete: Bool { permissions.can(.deleteDocument) }

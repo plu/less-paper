@@ -40,7 +40,7 @@ struct DocumentShareLinksView: View {
     @ViewBuilder
     private func errorView(error: String) -> some View {
         EmptyListView(
-            systemImage: "link.badge.plus",
+            systemImage: "exclamationmark.triangle",
             title: .init(stringLiteral: error)
         ) {
             Button {
@@ -61,6 +61,7 @@ struct DocumentShareLinksView: View {
         VStack(spacing: .x3) {
             AdaptiveStack(horizontalSpacing: .x3) {
                 Text(.shareLinkExpires)
+                    .accessibilityHidden(true)
                 Spacer(minLength: .x0)
                 Picker(selection: $store.expiry) {
                     ForEach(DocumentShareLinksExpiry.allCases) { expiry in

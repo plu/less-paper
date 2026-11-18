@@ -1004,13 +1004,13 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Link kopieren"
+            "value": "Link %@ kopieren"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copy link"
+            "value": "Copy link %@"
           }
         }
       }
@@ -1508,6 +1508,23 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "deleteLinkNamed": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link %@ löschen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete %@"
           }
         }
       }
@@ -3311,7 +3328,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Läuft ab %@"
+            "value": "Läuft %@ ab"
           }
         },
         "en": {
