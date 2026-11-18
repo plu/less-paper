@@ -998,6 +998,23 @@
         }
       }
     },
+    "copyLink": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link kopieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy link"
+          }
+        }
+      }
+    },
     "correspondent": {
       "extractionState": "manual",
       "localizations": {
@@ -1093,6 +1110,23 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "createLink": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link erstellen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create link"
           }
         }
       }
@@ -2458,6 +2492,23 @@
         }
       }
     },
+    "noShareLinksYet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Freigabelinks"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No share links yet"
+          }
+        }
+      }
+    },
     "notAssigned": {
       "extractionState": "manual",
       "localizations": {
@@ -3203,6 +3254,57 @@
         }
       }
     },
+    "shareArchivedVersion": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archivierte Version teilen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share archived version"
+          }
+        }
+      }
+    },
+    "shareLinkExpires": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Läuft ab"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expires"
+          }
+        }
+      }
+    },
+    "shareLinkExpiresAt": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Läuft ab %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expires %@"
+          }
+        }
+      }
+    },
     "shareLinkExpiryNever": {
       "extractionState": "manual",
       "localizations": {
@@ -3267,6 +3369,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "30 days"
+          }
+        }
+      }
+    },
+    "shareLinkNeverExpires": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Läuft nie ab"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Never expires"
+          }
+        }
+      }
+    },
+    "shareLinks": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Freigabelinks"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share links"
           }
         }
       }
