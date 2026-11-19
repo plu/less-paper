@@ -18,7 +18,7 @@ struct DocumentShareLinksViewTests {
     @Test
     func testSnapshot() async throws {
         assertSnapshot(
-            of: view(state: .testValue(links: Self.links)),
+            of: view(state: .testValue(links: Self.links, server: Self.server)),
             as: .image(layout: .device(config: .iPhone12))
         )
     }
@@ -26,7 +26,7 @@ struct DocumentShareLinksViewTests {
     @Test
     func testSnapshot_accessibilityXXL() async throws {
         assertSnapshot(
-            of: view(state: .testValue(links: Self.links))
+            of: view(state: .testValue(links: Self.links, server: Self.server))
                 .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge),
             as: .image(layout: .device(config: .iPhone12)),
             named: "accessibilityXXL"
@@ -36,7 +36,7 @@ struct DocumentShareLinksViewTests {
     @Test
     func testSnapshot_empty() async throws {
         assertSnapshot(
-            of: view(state: .testValue(links: [])),
+            of: view(state: .testValue(links: [], server: Self.server)),
             as: .image(layout: .device(config: .iPhone12)),
             named: "empty"
         )
@@ -45,7 +45,7 @@ struct DocumentShareLinksViewTests {
     @Test
     func testSnapshot_loadError() async throws {
         assertSnapshot(
-            of: view(state: .testValue(loadError: "The request timed out.")),
+            of: view(state: .testValue(loadError: "The request timed out.", server: Self.server)),
             as: .image(layout: .device(config: .iPhone12)),
             named: "loadError"
         )
@@ -54,7 +54,7 @@ struct DocumentShareLinksViewTests {
     @Test
     func testSnapshot_noArchive() async throws {
         assertSnapshot(
-            of: view(state: .testValue(hasArchiveVersion: false, links: Self.links)),
+            of: view(state: .testValue(hasArchiveVersion: false, links: Self.links, server: Self.server)),
             as: .image(layout: .device(config: .iPhone12)),
             named: "noArchive"
         )
@@ -69,6 +69,10 @@ struct DocumentShareLinksViewTests {
         )
     }
 
+    // Fixed rather than the default test server, whose URL comes from TUIST_PAPERLESS_TEST_URL and
+    // differs between CI and a local checkout.
+    private static let server = Server.testValue(url: URL(string: "https://paperless.example.com")!)
+
     // The fixed clock from testDependencies: 6 days ahead of it reads "in 6 days".
     private static let links: IdentifiedArrayOf<ApiInterface.ShareLink> = [
         .testValue(
@@ -81,7 +85,7 @@ struct DocumentShareLinksViewTests {
 
     // Seeded before the state is built: ServerPermissions reads the shared caches on init.
     private func withoutDeletePermission() -> DocumentShareLinksReducer.State {
-        let server = Server.testValue()
+        let server = Self.server
 
         @Shared(.permissions(server)) var permissions: [Permission]?
         @Shared(.currentUser(server)) var currentUser: User?
