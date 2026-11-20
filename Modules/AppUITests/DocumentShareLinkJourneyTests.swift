@@ -62,18 +62,22 @@ final class DocumentShareLinkJourneyTests: UITestCase {
             "The system share sheet did not dismiss"
         )
 
+        // The row is one button, so its texts read as that button's label rather than as texts.
+        let neverExpires = NSPredicate(format: "label CONTAINS 'Never expires'")
+        let linkRow = app.buttons.matching(neverExpires).firstMatch
         XCTAssertTrue(
-            app.staticTexts["Never expires"].waitForExistence(timeout: timeout),
+            linkRow.waitForExistence(timeout: timeout),
             "The created link was not listed with Never expires"
         )
         XCTAssertEqual(
-            app.staticTexts.matching(identifier: "Never expires").count,
+            app.buttons.matching(neverExpires).count,
             1,
             "Exactly one link should be listed after creating one"
         )
 
+        linkRow.swipeLeft()
         let delete = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Delete '")).firstMatch
-        XCTAssertTrue(delete.waitUntilHittable(timeout: timeout), "The created link has no delete button")
+        XCTAssertTrue(delete.waitUntilHittable(timeout: timeout), "The created link has no delete swipe action")
         delete.tap()
         let confirm = app.buttons["Confirm"].firstMatch
         XCTAssertTrue(confirm.waitUntilHittable(timeout: timeout), "Delete did not ask for confirmation")
@@ -83,7 +87,7 @@ final class DocumentShareLinkJourneyTests: UITestCase {
             app.staticTexts["No share links yet"].waitForExistence(timeout: timeout),
             "The list was not empty after deleting the link"
         )
-        XCTAssertFalse(app.staticTexts["Never expires"].exists)
+        XCTAssertFalse(app.buttons.matching(neverExpires).firstMatch.exists)
     }
 
     override func tearDown() async throws {

@@ -6,55 +6,33 @@ import SwiftUI
 struct DocumentShareLinkRow: View {
 
     var body: some View {
-        AdaptiveStack {
-            HStack(spacing: .x3) {
-                Image(systemName: "link")
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: .x1) {
+                Text(displayURL)
+                    .foregroundStyle(Color.m3OnSurface)
+                    .lineLimit(2)
+                    .truncationMode(.middle)
+                Text(expiry)
+                    .font(.caption)
                     .foregroundStyle(Color.m3OnSurfaceVariant)
-                    .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: .x1) {
-                    Text(displayURL)
-                        .font(.body)
-                        .foregroundStyle(Color.m3OnSurface)
-                        .lineLimit(3)
-                        .truncationMode(.middle)
-                    Text(expiry)
-                        .font(.caption)
-                        .foregroundStyle(Color.m3OnSurfaceVariant)
-                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            HStack(spacing: .x0) {
-                Button(action: onCopy) {
-                    Image(systemName: "doc.on.doc")
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(.rect)
-                        .accessibilityLabel(.copyLink(link.slug))
-                }
-                .buttonStyle(.borderless)
-
-                if let onDelete {
-                    Button(action: onDelete) {
-                        Image(systemName: "trash")
-                            .frame(minWidth: 44, minHeight: 44)
-                            .contentShape(.rect)
-                            .accessibilityLabel(.deleteLinkNamed(link.slug))
-                    }
-                    .buttonStyle(.borderless)
-                }
-            }
+            .contentShape(.rect)
         }
-        .padding(.vertical, .x2)
+        .accessibilityHint(.copyLinkHint)
+        .listRowBackground(Color.m3SurfaceContainer)
+        .swipeActions(content: swipeActions)
     }
 
     let link: ApiInterface.ShareLink
 
     let now: Date
 
-    let onCopy: () -> Void
-
     let onDelete: (() -> Void)?
+
+    let onShare: () -> Void
+
+    let onTap: () -> Void
 
     let server: Server
 
@@ -69,5 +47,22 @@ struct DocumentShareLinkRow: View {
         return .shareLinkExpiresAt(
             RelativeDateTimeFormatter().localizedString(for: expiration, relativeTo: now)
         )
+    }
+
+    @ViewBuilder
+    private func swipeActions() -> some View {
+        Button(action: onShare) {
+            Image(systemName: "square.and.arrow.up")
+        }
+        .accessibilityLabel(.shareLinkNamed(link.slug))
+        .tint(.m3Primary)
+
+        if let onDelete {
+            Button(action: onDelete) {
+                Image(systemName: "trash")
+            }
+            .accessibilityLabel(.deleteLinkNamed(link.slug))
+            .tint(.m3Error)
+        }
     }
 }

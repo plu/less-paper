@@ -8,13 +8,20 @@ import SwiftUI
 struct DocumentShareLinksView: View {
 
     var body: some View {
-        Sheet {
+        Sheet(isScrollingEnabled: false, padding: .x0) {
             SheetHeader(title: .shareLinks, left: leftHeader)
         } content: {
-            VStack(alignment: .leading, spacing: .x4) {
-                linksSection()
+            VStack(spacing: .x0) {
+                List {
+                    linkRows()
+                }
+                .scrollContentBackground(.hidden)
+                .overlay(stateOverlay())
+
                 form()
+                    .padding(.x4)
             }
+            .background(Color.m3SurfaceContainerLowest)
         } bottom: {
             Button {
                 send(.createButtonTapped)
@@ -78,6 +85,7 @@ struct DocumentShareLinksView: View {
                 Toggle(isOn: $store.shareArchiveVersion) {
                     Text(.shareArchivedVersion)
                 }
+                .tint(Color.m3Primary)
             }
         }
         .disabled(store.isCreating)
@@ -90,37 +98,33 @@ struct DocumentShareLinksView: View {
         }
     }
 
+    @ViewBuilder
+    private func linkRows() -> some View {
+        ForEach(store.links ?? []) { link in
+            DocumentShareLinkRow(
+                link: link,
+                now: now,
+                onDelete: store.canDelete
+                    ? { send(.deleteButtonTapped(link.id)) }
+                    : nil,
+                onShare: { send(.shareButtonTapped(link.id)) },
+                onTap: { send(.rowTapped(link.id)) },
+                server: store.server
+            )
+        }
+    }
+
     // Decided by `links` first: a create that succeeds while the list was refused leaves the error
     // set, and the list it produced must win over it.
     @ViewBuilder
-    private func linksSection() -> some View {
+    private func stateOverlay() -> some View {
         if let links = store.links {
             if links.isEmpty {
-                Text(.noShareLinksYet)
-                    .font(.body)
-                    .foregroundStyle(Color.m3OnSurfaceVariant)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, .x4)
-            } else {
-                VStack(spacing: .x0) {
-                    ForEach(links) { link in
-                        DocumentShareLinkRow(
-                            link: link,
-                            now: now,
-                            onCopy: { send(.copyButtonTapped(link.id)) },
-                            onDelete: store.canDelete
-                                ? { send(.deleteButtonTapped(link.id)) }
-                                : nil,
-                            server: store.server
-                        )
-                    }
-                }
+                EmptyListView(systemImage: "link", title: .noShareLinksYet)
             }
         } else if store.isLoading {
             ProgressView()
                 .controlSize(.large)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, .x4)
         } else if let loadError = store.loadError {
             errorView(error: loadError)
         }

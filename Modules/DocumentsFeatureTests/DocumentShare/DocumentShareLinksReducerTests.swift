@@ -339,7 +339,7 @@ struct DocumentShareLinksReducerTests {
     }
 
     @Test
-    func test_copy_writesPasteboardAndToastsSuccess() async throws {
+    func test_rowTapped_writesPasteboardAndToastsSuccess() async throws {
         let link = ShareLink.testValue(slug: "aB3x9Q")
         let copied = LockIsolated<[String]>([])
         let toasts = LockIsolated<[Toast]>([])
@@ -356,7 +356,7 @@ struct DocumentShareLinksReducerTests {
             }
         }
 
-        await store.send(.view(.copyButtonTapped(1)))
+        await store.send(.view(.rowTapped(1)))
         await store.finish()
 
         #expect(copied.value == [link.url(server: .testValue())!.absoluteString])
@@ -364,6 +364,20 @@ struct DocumentShareLinksReducerTests {
         guard case .success = toasts.value.first else {
             Issue.record("The copy confirmation is a success toast.")
             return
+        }
+    }
+
+    @Test
+    func test_shareButtonTapped_presentsShareSheet() async throws {
+        let link = ShareLink.testValue(id: 1)
+        let store = TestStore(
+            initialState: DocumentShareLinksReducer.State.testValue(links: [link])
+        ) {
+            DocumentShareLinksReducer()
+        }
+
+        await store.send(.view(.shareButtonTapped(1))) {
+            $0.shareItem = ShareItem(url: link.url(server: .testValue())!)
         }
     }
 

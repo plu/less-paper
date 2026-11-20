@@ -998,19 +998,19 @@
         }
       }
     },
-    "copyLink": {
+    "copyLinkHint": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Link %@ kopieren"
+            "value": "Kopiert den Link"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copy link %@"
+            "value": "Copies the link"
           }
         }
       }
@@ -3403,6 +3403,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "30 days"
+          }
+        }
+      }
+    },
+    "shareLinkNamed": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link %@ teilen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share %@"
           }
         }
       }
