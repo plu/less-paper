@@ -998,23 +998,6 @@
         }
       }
     },
-    "copyLinkHint": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kopiert den Link"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copies the link"
-          }
-        }
-      }
-    },
     "correspondent": {
       "extractionState": "manual",
       "localizations": {
@@ -2148,23 +2131,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Language"
-          }
-        }
-      }
-    },
-    "linkCopied": {
-      "extractionState": "manual",
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Link kopiert"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Link copied"
           }
         }
       }
@@ -3407,19 +3373,19 @@
         }
       }
     },
-    "shareLinkNamed": {
+    "shareLinkHint": {
       "extractionState": "manual",
       "localizations": {
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Link %@ teilen"
+            "value": "Teilt den Link"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Share %@"
+            "value": "Shares the link"
           }
         }
       }

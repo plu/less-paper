@@ -16,6 +16,7 @@ struct DocumentShareLinksView: View {
                     linkRows()
                 }
                 .scrollContentBackground(.hidden)
+                .animation(.default, value: store.links?.ids)
                 .overlay(stateOverlay())
 
                 form()
@@ -107,7 +108,6 @@ struct DocumentShareLinksView: View {
                 onDelete: store.canDelete
                     ? { send(.deleteButtonTapped(link.id)) }
                     : nil,
-                onShare: { send(.shareButtonTapped(link.id)) },
                 onTap: { send(.rowTapped(link.id)) },
                 server: store.server
             )
@@ -116,17 +116,34 @@ struct DocumentShareLinksView: View {
 
     // Decided by `links` first: a create that succeeds while the list was refused leaves the error
     // set, and the list it produced must win over it.
+    // The pinned form leaves the list little height at large text sizes, less than the empty and
+    // error cards need, so they scroll there rather than spill over the form. Only ever around a
+    // card: with nothing to fit, `ViewThatFits` takes the scroll view, which then covers the list
+    // and swallows its swipes.
+    private func scrollingIfNeeded(_ content: some View) -> some View {
+        ViewThatFits(in: .vertical) {
+            content
+            ScrollView {
+                content
+                    .padding(.vertical, .x5)
+                    .frame(maxWidth: .infinity)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .dynamicTypeSize(...DynamicTypeSize.xxLarge)
+    }
+
     @ViewBuilder
     private func stateOverlay() -> some View {
         if let links = store.links {
             if links.isEmpty {
-                EmptyListView(systemImage: "link", title: .noShareLinksYet)
+                scrollingIfNeeded(EmptyListView(systemImage: "link", title: .noShareLinksYet))
             }
         } else if store.isLoading {
             ProgressView()
                 .controlSize(.large)
         } else if let loadError = store.loadError {
-            errorView(error: loadError)
+            scrollingIfNeeded(errorView(error: loadError))
         }
     }
 }

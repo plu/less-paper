@@ -19,7 +19,7 @@ struct DocumentShareLinkRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(.rect)
         }
-        .accessibilityHint(.copyLinkHint)
+        .accessibilityHint(.shareLinkHint)
         .listRowBackground(Color.m3SurfaceContainer)
         .swipeActions(content: swipeActions)
     }
@@ -29,8 +29,6 @@ struct DocumentShareLinkRow: View {
     let now: Date
 
     let onDelete: (() -> Void)?
-
-    let onShare: () -> Void
 
     let onTap: () -> Void
 
@@ -51,12 +49,6 @@ struct DocumentShareLinkRow: View {
 
     @ViewBuilder
     private func swipeActions() -> some View {
-        Button(action: onShare) {
-            Image(systemName: "square.and.arrow.up")
-        }
-        .accessibilityLabel(.shareLinkNamed(link.slug))
-        .tint(.m3Primary)
-
         if let onDelete {
             Button(action: onDelete) {
                 Image(systemName: "trash")

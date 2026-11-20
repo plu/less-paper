@@ -43,6 +43,16 @@ struct DocumentShareLinksViewTests {
     }
 
     @Test
+    func testSnapshot_empty_accessibilityXXL() async throws {
+        assertSnapshot(
+            of: view(state: .testValue(links: [], server: Self.server))
+                .environment(\.sizeCategory, .accessibilityExtraExtraExtraLarge),
+            as: .image(layout: .device(config: .iPhone12)),
+            named: "emptyAccessibilityXXL"
+        )
+    }
+
+    @Test
     func testSnapshot_loadError() async throws {
         assertSnapshot(
             of: view(state: .testValue(loadError: "The request timed out.", server: Self.server)),

@@ -339,36 +339,7 @@ struct DocumentShareLinksReducerTests {
     }
 
     @Test
-    func test_rowTapped_writesPasteboardAndToastsSuccess() async throws {
-        let link = ShareLink.testValue(slug: "aB3x9Q")
-        let copied = LockIsolated<[String]>([])
-        let toasts = LockIsolated<[Toast]>([])
-        let store = TestStore(
-            initialState: DocumentShareLinksReducer.State.testValue(links: [link])
-        ) {
-            DocumentShareLinksReducer()
-        } withDependencies: {
-            $0.pasteboard.copy = { value in
-                copied.withValue { $0.append(value) }
-            }
-            $0.toastPresenter.present = { value in
-                toasts.withValue { $0.append(value) }
-            }
-        }
-
-        await store.send(.view(.rowTapped(1)))
-        await store.finish()
-
-        #expect(copied.value == [link.url(server: .testValue())!.absoluteString])
-        #expect(toasts.value.count == 1)
-        guard case .success = toasts.value.first else {
-            Issue.record("The copy confirmation is a success toast.")
-            return
-        }
-    }
-
-    @Test
-    func test_shareButtonTapped_presentsShareSheet() async throws {
+    func test_rowTapped_presentsShareSheet() async throws {
         let link = ShareLink.testValue(id: 1)
         let store = TestStore(
             initialState: DocumentShareLinksReducer.State.testValue(links: [link])
@@ -376,7 +347,7 @@ struct DocumentShareLinksReducerTests {
             DocumentShareLinksReducer()
         }
 
-        await store.send(.view(.shareButtonTapped(1))) {
+        await store.send(.view(.rowTapped(1))) {
             $0.shareItem = ShareItem(url: link.url(server: .testValue())!)
         }
     }

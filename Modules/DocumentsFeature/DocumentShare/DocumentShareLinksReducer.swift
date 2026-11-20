@@ -28,7 +28,6 @@ public struct DocumentShareLinksReducer: Sendable {
             case onAppear
             case retryButtonTapped
             case rowTapped(ShareLink.Id)
-            case shareButtonTapped(ShareLink.Id)
         }
     }
 
@@ -166,11 +165,6 @@ public struct DocumentShareLinksReducer: Sendable {
                     state.loadError = nil
                     return .runGetShareLinks(documentId: state.documentId, server: state.server)
                 case let .rowTapped(id):
-                    guard let url = state.links?[id: id]?.url(server: state.server) else {
-                        return .none
-                    }
-                    return .runCopy(url: url)
-                case let .shareButtonTapped(id):
                     state.shareItem = state.links?[id: id]?.url(server: state.server).map(ShareItem.init)
                     return .none
                 }

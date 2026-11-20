@@ -18,19 +18,6 @@ extension Effect where Action == DocumentShareLinksReducer.Action {
         .cancellable(id: DocumentShareLinksReducer.CancelID.confirmDelete)
     }
 
-    static func runCopy(url: URL) -> Self {
-        @Dependency(\.pasteboard.copy)
-        var copy
-
-        return .run { _ in
-            copy(url.absoluteString)
-            @Dependency(\.toastPresenter)
-            var toastPresenter
-
-            await toastPresenter.present(toast: .success(String(localized: .linkCopied)))
-        }
-    }
-
     static func runCreateShareLink(input: CreateShareLinkInput, server: Server) -> Self {
         .run { send in
             @Dependency(\.createShareLink.execute)
