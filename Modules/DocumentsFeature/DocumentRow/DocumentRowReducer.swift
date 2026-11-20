@@ -33,6 +33,7 @@ public struct DocumentRowReducer: Sendable {
             case previewButtonTapped
             case rowTapped
             case shareButtonTapped
+            case shareLinksButtonTapped
         }
     }
 
@@ -44,6 +45,7 @@ public struct DocumentRowReducer: Sendable {
     @Reducer
     public enum Destination {
         case documentSheet(DocumentSheetReducer)
+        case shareLinks(DocumentShareLinksReducer)
     }
 
     @ObservableState
@@ -98,6 +100,10 @@ public struct DocumentRowReducer: Sendable {
         var permissions: ServerPermissions
 
         var canEdit: Bool { permissions.can(.changeDocument) }
+
+        // OfflineRowView composes its own row with swipe actions only and never shows this context
+        // menu, so `canEdit` is all there is to honour here.
+        var canShareLinks: Bool { permissions.can(.addShareLink) && canEdit }
 
         var canDelete: Bool { permissions.can(.deleteDocument) }
 
@@ -251,7 +257,19 @@ public struct DocumentRowReducer: Sendable {
                     return .send(.delegate(.presentDocumentDetail(state.$document)))
                 case .shareButtonTapped:
                     return state.download(intent: .share)
+                case .shareLinksButtonTapped:
+                    guard state.canShareLinks else {
+                        return .none
+                    }
+                    state.destination = .shareLinks(DocumentShareLinksReducer.State(
+                        document: state.document,
+                        server: state.server
+                    ))
+                    return .none
                 }
+            case .destination(.presented(.shareLinks(.delegate(.close)))):
+                state.destination = nil
+                return .none
             case .binding, .delegate, .destination:
                 return .none
             }

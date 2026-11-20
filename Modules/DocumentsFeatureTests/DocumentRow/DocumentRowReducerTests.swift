@@ -380,4 +380,65 @@ struct DocumentRowReducerTests {
 
         #expect(toasts.value == [.error("Something went wrong")])
     }
+
+    @Test
+    func test_shareLinksButtonTapped_presentsSheet() async throws {
+        let server = Server.testValue()
+        let document = Document.testValue(archivedFileName: "a.pdf")
+        let state = DocumentRowReducer.State.testValue(document: document, server: server)
+        let store = TestStore(initialState: state) {
+            DocumentRowReducer()
+        }
+
+        await store.send(.view(.shareLinksButtonTapped)) {
+            $0.destination = .shareLinks(DocumentShareLinksReducer.State(document: document, server: server))
+        }
+        #expect(store.state.destination.flatMap { $0.shareLinks?.documentId } == document.id)
+        #expect(store.state.destination?.shareLinks?.hasArchiveVersion == true)
+    }
+
+    @Test
+    func test_shareLinksButtonTapped_withoutAddShareLink_isIgnored() async throws {
+        let server = Server.testValue()
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .changeDocument] }
+        let store = TestStore(initialState: DocumentRowReducer.State.testValue(server: server)) {
+            DocumentRowReducer()
+        }
+
+        await store.send(.view(.shareLinksButtonTapped))
+    }
+
+    @Test
+    func test_shareLinksButtonTapped_withoutChangeDocument_isIgnored() async throws {
+        let server = Server.testValue()
+        @Shared(.permissions(server)) var permissions: [Permission]?
+        @Shared(.currentUser(server)) var currentUser: User?
+        $currentUser.withLock { $0 = .testValue(isSuperuser: false) }
+        $permissions.withLock { $0 = [.viewDocument, .addShareLink] }
+        let store = TestStore(initialState: DocumentRowReducer.State.testValue(server: server)) {
+            DocumentRowReducer()
+        }
+
+        await store.send(.view(.shareLinksButtonTapped))
+    }
+
+    @Test
+    func test_shareLinksClose_dismisses() async throws {
+        let server = Server.testValue()
+        let document = Document.testValue()
+        let store = TestStore(initialState: DocumentRowReducer.State.testValue(
+            destination: .shareLinks(DocumentShareLinksReducer.State(document: document, server: server)),
+            document: document,
+            server: server
+        )) {
+            DocumentRowReducer()
+        }
+
+        await store.send(.destination(.presented(.shareLinks(.delegate(.close))))) {
+            $0.destination = nil
+        }
+    }
 }

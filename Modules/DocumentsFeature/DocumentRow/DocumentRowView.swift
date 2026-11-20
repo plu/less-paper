@@ -45,6 +45,11 @@ struct DocumentRowView: View {
             DocumentSheetView(store: store)
                 .presentationDetents([.large])
         }
+        .sheet(
+            item: $store.scope(state: \.destination?.shareLinks, action: \.destination.shareLinks)
+        ) { store in
+            DocumentShareLinksView(store: store)
+        }
     }
 
     @Bindable
@@ -98,7 +103,11 @@ struct DocumentRowView: View {
             )
         ) { send(.openButtonTapped($0)) }
 
-        DocumentShareMenu(documentId: store.document.id, server: store.server) {
+        DocumentShareMenu(
+            documentId: store.document.id,
+            server: store.server,
+            shareLinks: store.canShareLinks ? { send(.shareLinksButtonTapped) } : nil
+        ) {
             // A row has no file yet, so this asks for one: the download runs and the share sheet
             // follows it. The links below it need nothing downloaded.
             Button {

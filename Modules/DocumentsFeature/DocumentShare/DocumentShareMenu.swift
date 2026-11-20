@@ -27,6 +27,12 @@ struct DocumentShareMenu<Document: View>: View {
                     Label(.webLink, systemImage: "globe")
                 }
             }
+
+            if let shareLinks {
+                Button(action: shareLinks) {
+                    Label(.shareLink, systemImage: "link.badge.plus")
+                }
+            }
         } label: {
             Label(.share, systemImage: "square.and.arrow.up")
         }
@@ -36,13 +42,16 @@ struct DocumentShareMenu<Document: View>: View {
 
     let server: Server
 
+    // nil when the user may not create share links, which leaves the item out altogether.
+    var shareLinks: (() -> Void)?
+
     @ViewBuilder
     let document: () -> Document
 }
 
 #Preview {
     Menu("Document") {
-        DocumentShareMenu(documentId: 42, server: .testValue()) {
+        DocumentShareMenu(documentId: 42, server: .testValue(), shareLinks: {}) {
             Button("Document") {}
         }
     }

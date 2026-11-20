@@ -27,6 +27,11 @@ private struct DocumentRowDestinations: ViewModifier {
                 DocumentSheetView(store: store)
                     .presentationDetents([.large])
             }
+            .sheet(
+                item: $store.scope(state: \.destination?.shareLinks, action: \.destination.shareLinks)
+            ) { store in
+                DocumentShareLinksView(store: store)
+            }
     }
 
     @Bindable
