@@ -1,7 +1,7 @@
 Teile ein Dokument per Link mit allen – ganz ohne Paperless-Konto.
 
 • Neu im Teilen-Menü eines Dokuments, in der Liste wie in der Ansicht: „Freigabelink…“. Damit erstellst du einen öffentlichen Link auf das Dokument – dieselben Freigabelinks, die auch die Weboberfläche anbietet. Wähle, ob er nach 1, 7 oder 30 Tagen oder nie abläuft und ob die archivierte Version geteilt wird. Der Link landet direkt im Teilen-Dialog.
-• Dasselbe Blatt listet die vorhandenen Links des Dokuments samt Ablaufdatum. Tippe auf einen, um ihn erneut zu teilen, oder wische, um ihn zu löschen.
+• Dort siehst du auch alle vorhandenen Links des Dokuments und wann sie ablaufen. Tippe auf einen, um ihn erneut zu teilen, oder wische, um ihn zu löschen.
 • „Freigabelink…“ wird nur angeboten, wenn dein Konto Freigabelinks erstellen und das Dokument bearbeiten darf.
 
 Wenn dir etwas auffällt, melde es bitte unter https://github.com/plu/less-paper/issues – so lässt es sich am schnellsten beheben.
