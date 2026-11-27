@@ -1,0 +1,12 @@
+# Caddy for the Apache + mod_auth_openidc stack (issue #134). TLS only - authentication is
+# entirely Apache's, so the behaviour under test is the reporter's, not Caddy's.
+
+auth.local.plunien.com:443 {
+    tls internal
+    reverse_proxy keycloak:8080
+}
+
+paperless.local.plunien.com:443 {
+    tls internal
+    reverse_proxy apache:80
+}

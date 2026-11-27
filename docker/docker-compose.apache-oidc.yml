@@ -1,0 +1,95 @@
+# Apache + mod_auth_openidc + Keycloak in front of paperless in remote-user mode - the setup from
+# issue #134.
+#
+#   cd docker
+#   docker-compose -f docker-compose.apache-oidc.yml -p less-paper-apache-oidc up -d --build
+#
+# Its own project on port 8300; 8000/8010, 9000/9010, 8100/9100 and 8200 belong to other stacks.
+# Same hostnames and the same /etc/hosts entries as the Authelia stack (docs/forward-auth-development.md),
+# but its own Caddy, so the simulator also has to trust this stack's internal CA.
+#
+# Pick the variant with APACHE_ARGUMENTS (see apache-oidc/paperless.conf):
+#
+#   APACHE_ARGUMENTS="-D API_EXEMPT"       the reporter's current config
+#   APACHE_ARGUMENTS=""                    /api protected, mod_auth_openidc defaults
+#   APACHE_ARGUMENTS="-D FORCE_REDIRECT"   /api protected, API requests redirected to Keycloak
+#
+# then `up -d --force-recreate apache`.
+
+services:
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.0.5
+    restart: unless-stopped
+    depends_on:
+      - paperless-redis
+    environment:
+      OPENSSL_armcap: "0"
+      PAPERLESS_ADMIN_MAIL: admin@less-paper.test
+      PAPERLESS_ADMIN_PASSWORD: development-only
+      PAPERLESS_ADMIN_USER: admin
+      PAPERLESS_REDIS: redis://paperless-redis:6379
+      PAPERLESS_SECRET_KEY: c0ff33
+      PAPERLESS_TIME_ZONE: Europe/Berlin
+      PAPERLESS_URL: https://paperless.local.plunien.com:8300
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: https://paperless.local.plunien.com:8300
+      PAPERLESS_ENABLE_HTTP_REMOTE_USER: "true"
+      PAPERLESS_ENABLE_HTTP_REMOTE_USER_API: "true"
+      PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME: HTTP_REMOTE_USER
+    volumes:
+      - paperless-data:/usr/src/paperless/data
+      - paperless-media:/usr/src/paperless/media
+
+  paperless-redis:
+    image: docker.io/library/redis:7-alpine
+    restart: unless-stopped
+
+  # User admin / secret, realm and client from keycloak/paperless-realm.json. KC_HOSTNAME is the
+  # public URL so tokens carry the issuer Apache expects; the dynamic back channel lets Apache reach
+  # the token and JWKS endpoints through Caddy on 443 inside Docker instead.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4
+    restart: unless-stopped
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: development-only
+      KC_HOSTNAME: https://auth.local.plunien.com:8300
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+    volumes:
+      - ./keycloak/paperless-realm.json:/opt/keycloak/data/import/paperless-realm.json:ro
+
+  apache:
+    build: ./apache-oidc
+    restart: unless-stopped
+    depends_on:
+      - keycloak
+      - paperless
+    environment:
+      APACHE_ARGUMENTS: ${APACHE_ARGUMENTS--D API_EXEMPT}
+
+  caddy:
+    image: caddy:2.11-alpine
+    # Apache reaches Keycloak's back channel through here, under the public name.
+    networks:
+      default:
+        aliases:
+          - auth.local.plunien.com
+    restart: unless-stopped
+    depends_on:
+      - apache
+      - keycloak
+    ports:
+      - "8300:443"
+    volumes:
+      - ./caddy/Caddyfile.apache-oidc:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    command: caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+
+volumes:
+  caddy-config:
+  caddy-data:
+  paperless-data:
+  paperless-media:
