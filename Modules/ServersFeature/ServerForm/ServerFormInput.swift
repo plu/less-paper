@@ -22,21 +22,15 @@ public struct ServerFormInput: Equatable, Sendable {
 
 extension ServerFormInput {
 
+    // No username or password: a provider login and a forward-auth proxy in remote-user mode both
+    // authenticate the human without them. Whether a token login needs them is only known once
+    // the save has probed for a proxy identity - see ServerFormError.credentialsRequired.
     var isValid: Bool {
         [
             alias,
             id,
-            password,
-            url.host ?? "",
-            username
+            url.host ?? ""
         ].allSatisfy { !$0.isEmpty }
-    }
-
-    /// What a provider login needs: an address to discover against and an alias to save the
-    /// server under. No username or password - the provider authenticates the human, so those
-    /// fields stay empty and must not gate the buttons the way isValid does for the save button.
-    var isProviderLoginValid: Bool {
-        !alias.isEmpty && !(url.host ?? "").isEmpty
     }
 
     var server: Server {

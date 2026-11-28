@@ -65,8 +65,7 @@ struct ServerFormReducerTests {
 
     // When the probe finds a proxy-injected identity, no token is stored - the cookie is the
     // whole login - and the username the form was filled with gets replaced by whatever paperless
-    // returned. That last part matters: the form's username may have been a placeholder because
-    // isValid requires the field to be non-empty.
+    // returned. That last part matters: the form's username may be a placeholder or empty.
     @Test
     func test_view_saveButtonTapped_forwardAuthIdentity_storesServerWithoutToken() async throws {
         let events = LockIsolated<[String]>([])
@@ -146,18 +145,18 @@ struct ServerFormReducerTests {
     }
 
     @Test
-    func test_isProviderLoginValid() {
-        #expect(ServerFormInput.testValue().isProviderLoginValid)
+    func test_isValid() {
+        #expect(ServerFormInput.testValue().isValid)
     }
 
     @Test
-    func test_isProviderLoginValid_requiresAnAlias() {
-        #expect(!ServerFormInput.testValue(alias: "").isProviderLoginValid)
+    func test_isValid_requiresAnAlias() {
+        #expect(!ServerFormInput.testValue(alias: "").isValid)
     }
 
     @Test
-    func test_isProviderLoginValid_requiresAHost() {
-        #expect(!ServerFormInput.testValue(url: .empty).isProviderLoginValid)
+    func test_isValid_requiresAHost() {
+        #expect(!ServerFormInput.testValue(url: .empty).isValid)
     }
 
     @Test
@@ -512,10 +511,10 @@ struct ServerFormReducerTests {
     }
 
     @Test
-    func test_isProviderLoginValid_whitespaceAliasCountsAsNonEmpty() {
+    func test_isValid_whitespaceAliasCountsAsNonEmpty() {
         // Pins the unchanged rule: only truly empty aliases gate. A person would expect
         // whitespace blocked; changing that is a separate validation change, not this one.
-        #expect(ServerFormInput.testValue(alias: " ").isProviderLoginValid)
+        #expect(ServerFormInput.testValue(alias: " ").isValid)
     }
 
     @Test
@@ -591,6 +590,7 @@ struct ServerFormReducerTests {
         let input = ServerFormInput.testValue(alias: "renamed", password: "", username: "")
         let store = TestStore(initialState: ServerFormReducer.State(
             input: input,
+            isEdit: true,
             isPasswordlessEdit: true
         )) {
             ServerFormReducer()
@@ -623,7 +623,7 @@ struct ServerFormReducerTests {
     @Test
     func test_saveButtonTapped_clearedPassword_keepsExistingToken() async throws {
         let input = ServerFormInput.testValue(alias: "renamed", password: "")
-        let store = TestStore(initialState: ServerFormReducer.State(input: input)) {
+        let store = TestStore(initialState: ServerFormReducer.State(input: input, isEdit: true)) {
             ServerFormReducer()
         } withDependencies: {
             $0.storeToken.execute = { _, _, _, _ in
@@ -641,6 +641,74 @@ struct ServerFormReducerTests {
         await store.receive(\.binding, .set(\.isSaving, false)) {
             $0.isSaving = false
         }
+    }
+
+    // A forward-auth server in remote-user mode needs no credentials: the proxy supplies the
+    // identity. Save stays available so the probe can find that out.
+    @Test
+    func test_isSaveValid_newServerWithoutCredentials() {
+        let state = ServerFormReducer.State(input: .testValue(password: "", username: ""))
+
+        #expect(state.isSaveValid)
+    }
+
+    @Test
+    func test_saveButtonTapped_newServerWithoutCredentials_forwardAuthIdentity_storesServerWithoutToken() async throws {
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: .testValue(password: "", username: "")
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.getForwardAuthIdentity.execute = { _ in "proxy-user" }
+            $0.storeServerWithoutToken.execute = { _ in }
+            $0.storeToken.execute = { _, _, _, _ in
+                Issue.record("storeToken must not run when the proxy authenticated the identity")
+            }
+            $0.negotiateApiVersion.execute = { _ in 10 }
+            $0.updateCache.execute = { _ in }
+        }
+
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.binding, .set(\.isSaving, true)) {
+            $0.isSaving = true
+        }
+        await store.receive(\.delegate.serverSaved, .testValue(username: "proxy-user"))
+        await store.receive(\.binding, .set(\.isSaving, false)) {
+            $0.isSaving = false
+        }
+    }
+
+    // Without a proxy identity a new server needs a token login, and paperless cannot issue one
+    // without both fields. Asked for here rather than sent to paperless to be refused.
+    @Test(arguments: [("", ""), ("admin", ""), ("", "T0PS3CR3T!!123")])
+    func test_saveButtonTapped_newServerWithoutCredentials_noProxyIdentity_asksForCredentials(
+        username: String,
+        password: String
+    ) async throws {
+        let toasts = LockIsolated<[Toast]>([])
+        let store = TestStore(initialState: ServerFormReducer.State(
+            input: .testValue(password: password, username: username)
+        )) {
+            ServerFormReducer()
+        } withDependencies: {
+            $0.getForwardAuthIdentity.execute = { _ in nil }
+            $0.storeToken.execute = { _, _, _, _ in
+                Issue.record("a token login without both credentials can only fail")
+            }
+            $0.toastPresenter.present = { value in
+                toasts.withValue { $0.append(value) }
+            }
+        }
+
+        await store.send(.view(.saveButtonTapped))
+        await store.receive(\.binding, .set(\.isSaving, true)) {
+            $0.isSaving = true
+        }
+        await store.receive(\.error)
+        await store.receive(\.binding, .set(\.isSaving, false)) {
+            $0.isSaving = false
+        }
+        #expect(toasts.value == [.error("This server needs a username and password.")])
     }
 
     @Test

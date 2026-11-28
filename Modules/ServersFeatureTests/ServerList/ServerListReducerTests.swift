@@ -127,6 +127,7 @@ struct ServerListReducerTests {
         await store.receive(\.getCredentialsResult) {
             $0.destination = .serverForm(ServerFormReducer.State(
                 input: .testValue(headers: [.testValue()]),
+                isEdit: true,
                 isPasswordlessEdit: false
             ))
         }
@@ -149,6 +150,7 @@ struct ServerListReducerTests {
         await store.receive(\.getCredentialsResult) {
             $0.destination = .serverForm(ServerFormReducer.State(
                 input: .testValue(password: ""),
+                isEdit: true,
                 isPasswordlessEdit: true
             ))
         }

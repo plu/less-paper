@@ -70,6 +70,7 @@ public struct ServerListReducer: Sendable {
                         url: server.url,
                         username: server.username
                     ),
+                    isEdit: true,
                     // No stored password means no credentials to show: the form edits the record
                     // and leaves the login alone.
                     isPasswordlessEdit: credentials?.password == nil

@@ -37,6 +37,10 @@ extension Effect where Action == ServerFormReducer.Action {
                 return
             }
 
+            guard !input.username.isEmpty, !input.password.isEmpty else {
+                throw ServerFormError.credentialsRequired
+            }
+
             try await storeToken(input.code, input.password, input.server, input.username)
             _ = try await negotiateApiVersion(input.server)
             try await updateCache(input.server)

@@ -76,8 +76,8 @@ public struct ServerFormView: View {
         Field(.alias) {
             TextField(String(localized: .alias), text: $store.input.alias)
                 .focused($focus, equals: .alias)
-                .onSubmit { focus = nil }
-                .submitLabel(.done)
+                .onSubmit { focus = showsCredentials ? .username : nil }
+                .submitLabel(showsCredentials ? .next : .done)
                 .textFieldStyle(.plain)
         }
         .accessibilityLabel(.alias)
@@ -89,8 +89,8 @@ public struct ServerFormView: View {
         Field(.password) {
             SecureField(String(localized: .password), text: $store.input.password)
                 .focused($focus, equals: .password)
-                .onSubmit { focus = .alias }
-                .submitLabel(.next)
+                .onSubmit { focus = nil }
+                .submitLabel(.done)
                 .textContentType(.password)
                 .textFieldStyle(.plain)
         }
@@ -107,7 +107,7 @@ public struct ServerFormView: View {
             equals: .url
         )
         .onSubmit {
-            focus = .username
+            focus = .alias
             // Asked when the address is settled rather than on every keystroke.
             send(.urlCommitted)
         }
@@ -130,18 +130,22 @@ public struct ServerFormView: View {
         .onTapGesture { focus = .username }
     }
 
+    // A server stored without a password has no credentials to show or edit, and a selected
+    // provider signs in without them.
+    private var showsCredentials: Bool {
+        store.selectedProvider == nil && !store.isPasswordlessEdit
+    }
+
     @ViewBuilder
     private func formView() -> some View {
         VStack(spacing: .x4) {
             urlField()
+            aliasField()
             providerButtons()
-            // A server stored without a password has no credentials to show or edit: hiding
-            // the fields is what frees its alias and address from the password gate.
-            if store.selectedProvider == nil, !store.isPasswordlessEdit {
+            if showsCredentials {
                 usernameField()
                 passwordField()
             }
-            aliasField()
         }
         .onChange(of: store.selectedProvider?.id) { _, newValue in
             // Clearing the selection leaves focus alone: only moving to a selection with an

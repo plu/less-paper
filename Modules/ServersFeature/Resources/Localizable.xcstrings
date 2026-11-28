@@ -715,6 +715,23 @@
         }
       }
     },
+    "serverFormCredentialsRequired": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Server benötigt einen Benutzernamen und ein Passwort."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This server needs a username and password."
+          }
+        }
+      }
+    },
     "serverId": {
       "extractionState": "manual",
       "localizations": {

@@ -52,12 +52,14 @@ public struct ServerFormReducer: Sendable {
 
         // Set when the form opens for editing a server whose stored credentials hold no
         // password (OIDC, forward-auth). Data only for now; behavior follows.
+        // A new server and an edit read an empty password differently: an edit keeps the login it
+        // has, a new server has none to keep.
+        var isEdit = false
+
         var isPasswordlessEdit = false
 
-        // Save-button gate. A selected provider and a passwordless edit both validate on
-        // alias plus address; only the password path needs the full set.
         var isSaveValid: Bool {
-            (selectedProvider != nil || isPasswordlessEdit) ? input.isProviderLoginValid : input.isValid
+            input.isValid
         }
 
         var isSaving = false
@@ -87,11 +89,13 @@ public struct ServerFormReducer: Sendable {
         public init(
             destination: Destination.State? = nil,
             input: ServerFormInput = .empty,
+            isEdit: Bool = false,
             isPasswordlessEdit: Bool = false,
             selectedProvider: OIDCProvider? = nil
         ) {
             self.destination = destination
             self.input = input
+            self.isEdit = isEdit
             self.isPasswordlessEdit = isPasswordlessEdit
             self.selectedProvider = selectedProvider
             // Seeded with the address the form opened on, so only a change asks the server. Left
@@ -178,9 +182,10 @@ public struct ServerFormReducer: Sendable {
                     if let provider = state.selectedProvider {
                         return .runProviderLogin(input: state.input, provider: provider)
                     }
-                    // The token refreshes only when a password is there to trade it with.
-                    // Without one the stored login is kept and only the record is updated.
-                    if state.input.password.isEmpty {
+                    // On an edit the token refreshes only when a password is there to trade it
+                    // with. Without one the stored login is kept and only the record is updated.
+                    // A new server has no login to keep, so it always probes and logs in.
+                    if state.isEdit, state.input.password.isEmpty {
                         return .runSaveServerMetadata(input: state.input)
                     }
                     return .runSaveServer(input: state.input)
