@@ -46,7 +46,7 @@ private extension ForwardAuthSignInPresenter {
                 }
 
                 let session = ForwardAuthSignInSession(continuation: continuation)
-                let controller = UIHostingController(
+                let controller = ForwardAuthSheetController(
                     rootView: ForwardAuthSheetView(
                         redirect: redirect,
                         onFinished: { session.finish(signedIn: true) },
@@ -55,7 +55,7 @@ private extension ForwardAuthSignInPresenter {
                 )
 
                 session.controller = controller
-                controller.presentationController?.delegate = session
+                controller.onDismissed = { session.dismissed() }
 
                 presenter.present(controller, animated: true)
 
@@ -94,8 +94,26 @@ private extension ForwardAuthSignInPresenter {
     }
 }
 
+// Reports its own dismissal, however it came about. A presentation-controller delegate did not:
+// swiping the sheet away left the continuation unresumed, state.redirect never cleared, and every
+// later bounce was dropped as "a login is already up" until the app was relaunched.
+private final class ForwardAuthSheetController: UIHostingController<ForwardAuthSheetView> {
+
+    var onDismissed: (() -> Void)?
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        // Not on every disappearance: something presented over the sheet hides it without
+        // ending the login.
+        if isBeingDismissed || presentingViewController == nil {
+            onDismissed?()
+        }
+    }
+}
+
 @MainActor
-private final class ForwardAuthSignInSession: NSObject, UIAdaptivePresentationControllerDelegate {
+private final class ForwardAuthSignInSession {
 
     // Weak: the presented controller holds the SwiftUI closures that hold this session.
     weak var controller: UIViewController?
@@ -109,8 +127,9 @@ private final class ForwardAuthSignInSession: NSObject, UIAdaptivePresentationCo
         resume(signedIn: signedIn)
     }
 
-    // Swiping the sheet down is the same decision as tapping close.
-    func presentationControllerDidDismiss(_: UIPresentationController) {
+    // Swiping the sheet down is the same decision as tapping close. After a finished sign-in
+    // this arrives second and changes nothing.
+    func dismissed() {
         resume(signedIn: false)
     }
 
