@@ -66,6 +66,20 @@ struct ForwardAuthRedirectTests {
         )))
     }
 
+    // The proxy, or paperless behind it, failing at signInURL. Closing the sheet on it replays
+    // every parked request into the same failure.
+    @Test(arguments: [500, 502, 503])
+    func isSignInComplete_falseForAServerErrorAtTheSignInURL(statusCode: Int) {
+        let redirect = ForwardAuthRedirect.testValue(
+            server: .testValue(url: URL(string: "https://paperless.example.com:8300")!)
+        )
+
+        #expect(!redirect.isSignInComplete(response(
+            "https://paperless.example.com:8300/api/ui_settings/",
+            statusCode: statusCode
+        )))
+    }
+
     @Test
     func isSignInComplete_falseForTheLoginHost() {
         let redirect = ForwardAuthRedirect.testValue(

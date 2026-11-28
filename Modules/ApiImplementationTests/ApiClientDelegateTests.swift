@@ -278,6 +278,54 @@ struct ApiClientDelegateTests {
         }
     }
 
+    // mod_auth_openidc sets a state cookie on every bounce, and a launch bounces a dozen requests
+    // at once. The login web view takes its own bounce, so these are never used - kept, they were
+    // seeded into the web view, whose first request then carried more than the proxy allows and
+    // was answered 503 instead of a login.
+    @Test
+    func validateResponse_bounce_discardsTheCookiesItSet() throws {
+        let server = Server.testValue(url: URL(string: "https://paperless.example.com")!)
+        let delegate = ApiClientDelegate(server: server)
+        let storage = HTTPCookieStorage.sharedCookieStorage(
+            forGroupContainerIdentifier: "ApiClientDelegateTests.\(UUID().uuidString)"
+        )
+        let response = HTTPURLResponse(
+            url: URL(string: "https://paperless.example.com/api/documents/")!,
+            statusCode: 302,
+            httpVersion: nil,
+            headerFields: [
+                "Location": "https://auth.example.com/login",
+                "Set-Cookie": "mod_auth_openidc_state_abc=xyz; Path=/; Secure; HttpOnly"
+            ]
+        )!
+        // What URLSession stored from the bounce, and a login-host session that must survive.
+        let fields = ["Set-Cookie": "mod_auth_openidc_state_abc=xyz; Path=/; Secure; HttpOnly"]
+        for cookie in HTTPCookie.cookies(withResponseHeaderFields: fields, for: response.url!) {
+            storage.setCookie(cookie)
+        }
+        let identityProviderSession = HTTPCookie(properties: [
+            .domain: "auth.example.com",
+            .name: "KEYCLOAK_SESSION",
+            .path: "/",
+            .value: "signed-in"
+        ])!
+        storage.setCookie(identityProviderSession)
+
+        let client = APIClient(baseURL: server.url) {
+            $0.sessionConfiguration.httpCookieStorage = storage
+        }
+
+        #expect(throws: ForwardAuthError.self) {
+            try delegate.client(
+                client,
+                validateResponse: response,
+                data: Data(),
+                task: URLSession.shared.dataTask(with: URLRequest(url: response.url!))
+            )
+        }
+        #expect(storage.cookies?.map(\.name) == ["KEYCLOAK_SESSION"])
+    }
+
     // A 401 with no Location is an ordinary unauthorized - a stale token, a wrong password.
     // Opening a browser for that would be worse than reporting it.
     @Test

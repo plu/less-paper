@@ -30,12 +30,14 @@ public struct ForwardAuthRedirect: Equatable, Identifiable, Sendable {
     // The proxy has let the web view through once it is delivered back to signInURL, whatever
     // paperless answers there: a 401 is gate-only mode asking for its own login next. Any other
     // response from the server's host - a proxy's callback, or the error it answers one with - is
-    // still part of the login. So is a 3xx at signInURL: that is the proxy bouncing it, not
-    // paperless answering.
+    // still part of the login. So is a 3xx at signInURL - the proxy bouncing it, not paperless
+    // answering - and a 5xx, which is the proxy or paperless failing: closing on it would replay
+    // every parked request into the same failure.
     public func isSignInComplete(_ response: URLResponse) -> Bool {
         guard let responseURL = response.url,
               let statusCode = (response as? HTTPURLResponse)?.statusCode,
-              !(300 ..< 400).contains(statusCode)
+              !(300 ..< 400).contains(statusCode),
+              statusCode < 500
         else {
             return false
         }
