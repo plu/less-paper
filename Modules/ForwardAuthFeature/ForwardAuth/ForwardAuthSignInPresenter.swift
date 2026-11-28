@@ -116,9 +116,9 @@ private final class ForwardAuthSignInSession: NSObject, UIAdaptivePresentationCo
 
     private var continuation: CheckedContinuation<Bool, Never>?
 
-    // decidePolicyFor fires for every response coming back from the server's host, so onFinished
-    // can arrive more than once for a single sign-in - and a checked continuation resumed twice
-    // traps. First outcome wins.
+    // decidePolicyFor can deliver more than one completing response for a single sign-in, so
+    // onFinished can arrive more than once - and a checked continuation resumed twice traps.
+    // First outcome wins.
     private func resume(signedIn: Bool) {
         guard let continuation else {
             return
