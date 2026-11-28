@@ -128,3 +128,26 @@ openssl rand -hex 32   # encryption_key
 docker run --rm authelia/authelia:latest \
   authelia crypto hash generate argon2 --password '<new password>'
 ```
+
+## Apache + mod_auth_openidc + Keycloak (issue #134)
+
+A second forward-auth stack, reproducing a self-hoster whose Apache runs mod_auth_openidc against
+Keycloak and injects `Remote-User`. Same hostnames and `/etc/hosts` entries as above, port 8300,
+its own Caddy (TLS only — authentication is all Apache's), so trust its CA in the simulator too
+(`less-paper-apache-oidc-caddy-1`).
+
+```sh
+cd docker
+docker-compose -f docker-compose.apache-oidc.yml -p less-paper-apache-oidc up -d --build
+```
+
+Keycloak user `admin` / `secret`. `APACHE_ARGUMENTS` picks the Apache variant (recreate `apache`
+after changing it):
+
+| `APACHE_ARGUMENTS`      | `GET /api/ui_settings/` with `Accept: application/json`                 |
+|-------------------------|-------------------------------------------------------------------------|
+| `-D API_EXEMPT` (default) | `403` from paperless — `/api` skips OIDC, so the app never sees a proxy |
+| `""`                    | bare `401` from mod_auth_openidc — it treats non-HTML requests as XHR   |
+| `-D FORCE_REDIRECT`     | `302` to Keycloak (`OIDCUnAuthAction auth true`) — the app's bounce      |
+
+Only the last one is a login the app can recognise.

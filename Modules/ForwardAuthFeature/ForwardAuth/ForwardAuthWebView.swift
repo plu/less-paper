@@ -22,7 +22,7 @@ struct ForwardAuthWebView: UIViewRepresentable {
             for cookie in ForwardAuthCookieStorage.cookiesToSeed() {
                 await store.setCookie(cookie)
             }
-            webView.load(URLRequest(url: redirect.url))
+            webView.load(URLRequest(url: redirect.signInURL))
         }
 
         return webView
@@ -49,14 +49,12 @@ struct ForwardAuthWebView: UIViewRepresentable {
             _ webView: WKWebView,
             decidePolicyFor navigationResponse: WKNavigationResponse
         ) async -> WKNavigationResponsePolicy {
-            guard let response = navigationResponse.response as? HTTPURLResponse,
-                  response.url?.host() == parent.redirect.server.url.host()
-            else {
+            guard parent.redirect.isSignInComplete(navigationResponse.response) else {
                 return .allow
             }
 
-            // A response has come back from the server's host - the cookies WKWebView now holds
-            // are what the API session needs. Copy them to app-group storage, then let the
+            // The proxy has let the web view through to paperless - the cookies WKWebView now
+            // holds are what the API session needs. Copy them to app-group storage, then let the
             // outer view close the sheet.
             let cookies = await webView.configuration.websiteDataStore.httpCookieStore.allCookies()
             ForwardAuthCookieStorage.store(cookies)

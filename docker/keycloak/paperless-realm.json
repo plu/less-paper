@@ -1,0 +1,32 @@
+{
+  "realm": "paperless",
+  "enabled": true,
+  "sslRequired": "none",
+  "clients": [
+    {
+      "clientId": "paperless",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "development-only-client-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["https://paperless.local.plunien.com:8300/oidc/redirect"],
+      "webOrigins": ["https://paperless.local.plunien.com:8300"]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@less-paper.test",
+      "emailVerified": true,
+      "firstName": "Paperless",
+      "lastName": "Admin",
+      "credentials": [
+        { "type": "password", "value": "secret", "temporary": false }
+      ]
+    }
+  ]
+}

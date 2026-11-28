@@ -76,6 +76,11 @@ extension ApiClientDelegate: Get.APIClientDelegate {
            let redirectHost = redirectURL.host(),
            let serverHost = server.url.host(),
            redirectHost != serverHost {
+            // The login web view takes a bounce of its own, so whatever this one set - a state
+            // cookie per request, with mod_auth_openidc - is never used. Kept, it piles up and is
+            // seeded into the web view, which the proxy then turns away for carrying too many.
+            discardCookies(setBy: response, in: client.session.configuration.httpCookieStorage)
+
             // Only thrown, never announced: the login is raised by shouldRetry, where the request
             // that needs it is parked. Announcing it here would leave a suspended task behind for
             // every bounce the share extension takes, which has nothing listening.
@@ -119,6 +124,19 @@ extension ApiClientDelegate: Get.APIClientDelegate {
         return await coordinator.awaitSignIn(
             for: ForwardAuthRedirect(server: server, url: url)
         )
+    }
+
+    private func discardCookies(setBy response: HTTPURLResponse, in storage: HTTPCookieStorage?) {
+        guard let storage,
+              let url = response.url,
+              let fields = response.allHeaderFields as? [String: String]
+        else {
+            return
+        }
+
+        for cookie in HTTPCookie.cookies(withResponseHeaderFields: fields, for: url) {
+            storage.deleteCookie(cookie)
+        }
     }
 
     /// One line per *failed* request: what was asked, of where, and what came back.
